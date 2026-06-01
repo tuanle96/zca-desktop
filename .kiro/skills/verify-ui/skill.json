@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "id": "verify-ui",
+  "name": "verify-ui",
+  "version": "1.0.0",
+  "description": "Run Browser Validation with Playwright golden-path checks, screenshots, console/network capture, and HTML reporting.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(node .harness/scripts/verify-ui.mjs*)"
+    ],
+    "deny": []
+  }
+}

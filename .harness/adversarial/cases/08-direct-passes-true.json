@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "direct-passes-true",
+  "title": "Direct passes true edits without contract and evidence are rejected",
+  "failureMode": "false-done",
+  "severity": "critical",
+  "probe": "task-evidence-direct-passes-true",
+  "prevention": {
+    "gate": "task-evidence",
+    "failureClass": "false-done"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "task-evidence-check: FAILED",
+      "passes=true requires taskContractPath",
+      "passes=true requires evidencePath"
+    ]
+  }
+}

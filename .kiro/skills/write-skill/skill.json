@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "write-skill",
+  "name": "write-skill",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user asks to \"create a skill\", \"add a slash command\", \"package a workflow\", or \"make X reusable across sessions\". Generates a SKILL.md with valid YAML frontmatter (name regex, description ≤ 1024 chars, body ≤ 500 lines) and supporting .harness/scripts/references/assets. Tests the skill by simulating an auto-discovery prompt.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(ls*)"
+    ],
+    "deny": []
+  }
+}

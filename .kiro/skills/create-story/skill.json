@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "create-story",
+  "name": "create-story",
+  "version": "1.0.0",
+  "description": "Create a Story Packet for normal/high-risk features. Use after /feature-intake classifies work as normal or high-risk, or when the user asks to break a feature into acceptance criteria, test expectations, and agent-sized work units.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(node .kiro/skills/create-story/create-story.mjs*)"
+    ],
+    "deny": []
+  }
+}

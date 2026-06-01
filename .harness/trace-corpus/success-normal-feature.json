@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "success-normal-feature",
+  "case": "success-normal",
+  "title": "Normal feature delivered through contract and review",
+  "sanitized": true,
+  "source": "synthetic-regression-pattern",
+  "runtime": "claude",
+  "task": {
+    "id": "feature-saved-filter",
+    "type": "feature",
+    "riskTier": "normal",
+    "acceptance": ["filter-persists", "service-tests-pass", "advisor-pass"]
+  },
+  "outcome": {
+    "status": "pass",
+    "failureClass": null,
+    "blockedBy": []
+  },
+  "modelRouting": {
+    "lane": "implementation",
+    "model": "claude-sonnet-4-6",
+    "expectedModel": "claude-sonnet-4-6",
+    "success": true,
+    "costUsd": 0.047,
+    "inputTokens": 6400,
+    "outputTokens": 1800
+  },
+  "evalSignals": [
+    {
+      "id": "unit-tests",
+      "kind": "command",
+      "status": "pass",
+      "summary": "Focused service tests passed."
+    },
+    {
+      "id": "advisor-decision",
+      "kind": "review",
+      "status": "pass",
+      "summary": "Advisor reviewed the changed files and passed."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "harness",
+      "event": "contract-created",
+      "summary": "Task contract captured scope and acceptance checks."
+    },
+    {
+      "step": 2,
+      "actor": "agent",
+      "event": "feature-implemented",
+      "summary": "Implemented the saved filter through service boundary."
+    },
+    {
+      "step": 3,
+      "actor": "reviewer",
+      "event": "review-passed",
+      "summary": "Reviewer found no blocking findings."
+    },
+    {
+      "step": 4,
+      "actor": "harness",
+      "event": "done-allowed",
+      "summary": "Evidence and advisor gates allowed completion."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "repo",
+      "replacement": "repo://demo"
+    },
+    {
+      "kind": "content",
+      "replacement": "<redacted-customer-copy>"
+    }
+  ]
+}

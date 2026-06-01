@@ -1,0 +1,85 @@
+{
+  "schemaVersion": "1",
+  "project": {
+    "name": "zca-desktop",
+    "mode": "solo-dev",
+    "summary": "Cross-platform Zalo desktop client (Tauri v2 + Rust) built on the zca-rust unofficial API. Supports multiple accounts logged in simultaneously and coexistence with the user's other Zalo devices. agent-harness-kit is the dev control center (model routing + feature tracking + review gates)."
+  },
+  "currentPhase": "mvp",
+  "phases": [
+    {
+      "id": "discovery",
+      "title": "Discovery / Research",
+      "status": "done",
+      "goals": ["Map zca-rust auth + listener model", "Confirm Tauri v2 fit", "Stand up agent-harness-kit control center"],
+      "exitCriteria": ["Architecture + phased roadmap recorded", "Harness installed (kiro runtime, rust)"]
+    },
+    {
+      "id": "mvp",
+      "title": "MVP: Phase 1 + 2 (single + multi-account messaging)",
+      "status": "active",
+      "scope": {
+        "in": [
+          "Tauri v2 shell + zca-rust integration",
+          "Credential import (ZaloDataExtractor JSON)",
+          "Single-account login + own profile",
+          "Realtime listener -> Tauri events",
+          "Send text message",
+          "Multi-account SessionManager + account switcher + per-account routing"
+        ],
+        "out": [
+          "Persistence/cache (Phase 3)",
+          "Rich media/attachments (Phase 4)",
+          "Cross-install sync relay (Phase 5 stretch)",
+          "Signed packaging (Phase 6)"
+        ]
+      },
+      "milestones": [
+        { "id": "mvp-vertical-slice", "title": "Two accounts online, send/receive text", "status": "active" }
+      ],
+      "checklists": [
+        {
+          "id": "mvp-release",
+          "title": "MVP gate",
+          "items": [
+            { "id": "scope-reviewed", "title": "Scope reviewed", "done": true },
+            { "id": "tauri-boots", "title": "Tauri app boots + zca-rust compiles", "done": true },
+            { "id": "multi-account", "title": "2 concurrent accounts send/receive", "done": false },
+            { "id": "tests-pass", "title": "Relevant cargo tests pass", "done": false }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "hardening",
+      "title": "Phase 3 + 4: Persistence, security, full messaging",
+      "status": "planned",
+      "goals": ["Keychain credential storage", "SQLite cache + session restore", "Attachments/stickers/reactions"],
+      "exitCriteria": ["No plaintext secrets", "Restart restores accounts", "Rich messaging verified live"]
+    },
+    {
+      "id": "release",
+      "title": "Phase 5 + 6: Multi-device coexistence + packaging",
+      "status": "planned",
+      "goals": ["Verify multi-device coexistence", "Signed cross-platform bundles"],
+      "exitCriteria": ["Coexistence documented + verified", "Installers produced per OS"]
+    }
+  ],
+  "features": [],
+  "risks": [
+    { "id": "r1", "title": "Unofficial API / ToS + account-ban risk", "severity": "P1", "mitigation": "Treat as personal-use tool; rate-limit; surface warnings; no automation that looks like spam." },
+    { "id": "r2", "title": "Cookie/session expiry invalidates login", "severity": "P1", "mitigation": "Detect 401/expiry, mark account re-auth-needed, prompt re-import." },
+    { "id": "r3", "title": "Multi-device same-account conflicts (imei/session)", "severity": "P2", "mitigation": "Each account = distinct exported session; verify coexistence (device-coexistence feature) before claiming support." },
+    { "id": "r4", "title": "Secret handling (cookies are bearer tokens)", "severity": "P1", "mitigation": "OS keychain via keyring; never log/echo cookie values; gitignore cred files." },
+    { "id": "r5", "title": "zca-rust endpoints only 43/149 verified live", "severity": "P2", "mitigation": "Build on verified endpoints first; gate unverified behind live-test evidence." }
+  ],
+  "decisions": [
+    { "id": "d1", "title": "Tauri v2 + Rust core hosts zca-rust sessions; webview = UI", "status": "accepted" },
+    { "id": "d2", "title": "zca-rust consumed as git dependency (not crates.io)", "status": "accepted" },
+    { "id": "d3", "title": "Multi-account = many in-process API+Listener sessions in a SessionManager", "status": "accepted" },
+    { "id": "d4", "title": "Credentials imported as ZaloDataExtractor JSON; stored in OS keychain", "status": "accepted" },
+    { "id": "d5", "title": "Model routing: Opus=implementation, Sonnet=review, Haiku=explore", "status": "accepted" },
+    { "id": "d6", "title": "Cross-install sync relay is out of MVP (stretch, ADR-gated)", "status": "proposed" }
+  ],
+  "updatedAt": "2026-06-01T11:56:15.523Z"
+}

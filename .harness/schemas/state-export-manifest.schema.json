@@ -1,0 +1,42 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/state-export-manifest.schema.json",
+  "title": "agent-harness-kit state export manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "exportedAt", "redacted", "dbPath", "tables"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "exportedAt": { "type": "string", "format": "date-time" },
+    "redacted": { "type": "boolean" },
+    "dbPath": { "type": "string", "minLength": 1 },
+    "tables": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "array",
+        "items": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "properties": {
+        "intake": { "$ref": "#/$defs/tableRows" },
+        "story": { "$ref": "#/$defs/tableRows" },
+        "decision_record": { "$ref": "#/$defs/tableRows" },
+        "backlog": { "$ref": "#/$defs/tableRows" },
+        "trace": { "$ref": "#/$defs/tableRows" },
+        "session_worktree": { "$ref": "#/$defs/tableRows" },
+        "state_migration": { "$ref": "#/$defs/tableRows" }
+      }
+    }
+  },
+  "$defs": {
+    "tableRows": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    }
+  }
+}

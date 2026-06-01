@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "missing-stop-hook",
+  "title": "Deleting the Stop hook script fails hook integrity",
+  "failureMode": "hook-weakening",
+  "severity": "critical",
+  "probe": "hook-integrity-missing-stop-hook",
+  "prevention": {
+    "gate": "hook-integrity",
+    "failureClass": "tool-misuse"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "check-hook-integrity: FAILED",
+      "Stop .harness/scripts/precompletion-checklist.sh referenced script missing"
+    ]
+  }
+}

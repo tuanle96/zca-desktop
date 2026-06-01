@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "bun run build",
+  "status": "pass",
+  "summary": "vite build OK; adapter-static wrote site to build/.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-01T13:03:12.517Z",
+  "finishedAt": "2026-06-01T13:03:14.556Z",
+  "gitHead": "unknown",
+  "workingTreeHash": "sha256:855bb9a8f1c29893435feac51640b941ec33cfeebe814efac932d198d92aacbd",
+  "stdoutHash": "sha256:a3a22bf0ebe9583f9f59a9d1bde06c452df11903af27375c25160f9c17e72d34",
+  "stderrHash": "sha256:ba386d929d50053748f6cebb573cdb784aa5e6bc30afb04d83ae6792e4595a7d",
+  "stdoutPath": ".harness/evidence/tauri-scaffold/checks/frontend.build-20260601130312/stdout.txt",
+  "stderrPath": ".harness/evidence/tauri-scaffold/checks/frontend.build-20260601130312/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/tauri-scaffold/checks/frontend.build-20260601130312/stdout.txt",
+    ".harness/evidence/tauri-scaffold/checks/frontend.build-20260601130312/stderr.txt"
+  ]
+}

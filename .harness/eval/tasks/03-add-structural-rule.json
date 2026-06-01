@@ -1,0 +1,15 @@
+{
+  "id": "add-structural-rule",
+  "description": "Adding a structural rule via `/structural-test-author` is principle 7 in action. Exercises the 'rule + enforcement-mechanism + test' bundle.",
+  "input": "Benchmark task: add a structural rule bundle. You must make these file changes using Edit/Write/MultiEdit, not Bash-generated rewrites: (1) edit `src/templates/_adapter-typescript/.harness/runners/structural-test.mjs` to flag any file under `src/runtime/` importing from `src/ui/`; (2) edit or add a test under `tests/` that covers both pass and fail cases for runtime importing ui; (3) edit `src/templates/.harness/docs/golden-principles.md.hbs` with a new principle or bullet pointing at this enforcement mechanism. Run the relevant structural/test command and report the result.",
+  "expected": {
+    "filesChanged": {
+      "min": 2,
+      "max": 5
+    },
+    "requiredFiles": [
+      "src/templates/_adapter-typescript/.harness/runners/structural-test.mjs",
+      "src/templates/.harness/docs/golden-principles.md.hbs"
+    ]
+  }
+}

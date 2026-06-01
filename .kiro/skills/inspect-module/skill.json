@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "inspect-module",
+  "name": "inspect-module",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user mentions \"explore\", \"inspect\", \"understand\", \"what does X do\", \"where is Y\", or before adding a new feature in an unfamiliar area. Produces a structured map of one module — files, exports, dependencies, layer assignment, and recent commits — without reading the entire codebase. Always invoke this skill before editing an unfamiliar module so the agent has accurate context, not guesses.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(git log*)",
+      "Bash(git ls-tree*)",
+      "Bash(tree*)",
+      "Bash(node .kiro/skills/inspect-module/scripts/module-summary.mjs*)"
+    ],
+    "deny": []
+  }
+}

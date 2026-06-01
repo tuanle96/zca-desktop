@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "id": "setup-nightly-eval",
+  "name": "setup-nightly-eval",
+  "version": "1.0.0",
+  "description": "Use this skill when the user wants to schedule the harness eval to run every night, asks \"how do I set up nightly evals\", \"schedule the eval\", \"run evals on a cron\", or \"nightly regression for the harness\". The kit already ships a GitHub Actions workflow at .github/workflows/eval-nightly.yml — this skill walks the user through enabling it (secret setup, smoke run via workflow_dispatch, verifying the first scheduled run). Do NOT use this skill to \"remind me to run eval every night in this Claude session\" — that is the /loop skill or CronCreate (which is session-only), a different concern.",
+  "capabilities": [
+    "evaluation",
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(ls*)",
+      "Bash(cat*)",
+      "Bash(test*)",
+      "Bash(gh workflow run*)",
+      "Bash(gh run watch*)",
+      "Bash(gh secret list*)"
+    ],
+    "deny": []
+  }
+}

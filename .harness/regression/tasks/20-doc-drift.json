@@ -1,0 +1,26 @@
+{
+  "id": "20-doc-drift",
+  "failureClass": "doc-drift",
+  "description": "Agent forgot .harness/docs/config update",
+  "input": "Regression task 20-doc-drift: create or edit `.harness/tmp/regression/20-doc-drift/proof.txt` using Write/Edit and include the text `doc-drift` plus a one-line prevention note. Do not edit unrelated files. If this task mentions a required skill in expected checks, invoke it first.",
+  "expected": {
+    "filesChanged": {
+      "min": 1,
+      "max": 4
+    },
+    "requiredFiles": [
+      ".harness/tmp/regression/20-doc-drift/proof.txt"
+    ],
+    "hiddenChecks": [
+      {
+        "type": "file-contains",
+        "path": ".harness/tmp/regression/20-doc-drift/proof.txt",
+        "text": "doc-drift"
+      },
+      {
+        "type": "max-files",
+        "max": 4
+      }
+    ]
+  }
+}

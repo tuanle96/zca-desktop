@@ -1,0 +1,147 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Sanitized Harness Trace Corpus Entry",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "id",
+    "case",
+    "title",
+    "sanitized",
+    "source",
+    "runtime",
+    "task",
+    "outcome",
+    "modelRouting",
+    "evalSignals",
+    "events",
+    "redactions"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "case": {
+      "type": "string",
+      "enum": [
+        "success-tiny",
+        "success-normal",
+        "success-high-risk",
+        "false-done",
+        "overbroad-edit",
+        "missing-reviewer",
+        "evidence-replay-failure",
+        "bypass-approval-flow",
+        "runtime-parity-failure"
+      ]
+    },
+    "title": { "type": "string", "minLength": 12 },
+    "sanitized": { "const": true },
+    "source": {
+      "type": "string",
+      "enum": ["sanitized-real-pattern", "synthetic-regression-pattern"]
+    },
+    "runtime": { "type": "string", "enum": ["claude", "codex", "dual"] },
+    "task": {
+      "type": "object",
+      "required": ["id", "type", "riskTier", "acceptance"],
+      "properties": {
+        "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+        "type": { "type": "string", "enum": ["feature", "bugfix", "refactor", "release", "docs", "harness"] },
+        "riskTier": { "type": "string", "enum": ["tiny", "normal", "high-risk"] },
+        "acceptance": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status", "blockedBy"],
+      "properties": {
+        "status": { "type": "string", "enum": ["pass", "blocked", "failed", "needs-human"] },
+        "failureClass": {
+          "type": ["string", "null"],
+          "enum": [
+            null,
+            "context-miss",
+            "false-done",
+            "architecture-drift",
+            "test-gap",
+            "doc-drift",
+            "tool-misuse",
+            "permission-gap",
+            "runtime-gap",
+            "eval-gap",
+            "cost-spike",
+            "model-behavior"
+          ]
+        },
+        "blockedBy": {
+          "type": "array",
+          "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }
+        }
+      },
+      "additionalProperties": false
+    },
+    "modelRouting": {
+      "type": "object",
+      "required": ["lane", "model", "expectedModel", "success", "costUsd", "inputTokens", "outputTokens"],
+      "properties": {
+        "lane": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+        "model": { "type": "string", "minLength": 3 },
+        "expectedModel": { "type": "string", "minLength": 3 },
+        "success": { "type": "boolean" },
+        "costUsd": { "type": "number", "minimum": 0 },
+        "inputTokens": { "type": "integer", "minimum": 0 },
+        "outputTokens": { "type": "integer", "minimum": 0 }
+      },
+      "additionalProperties": false
+    },
+    "evalSignals": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "kind", "status", "summary"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "kind": { "type": "string", "enum": ["command", "artifact", "review", "gate", "telemetry"] },
+          "status": { "type": "string", "enum": ["pass", "fail", "blocked", "warning"] },
+          "summary": { "type": "string", "minLength": 8 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "events": {
+      "type": "array",
+      "minItems": 2,
+      "items": {
+        "type": "object",
+        "required": ["step", "actor", "event", "summary"],
+        "properties": {
+          "step": { "type": "integer", "minimum": 1 },
+          "actor": { "type": "string", "enum": ["user", "agent", "harness", "reviewer", "runtime"] },
+          "event": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "summary": { "type": "string", "minLength": 8 }
+        },
+        "additionalProperties": false
+      }
+    },
+    "redactions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["kind", "replacement"],
+        "properties": {
+          "kind": { "type": "string", "enum": ["repo", "path", "user", "host", "secret", "content"] },
+          "replacement": { "type": "string", "pattern": "^[a-z]+://[a-z0-9._-]+$|^<redacted-[a-z0-9._-]+>$" }
+        },
+        "additionalProperties": false
+      }
+    }
+  },
+  "additionalProperties": false
+}

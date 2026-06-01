@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "middleware-pipeline",
+  "name": "middleware-pipeline",
+  "version": "1.0.0",
+  "description": "Use composable middleware behaviors for provider/tool execution: retry, caching, timeout, telemetry, and budget guards.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .harness/scripts/middleware-demo.mjs*)"
+    ],
+    "deny": []
+  }
+}

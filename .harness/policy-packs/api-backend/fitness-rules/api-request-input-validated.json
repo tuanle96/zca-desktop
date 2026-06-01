@@ -1,0 +1,48 @@
+{
+  "schemaVersion": 1,
+  "id": "api-request-input-validated",
+  "description": "API handlers that read request input must validate it before calling service logic.",
+  "kind": "require-pattern",
+  "severity": "block",
+  "owner": "security-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "api/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "routes/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "controllers/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/api/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/routes/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/controllers/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/handlers/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+  ],
+  "allowPaths": ["src/templates/**"],
+  "triggerPatterns": [
+    "\\b(req|request)\\.(body|query|params)\\b",
+    "\\.json\\s*\\(",
+    "\\bctx\\.req\\b",
+    "\\bc\\.req\\b"
+  ],
+  "requiredPatterns": [
+    "\\b(z|yup|joi|superstruct)\\b",
+    "\\b(class-validator|validateOrReject|plainToInstance)\\b",
+    "\\.(parse|safeParse|validate|validateSync)\\s*\\(",
+    "\\b(requestSchema|bodySchema|paramsSchema|querySchema|validateInput|validator|schema)\\b"
+  ],
+  "message": "API handler reads request input without visible schema validation.",
+  "examples": {
+    "pass": [
+      {
+        "path": "src/routes/users.ts",
+        "content": "const bodySchema = z.object({ email: z.string().email() });\nexport async function createUser(req) { const body = bodySchema.parse(req.body); return service.create(body); }"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/routes/users.ts",
+        "content": "export async function createUser(req) { return service.create(req.body); }"
+      }
+    ]
+  }
+}

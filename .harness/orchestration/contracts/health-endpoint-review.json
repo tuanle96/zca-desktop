@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "health-endpoint-review",
+  "taskId": "health-endpoint",
+  "featureId": "health-endpoint",
+  "pattern": "expert-pool",
+  "maxConcurrency": 2,
+  "permissionProfile": "mixed",
+  "requiredReviewers": ["reliability-reviewer"],
+  "requiredArtifacts": ["manifest", "summary", "transcripts", "review-decisions", "evidence"],
+  "lanes": [
+    {
+      "id": "reliability-review",
+      "title": "Reliability review",
+      "role": "review",
+      "toolPolicy": "review-only",
+      "requiredReviewer": "reliability-reviewer",
+      "prompt": "Review the health-endpoint task contract for startup, routing, error handling, and smoke-test evidence gaps. Do not edit files.",
+      "outputPath": ".harness/reviews/health-endpoint/reliability-reviewer.json"
+    },
+    {
+      "id": "implementation",
+      "title": "Implementation lane",
+      "role": "implementation",
+      "toolPolicy": "mutating",
+      "requiresEvidence": true,
+      "prompt": "Implement only the health-endpoint task contract. Keep the diff narrow, respect allowed layers, run the declared acceptance commands, and write the evidence bundle before claiming done.",
+      "outputPath": ".harness/orchestration/<run-id>/lanes/implementation.json"
+    }
+  ]
+}

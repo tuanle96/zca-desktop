@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "evidence-replay-failure",
+  "case": "evidence-replay-failure",
+  "title": "Evidence replay failed because command proof drifted",
+  "sanitized": true,
+  "source": "synthetic-regression-pattern",
+  "runtime": "dual",
+  "task": {
+    "id": "bugfix-checkout-tax",
+    "type": "bugfix",
+    "riskTier": "normal",
+    "acceptance": ["tax-total-correct", "evidence-replay-pass"]
+  },
+  "outcome": {
+    "status": "failed",
+    "failureClass": "eval-gap",
+    "blockedBy": ["evidence-replay", "stdout-hash"]
+  },
+  "modelRouting": {
+    "lane": "implementation",
+    "model": "claude-sonnet-4-6",
+    "expectedModel": "claude-sonnet-4-6",
+    "success": false,
+    "costUsd": 0.053,
+    "inputTokens": 6900,
+    "outputTokens": 1500
+  },
+  "evalSignals": [
+    {
+      "id": "replay",
+      "kind": "command",
+      "status": "fail",
+      "summary": "Replay command produced a different output hash."
+    },
+    {
+      "id": "attestation",
+      "kind": "artifact",
+      "status": "fail",
+      "summary": "Recorded tree hash did not match the task worktree."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "agent",
+      "event": "evidence-written",
+      "summary": "Agent wrote an evidence bundle with command proof."
+    },
+    {
+      "step": 2,
+      "actor": "harness",
+      "event": "replay-started",
+      "summary": "Harness replayed the evidence command."
+    },
+    {
+      "step": 3,
+      "actor": "harness",
+      "event": "replay-failed",
+      "summary": "Replay failed due to output and tree hash drift."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "content",
+      "replacement": "<redacted-command-output>"
+    }
+  ]
+}

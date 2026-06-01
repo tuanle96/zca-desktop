@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "success-high-risk-auth",
+  "case": "success-high-risk",
+  "title": "High risk auth change completed with isolation and reviews",
+  "sanitized": true,
+  "source": "sanitized-real-pattern",
+  "runtime": "dual",
+  "task": {
+    "id": "auth-session-rotation",
+    "type": "bugfix",
+    "riskTier": "high-risk",
+    "acceptance": ["session-rotation-tested", "security-review-pass", "worktree-isolated"]
+  },
+  "outcome": {
+    "status": "pass",
+    "failureClass": null,
+    "blockedBy": []
+  },
+  "modelRouting": {
+    "lane": "high-risk",
+    "model": "claude-sonnet-4-6",
+    "expectedModel": "claude-sonnet-4-6",
+    "success": true,
+    "costUsd": 0.162,
+    "inputTokens": 18400,
+    "outputTokens": 4200
+  },
+  "evalSignals": [
+    {
+      "id": "security-review",
+      "kind": "review",
+      "status": "pass",
+      "summary": "Security reviewer checked session and secret boundaries."
+    },
+    {
+      "id": "replay-evidence",
+      "kind": "artifact",
+      "status": "pass",
+      "summary": "Evidence command hashes matched the task worktree."
+    },
+    {
+      "id": "session-isolation",
+      "kind": "gate",
+      "status": "pass",
+      "summary": "High risk work ran in a linked task worktree."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "harness",
+      "event": "worktree-prepared",
+      "summary": "Session isolation prepared a task specific worktree."
+    },
+    {
+      "step": 2,
+      "actor": "agent",
+      "event": "bugfix-implemented",
+      "summary": "Session rotation fix stayed inside the auth boundary."
+    },
+    {
+      "step": 3,
+      "actor": "reviewer",
+      "event": "security-pass",
+      "summary": "Security reviewer passed the changed auth files."
+    },
+    {
+      "step": 4,
+      "actor": "harness",
+      "event": "readiness-passed",
+      "summary": "Replayable evidence and review gates passed."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "secret",
+      "replacement": "<redacted-secret>"
+    },
+    {
+      "kind": "host",
+      "replacement": "host://demo"
+    }
+  ]
+}

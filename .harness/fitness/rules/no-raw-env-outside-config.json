@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "no-raw-env-outside-config",
+  "description": "Environment reads must stay behind config/env modules.",
+  "kind": "forbid-pattern",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "normal",
+  "appliesTo": ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}", "app/**/*.{ts,tsx,js,jsx,mjs,cjs}", "pages/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  "allowPaths": ["src/config/**", "src/env.*", "src/env/**", "src/**/config/**", "src/core/**", "src/templates/**"],
+  "forbiddenPatterns": [
+    {
+      "id": "process-env",
+      "regex": "\\bprocess\\.env\\b",
+      "message": "Raw process.env access belongs in a config/env adapter."
+    },
+    {
+      "id": "deno-env",
+      "regex": "\\bDeno\\.env\\b",
+      "message": "Raw Deno.env access belongs in a config/env adapter."
+    },
+    {
+      "id": "import-meta-env",
+      "regex": "\\bimport\\.meta\\.env\\b",
+      "message": "Raw import.meta.env access belongs in a config/env adapter."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/config/env.ts",
+        "content": "export const apiUrl = process.env.API_URL;"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/service/checkout.ts",
+        "content": "export const apiUrl = process.env.API_URL;"
+      }
+    ]
+  }
+}

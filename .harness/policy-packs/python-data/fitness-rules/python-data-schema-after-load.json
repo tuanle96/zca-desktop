@@ -1,0 +1,46 @@
+{
+  "schemaVersion": 1,
+  "id": "python-data-schema-after-load",
+  "description": "Python data pipelines that load tabular external data must validate the frame before transformation or storage.",
+  "kind": "require-pattern",
+  "severity": "block",
+  "owner": "reliability-reviewer",
+  "failureClass": "test-gap",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "pipelines/**/*.py",
+    "jobs/**/*.py",
+    "scripts/**/*.py",
+    "src/**/pipelines/**/*.py",
+    "src/**/etl/**/*.py",
+    "src/**/jobs/**/*.py"
+  ],
+  "allowPaths": ["src/templates/**"],
+  "triggerPatterns": [
+    "\\b(pd|pandas)\\.read_(csv|json|parquet|excel)\\s*\\(",
+    "\\b(pl|polars)\\.read_(csv|json|parquet|excel)\\s*\\("
+  ],
+  "requiredPatterns": [
+    "\\b(pandera|pa\\.)\\b",
+    "\\b(great_expectations|ge\\.)\\b",
+    "\\b(pydantic|BaseModel)\\b",
+    "\\b(DataFrameModel|SchemaModel)\\b",
+    "\\b(validate(_schema|_frame|_data)?|schema\\.validate|expect_)\\b"
+  ],
+  "message": "Data pipeline loads external tabular data without visible schema validation.",
+  "examples": {
+    "pass": [
+      {
+        "path": "pipelines/import_orders.py",
+        "content": "df = pd.read_csv(path)\nvalidated = schema.validate(df)\nreturn validated"
+      }
+    ],
+    "fail": [
+      {
+        "path": "pipelines/import_orders.py",
+        "content": "df = pd.read_csv(path)\nreturn transform_orders(df)"
+      }
+    ]
+  }
+}

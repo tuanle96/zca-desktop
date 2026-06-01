@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "protected-patch-move",
+  "title": "apply_patch Move to a protected scaffold path is denied",
+  "failureMode": "protected-path-bypass",
+  "severity": "critical",
+  "probe": "edit-guard-protected-patch-move",
+  "prevention": {
+    "gate": "pretooluse-edit-guard",
+    "failureClass": "tool-misuse"
+  },
+  "expected": {
+    "exitCode": 0,
+    "stdoutIncludes": [
+      "\"permissionDecision\":\"deny\"",
+      ".claude/"
+    ]
+  }
+}

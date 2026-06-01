@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "unsafe-eval-command",
+  "title": "Eval acceptance checks cannot use destructive publish commands",
+  "failureMode": "unsafe-command",
+  "severity": "high",
+  "probe": "eval-task-unsafe-command",
+  "prevention": {
+    "gate": "eval-task-policy",
+    "failureClass": "eval-gap"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "check-eval-tasks: FAILED",
+      "risky command"
+    ]
+  }
+}

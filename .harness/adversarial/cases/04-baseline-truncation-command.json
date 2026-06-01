@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "baseline-truncation-command",
+  "title": "Direct structural baseline truncation command is denied",
+  "failureMode": "protected-path-bypass",
+  "severity": "critical",
+  "probe": "bash-guard-baseline-truncation",
+  "prevention": {
+    "gate": "pretooluse-bash-guard",
+    "failureClass": "tool-misuse"
+  },
+  "expected": {
+    "exitCode": 0,
+    "stdoutIncludes": [
+      "\"permissionDecision\":\"deny\"",
+      "bypasses the monotonic guard"
+    ]
+  }
+}

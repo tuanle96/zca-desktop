@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build OK; zca-desktop compiled.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-01T13:03:14.601Z",
+  "finishedAt": "2026-06-01T13:03:15.328Z",
+  "gitHead": "unknown",
+  "workingTreeHash": "sha256:855bb9a8f1c29893435feac51640b941ec33cfeebe814efac932d198d92aacbd",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:3bb679965f0a12982e07be2b1c71ba457c15ceb768859fabb10911106022ba16",
+  "stdoutPath": ".harness/evidence/tauri-scaffold/checks/rust.build-20260601130314/stdout.txt",
+  "stderrPath": ".harness/evidence/tauri-scaffold/checks/rust.build-20260601130314/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/tauri-scaffold/checks/rust.build-20260601130314/stdout.txt",
+    ".harness/evidence/tauri-scaffold/checks/rust.build-20260601130314/stderr.txt"
+  ]
+}

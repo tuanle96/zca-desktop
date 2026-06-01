@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "runtime-parity-failure",
+  "case": "runtime-parity-failure",
+  "title": "Runtime parity failure caught by conformance report",
+  "sanitized": true,
+  "source": "synthetic-regression-pattern",
+  "runtime": "codex",
+  "task": {
+    "id": "runtime-codex-parity",
+    "type": "harness",
+    "riskTier": "normal",
+    "acceptance": ["codex-hook-fixture-pass", "parity-report-clean"]
+  },
+  "outcome": {
+    "status": "failed",
+    "failureClass": "runtime-gap",
+    "blockedBy": ["runtime-conformance", "patch-guard-fixture"]
+  },
+  "modelRouting": {
+    "lane": "eval",
+    "model": "gpt-5.5",
+    "expectedModel": "gpt-5.5",
+    "success": false,
+    "costUsd": 0.022,
+    "inputTokens": 3300,
+    "outputTokens": 700
+  },
+  "evalSignals": [
+    {
+      "id": "runtime-conformance",
+      "kind": "gate",
+      "status": "fail",
+      "summary": "Codex patch guard fixture failed parity expectations."
+    },
+    {
+      "id": "runtime-parity",
+      "kind": "telemetry",
+      "status": "warning",
+      "summary": "Claude passed the equivalent runtime guard fixture."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "runtime",
+      "event": "codex-fixture-ran",
+      "summary": "Codex conformance fixture exercised patch mutation."
+    },
+    {
+      "step": 2,
+      "actor": "harness",
+      "event": "fixture-failed",
+      "summary": "Expected protected path block was not observed."
+    },
+    {
+      "step": 3,
+      "actor": "harness",
+      "event": "parity-reported",
+      "summary": "Runtime parity report surfaced the gap."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "path",
+      "replacement": "path://fixture"
+    }
+  ]
+}

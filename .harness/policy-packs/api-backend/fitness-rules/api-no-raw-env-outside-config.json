@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "api-no-raw-env-outside-config",
+  "description": "API runtime code must not read environment variables outside config/env modules.",
+  "kind": "forbid-pattern",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "api/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "routes/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "controllers/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+  ],
+  "allowPaths": ["config/**", "src/config/**", "src/env.*", "src/env/**", "src/**/config/**", "src/core/**", "src/templates/**"],
+  "forbiddenPatterns": [
+    {
+      "id": "process-env",
+      "regex": "\\bprocess\\.env\\b",
+      "message": "API code should receive typed config values instead of reading process.env directly."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/config/env.ts",
+        "content": "export const databaseUrl = process.env.DATABASE_URL;"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/service/users.ts",
+        "content": "export const databaseUrl = process.env.DATABASE_URL;"
+      }
+    ]
+  }
+}

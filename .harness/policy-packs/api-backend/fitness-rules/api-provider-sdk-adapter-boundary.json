@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "api-provider-sdk-adapter-boundary",
+  "description": "External provider SDK imports must stay in provider, adapter, or integration modules.",
+  "kind": "forbid-import",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "api/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "routes/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "controllers/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+  ],
+  "allowPaths": ["src/providers/**", "src/provider/**", "src/adapters/**", "src/**/adapters/**", "src/integrations/**", "src/config/**", "src/templates/**"],
+  "forbiddenImports": [
+    {
+      "id": "provider-sdks",
+      "specifierRegex": "^(stripe|openai|@sentry/.*|posthog-node|firebase-admin|aws-sdk|@aws-sdk/.*|twilio|sendgrid|@sendgrid/mail)(/|$)",
+      "message": "Provider SDK imports belong behind provider/adapter modules."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/providers/stripe.ts",
+        "content": "import Stripe from 'stripe';\nexport const stripeProvider = new Stripe('sk_test');"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/service/billing.ts",
+        "content": "import Stripe from 'stripe';\nexport async function charge() {}"
+      }
+    ]
+  }
+}

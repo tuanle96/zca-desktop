@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-mcp.json",
+  "_comment": "Rename to .mcp.json or run `agent-harness-kit init --with-mcp` to enable. Each server below is OFF until uncommented + credentialed.",
+  "mcpServers": {
+    "playwright": {
+      "_comment": "Headless browser for /review-this-pr UI smoke checks. Requires `npx playwright install` first.",
+      "command": "npx",
+      "args": ["-y", "@playwright/mcp@latest"],
+      "env": {
+        "PLAYWRIGHT_BROWSERS_PATH": "0"
+      }
+    },
+    "github": {
+      "_comment": "Read/write GitHub issues + PRs from inside Claude Code. Needs GITHUB_PERSONAL_ACCESS_TOKEN with `repo` + `read:org` scopes.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-github"],
+      "env": {
+        "GITHUB_PERSONAL_ACCESS_TOKEN": "${GITHUB_PERSONAL_ACCESS_TOKEN}"
+      }
+    },
+    "filesystem-readonly": {
+      "_comment": "Read-only access to a sibling repo (docs / reference code). Adjust ALLOWED_PATHS for your layout.",
+      "command": "npx",
+      "args": ["-y", "@modelcontextprotocol/server-filesystem"],
+      "env": {
+        "ALLOWED_PATHS": "${HOME}/Dev/reference-repo"
+      }
+    }
+  },
+  "_recommended_skills": {
+    "playwright": "Useful for /review-this-pr when UI files changed — runs smoke against a dev server.",
+    "github": "Useful for /garbage-collection when proposing PRs and for /review-this-pr to read base branch.",
+    "filesystem-readonly": "Useful when /inspect-module needs to peek at a sibling repo without copying code in."
+  }
+}

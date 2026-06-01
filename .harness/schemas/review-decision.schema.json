@@ -1,0 +1,257 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/review-decision.schema.json",
+  "title": "agent-harness-kit review decision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "reviewer", "decision", "createdAt", "summary", "findings"],
+  "allOf": [
+    {
+      "if": {
+        "properties": {
+          "decision": { "const": "pass" }
+        }
+      },
+      "then": {
+        "required": ["taskId", "featureId", "checkedFiles", "checkedInvariants", "diffCoverage", "confidence"],
+        "properties": {
+          "checkedFiles": {
+            "minItems": 1
+          },
+          "checkedInvariants": {
+            "minItems": 1
+          },
+          "diffCoverage": {
+            "required": ["changedFiles", "reviewedFiles", "uncoveredFiles", "coverage"],
+            "properties": {
+              "changedFiles": { "minItems": 1 },
+              "reviewedFiles": { "minItems": 1 }
+            }
+          },
+          "confidence": {
+            "minimum": 0.6
+          },
+          "unreviewedRiskAreas": {
+            "maxItems": 0
+          },
+          "findings": {
+            "not": {
+              "contains": {
+                "type": "object",
+                "required": ["blocking"],
+                "properties": {
+                  "blocking": { "const": true }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": { "const": "block" }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "minItems": 1,
+            "contains": {
+              "type": "object",
+              "required": ["blocking"],
+              "properties": {
+                "blocking": { "const": true }
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "properties": {
+          "decision": { "const": "needs-human" }
+        }
+      },
+      "then": {
+        "properties": {
+          "findings": {
+            "minItems": 1
+          }
+        }
+      }
+    }
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "reviewer": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "featureId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "decision": {
+      "enum": ["pass", "block", "needs-human"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "checkedFiles": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true,
+      "default": []
+    },
+    "checkedInvariants": {
+      "type": "array",
+      "description": "Stable invariant ids the reviewer actually inspected, such as layering, provider-boundary, input-validation, auth-session-boundary, or secret-handling.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "diffCoverage": {
+      "type": "object",
+      "description": "Machine-checkable coverage summary for the changed source/config files relevant to this review.",
+      "additionalProperties": false,
+      "required": ["changedFiles", "reviewedFiles", "uncoveredFiles", "coverage"],
+      "properties": {
+        "changedFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "default": []
+        },
+        "reviewedFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "default": []
+        },
+        "uncoveredFiles": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true,
+          "default": []
+        },
+        "coverage": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1
+        },
+        "notes": {
+          "type": "string"
+        }
+      }
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "Reviewer confidence after accounting for skipped files, skipped layers, missing artifacts, and unresolved risks."
+    },
+    "unreviewedRiskAreas": {
+      "type": "array",
+      "description": "Known risk areas the reviewer did not inspect. Passing decisions must keep this empty.",
+      "items": {
+        "type": "string",
+        "minLength": 1,
+        "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "resolvedFindings": {
+      "type": "array",
+      "description": "Previously blocking findings this decision rechecked and found resolved.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "resolution"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._:-]*$"
+          },
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "resolution": {
+            "type": "string",
+            "minLength": 1
+          }
+        }
+      },
+      "default": []
+    },
+    "requiredGates": {
+      "type": "array",
+      "description": "Evidence check gates that must pass because of this review. Only gates backed by evidence checks are allowed.",
+      "items": {
+        "enum": ["structural", "lint", "tests", "smoke", "ui"]
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["severity", "evidence", "fix"],
+        "properties": {
+          "severity": {
+            "enum": ["critical", "high", "medium", "low", "info"]
+          },
+          "file": {
+            "type": "string"
+          },
+          "line": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "rule": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "string",
+            "minLength": 1
+          },
+          "fix": {
+            "type": "string",
+            "minLength": 1
+          },
+          "blocking": {
+            "type": "boolean",
+            "default": false
+          }
+        }
+      },
+      "default": []
+    },
+    "summary": {
+      "type": "string",
+      "minLength": 1
+    }
+  }
+}

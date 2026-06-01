@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "id": "nextjs-saas",
+  "title": "Next.js SaaS",
+  "description": "Opinionated governance defaults for a Next.js SaaS application with auth, billing, provider adapters, server routes, and browser smoke flows.",
+  "stacks": [
+    {
+      "language": "typescript",
+      "frameworks": ["nextjs"]
+    }
+  ],
+  "strictnessDefault": "standard",
+  "structuralRules": [
+    "no-raw-env-outside-config",
+    "no-db-in-ui",
+    "no-provider-bypass",
+    "require-validation-at-boundary"
+  ],
+  "fitnessRules": [
+    {
+      "id": "nextjs-no-server-secret-in-client",
+      "path": "fitness-rules/nextjs-no-server-secret-in-client.json",
+      "owner": "security-reviewer"
+    },
+    {
+      "id": "nextjs-route-handler-validated-input",
+      "path": "fitness-rules/nextjs-route-handler-validated-input.json",
+      "owner": "security-reviewer"
+    },
+    {
+      "id": "nextjs-no-db-in-client-or-page",
+      "path": "fitness-rules/nextjs-no-db-in-client-or-page.json",
+      "owner": "architecture-reviewer"
+    }
+  ],
+  "taskContractDefaults": {
+    "scope": {
+      "allowedLayers": ["config", "repo", "service", "runtime", "ui"]
+    },
+    "doneRequires": ["structural", "lint", "tests", "smoke", "ui", "review", "evidence-bundle"],
+    "riskRouting": [
+      {
+        "match": ["app/**/route.*", "pages/api/**", "middleware.*", "src/auth/**", "src/providers/**"],
+        "riskTier": "high-risk",
+        "requiredReviewers": ["advisor", "security-reviewer", "architecture-reviewer"]
+      },
+      {
+        "match": ["app/**/page.*", "components/**", "src/ui/**"],
+        "riskTier": "normal",
+        "requiredReviewers": ["advisor"]
+      }
+    ]
+  },
+  "reviewerDefaults": {
+    "required": ["advisor"],
+    "conditional": [
+      {
+        "reviewer": "security-reviewer",
+        "whenChanged": ["app/**/route.*", "pages/api/**", "middleware.*", "src/auth/**", "src/config/**"]
+      },
+      {
+        "reviewer": "architecture-reviewer",
+        "whenChanged": ["src/providers/**", "src/repo/**", "src/service/**", "package.json"]
+      }
+    ]
+  },
+  "evidenceRequirements": [
+    {
+      "id": "route-handler-input-validation",
+      "whenChanged": ["app/**/route.*", "pages/api/**"],
+      "requires": ["attested test command", "input validation proof", "advisor pass decision"]
+    },
+    {
+      "id": "browser-smoke-for-ui",
+      "whenChanged": ["app/**/page.*", "components/**", "src/ui/**"],
+      "requires": ["verify-ui artifact", "screenshot or DOM assertions", "diff summary"]
+    },
+    {
+      "id": "provider-boundary",
+      "whenChanged": ["src/providers/**", "src/service/**", "package.json"],
+      "requires": ["provider adapter proof", "no direct SDK import outside provider boundary"]
+    }
+  ],
+  "evalTemplates": [
+    {
+      "id": "nextjs-route-validation",
+      "description": "A route handler that reads JSON must validate input before calling domain logic."
+    },
+    {
+      "id": "nextjs-client-secret-guard",
+      "description": "Client-visible components must not read non-NEXT_PUBLIC environment variables."
+    }
+  ],
+  "verifyUiFlows": [
+    {
+      "id": "auth-smoke",
+      "routes": ["/login", "/settings"],
+      "assertions": ["page renders without console error", "primary form/control is visible"]
+    },
+    {
+      "id": "billing-smoke",
+      "routes": ["/billing"],
+      "assertions": ["plan state is visible", "checkout action is reachable or disabled with clear state"]
+    }
+  ],
+  "antiPatterns": [
+    {
+      "id": "secret-in-client-component",
+      "description": "A client component reads STRIPE_SECRET_KEY, DATABASE_URL, or another server-only environment variable.",
+      "fix": "Move the read into config/server or a route/service boundary and expose only a safe DTO to the client."
+    },
+    {
+      "id": "direct-db-in-page",
+      "description": "A page or component imports Prisma, Drizzle, pg, or a repository internal path directly.",
+      "fix": "Call a service/query boundary or server action that owns the data access."
+    },
+    {
+      "id": "unvalidated-route-body",
+      "description": "A route handler calls request.json(), formData(), or searchParams without schema validation.",
+      "fix": "Parse through zod/yup/joi or a local schema before invoking domain logic."
+    }
+  ]
+}

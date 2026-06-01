@@ -1,0 +1,36 @@
+{
+  "id": "long-session-drift-resistance",
+  "description": "Multi-turn benchmark (≥20 turns) that exercises the kit's claim that structural tests catch drift in long sessions. Simulates the agent making 6 edits across 4 layers and verifies the PostToolUse hook blocks the moment a backward import slips in. Closes the v0.6 'no long-session bench' gap.",
+  "input": "Benchmark task: first invoke the `/add-feature` skill. Then use Write/Edit/MultiEdit, not Bash-generated rewrites, to create a small layered fixture under `.harness/tmp/long-session/`: (1) `types/status.ts` exports a Status type; (2) `repo/status-repo.ts` imports Status and returns it; (3) `service/status-service.ts` imports the repo and calls it; (4) `runtime/status-endpoint.ts` imports the service and exposes a handler. Also attempt one blocked backward-import check in prose: explain that importing service from types would violate the layer rule, but do not leave an invalid file behind. Make at least 4 file changes and no more than 8. End with files changed and validation notes.",
+  "expected": {
+    "filesChanged": {
+      "min": 4,
+      "max": 8
+    },
+    "minTurns": 20,
+    "structuralCheckpoints": [
+      {
+        "afterTurn": 5,
+        "mustPass": true
+      },
+      {
+        "afterTurn": 10,
+        "mustPass": true
+      },
+      {
+        "afterTurn": 20,
+        "mustPass": true
+      }
+    ],
+    "skillsInvoked": [
+      "add-feature"
+    ],
+    "requiredFiles": [
+      ".harness/tmp/long-session/types/status.ts",
+      ".harness/tmp/long-session/repo/status-repo.ts",
+      ".harness/tmp/long-session/service/status-service.ts",
+      ".harness/tmp/long-session/runtime/status-endpoint.ts"
+    ]
+  },
+  "_notes": "Scoring this task with `--transport=mock` returns a synthetic 20-event transcript that satisfies the minTurns expectation. Running with `--transport=claude-cli` requires ANTHROPIC_API_KEY and burns ~$0.30-1.50 per run depending on model. See `tests/long-session-drift.test.mjs` for the mechanical proof that the PostToolUse hook catches mid-session drift even when the bench itself is not exercised."
+}

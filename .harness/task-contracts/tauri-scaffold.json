@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "tauri-scaffold",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Scaffold the Tauri v2 + SvelteKit(SPA) + Tailwind v4 + shadcn-svelte shell that boots a window.",
+    "goals": [
+      "Frontend and Rust core both build",
+      "Tailwind v4 + shadcn-svelte wired (Button + cn util)",
+      "App boots a desktop window via bun run tauri dev"
+    ],
+    "nonGoals": ["zca-rust integration", "login", "messaging"]
+  },
+  "acceptance": [
+    { "id": "frontend-build", "description": "Frontend builds to build/ with no errors", "verification": { "command": "bun run build" } },
+    { "id": "rust-build", "description": "Rust core compiles", "verification": { "command": "cargo build --manifest-path src-tauri/Cargo.toml" } }
+  ],
+  "requiresAdr": false,
+  "permissions": {
+    "allow": ["Read", "Grep", "Glob", "Write", "Edit", "Bash(bun:*)", "Bash(bunx:*)", "Bash(cargo:*)"]
+  },
+  "doneRequires": ["evidence-bundle"],
+  "evidencePath": ".harness/evidence/tauri-scaffold.json"
+}

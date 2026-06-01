@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "fake-evidence-placeholder",
+  "title": "Fake passing evidence with placeholders is rejected",
+  "failureMode": "fake-evidence",
+  "severity": "critical",
+  "probe": "task-evidence-placeholder-proof",
+  "prevention": {
+    "gate": "task-evidence",
+    "failureClass": "false-done"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "task-evidence-check: FAILED",
+      "diffSummary cannot contain placeholder",
+      "command must be concrete"
+    ]
+  }
+}

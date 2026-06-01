@@ -1,0 +1,232 @@
+{
+  "$schema": "./.harness/feature-list.schema.json",
+  "version": "0.1",
+  "project": "zca-desktop",
+  "features": [
+    {
+      "id": "tauri-scaffold",
+      "title": "Phase 1: Tauri v2 app boots an empty window (cargo + frontend dev server)",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/tauri-scaffold.json",
+      "evidencePath": ".harness/evidence/tauri-scaffold.json",
+      "steps": [
+        { "id": "scaffold", "title": "create-tauri-app (svelte-ts/SvelteKit SPA) + Tailwind v4 + shadcn-svelte (zinc)", "done": true },
+        { "id": "build", "title": "bun run build (frontend) + cargo build (src-tauri) succeed", "done": true },
+        { "id": "smoke", "title": "bun run tauri dev opens a window (manual GUI check)", "done": true }
+      ]
+    },
+    {
+      "id": "zca-dep-wired",
+      "title": "Phase 1: zca-rust added as git dependency and compiles into src-tauri",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/zca-dep-wired.json",
+      "evidencePath": ".harness/evidence/zca-dep-wired.json",
+      "steps": [
+        { "id": "dep", "title": "Add zca-rust + tokio to src-tauri/Cargo.toml", "done": false },
+        { "id": "wrap", "title": "zalo/ module wraps Zalo::new().login()", "done": false },
+        { "id": "build", "title": "cargo build clean (clippy -D warnings)", "done": false }
+      ]
+    },
+    {
+      "id": "credential-import",
+      "title": "Phase 1: Import account credentials (ZaloDataExtractor JSON) via file picker/paste",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/credential-import.json",
+      "evidencePath": ".harness/evidence/credential-import.json",
+      "steps": [
+        { "id": "type", "title": "types/: Credentials + AccountProfile DTOs", "done": false },
+        { "id": "cmd", "title": "command/: import_credentials tauri command validates JSON", "done": false },
+        { "id": "smoke", "title": "Invalid JSON rejected with clear error; valid parsed", "done": false }
+      ]
+    },
+    {
+      "id": "single-login",
+      "title": "Phase 1: Log in one account and display own profile (get_own_id)",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/single-login.json",
+      "evidencePath": ".harness/evidence/single-login.json",
+      "steps": [
+        { "id": "zalo", "title": "zalo/: login() returns API facade, fetch own profile", "done": false },
+        { "id": "cmd", "title": "command/: login command returns AccountProfile to UI", "done": false },
+        { "id": "smoke", "title": "UI shows logged-in account id/name", "done": false }
+      ]
+    },
+    {
+      "id": "listener-events",
+      "title": "Phase 1: WebSocket Listener forwards incoming messages to frontend as Tauri events",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/listener-events.json",
+      "evidencePath": ".harness/evidence/listener-events.json",
+      "steps": [
+        { "id": "zalo", "title": "zalo/: spawn Listener, bridge mpsc -> app.emit", "done": false },
+        { "id": "ui", "title": "Frontend subscribes to zalo://message events", "done": false },
+        { "id": "smoke", "title": "Incoming message appears in UI in realtime", "done": false }
+      ]
+    },
+    {
+      "id": "send-text",
+      "title": "Phase 1: Send a text message to a thread from the UI",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/send-text.json",
+      "evidencePath": ".harness/evidence/send-text.json",
+      "steps": [
+        { "id": "cmd", "title": "command/: send_message command (thread_id, ThreadType)", "done": false },
+        { "id": "ui", "title": "Composer sends + optimistic render", "done": false },
+        { "id": "smoke", "title": "Message delivered (verified against live)", "done": false }
+      ]
+    },
+    {
+      "id": "session-manager",
+      "title": "Phase 2: SessionManager holds N concurrent API+Listener sessions keyed by account",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/session-manager.json",
+      "evidencePath": ".harness/evidence/session-manager.json",
+      "steps": [
+        { "id": "session", "title": "session/: SessionManager (DashMap<AccountId, AccountSession>)", "done": false },
+        { "id": "lifecycle", "title": "add/remove/restart session, graceful listener shutdown", "done": false },
+        { "id": "smoke", "title": "Two accounts logged in concurrently, both receive events", "done": false }
+      ]
+    },
+    {
+      "id": "account-switcher",
+      "title": "Phase 2: UI sidebar lists accounts and switches the active account",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/account-switcher.json",
+      "evidencePath": ".harness/evidence/account-switcher.json",
+      "steps": [
+        { "id": "cmd", "title": "command/: list_accounts + set_active_account", "done": false },
+        { "id": "ui", "title": "Account sidebar with status badges", "done": false },
+        { "id": "smoke", "title": "Switching account swaps thread view + composer target", "done": false }
+      ]
+    },
+    {
+      "id": "per-account-routing",
+      "title": "Phase 2: Incoming events tagged with accountId and routed to the correct view",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/per-account-routing.json",
+      "evidencePath": ".harness/evidence/per-account-routing.json",
+      "steps": [
+        { "id": "types", "title": "types/: AppEvent { account_id, payload }", "done": false },
+        { "id": "route", "title": "Frontend store keyed by account_id", "done": false },
+        { "id": "smoke", "title": "Message on account B does not leak into account A view", "done": false }
+      ]
+    },
+    {
+      "id": "secure-cred-store",
+      "title": "Phase 3: Credentials stored in OS keychain (keyring), never plaintext on disk",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/secure-cred-store.json",
+      "evidencePath": ".harness/evidence/secure-cred-store.json",
+      "steps": [
+        { "id": "store", "title": "store/: keyring-backed CredentialStore (save/load/delete)", "done": false },
+        { "id": "smoke", "title": "Creds round-trip via keychain; no secrets in app data dir", "done": false }
+      ]
+    },
+    {
+      "id": "message-cache",
+      "title": "Phase 3: Threads/messages cached in SQLite and reloaded on restart",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/message-cache.json",
+      "evidencePath": ".harness/evidence/message-cache.json",
+      "steps": [
+        { "id": "store", "title": "store/: sqlx/rusqlite schema for accounts/threads/messages", "done": false },
+        { "id": "smoke", "title": "Restart restores recent threads without refetch", "done": false }
+      ]
+    },
+    {
+      "id": "session-restore",
+      "title": "Phase 3: Auto-restore saved accounts on app start",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/session-restore.json",
+      "evidencePath": ".harness/evidence/session-restore.json",
+      "steps": [
+        { "id": "boot", "title": "On startup load creds from keychain, re-login each", "done": false },
+        { "id": "expiry", "title": "Detect expired cookie -> mark account re-auth needed", "done": false },
+        { "id": "smoke", "title": "Relaunch reconnects all valid accounts automatically", "done": false }
+      ]
+    },
+    {
+      "id": "thread-list",
+      "title": "Phase 4: List friends and groups (get_all_friends, get_all_groups)",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/thread-list.json",
+      "evidencePath": ".harness/evidence/thread-list.json",
+      "steps": [
+        { "id": "cmd", "title": "command/: list_threads (friends + groups, paginated)", "done": false },
+        { "id": "smoke", "title": "UI renders combined thread list per account", "done": false }
+      ]
+    },
+    {
+      "id": "rich-messages",
+      "title": "Phase 4: Stickers, links, reactions, quote/reply",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/rich-messages.json",
+      "evidencePath": ".harness/evidence/rich-messages.json",
+      "steps": [
+        { "id": "cmd", "title": "command/: send_sticker/send_link/add_reaction/undo", "done": false },
+        { "id": "smoke", "title": "Each rich type renders + round-trips against live", "done": false }
+      ]
+    },
+    {
+      "id": "attachments",
+      "title": "Phase 4: Image/file upload and rendering",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/attachments.json",
+      "evidencePath": ".harness/evidence/attachments.json",
+      "steps": [
+        { "id": "cmd", "title": "command/: upload_attachment + send", "done": false },
+        { "id": "smoke", "title": "Image uploads and displays in thread", "done": false }
+      ]
+    },
+    {
+      "id": "device-coexistence",
+      "title": "Phase 5: Verify our session coexists with user's other Zalo devices (no forced logout)",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/device-coexistence.json",
+      "evidencePath": ".harness/evidence/device-coexistence.json",
+      "steps": [
+        { "id": "probe", "title": "Document Zalo multi-device behavior + imei handling", "done": false },
+        { "id": "smoke", "title": "App stays online while phone/web sessions remain active", "done": false }
+      ]
+    },
+    {
+      "id": "optional-sync",
+      "title": "Phase 5 (stretch): Optional self-hosted relay to sync same-account state across our installs",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/optional-sync.json",
+      "evidencePath": ".harness/evidence/optional-sync.json",
+      "steps": [
+        { "id": "adr", "title": "ADR: relay vs local-only; data model + security", "done": false }
+      ]
+    },
+    {
+      "id": "app-packaging",
+      "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/app-packaging.json",
+      "evidencePath": ".harness/evidence/app-packaging.json",
+      "steps": [
+        { "id": "bundle", "title": "tauri build produces installers per OS", "done": false },
+        { "id": "update", "title": "Wire tauri-plugin-updater (optional)", "done": false }
+      ]
+    }
+  ]
+}

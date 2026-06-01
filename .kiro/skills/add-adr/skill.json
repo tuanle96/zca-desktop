@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "add-adr",
+  "name": "add-adr",
+  "version": "1.0.0",
+  "description": "Use this skill whenever a decision is made about architecture, dependencies, frameworks, naming conventions, or layer order. Creates a numbered ADR (Architecture Decision Record) in `.harness/docs/adr/` in the canonical Nygard format. Always invoke this before changing layer order, adding a layer, swapping a major dependency, or introducing a new external service.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Glob"
+    ],
+    "deny": []
+  }
+}

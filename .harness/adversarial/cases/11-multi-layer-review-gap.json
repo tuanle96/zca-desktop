@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "multi-layer-review-gap",
+  "title": "Reviewer pass that skips an impacted layer is rejected",
+  "failureMode": "review-gap",
+  "severity": "high",
+  "probe": "task-evidence-multi-layer-review-gap",
+  "prevention": {
+    "gate": "task-evidence",
+    "failureClass": "architecture-drift"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "task-evidence-check: FAILED",
+      "required reviewer checkedFiles must cover changed source/config file(s): src/ui/change.ts"
+    ]
+  }
+}

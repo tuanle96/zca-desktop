@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "nextjs-no-db-in-client-or-page",
+  "description": "Next.js pages and client-facing components must not import database clients or repository internals directly.",
+  "kind": "forbid-import",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "app/**/page.{ts,tsx,js,jsx,mjs,cjs}",
+    "components/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/components/**/*.{ts,tsx,js,jsx,mjs,cjs}",
+    "src/ui/**/*.{ts,tsx,js,jsx,mjs,cjs}"
+  ],
+  "allowPaths": ["src/templates/**"],
+  "forbiddenImports": [
+    {
+      "id": "db-packages",
+      "specifierRegex": "^(@prisma/client|drizzle-orm|knex|mongodb|mongoose|mysql2|pg|sequelize|typeorm)(/|$)",
+      "message": "Next.js UI surfaces must call a service/server boundary instead of importing database packages."
+    },
+    {
+      "id": "db-internal-path",
+      "specifierRegex": "(^@/|^\\.\\.?/).*(repo|repositories|database|db)(/|$)",
+      "message": "Next.js UI surfaces must not deep-import repository/database internals."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "app/dashboard/page.tsx",
+        "content": "import { loadDashboard } from '@/service/dashboard';\nexport default async function Page() { return null; }"
+      }
+    ],
+    "fail": [
+      {
+        "path": "app/dashboard/page.tsx",
+        "content": "import { PrismaClient } from '@prisma/client';\nexport default async function Page() { return null; }"
+      }
+    ]
+  }
+}

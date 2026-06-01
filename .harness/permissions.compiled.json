@@ -1,0 +1,1513 @@
+{
+  "schemaVersion": 1,
+  "runtime": "kiro",
+  "generatedAt": "2026-06-01T11:56:15.517Z",
+  "source": {
+    "defaultPolicy": "permissions-compiler:DEFAULT_PERMISSION_POLICY",
+    "skillsDir": ".kiro/skills",
+    "taskContractsDir": ".harness/task-contracts"
+  },
+  "policy": {
+    "version": 1,
+    "default": {
+      "allow": [
+        "Read",
+        "Grep",
+        "Glob",
+        "LS",
+        "TodoWrite",
+        "Bash(git status*)",
+        "Bash(git diff*)",
+        "Bash(git log*)",
+        "Bash(ls*)",
+        "Bash(rg*)",
+        "Bash(find*)",
+        "Bash(node .harness/scripts/*)"
+      ],
+      "deny": [
+        "Bash(git push*)",
+        "Bash(git commit*)"
+      ]
+    },
+    "skills": {
+      "add-adr": {
+        "allow": [
+          "Read",
+          "Write",
+          "Glob"
+        ],
+        "deny": []
+      },
+      "add-feature": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(npm run*)",
+          "Bash(pytest*)",
+          "Bash(ruff*)",
+          "Bash(git status*)",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Glob",
+          "Grep"
+        ],
+        "deny": []
+      },
+      "benchmark-suite": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "Bash(node .harness/scripts/bench-compare.mjs*)"
+        ],
+        "deny": []
+      },
+      "context-health": {
+        "allow": [
+          "Read",
+          "Bash(node .kiro/skills/context-health/context-health.mjs*)"
+        ],
+        "deny": []
+      },
+      "create-story": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Bash(node .kiro/skills/create-story/create-story.mjs*)"
+        ],
+        "deny": []
+      },
+      "debug-flow": {
+        "allow": [
+          "Read",
+          "Bash(npm run dev*)",
+          "Bash(node ./src/server.js*)",
+          "Bash(npm run start:dev*)",
+          "Bash(uvicorn*)",
+          "Bash(python manage.py runserver*)",
+          "Bash(flask*)",
+          "Bash(python -m app*)",
+          "Bash(go run*)",
+          "Bash(cargo run*)",
+          "Bash(swift run*)",
+          "Bash(./gradlew run*)",
+          "Bash(curl*)",
+          "Bash(playwright*)",
+          "Bash(.harness/scripts/dev-up.sh)"
+        ],
+        "deny": []
+      },
+      "deliver-html": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .kiro/skills/deliver-html/scripts/wrap-html.mjs*)",
+          "Bash(cat*)",
+          "Bash(ls*)"
+        ],
+        "deny": []
+      },
+      "doc-drift-scan": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(test -e*)",
+          "Bash(command -v*)",
+          "Bash(node .kiro/skills/doc-drift-scan/scripts/scan-paths.mjs*)"
+        ],
+        "deny": []
+      },
+      "eval-rubric-author": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Grep",
+          "Glob",
+          "Bash(npm run harness:eval*)",
+          "Bash(npm run check:eval-tasks*)",
+          "Bash(node .harness/scripts/eval-runner-v2.mjs*)",
+          "Bash(node .harness/scripts/check-eval-tasks.mjs*)"
+        ],
+        "deny": []
+      },
+      "eval-runner": {
+        "allow": [
+          "Bash(npm run harness:eval*)",
+          "Bash(python -m harness.eval_runner*)",
+          "Read"
+        ],
+        "deny": []
+      },
+      "feature-intake": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Bash(node .kiro/skills/feature-intake/scripts/classify.mjs*)"
+        ],
+        "deny": []
+      },
+      "garbage-collection": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(npm run*)",
+          "Bash(pytest*)",
+          "Bash(ruff*)",
+          "Bash(node .kiro/skills/garbage-collection/scripts/gc-classify.mjs*)",
+          "Bash(git status*)",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(gh pr create*)"
+        ],
+        "deny": []
+      },
+      "harness-improvement-loop": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Grep",
+          "Glob",
+          "Bash(git diff*)",
+          "Bash(npm run harness:eval*)",
+          "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "Bash(node .harness/scripts/record-failure.mjs*)",
+          "Bash(node .harness/scripts/check-failure-records.mjs*)",
+          "Bash(node .harness/scripts/harness-report.mjs*)",
+          "Bash(node .harness/scripts/regression-runner.mjs*)"
+        ],
+        "deny": []
+      },
+      "i18n-add-locale": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .harness/scripts/locale-scaffold.mjs*)"
+        ],
+        "deny": []
+      },
+      "inspect-app": {
+        "allow": [
+          "Read",
+          "Bash(.harness/scripts/dev-up.sh)",
+          "Bash(curl*)",
+          "Bash(playwright*)"
+        ],
+        "deny": []
+      },
+      "inspect-module": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(git log*)",
+          "Bash(git ls-tree*)",
+          "Bash(tree*)",
+          "Bash(node .kiro/skills/inspect-module/scripts/module-summary.mjs*)"
+        ],
+        "deny": []
+      },
+      "map-domain": {
+        "allow": [
+          "Read",
+          "Bash(node .kiro/skills/map-domain/scripts/domain-map.mjs*)"
+        ],
+        "deny": []
+      },
+      "middleware-pipeline": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/middleware-demo.mjs*)"
+        ],
+        "deny": []
+      },
+      "model-profile": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .harness/scripts/model-routing-report.mjs*)",
+          "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "Bash(node .harness/scripts/bench-compare.mjs*)",
+          "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "Bash(node .harness/scripts/regression-compare.mjs*)"
+        ],
+        "deny": []
+      },
+      "orchestrate": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Bash(node .kiro/skills/orchestrate/orchestrate.mjs*)",
+          "Bash(node .harness/scripts/orchestration-contract-from-task.mjs*)",
+          "Bash(node .harness/scripts/session-replay.mjs*)",
+          "Bash(node .harness/scripts/cost-tracker.mjs*)",
+          "Bash(node .harness/scripts/orchestration-schema-check.mjs*)"
+        ],
+        "deny": [
+          "Write",
+          "Edit",
+          "MultiEdit"
+        ]
+      },
+      "project-status": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/project-status-report.mjs*)",
+          "Bash(node .harness/scripts/project-memory.mjs*)"
+        ],
+        "deny": []
+      },
+      "propose-harness-improvement": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(git diff*)",
+          "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "Bash(node .harness/scripts/record-failure.mjs*)",
+          "Bash(node .harness/scripts/check-failure-records.mjs*)"
+        ],
+        "deny": []
+      },
+      "refactor-feature": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Bash(git diff*)",
+          "Bash(node .kiro/skills/refactor-feature/scripts/feature-diff.mjs*)"
+        ],
+        "deny": []
+      },
+      "regression-benchmark": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "Bash(node .harness/scripts/regression-compare.mjs*)",
+          "Bash(node .harness/scripts/regression-report.mjs*)"
+        ],
+        "deny": []
+      },
+      "remember-project": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/project-memory.mjs*)"
+        ],
+        "deny": []
+      },
+      "review-this-pr": {
+        "allow": [
+          "Read",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(git merge-base*)",
+          "Bash(node .kiro/skills/review-this-pr/scripts/pr-review-driver.mjs*)"
+        ],
+        "deny": []
+      },
+      "setup-nightly-eval": {
+        "allow": [
+          "Read",
+          "Bash(ls*)",
+          "Bash(cat*)",
+          "Bash(test*)",
+          "Bash(gh workflow run*)",
+          "Bash(gh run watch*)",
+          "Bash(gh secret list*)"
+        ],
+        "deny": []
+      },
+      "skill-discovery": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/skill-discovery.mjs*)",
+          "Bash(node .harness/scripts/skill-load.mjs*)"
+        ],
+        "deny": []
+      },
+      "structural-test-author": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(npm test*)",
+          "Bash(pytest*)"
+        ],
+        "deny": []
+      },
+      "trace-analyzer": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(node .harness/scripts/harness-report.mjs*)"
+        ],
+        "deny": []
+      },
+      "verify-ui": {
+        "allow": [
+          "Bash(node .harness/scripts/verify-ui.mjs*)"
+        ],
+        "deny": []
+      },
+      "write-skill": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(ls*)"
+        ],
+        "deny": []
+      }
+    }
+  },
+  "sources": {
+    "add-adr": {
+      "skillJson": ".kiro/skills/add-adr/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/add-adr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/add-adr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/add-adr/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "add-feature": {
+      "skillJson": ".kiro/skills/add-feature/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(pytest*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(ruff*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git status*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git log*)",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/add-feature/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "benchmark-suite": {
+      "skillJson": ".kiro/skills/benchmark-suite/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/benchmark-suite/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "source": ".kiro/skills/benchmark-suite/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/bench-compare.mjs*)",
+          "source": ".kiro/skills/benchmark-suite/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "context-health": {
+      "skillJson": ".kiro/skills/context-health/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/context-health/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/context-health/context-health.mjs*)",
+          "source": ".kiro/skills/context-health/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "create-story": {
+      "skillJson": ".kiro/skills/create-story/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/create-story/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/create-story/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/create-story/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/create-story/create-story.mjs*)",
+          "source": ".kiro/skills/create-story/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "debug-flow": {
+      "skillJson": ".kiro/skills/debug-flow/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run dev*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node ./src/server.js*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run start:dev*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(uvicorn*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(python manage.py runserver*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(flask*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(python -m app*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(go run*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(cargo run*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(swift run*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(./gradlew run*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(curl*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(playwright*)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(.harness/scripts/dev-up.sh)",
+          "source": ".kiro/skills/debug-flow/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "deliver-html": {
+      "skillJson": ".kiro/skills/deliver-html/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/deliver-html/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/deliver-html/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/deliver-html/scripts/wrap-html.mjs*)",
+          "source": ".kiro/skills/deliver-html/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(cat*)",
+          "source": ".kiro/skills/deliver-html/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(ls*)",
+          "source": ".kiro/skills/deliver-html/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "doc-drift-scan": {
+      "skillJson": ".kiro/skills/doc-drift-scan/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(test -e*)",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(command -v*)",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/doc-drift-scan/scripts/scan-paths.mjs*)",
+          "source": ".kiro/skills/doc-drift-scan/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "eval-rubric-author": {
+      "skillJson": ".kiro/skills/eval-rubric-author/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run harness:eval*)",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run check:eval-tasks*)",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/eval-runner-v2.mjs*)",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/check-eval-tasks.mjs*)",
+          "source": ".kiro/skills/eval-rubric-author/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "eval-runner": {
+      "skillJson": ".kiro/skills/eval-runner/skill.json",
+      "allow": [
+        {
+          "permission": "Bash(npm run harness:eval*)",
+          "source": ".kiro/skills/eval-runner/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(python -m harness.eval_runner*)",
+          "source": ".kiro/skills/eval-runner/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/eval-runner/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "feature-intake": {
+      "skillJson": ".kiro/skills/feature-intake/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/feature-intake/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/feature-intake/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/feature-intake/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/feature-intake/scripts/classify.mjs*)",
+          "source": ".kiro/skills/feature-intake/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "garbage-collection": {
+      "skillJson": ".kiro/skills/garbage-collection/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(pytest*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(ruff*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/garbage-collection/scripts/gc-classify.mjs*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git status*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git log*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(gh pr create*)",
+          "source": ".kiro/skills/garbage-collection/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "harness-improvement-loop": {
+      "skillJson": ".kiro/skills/harness-improvement-loop/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm run harness:eval*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/record-failure.mjs*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/check-failure-records.mjs*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/harness-report.mjs*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "source": ".kiro/skills/harness-improvement-loop/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "i18n-add-locale": {
+      "skillJson": ".kiro/skills/i18n-add-locale/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/i18n-add-locale/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/i18n-add-locale/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/locale-scaffold.mjs*)",
+          "source": ".kiro/skills/i18n-add-locale/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "inspect-app": {
+      "skillJson": ".kiro/skills/inspect-app/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/inspect-app/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(.harness/scripts/dev-up.sh)",
+          "source": ".kiro/skills/inspect-app/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(curl*)",
+          "source": ".kiro/skills/inspect-app/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(playwright*)",
+          "source": ".kiro/skills/inspect-app/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "inspect-module": {
+      "skillJson": ".kiro/skills/inspect-module/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git log*)",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git ls-tree*)",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(tree*)",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/inspect-module/scripts/module-summary.mjs*)",
+          "source": ".kiro/skills/inspect-module/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "map-domain": {
+      "skillJson": ".kiro/skills/map-domain/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/map-domain/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/map-domain/scripts/domain-map.mjs*)",
+          "source": ".kiro/skills/map-domain/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "middleware-pipeline": {
+      "skillJson": ".kiro/skills/middleware-pipeline/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/middleware-pipeline/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/middleware-demo.mjs*)",
+          "source": ".kiro/skills/middleware-pipeline/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "model-profile": {
+      "skillJson": ".kiro/skills/model-profile/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/model-routing-report.mjs*)",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/bench-compare.mjs*)",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-compare.mjs*)",
+          "source": ".kiro/skills/model-profile/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "orchestrate": {
+      "skillJson": ".kiro/skills/orchestrate/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "LS",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/orchestrate/orchestrate.mjs*)",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/orchestration-contract-from-task.mjs*)",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/session-replay.mjs*)",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/cost-tracker.mjs*)",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/orchestration-schema-check.mjs*)",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.allow"
+        }
+      ],
+      "deny": [
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.deny"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.deny"
+        },
+        {
+          "permission": "MultiEdit",
+          "source": ".kiro/skills/orchestrate/skill.json#permissions.deny"
+        }
+      ]
+    },
+    "project-status": {
+      "skillJson": ".kiro/skills/project-status/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/project-status/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/project-status-report.mjs*)",
+          "source": ".kiro/skills/project-status/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/project-memory.mjs*)",
+          "source": ".kiro/skills/project-status/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "propose-harness-improvement": {
+      "skillJson": ".kiro/skills/propose-harness-improvement/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/record-failure.mjs*)",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/check-failure-records.mjs*)",
+          "source": ".kiro/skills/propose-harness-improvement/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "refactor-feature": {
+      "skillJson": ".kiro/skills/refactor-feature/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/refactor-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/refactor-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/refactor-feature/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/refactor-feature/scripts/feature-diff.mjs*)",
+          "source": ".kiro/skills/refactor-feature/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "regression-benchmark": {
+      "skillJson": ".kiro/skills/regression-benchmark/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "LS",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-compare.mjs*)",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/regression-report.mjs*)",
+          "source": ".kiro/skills/regression-benchmark/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "remember-project": {
+      "skillJson": ".kiro/skills/remember-project/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/remember-project/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/project-memory.mjs*)",
+          "source": ".kiro/skills/remember-project/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "review-this-pr": {
+      "skillJson": ".kiro/skills/review-this-pr/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/review-this-pr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/review-this-pr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git log*)",
+          "source": ".kiro/skills/review-this-pr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git merge-base*)",
+          "source": ".kiro/skills/review-this-pr/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .kiro/skills/review-this-pr/scripts/pr-review-driver.mjs*)",
+          "source": ".kiro/skills/review-this-pr/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "setup-nightly-eval": {
+      "skillJson": ".kiro/skills/setup-nightly-eval/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(ls*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(cat*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(test*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(gh workflow run*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(gh run watch*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(gh secret list*)",
+          "source": ".kiro/skills/setup-nightly-eval/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "skill-discovery": {
+      "skillJson": ".kiro/skills/skill-discovery/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/skill-discovery/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/skill-discovery.mjs*)",
+          "source": ".kiro/skills/skill-discovery/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/skill-load.mjs*)",
+          "source": ".kiro/skills/skill-discovery/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "structural-test-author": {
+      "skillJson": ".kiro/skills/structural-test-author/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/structural-test-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/structural-test-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/structural-test-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm test*)",
+          "source": ".kiro/skills/structural-test-author/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(pytest*)",
+          "source": ".kiro/skills/structural-test-author/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "trace-analyzer": {
+      "skillJson": ".kiro/skills/trace-analyzer/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git log*)",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(node .harness/scripts/harness-report.mjs*)",
+          "source": ".kiro/skills/trace-analyzer/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "verify-ui": {
+      "skillJson": ".kiro/skills/verify-ui/skill.json",
+      "allow": [
+        {
+          "permission": "Bash(node .harness/scripts/verify-ui.mjs*)",
+          "source": ".kiro/skills/verify-ui/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    },
+    "write-skill": {
+      "skillJson": ".kiro/skills/write-skill/skill.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".kiro/skills/write-skill/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".kiro/skills/write-skill/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".kiro/skills/write-skill/skill.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(ls*)",
+          "source": ".kiro/skills/write-skill/skill.json#permissions.allow"
+        }
+      ],
+      "deny": []
+    }
+  },
+  "errors": [],
+  "tasks": {
+    "health-endpoint": {
+      "id": "health-endpoint",
+      "riskTier": "normal",
+      "type": "feature",
+      "scope": {
+        "summary": "GET /health returns {status:'ok'}",
+        "goals": [
+          "Implement the health endpoint across the smallest required vertical slice",
+          "Prove the endpoint with a deterministic command"
+        ],
+        "nonGoals": [
+          "Do not redesign unrelated routing or provider setup"
+        ],
+        "allowedLayers": [
+          "types",
+          "config",
+          "repo",
+          "service",
+          "runtime",
+          "ui"
+        ]
+      },
+      "doneRequires": [
+        "structural",
+        "tests",
+        "smoke",
+        "evidence-bundle"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Edit",
+          "Write",
+          "Bash(npm test*)",
+          "Bash(git status*)",
+          "Bash(git diff*)"
+        ],
+        "deny": [
+          "Bash(git commit*)",
+          "Bash(git push*)"
+        ]
+      },
+      "source": ".harness/task-contracts/health-endpoint.json",
+      "errors": []
+    },
+    "not-found-page": {
+      "id": "not-found-page",
+      "riskTier": "normal",
+      "type": "feature",
+      "scope": {
+        "summary": "Custom 404 page or handler",
+        "goals": [
+          "Return a deliberate 404 experience for unknown routes",
+          "Prove the behavior with a deterministic command"
+        ],
+        "nonGoals": [
+          "Do not change routing for existing valid paths"
+        ],
+        "allowedLayers": [
+          "types",
+          "config",
+          "repo",
+          "service",
+          "runtime",
+          "ui"
+        ]
+      },
+      "doneRequires": [
+        "structural",
+        "tests",
+        "smoke",
+        "evidence-bundle"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Edit",
+          "Write",
+          "Bash(npm test*)",
+          "Bash(git status*)",
+          "Bash(git diff*)"
+        ],
+        "deny": [
+          "Bash(git commit*)",
+          "Bash(git push*)"
+        ]
+      },
+      "source": ".harness/task-contracts/not-found-page.json",
+      "errors": []
+    }
+  },
+  "taskSources": {
+    "health-endpoint": {
+      "taskContract": ".harness/task-contracts/health-endpoint.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "LS",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm test*)",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git status*)",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.allow"
+        }
+      ],
+      "deny": [
+        {
+          "permission": "Bash(git commit*)",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.deny"
+        },
+        {
+          "permission": "Bash(git push*)",
+          "source": ".harness/task-contracts/health-endpoint.json#permissions.deny"
+        }
+      ]
+    },
+    "not-found-page": {
+      "taskContract": ".harness/task-contracts/not-found-page.json",
+      "allow": [
+        {
+          "permission": "Read",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Grep",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Glob",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "LS",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Edit",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Write",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(npm test*)",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git status*)",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        },
+        {
+          "permission": "Bash(git diff*)",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.allow"
+        }
+      ],
+      "deny": [
+        {
+          "permission": "Bash(git commit*)",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.deny"
+        },
+        {
+          "permission": "Bash(git push*)",
+          "source": ".harness/task-contracts/not-found-page.json#permissions.deny"
+        }
+      ]
+    }
+  },
+  "runtimeExpectations": {
+    "runtime": "kiro",
+    "hooksPath": ".kiro/agents/harness.json",
+    "installedHooksPath": ".kiro/agents/harness.json",
+    "templateHooksPath": ".kiro/agents/harness.json",
+    "settingsPath": "",
+    "settingsMirror": false,
+    "policyPath": ".harness/permissions.json",
+    "compiledPolicyPath": ".harness/permissions.compiled.json",
+    "hooks": [],
+    "validation": {
+      "status": "passed",
+      "errors": [],
+      "warnings": []
+    }
+  },
+  "runtimePermissionHints": {
+    "runtime": "kiro",
+    "settingsPath": "",
+    "allow": [],
+    "deny": [],
+    "source": "permissions-compiler:runtime-permission-hints",
+    "appliesTo": []
+  }
+}

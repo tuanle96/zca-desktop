@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "no-provider-bypass",
+  "description": "External provider SDKs must be wrapped by provider/adapter modules.",
+  "kind": "forbid-import",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "normal",
+  "appliesTo": ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}", "app/**/*.{ts,tsx,js,jsx,mjs,cjs}", "pages/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  "allowPaths": ["src/providers/**", "src/provider/**", "src/adapters/**", "src/**/adapters/**", "src/integrations/**", "src/config/**", "src/instrumentation.*", "src/core/**", "src/templates/**"],
+  "forbiddenImports": [
+    {
+      "id": "provider-sdks",
+      "specifierRegex": "^(stripe|openai|@sentry/.*|posthog-node|firebase-admin|aws-sdk|@aws-sdk/.*)(/|$)",
+      "message": "Provider SDK imports must stay in provider/adapter modules."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/providers/stripe.ts",
+        "content": "import Stripe from 'stripe';\nexport const stripe = new Stripe('sk_test');"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/service/billing.ts",
+        "content": "import Stripe from 'stripe';\nexport async function charge() {}"
+      }
+    ]
+  }
+}

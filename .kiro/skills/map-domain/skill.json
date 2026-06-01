@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "map-domain",
+  "name": "map-domain",
+  "version": "1.0.0",
+  "description": "Use this skill to render the harness's domain/layer config as a mermaid diagram + check for drift between .harness/config.json#domains and the actual filesystem. Surfaces \"the config says layers A→B→C but the repo has folders A, B, X\" — drift that silently invalidates the structural-test contract.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .kiro/skills/map-domain/scripts/domain-map.mjs*)"
+    ],
+    "deny": []
+  }
+}

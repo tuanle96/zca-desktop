@@ -1,0 +1,698 @@
+{
+  "schemaVersion": 1,
+  "skills": [
+    {
+      "schemaVersion": 1,
+      "id": "add-adr",
+      "name": "add-adr",
+      "version": "1.0.0",
+      "description": "Use this skill whenever a decision is made about architecture, dependencies, frameworks, naming conventions, or layer order. Creates a numbered ADR (Architecture Decision Record) in `.harness/docs/adr/` in the canonical Nygard format. Always invoke this before changing layer order, adding a layer, swapping a major dependency, or introducing a new external service.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Glob"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "add-feature",
+      "name": "add-feature",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user asks to add, implement, or build a new feature, capability, endpoint, page, command, or anything user-visible. Enforces the Anthropic two-fold harness pattern — read .harness/feature_list.json, pick exactly one feature, implement incrementally, run the structural test on every save, and never declare \"done\" without updating the JSON. Always invoke this skill instead of writing new feature code freehand.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(npm run*)",
+          "Bash(pytest*)",
+          "Bash(ruff*)",
+          "Bash(git status*)",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Glob",
+          "Grep"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "benchmark-suite",
+      "name": "benchmark-suite",
+      "version": "1.0.0",
+      "description": "Run Mini SWE-bench style harness regression tasks and A/B comparisons to measure harness improvement objectively.",
+      "capabilities": [
+        "evaluation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "Bash(node .harness/scripts/bench-compare.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "context-health",
+      "name": "context-health",
+      "version": "1.0.0",
+      "description": "Inspect context usage, token budget, compaction history, and overflow risk. Use when sessions get long, before large changes, after compaction, or when cost/context drift is suspected.",
+      "capabilities": [
+        "observability",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .kiro/skills/context-health/context-health.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "create-story",
+      "name": "create-story",
+      "version": "1.0.0",
+      "description": "Create a Story Packet for normal/high-risk features. Use after /feature-intake classifies work as normal or high-risk, or when the user asks to break a feature into acceptance criteria, test expectations, and agent-sized work units.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Bash(node .kiro/skills/create-story/create-story.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "debug-flow",
+      "name": "debug-flow",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user reports a bug, unexpected output, or \"this doesn't work\". Runs the dev server, drives the failing flow via Playwright MCP if installed (else captures stdout/stderr), and produces a minimal repro before any fix. Mirrors the OpenAI Chrome-DevTools-Protocol-into-runtime pattern at solo scale — verify the failure before you propose a fix.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(npm run dev*)",
+          "Bash(node ./src/server.js*)",
+          "Bash(npm run start:dev*)",
+          "Bash(uvicorn*)",
+          "Bash(python manage.py runserver*)",
+          "Bash(flask*)",
+          "Bash(python -m app*)",
+          "Bash(go run*)",
+          "Bash(cargo run*)",
+          "Bash(swift run*)",
+          "Bash(./gradlew run*)",
+          "Bash(curl*)",
+          "Bash(playwright*)",
+          "Bash(.harness/scripts/dev-up.sh)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "deliver-html",
+      "name": "deliver-html",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user asks to analyze, audit, review, summarize, produce a report, write a plan, make a proposal, draft a decision doc, list \"next actions\", or any other task that produces a DOCUMENT a HUMAN reads-and-acts-on. Outputs a self-contained <slug>.html at repo root using the shared dark-theme CSS. Why HTML and not Markdown: golden principle #9 — Markdown is great for files an agent reads-and-edits (CLAUDE.md, SKILL.md, ADRs), but a HUMAN reading a 700-line MD deliverable will scroll, miss the conclusion, and ask the agent to clarify — burning turns and tokens. HTML deliverable is read once, decided once. Do NOT use this skill for files the agent itself reads (those stay MD), for stdout output from /review-this-pr or /garbage-collection (pass-through MD), or for short summaries under ~30 lines (overhead not worth it).",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .kiro/skills/deliver-html/scripts/wrap-html.mjs*)",
+          "Bash(cat*)",
+          "Bash(ls*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "doc-drift-scan",
+      "name": "doc-drift-scan",
+      "version": "1.0.0",
+      "description": "Use this skill weekly, before releases, or when the user mentions \"stale docs\", \"doc drift\", \"docs are wrong\", or \"the README is out of date\". Cross-checks every code path, file path, and command referenced in `.harness/docs/` and `CLAUDE.md` against the current repo state and produces a list of stale references — the doc-gardening agent pattern.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(test -e*)",
+          "Bash(command -v*)",
+          "Bash(node .kiro/skills/doc-drift-scan/scripts/scan-paths.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "eval-rubric-author",
+      "name": "eval-rubric-author",
+      "version": "1.0.0",
+      "description": "Use this skill when adding or changing harness eval tasks. Writes deterministic checks first, then optional rubric dimensions with JSON output, so evals grade outcome, process, style, and efficiency without becoming vague prompt feedback.",
+      "capabilities": [
+        "evaluation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Grep",
+          "Glob",
+          "Bash(npm run harness:eval*)",
+          "Bash(npm run check:eval-tasks*)",
+          "Bash(node .harness/scripts/eval-runner-v2.mjs*)",
+          "Bash(node .harness/scripts/check-eval-tasks.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "eval-runner",
+      "name": "eval-runner",
+      "version": "1.0.0",
+      "description": "Use this skill whenever a skill, subagent, or hook is changed, before merging to main, or when the user mentions \"eval\", \"regression test for the harness\", or \"is the harness still working\". This skill is a thin wrapper — it runs a single shell command (`npm run harness:eval` or `python -m harness.eval_runner`) and summarizes the JSONL output. Do not implement the eval logic yourself; the runner is already deterministic.",
+      "capabilities": [
+        "evaluation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Bash(npm run harness:eval*)",
+          "Bash(python -m harness.eval_runner*)",
+          "Read"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "feature-intake",
+      "name": "feature-intake",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user asks to \"add a feature\", \"implement X\", \"build Y\", or before invoking /add-feature. Classifies the request into tiny/normal/high-risk based on estimated complexity and blast radius, then routes to the appropriate workflow — straight to code (tiny), story packet (normal), or ADR + story packet + mandatory review (high-risk). Prevents \"wrong direction\" sessions by forcing a pause before implementation. Pattern from harness-experimental and OpenAI's \"implementation prompts do not go straight to code\" discipline.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Bash(node .kiro/skills/feature-intake/scripts/classify.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "garbage-collection",
+      "name": "garbage-collection",
+      "version": "1.0.0",
+      "description": "Use this skill on Fridays, before tagging a release, or when the user mentions \"cleanup\", \"tech debt\", \"AI slop\", \"GC\", or \"garbage collection\". Runs the deterministic linters, structural tests, and doc-drift scans, then proposes the top-3 highest-leverage cleanups (with risk/cost/benefit) — does NOT auto-merge. This is the solo-dev shrunk version of OpenAI's Friday garbage-collection ritual.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(npm run*)",
+          "Bash(pytest*)",
+          "Bash(ruff*)",
+          "Bash(node .kiro/skills/garbage-collection/scripts/gc-classify.mjs*)",
+          "Bash(git status*)",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(gh pr create*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "harness-improvement-loop",
+      "name": "harness-improvement-loop",
+      "version": "1.0.0",
+      "description": "Use this skill after a trace-backed agent failure or repeated harness friction. Turns the failure into a ranked harness change, records a prediction, applies the smallest prevention, and reruns the relevant eval/regression gate. This is the agent-harness-kit AHE-lite loop.",
+      "capabilities": [
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Edit",
+          "Grep",
+          "Glob",
+          "Bash(git diff*)",
+          "Bash(npm run harness:eval*)",
+          "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "Bash(node .harness/scripts/record-failure.mjs*)",
+          "Bash(node .harness/scripts/check-failure-records.mjs*)",
+          "Bash(node .harness/scripts/harness-report.mjs*)",
+          "Bash(node .harness/scripts/regression-runner.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "i18n-add-locale",
+      "name": "i18n-add-locale",
+      "version": "1.0.0",
+      "description": "Use this skill to scaffold a new human-language locale for the kit's skills/agents/CLAUDE.md. Mirrors every existing SKILL.md.hbs into a SKILL.md.<locale>.hbs stub so a translator (or LLM) can edit copy without touching machine-readable frontmatter. Default locale codes — vi, ja, fr, es, de — but accepts any 2-5 char code.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .harness/scripts/locale-scaffold.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "inspect-app",
+      "name": "inspect-app",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user asks to \"test the UI\", \"check what the app looks like\", \"inspect the page\", \"verify the dev server is up\", or before claiming a UI feature is done. Boots the dev server via .harness/scripts/dev-up.sh and drives the failing flow through Playwright MCP if installed (else falls back to curl + lightweight HTML capture). Mirrors the OpenAI Chrome-DevTools-Protocol-into-runtime pattern at solo scale — verify the running app, don't trust the type checker alone.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(.harness/scripts/dev-up.sh)",
+          "Bash(curl*)",
+          "Bash(playwright*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "inspect-module",
+      "name": "inspect-module",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user mentions \"explore\", \"inspect\", \"understand\", \"what does X do\", \"where is Y\", or before adding a new feature in an unfamiliar area. Produces a structured map of one module — files, exports, dependencies, layer assignment, and recent commits — without reading the entire codebase. Always invoke this skill before editing an unfamiliar module so the agent has accurate context, not guesses.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Glob",
+          "Grep",
+          "Bash(git log*)",
+          "Bash(git ls-tree*)",
+          "Bash(tree*)",
+          "Bash(node .kiro/skills/inspect-module/scripts/module-summary.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "map-domain",
+      "name": "map-domain",
+      "version": "1.0.0",
+      "description": "Use this skill to render the harness's domain/layer config as a mermaid diagram + check for drift between .harness/config.json#domains and the actual filesystem. Surfaces \"the config says layers A→B→C but the repo has folders A, B, X\" — drift that silently invalidates the structural-test contract.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .kiro/skills/map-domain/scripts/domain-map.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "middleware-pipeline",
+      "name": "middleware-pipeline",
+      "version": "1.0.0",
+      "description": "Use composable middleware behaviors for provider/tool execution: retry, caching, timeout, telemetry, and budget guards.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/middleware-demo.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "model-profile",
+      "name": "model-profile",
+      "version": "1.0.0",
+      "description": "Use this skill when choosing, upgrading, or comparing models for a harness lane. Runs the same task set across candidate model profiles and reports pass rate, latency, token cost, intervention count, and failure class movement before changing defaults.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Write",
+          "Bash(node .harness/scripts/model-routing-report.mjs*)",
+          "Bash(node .harness/scripts/bench-runner.mjs*)",
+          "Bash(node .harness/scripts/bench-compare.mjs*)",
+          "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "Bash(node .harness/scripts/regression-compare.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "orchestrate",
+      "name": "orchestrate",
+      "version": "1.0.0",
+      "description": "Select and run a multi-agent workflow pattern for work that exceeds one agent's reliable scope. Use for parallel research, independent reviews, cross-domain changes, or high-risk implementation planning.",
+      "capabilities": [
+        "orchestration",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Bash(node .kiro/skills/orchestrate/orchestrate.mjs*)",
+          "Bash(node .harness/scripts/orchestration-contract-from-task.mjs*)",
+          "Bash(node .harness/scripts/session-replay.mjs*)",
+          "Bash(node .harness/scripts/cost-tracker.mjs*)",
+          "Bash(node .harness/scripts/orchestration-schema-check.mjs*)"
+        ],
+        "deny": [
+          "Write",
+          "Edit",
+          "MultiEdit"
+        ]
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "project-status",
+      "name": "project-status",
+      "version": "1.0.0",
+      "description": "Render project phases, risks, features, recent memory, orchestration health, and session isolation into a self-contained HTML status report.",
+      "capabilities": [
+        "project-management",
+        "reporting",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/project-status-report.mjs*)",
+          "Bash(node .harness/scripts/project-memory.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "propose-harness-improvement",
+      "name": "propose-harness-improvement",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the agent makes a mistake, the user observes an avoidable failure, a pattern recurs, or someone says \"the agent keeps doing X\". Files an \"Engineer the Harness\" entry — Mitchell Hashimoto's discipline: every failure becomes a permanent prevention mechanism. Always invoke this instead of just fixing the immediate symptom.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(git diff*)",
+          "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+          "Bash(node .harness/scripts/record-failure.mjs*)",
+          "Bash(node .harness/scripts/check-failure-records.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "refactor-feature",
+      "name": "refactor-feature",
+      "version": "1.0.0",
+      "description": "Use this skill when restructuring a feature in .harness/feature_list.json — splitting steps, merging steps, renaming, or marking a previously-failing step done. The side-car diffs .harness/feature_list.json#steps before/after and rejects the edit when a step.done transition is not accompanied by a test reference. Forces \"no done without proof\".",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Bash(git diff*)",
+          "Bash(node .kiro/skills/refactor-feature/scripts/feature-diff.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "regression-benchmark",
+      "name": "regression-benchmark",
+      "version": "1.0.0",
+      "description": "Run Tier 2 real-world-style regression benchmarks with isolated workspaces, hidden checks, A/B comparison, cost/time metrics, and HTML dashboard reporting.",
+      "capabilities": [
+        "evaluation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "LS",
+          "Bash(node .harness/scripts/regression-runner.mjs*)",
+          "Bash(node .harness/scripts/regression-compare.mjs*)",
+          "Bash(node .harness/scripts/regression-report.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "remember-project",
+      "name": "remember-project",
+      "version": "1.0.0",
+      "description": "Record durable project decisions, risks, scope changes, and handoff notes into the repo-local Project Operating Memory ledger.",
+      "capabilities": [
+        "memory",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/project-memory.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "review-this-pr",
+      "name": "review-this-pr",
+      "version": "1.0.0",
+      "description": "Use this skill to run a deterministic review of the current branch against its base — git diff base...HEAD, structural-test, baseline-monotonic check, and a markdown summary that lists each violating file with its layer rule. Replaces the \"ask the agent to review the diff\" pattern, which routinely misses cross-file drift.",
+      "capabilities": [
+        "analysis",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(git merge-base*)",
+          "Bash(node .kiro/skills/review-this-pr/scripts/pr-review-driver.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "setup-nightly-eval",
+      "name": "setup-nightly-eval",
+      "version": "1.0.0",
+      "description": "Use this skill when the user wants to schedule the harness eval to run every night, asks \"how do I set up nightly evals\", \"schedule the eval\", \"run evals on a cron\", or \"nightly regression for the harness\". The kit already ships a GitHub Actions workflow at .github/workflows/eval-nightly.yml — this skill walks the user through enabling it (secret setup, smoke run via workflow_dispatch, verifying the first scheduled run). Do NOT use this skill to \"remind me to run eval every night in this Claude session\" — that is the /loop skill or CronCreate (which is session-only), a different concern.",
+      "capabilities": [
+        "evaluation",
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(ls*)",
+          "Bash(cat*)",
+          "Bash(test*)",
+          "Bash(gh workflow run*)",
+          "Bash(gh run watch*)",
+          "Bash(gh secret list*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "skill-discovery",
+      "name": "skill-discovery",
+      "version": "1.0.0",
+      "description": "Build a lightweight skill index and load full skill instructions only on demand to reduce startup context pressure.",
+      "capabilities": [
+        "registry",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Bash(node .harness/scripts/skill-discovery.mjs*)",
+          "Bash(node .harness/scripts/skill-load.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "structural-test-author",
+      "name": "structural-test-author",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user wants to add a new architectural rule, prevent a recurring agent mistake, or codify a pattern from golden-principles.md. Generates a {{#if isPython}}libcst-based Python{{else}}ts-morph-based TypeScript{{/if}} structural test plus the matching {{#if isPython}}import-linter contract{{else}}eslint-plugin-boundaries rule{{/if}} entry. Always prefer this over leaving rules in prose.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(npm test*)",
+          "Bash(pytest*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "trace-analyzer",
+      "name": "trace-analyzer",
+      "version": "1.0.0",
+      "description": "Use this skill when an eval, regression run, hook, or long agent session fails and the next step depends on trace evidence. Classifies the failure from telemetry, transcripts, eval JSONL, git diff, and hook output before proposing a fix. Prevents prompt-only guesses by requiring a trace-backed failure class.",
+      "capabilities": [
+        "observability",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Grep",
+          "Glob",
+          "Bash(git diff*)",
+          "Bash(git log*)",
+          "Bash(node .harness/scripts/harness-report.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "verify-ui",
+      "name": "verify-ui",
+      "version": "1.0.0",
+      "description": "Run Browser Validation with Playwright golden-path checks, screenshots, console/network capture, and HTML reporting.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Bash(node .harness/scripts/verify-ui.mjs*)"
+        ],
+        "deny": []
+      }
+    },
+    {
+      "schemaVersion": 1,
+      "id": "write-skill",
+      "name": "write-skill",
+      "version": "1.0.0",
+      "description": "Use this skill whenever the user asks to \"create a skill\", \"add a slash command\", \"package a workflow\", or \"make X reusable across sessions\". Generates a SKILL.md with valid YAML frontmatter (name regex, description ≤ 1024 chars, body ≤ 500 lines) and supporting .harness/scripts/references/assets. Tests the skill by simulating an auto-discovery prompt.",
+      "capabilities": [
+        "generation",
+        "workflow"
+      ],
+      "permissions": {
+        "allow": [
+          "Read",
+          "Edit",
+          "Write",
+          "Bash(ls*)"
+        ],
+        "deny": []
+      }
+    }
+  ]
+}

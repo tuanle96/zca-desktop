@@ -1,0 +1,29 @@
+# Rust / Tauri
+/target
+/src-tauri/target
+**/*.rs.bk
+
+# Node / frontend
+node_modules
+dist
+dist-ssr
+.vite
+.svelte-kit
+/build
+
+# Zalo credential exports — NEVER commit (cookies are bearer tokens)
+*.cred.json
+.zalo-cred.json
+cookies.json
+/credentials/
+
+# Harness local runtime state
+.harness/state/harness.db
+.harness/state/harness.db-*
+.agent-worktrees/
+
+# OS / editor
+.DS_Store
+.idea
+.vscode/*
+!.vscode/extensions.json

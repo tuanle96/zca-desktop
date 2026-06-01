@@ -1,0 +1,121 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/failure-record.schema.json",
+  "title": "agent-harness-kit failure record",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "observedAt",
+    "primaryClass",
+    "symptom",
+    "evidence",
+    "preventionTarget",
+    "promotionStatus"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "observedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "source": {
+      "enum": ["eval", "hook", "review", "user-report", "session-trace", "ci", "runtime"]
+    },
+    "primaryClass": {
+      "enum": [
+        "context-miss",
+        "false-done",
+        "architecture-drift",
+        "test-gap",
+        "doc-drift",
+        "tool-misuse",
+        "permission-gap",
+        "runtime-gap",
+        "eval-gap",
+        "cost-spike",
+        "model-behavior"
+      ]
+    },
+    "symptom": {
+      "type": "string",
+      "minLength": 1
+    },
+    "evidence": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 }
+    },
+    "preventionTarget": {
+      "enum": ["docs", "skill", "hook", "subagent", "script", "structural-rule", "eval-task", "permission-policy", "project-code"]
+    },
+    "preventionJustification": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Required by check-failure-records.mjs when preventionTarget differs from the taxonomy class preferredPrevention."
+    },
+    "proposedPrevention": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "summary"],
+      "properties": {
+        "path": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Repo-local prevention artifact path. check-failure-records.mjs also enforces that the path matches preventionTarget conventions.",
+          "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+        },
+        "summary": { "type": "string", "minLength": 1 },
+        "verificationCommand": { "type": "string", "minLength": 1 }
+      }
+    },
+    "promotionStatus": {
+      "enum": ["proposed", "applied", "verified", "rejected"]
+    },
+    "observedResult": {
+      "type": ["string", "null"]
+    },
+    "links": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "default": []
+    }
+  },
+  "allOf": [
+    {
+      "if": {
+        "required": ["promotionStatus"],
+        "properties": {
+          "promotionStatus": { "enum": ["proposed", "applied", "verified"] }
+        }
+      },
+      "then": {
+        "required": ["proposedPrevention"],
+        "properties": {
+          "proposedPrevention": {
+            "required": ["path", "summary", "verificationCommand"]
+          }
+        }
+      }
+    },
+    {
+      "if": {
+        "required": ["promotionStatus"],
+        "properties": {
+          "promotionStatus": { "const": "verified" }
+        }
+      },
+      "then": {
+        "required": ["observedResult"]
+      }
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "id": "skill-registry",
+  "title": "Required Phase 3 skills exist",
+  "category": "regression",
+  "passThreshold": 1,
+  "checks": [
+    { "type": "file-exists", "path": ".claude/skills/benchmark-suite/SKILL.md" },
+    { "type": "file-exists", "path": ".claude/skills/middleware-pipeline/SKILL.md" },
+    { "type": "file-exists", "path": ".claude/skills/skill-discovery/SKILL.md" }
+  ]
+}

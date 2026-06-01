@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "id": "require-validation-at-boundary",
+  "description": "Input boundary handlers that read request data must validate it before use.",
+  "kind": "require-pattern",
+  "severity": "block",
+  "owner": "security-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "high-risk",
+  "appliesTo": ["src/**/api/**/*.{ts,tsx,js,jsx,mjs,cjs}", "src/**/route*.{ts,tsx,js,jsx,mjs,cjs}", "src/**/routes/**/*.{ts,tsx,js,jsx,mjs,cjs}", "src/**/controller*/**/*.{ts,tsx,js,jsx,mjs,cjs}", "src/**/handler*/**/*.{ts,tsx,js,jsx,mjs,cjs}", "app/**/route.{ts,tsx,js,jsx,mjs,cjs}", "pages/api/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  "allowPaths": ["src/templates/**"],
+  "triggerPatterns": ["\\.json\\s*\\(", "\\.formData\\s*\\(", "\\.body\\b", "\\.query\\b", "\\.params\\b", "\\bsearchParams\\b"],
+  "requiredPatterns": ["\\b(z|yup|joi|superstruct)\\b", "\\.(parse|safeParse|validate|validateSync)\\s*\\(", "\\b(validate|validator|schema|requestSchema|bodySchema|paramsSchema|querySchema)\\b"],
+  "message": "Boundary handler reads request data but no validation schema/check is visible.",
+  "examples": {
+    "pass": [
+      {
+        "path": "src/routes/signup.ts",
+        "content": "const bodySchema = z.object({ email: z.string().email() });\nexport async function POST(request) { return bodySchema.parse(await request.json()); }"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/routes/signup.ts",
+        "content": "export async function POST(request) { const body = await request.json(); return createUser(body); }"
+      }
+    ]
+  }
+}

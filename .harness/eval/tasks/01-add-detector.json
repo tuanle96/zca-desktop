@@ -1,0 +1,15 @@
+{
+  "id": "add-detector",
+  "description": "Adding a new framework detector to detect-stack.mjs is the canonical kit-development scenario. Exercises the layered template structure + tests/ co-update discipline.",
+  "input": "Benchmark task: implement Hono framework detection. You must make exactly these file changes using Edit or MultiEdit, not Bash-generated rewrites: (1) edit `src/core/detect-stack.mjs` so package.json dependencies containing `\"hono\"` return `{ framework: \"hono\", preset: \"node-api\" }`; (2) edit `tests/detect-stack.test.mjs` to add a fixture/test proving Hono detection. Run `node --test tests/detect-stack.test.mjs` or `npm test` and report the result. Do not change config, README, or unrelated files.",
+  "expected": {
+    "filesChanged": {
+      "min": 2,
+      "max": 4
+    },
+    "requiredFiles": [
+      "src/core/detect-stack.mjs",
+      "tests/detect-stack.test.mjs"
+    ]
+  }
+}

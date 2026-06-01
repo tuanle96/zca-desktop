@@ -1,0 +1,26 @@
+{
+  "id": "08-telemetry-regression",
+  "failureClass": "telemetry-regression",
+  "description": "Telemetry/session metrics missing",
+  "input": "Regression task 08-telemetry-regression: create or edit `.harness/tmp/regression/08-telemetry-regression/proof.txt` using Write/Edit and include the text `telemetry-regression` plus a one-line prevention note. Do not edit unrelated files. If this task mentions a required skill in expected checks, invoke it first.",
+  "expected": {
+    "filesChanged": {
+      "min": 1,
+      "max": 4
+    },
+    "requiredFiles": [
+      ".harness/tmp/regression/08-telemetry-regression/proof.txt"
+    ],
+    "hiddenChecks": [
+      {
+        "type": "file-contains",
+        "path": ".harness/tmp/regression/08-telemetry-regression/proof.txt",
+        "text": "telemetry-regression"
+      },
+      {
+        "type": "max-files",
+        "max": 4
+      }
+    ]
+  }
+}

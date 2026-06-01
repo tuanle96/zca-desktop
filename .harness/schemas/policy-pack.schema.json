@@ -1,0 +1,98 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://agent-harness-kit.local/schemas/policy-pack.schema.json",
+  "title": "agent-harness-kit policy pack",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "title",
+    "description",
+    "stacks",
+    "strictnessDefault",
+    "structuralRules",
+    "fitnessRules",
+    "taskContractDefaults",
+    "reviewerDefaults",
+    "evidenceRequirements",
+    "evalTemplates",
+    "verifyUiFlows",
+    "antiPatterns"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+    "title": { "type": "string", "minLength": 1 },
+    "description": { "type": "string", "minLength": 1 },
+    "stacks": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["language", "frameworks"],
+        "properties": {
+          "language": { "type": "string", "minLength": 1 },
+          "frameworks": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          }
+        }
+      }
+    },
+    "strictnessDefault": { "enum": ["starter", "standard", "strict", "release", "team"] },
+    "structuralRules": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+      "uniqueItems": true
+    },
+    "fitnessRules": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "path", "owner"],
+        "properties": {
+          "id": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" },
+          "path": { "type": "string", "minLength": 1 },
+          "owner": { "type": "string", "pattern": "^[a-z0-9][a-z0-9._-]*$" }
+        }
+      }
+    },
+    "taskContractDefaults": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["scope", "doneRequires", "riskRouting"]
+    },
+    "reviewerDefaults": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["required", "conditional"]
+    },
+    "evidenceRequirements": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object", "required": ["id", "requires"], "additionalProperties": true }
+    },
+    "evalTemplates": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object", "required": ["id", "description"], "additionalProperties": true }
+    },
+    "verifyUiFlows": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object", "required": ["id", "routes", "assertions"], "additionalProperties": true }
+    },
+    "antiPatterns": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "type": "object", "required": ["id", "description", "fix"], "additionalProperties": true }
+    }
+  }
+}

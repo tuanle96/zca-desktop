@@ -1,0 +1,39 @@
+{
+  "schemaVersion": 1,
+  "id": "no-db-in-ui",
+  "description": "UI code must not import database clients or ORM packages directly.",
+  "kind": "forbid-import",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "normal",
+  "appliesTo": ["src/ui/**/*.{ts,tsx,js,jsx,mjs,cjs}", "src/**/ui/**/*.{ts,tsx,js,jsx,mjs,cjs}", "app/**/*.{ts,tsx,js,jsx,mjs,cjs}", "pages/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  "allowPaths": ["src/templates/**"],
+  "forbiddenImports": [
+    {
+      "id": "db-packages",
+      "specifierRegex": "^(@prisma/client|drizzle-orm|knex|mongodb|mongoose|mysql2|pg|sequelize|typeorm)(/|$)",
+      "message": "UI code must go through a service/repository boundary instead of importing DB packages."
+    },
+    {
+      "id": "repo-deep-import",
+      "specifierRegex": "(^|/)(repo|repositories|db|database)(/|$)",
+      "message": "UI code must not reach directly into repository/database modules."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/ui/Checkout.tsx",
+        "content": "import { useCart } from '@/service/cart';\nexport function Checkout() { return null; }"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/ui/Checkout.tsx",
+        "content": "import { PrismaClient } from '@prisma/client';\nexport function Checkout() { return null; }"
+      }
+    ]
+  }
+}

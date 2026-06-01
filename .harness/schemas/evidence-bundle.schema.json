@@ -1,0 +1,383 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/evidence-bundle.schema.json",
+  "title": "agent-harness-kit evidence bundle",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schemaVersion", "taskId", "status", "createdAt", "changedFiles", "checks"],
+  "properties": {
+    "schemaVersion": {
+      "const": 1
+    },
+    "taskId": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "featureId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "status": {
+      "enum": ["pass", "fail", "partial", "blocked"]
+    },
+    "createdAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "updatedAt": {
+      "type": "string",
+      "format": "date-time"
+    },
+    "diffSummary": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Concrete human-readable summary of the implementation diff. Passing evidence bundles must include a non-placeholder value."
+    },
+    "changedFiles": {
+      "type": "array",
+      "description": "Repo-local files changed by the task. task-evidence-check rejects duplicate normalized paths such as src/x.ts and ./src/x.ts.",
+      "minItems": 1,
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+	    "checks": {
+	      "type": "array",
+	      "description": "Proof checks for the task. Check names must be stable lowercase ids and unique within the evidence bundle; use names such as tests.unit and tests.e2e for multiple checks in the same gate family.",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "command", "status"],
+	        "allOf": [
+	          {
+	            "description": "Passing checks must include concrete result summaries and concrete commands.",
+	            "if": {
+	              "properties": {
+	                "status": { "const": "pass" }
+	              }
+            },
+            "then": {
+              "required": ["summary"],
+              "properties": {
+                "command": {
+                  "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+                },
+                "summary": {
+                  "minLength": 1,
+                  "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+                }
+	              }
+	            }
+	          },
+	          {
+	            "description": "Passing UI/browser evidence must carry an artifact so the checker can inspect the proof instead of trusting prose.",
+	            "if": {
+	              "allOf": [
+	                {
+	                  "properties": {
+	                    "status": { "const": "pass" }
+	                  },
+	                  "required": ["status"]
+	                },
+	                {
+	                  "anyOf": [
+	                    {
+	                      "properties": {
+	                        "name": {
+	                          "pattern": "(^|[._-])ui([._-]|$)|(^|[._-])browser([._-]|$)|verify-ui|playwright"
+	                        }
+	                      },
+	                      "required": ["name"]
+	                    },
+	                    {
+	                      "properties": {
+	                        "command": {
+	                          "pattern": "\\b(ui|verify-ui\\.mjs|playwright|browser)\\b"
+	                        }
+	                      },
+	                      "required": ["command"]
+	                    }
+	                  ]
+	                }
+	              ]
+	            },
+	            "then": {
+	              "required": ["artifact"]
+	            }
+	          },
+	          {
+	            "description": "Passing verify-ui checks must point at the repo-local JSON summary emitted by verify-ui.mjs.",
+	            "if": {
+	              "allOf": [
+	                {
+	                  "properties": {
+	                    "status": { "const": "pass" }
+	                  },
+	                  "required": ["status"]
+	                },
+	                {
+	                  "properties": {
+	                    "command": {
+	                      "pattern": "(^|[\\s;&|])(?:node\\s+)?(?:\\.harness/scripts/|scripts/)?verify-ui\\.mjs(?:\\s|$)"
+	                    }
+	                  },
+	                  "required": ["command"]
+	                }
+	              ]
+	            },
+	            "then": {
+	              "required": ["artifact"],
+	              "properties": {
+	                "artifact": {
+	                  "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"
+	                }
+	              }
+	            }
+	          }
+	        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "command": {
+            "type": "string",
+            "minLength": 1
+          },
+          "acceptanceId": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$",
+            "description": "Optional stable lowercase id of the task-contract acceptance criterion this check proves. task-evidence-check rejects ids that are not present in the linked task contract."
+          },
+          "status": {
+            "enum": ["pass", "fail", "skipped"]
+          },
+          "artifact": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Optional proof artifact. Passing UI checks must include an artifact; verify-ui checks must point at a repo-local JSON summary that task-evidence-check can inspect."
+          },
+	          "summary": {
+	            "type": "string",
+	            "minLength": 1
+	          },
+          "exitCode": {
+            "type": "integer",
+            "description": "Process exit code captured by evidence-run.mjs. Passing checks should use 0."
+          },
+          "cwd": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repo-local working directory used for the proof command."
+          },
+          "startedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "finishedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "gitHead": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Git HEAD observed when the proof command ran."
+          },
+          "workingTreeHash": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$",
+            "description": "sha256 hash of git diff/status context observed when the proof command ran."
+          },
+          "stdoutHash": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "stderrHash": {
+            "type": "string",
+            "pattern": "^sha256:[a-f0-9]{64}$"
+          },
+          "stdoutPath": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repo-local stdout sidecar whose contents match stdoutHash."
+          },
+          "stderrPath": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Repo-local stderr sidecar whose contents match stderrHash."
+          },
+          "artifactPaths": {
+            "type": "array",
+            "description": "Additional repo-local artifacts produced by the proof command.",
+            "items": { "type": "string", "minLength": 1 },
+            "default": []
+          }
+	        }
+	      }
+	    },
+    "reviewers": {
+      "type": "array",
+      "description": "Structured reviewer outcomes. Reviewer names must be stable lowercase ids and unique within the evidence bundle; task-evidence-check enforces uniqueness by name.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["name", "decision"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "decision": {
+            "enum": ["pass", "block", "needs-human", "not-required"]
+          },
+          "artifact": {
+            "type": "string",
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+\\.json$"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "reviewDecision": {
+            "$ref": "review-decision.schema.json"
+          }
+        }
+      },
+      "default": []
+    },
+    "knownRisks": {
+      "type": "array",
+      "description": "Known risks that remain attached to the task evidence. A passing evidence bundle may only include mitigated or accepted risks; task-evidence-check rejects open risks for status=pass.",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "severity", "description", "disposition", "owner"],
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "disposition": { "const": "mitigated" }
+              },
+              "required": ["disposition"]
+            },
+            "then": {
+              "required": ["mitigation"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "disposition": { "const": "accepted" }
+              },
+              "required": ["disposition"]
+            },
+            "then": {
+              "required": ["acceptedBy", "acceptanceReason", "mitigation"]
+            }
+          },
+          {
+            "if": {
+              "properties": {
+                "disposition": { "const": "accepted" },
+                "severity": { "enum": ["critical", "high"] }
+              },
+              "required": ["disposition", "severity"]
+            },
+            "then": {
+              "required": ["acceptedUntil"]
+            }
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "severity": {
+            "enum": ["critical", "high", "medium", "low", "info"]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+          },
+          "disposition": {
+            "enum": ["mitigated", "accepted", "open"]
+          },
+          "owner": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+          },
+          "mitigation": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+          },
+          "acceptedBy": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+          },
+          "acceptanceReason": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+          },
+          "acceptedUntil": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "default": []
+	    }
+	  },
+	  "allOf": [
+	    {
+	      "description": "A passing evidence bundle must include a concrete diff summary.",
+	      "if": {
+	        "properties": {
+	          "status": { "const": "pass" }
+	        },
+	        "required": ["status"]
+	      },
+	      "then": {
+	        "required": ["diffSummary"],
+	        "properties": {
+	          "diffSummary": {
+	            "minLength": 1,
+	            "pattern": "^(?!\\s*(?:TBD|TODO|todo|tbd|N/A|n/a|NA|na|fill me|replace me)\\s*$).+"
+	          }
+	        }
+	      }
+	    },
+	    {
+	      "description": "A passing evidence bundle may not carry open known risks.",
+	      "if": {
+	        "properties": {
+	          "status": { "const": "pass" }
+	        },
+	        "required": ["status"]
+	      },
+	      "then": {
+	        "properties": {
+	          "knownRisks": {
+	            "not": {
+	              "contains": {
+	                "type": "object",
+	                "properties": {
+	                  "disposition": { "const": "open" }
+	                },
+	                "required": ["disposition"]
+	              }
+	            }
+	          }
+	        }
+	      }
+	    }
+	  ]
+	}

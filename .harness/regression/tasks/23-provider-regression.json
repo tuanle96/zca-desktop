@@ -1,0 +1,26 @@
+{
+  "id": "23-provider-regression",
+  "failureClass": "provider-regression",
+  "description": "Provider abstraction config/routing regressed",
+  "input": "Regression task 23-provider-regression: create or edit `.harness/tmp/regression/23-provider-regression/proof.txt` using Write/Edit and include the text `provider-regression` plus a one-line prevention note. Do not edit unrelated files. If this task mentions a required skill in expected checks, invoke it first.",
+  "expected": {
+    "filesChanged": {
+      "min": 1,
+      "max": 4
+    },
+    "requiredFiles": [
+      ".harness/tmp/regression/23-provider-regression/proof.txt"
+    ],
+    "hiddenChecks": [
+      {
+        "type": "file-contains",
+        "path": ".harness/tmp/regression/23-provider-regression/proof.txt",
+        "text": "provider-regression"
+      },
+      {
+        "type": "max-files",
+        "max": 4
+      }
+    ]
+  }
+}

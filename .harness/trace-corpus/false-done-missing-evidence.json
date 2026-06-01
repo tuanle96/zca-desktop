@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "false-done-missing-evidence",
+  "case": "false-done",
+  "title": "Done claim blocked because evidence bundle was missing",
+  "sanitized": true,
+  "source": "synthetic-regression-pattern",
+  "runtime": "claude",
+  "task": {
+    "id": "bugfix-empty-state",
+    "type": "bugfix",
+    "riskTier": "normal",
+    "acceptance": ["empty-state-rendered", "component-test-pass"]
+  },
+  "outcome": {
+    "status": "blocked",
+    "failureClass": "false-done",
+    "blockedBy": ["task-evidence", "advisor-required"]
+  },
+  "modelRouting": {
+    "lane": "implementation",
+    "model": "claude-sonnet-4-6",
+    "expectedModel": "claude-sonnet-4-6",
+    "success": false,
+    "costUsd": 0.026,
+    "inputTokens": 3800,
+    "outputTokens": 900
+  },
+  "evalSignals": [
+    {
+      "id": "stop-hook",
+      "kind": "gate",
+      "status": "blocked",
+      "summary": "Stop hook blocked a done claim without evidence."
+    },
+    {
+      "id": "missing-review",
+      "kind": "review",
+      "status": "blocked",
+      "summary": "Advisor decision was absent for the active task."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "agent",
+      "event": "done-claimed",
+      "summary": "Agent claimed the task was complete."
+    },
+    {
+      "step": 2,
+      "actor": "harness",
+      "event": "evidence-missing",
+      "summary": "No matching evidence bundle existed for the task."
+    },
+    {
+      "step": 3,
+      "actor": "harness",
+      "event": "completion-blocked",
+      "summary": "The active task remained blocked until proof was added."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "repo",
+      "replacement": "repo://demo"
+    }
+  ]
+}

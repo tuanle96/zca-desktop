@@ -1,0 +1,14 @@
+{
+  "id": "update-template",
+  "description": "Updating a single Handlebars template under src/templates is the most common kit-dev edit. Exercises the renderAll path + Handlebars escaping discipline.",
+  "input": "Benchmark task: update one template. Use Edit or MultiEdit, not Bash-generated rewrites. Edit only `src/templates/CLAUDE.md.hbs` and add one bullet under the existing \"What NOT to do\" section: `Don't npm install packages with native bindings without an ADR.` Keep the existing Handlebars structure valid. Run `node --test tests/render-templates.test.mjs` or `npm test` and report the result.",
+  "expected": {
+    "filesChanged": {
+      "min": 1,
+      "max": 2
+    },
+    "requiredFiles": [
+      "src/templates/CLAUDE.md.hbs"
+    ]
+  }
+}

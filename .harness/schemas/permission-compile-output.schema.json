@@ -1,0 +1,174 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/permission-compile-output.schema.json",
+  "title": "agent-harness-kit permission compile output",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "runtime",
+    "generatedAt",
+    "source",
+    "policy",
+    "sources",
+    "errors",
+    "tasks",
+    "taskSources",
+    "runtimeExpectations",
+    "runtimePermissionHints"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "runtime": { "enum": ["claude", "codex"] },
+    "generatedAt": { "type": "string", "format": "date-time" },
+    "source": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["defaultPolicy", "skillsDir", "taskContractsDir"],
+      "properties": {
+        "defaultPolicy": { "type": "string", "minLength": 1 },
+        "skillsDir": { "type": "string", "minLength": 1 },
+        "taskContractsDir": { "type": "string", "minLength": 1 }
+      }
+    },
+    "policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["version", "default", "skills"],
+      "properties": {
+        "version": { "const": 1 },
+        "default": { "$ref": "#/$defs/policyRule" },
+        "skills": {
+          "type": "object",
+          "additionalProperties": { "$ref": "#/$defs/policyRule" }
+        }
+      }
+    },
+    "sources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["skillJson", "allow", "deny"],
+        "properties": {
+          "skillJson": { "type": "string", "minLength": 1 },
+          "allow": { "$ref": "#/$defs/sourceItems" },
+          "deny": { "$ref": "#/$defs/sourceItems" }
+        }
+      }
+    },
+    "errors": {
+      "type": "array",
+      "items": { "type": "string" }
+    },
+    "tasks": {
+      "type": "object",
+      "additionalProperties": { "$ref": "#/$defs/taskPolicy" }
+    },
+    "taskSources": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "additionalProperties": true
+      }
+    },
+    "runtimeExpectations": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["runtime", "hooks", "validation"],
+      "properties": {
+        "runtime": { "enum": ["claude", "codex"] },
+        "hooksPath": { "type": "string" },
+        "installedHooksPath": { "type": "string" },
+        "templateHooksPath": { "type": "string" },
+        "settingsPath": { "type": "string" },
+        "settingsMirror": { "type": "boolean" },
+        "policyPath": { "type": "string" },
+        "compiledPolicyPath": { "type": "string" },
+        "hooks": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": true,
+            "required": ["event", "script"],
+            "properties": {
+              "event": { "type": "string", "minLength": 1 },
+              "matcher": { "type": "string" },
+              "script": { "type": "string", "minLength": 1 }
+            }
+          }
+        },
+        "validation": {
+          "type": "object",
+          "additionalProperties": true,
+          "required": ["status"],
+          "properties": {
+            "status": { "enum": ["passed", "failed", "skipped"] },
+            "errors": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "warnings": {
+              "type": "array",
+              "items": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "runtimePermissionHints": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["runtime", "allow", "deny", "source", "appliesTo"],
+      "properties": {
+        "runtime": { "enum": ["claude", "codex"] },
+        "settingsPath": { "type": "string" },
+        "allow": { "$ref": "#/$defs/permissions" },
+        "deny": { "$ref": "#/$defs/permissions" },
+        "source": { "type": "string", "minLength": 1 },
+        "appliesTo": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        }
+      }
+    }
+  },
+  "$defs": {
+    "permissions": {
+      "type": "array",
+      "items": { "type": "string", "minLength": 1 },
+      "uniqueItems": true
+    },
+    "policyRule": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["allow", "deny"],
+      "properties": {
+        "allow": { "$ref": "#/$defs/permissions" },
+        "deny": { "$ref": "#/$defs/permissions" }
+      }
+    },
+    "sourceItems": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["permission", "source"],
+        "properties": {
+          "permission": { "type": "string", "minLength": 1 },
+          "source": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "taskPolicy": {
+      "type": "object",
+      "additionalProperties": true,
+      "required": ["allow", "deny"],
+      "properties": {
+        "allow": { "$ref": "#/$defs/permissions" },
+        "deny": { "$ref": "#/$defs/permissions" }
+      }
+    }
+  }
+}

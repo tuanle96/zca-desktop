@@ -1,0 +1,189 @@
+{
+  "schemaVersion": 1,
+  "policyVersion": 1,
+  "status": "pre-1.0-stable",
+  "versioning": {
+    "currentCompatibilityMajor": 1,
+    "compatibleChanges": [
+      "add optional fields",
+      "add enum values only when readers ignore unknown values",
+      "tighten documentation without changing validation semantics"
+    ],
+    "breakingChanges": [
+      "remove or rename fields",
+      "make an optional field required",
+      "change field type or meaning",
+      "tighten validation for records already accepted by a released version"
+    ]
+  },
+  "migration": {
+    "requiredForBreakingChanges": true,
+    "mustPreserveReadability": true,
+    "migrationDir": ".harness/schema-migrations",
+    "rollbackRequired": true
+  },
+  "deprecation": {
+    "minimumNoticeDays": 90,
+    "minimumMinorReleases": 2,
+    "removalRequiresMajor": true
+  },
+  "changelog": {
+    "requiredForPackageRelease": true,
+    "requiredSection": "Schema Compatibility",
+    "breakingChangeLabels": ["Breaking schema change", "Migration", "Deprecation"]
+  },
+  "schemas": [
+    {
+      "id": "bypass-request",
+      "path": ".harness/schemas/bypass-request.schema.json",
+      "artifact": "bypass request",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "eval-task",
+      "path": ".harness/schemas/eval-task.schema.json",
+      "artifact": "eval task",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": false,
+      "legacyReason": "Eval tasks predate artifact schemaVersion; readers keep accepting the legacy shape until a v2 migration is shipped.",
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "evidence-bundle",
+      "path": ".harness/schemas/evidence-bundle.schema.json",
+      "artifact": "evidence bundle",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "explain-block-record",
+      "path": ".harness/schemas/explain-block-record.schema.json",
+      "artifact": "explain block record",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "failure-record",
+      "path": ".harness/schemas/failure-record.schema.json",
+      "artifact": "failure record",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "orchestration-contract",
+      "path": ".harness/schemas/orchestration-contract.schema.json",
+      "artifact": "orchestration contract",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "permission-compile-output",
+      "path": ".harness/schemas/permission-compile-output.schema.json",
+      "artifact": "permission compile output",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "policy-pack",
+      "path": ".harness/schemas/policy-pack.schema.json",
+      "artifact": "policy pack",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "review-decision",
+      "path": ".harness/schemas/review-decision.schema.json",
+      "artifact": "review decision",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "runtime-parity-report",
+      "path": ".harness/schemas/runtime-parity-report.schema.json",
+      "artifact": "runtime parity report",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "skill-contract",
+      "path": ".harness/schemas/skill-contract.schema.json",
+      "artifact": "skill contract",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": false,
+      "legacyReason": "Skill contracts use their own semver field; readers keep accepting this v1 shape until a v2 migration is shipped.",
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "skill-example",
+      "path": ".harness/schemas/skill-example.schema.json",
+      "artifact": "skill trace example",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "state-export-manifest",
+      "path": ".harness/schemas/state-export-manifest.schema.json",
+      "artifact": "state export manifest",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "task-contract",
+      "path": ".harness/schemas/task-contract.schema.json",
+      "artifact": "task contract",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    },
+    {
+      "id": "trace-corpus-entry",
+      "path": ".harness/schemas/trace-corpus-entry.schema.json",
+      "artifact": "trace corpus entry",
+      "currentVersion": 1,
+      "minimumReadableVersion": 1,
+      "requiresArtifactSchemaVersion": true,
+      "migrationRequiredForBreaking": true,
+      "deprecationNoticeDays": 90
+    }
+  ]
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "unreviewed-bypass-strict",
+  "title": "Strict bypass audit rejects unreviewed bypass records",
+  "failureMode": "unreviewed-bypass",
+  "severity": "high",
+  "probe": "bypass-audit-unreviewed-strict",
+  "prevention": {
+    "gate": "bypass-audit",
+    "failureClass": "permission-gap"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "check-bypass-audit: FAILED",
+      "require review"
+    ]
+  }
+}

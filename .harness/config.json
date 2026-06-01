@@ -1,0 +1,394 @@
+{
+  "$schema": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/v0.19.0/schema.json",
+  "version": "0.19.0",
+  "language": "rust",
+  "framework": "tauri",
+  "preset": "generic",
+  "workspace": {
+  "units": []
+},
+  "domains": [
+    {
+      "name": "default",
+      "root": "src-tauri/src",
+      "layers": ["types", "config", "store", "zalo", "session", "command"],
+      "layerDirPattern": "{layer}",
+      "useIdentPattern": "{layer}"
+    }
+  ],
+  "providers": ["auth", "telemetry", "feature-flags"],
+  "agentRuntime": {
+    "targets": [
+  "kiro"
+],
+    "primary": "kiro",
+    "claude": {
+      "instructionFile": "CLAUDE.md",
+      "hooks": false,
+      "skills": false,
+      "agents": false
+    },
+    "codex": {
+      "instructionFile": "AGENTS.md",
+      "hooks": false,
+      "skills": false,
+      "agents": false
+    },
+    "kiro": {
+      "instructionFile": ".kiro/steering/harness.md",
+      "hooks": true,
+      "skills": true,
+      "agents": true
+    }
+  },
+  "advisor": {
+    "enabled": true,
+    "model": "claude-opus-4-7",
+    "modelCodex": "gpt-5.5",
+    "modelReasoningEffort": "high",
+    "sandboxMode": "read-only",
+    "triggers": [
+  "claim-done",
+  "high-risk-mutation",
+  "cross-layer-change",
+  "security-touching",
+  "new-public-api"
+],
+    "blockOnSkip": true
+  },
+  "ownership": {
+    "userOwnedFiles": [],
+    "generatedMutableFiles": []
+  },
+  "goldenPrinciples": ".harness/docs/golden-principles.md",
+  "structuralTest": {
+    "engine": "none",
+    "configPath": ".harness/runners/structural-test.config.json",
+    "blockOnViolation": true,
+    "rules": [
+      {
+        "id": "no-raw-env-outside-config",
+        "kind": "no-raw-env",
+        "allowLayers": ["config"],
+        "allowPaths": ["src/config/**", "src/env.ts", "src/env.*"]
+      },
+      {
+        "id": "no-db-in-ui",
+        "kind": "no-db-in-ui",
+        "uiLayers": ["ui"],
+        "dbLayers": ["repo"],
+        "dbImportSpecifiers": ["@prisma/client", "drizzle-orm", "knex", "mongodb", "mongoose", "mysql2", "pg", "sequelize", "typeorm"]
+      },
+      {
+        "id": "no-provider-bypass",
+        "kind": "no-provider-bypass",
+        "allowLayers": ["config"],
+        "allowPaths": ["src/providers/**", "src/provider/**", "src/telemetry/**", "src/instrumentation.ts", "src/instrumentation.*"]
+      },
+      {
+        "id": "no-dynamic-import-in-layered-code",
+        "kind": "no-dynamic-import",
+        "enabled": false
+      }
+    ]
+  },
+  "architectureFitness": {
+    "enabled": true,
+    "rulesDir": ".harness/fitness/rules",
+    "checker": ".harness/scripts/check-architecture-fitness.mjs",
+    "blockOnViolation": true,
+    "includeExamples": true  },
+  "policyPacks": {
+  "enabled": true,
+  "packsDir": ".harness/policy-packs",
+  "schemaPath": ".harness/schemas/policy-pack.schema.json",
+  "validator": ".harness/scripts/check-policy-packs.mjs",
+  "selected": [],
+  "applied": []
+},
+  "policyPackPublishing": {
+    "publisher": ".harness/scripts/policy-pack-publish.mjs",
+    "dryRunOnly": true,
+    "allowedFiles": ["pack.json", "README.md", "LICENSE", "LICENSE.md", "fitness-rules/*.json"]
+  },
+  "schemaPolicy": {
+    "policyPath": ".harness/schema-policy.json",
+    "checker": ".harness/scripts/check-stable-schemas.mjs",
+    "schemasDir": ".harness/schemas",
+    "changelogSection": "Schema Compatibility",
+    "minimumDeprecationDays": 90,
+    "minimumMinorReleases": 2
+  },
+  "strictness": {
+    "tier": "standard",
+    "availableTiers": ["starter", "standard", "strict", "release", "team"],
+    "migrationCommand": "node .harness/scripts/strictness.mjs set <tier>"
+  },
+  "structuralBaseline": {
+    "baselinePath": ".harness/structural-baseline.json",
+    "checker": ".harness/scripts/check-structural-baseline.mjs",
+    "decreasingOnly": true,
+    "compareRef": "HEAD",
+    "maxEntries": null,
+    "reportPath": ".harness/reports/baseline-debt.html"
+  },
+  "hookIntegrity": {
+    "checker": ".harness/scripts/check-hook-integrity.mjs"
+  },
+  "evals": {
+    "tasksDir": ".harness/eval/tasks",
+    "schemaPath": ".harness/schemas/eval-task.schema.json",
+    "checker": ".harness/scripts/check-eval-tasks.mjs",
+    "scheduleCron": "0 6 * * *",
+    "dimensions": ["outcome", "process", "style", "efficiency"],
+    "truthSignals": ["acceptanceChecks", "structuralTest", "requiredFiles", "skillsInvoked", "rubric"]
+  },
+  "adversarial": {
+    "enabled": true,
+    "casesDir": ".harness/adversarial/cases",
+    "checker": ".harness/scripts/check-adversarial-suite.mjs",
+    "failureModes": ["false-done", "fake-evidence", "missing-attestation", "protected-path-bypass", "unsafe-command", "unreviewed-bypass", "prompt-injection", "hook-weakening", "permission-bypass", "review-gap", "adr-gap", "stale-evidence", "isolation-gap"]
+  },
+  "skillExamples": {
+    "enabled": true,
+    "skillsDir": ".claude/skills",
+    "examplesDirName": "examples",
+    "checker": ".harness/scripts/check-skill-examples.mjs",
+    "requiredCoreSkills": ["feature-intake", "create-story", "add-feature", "debug-flow", "inspect-app", "orchestrate", "verify-ui", "harness-improvement-loop"]
+  },
+  "traceCorpus": {
+    "enabled": true,
+    "corpusDir": ".harness/trace-corpus",
+    "schemaPath": ".harness/schemas/trace-corpus-entry.schema.json",
+    "checker": ".harness/scripts/check-trace-corpus.mjs",
+    "requiredCases": ["success-tiny", "success-normal", "success-high-risk", "false-done", "overbroad-edit", "missing-reviewer", "evidence-replay-failure", "bypass-approval-flow", "runtime-parity-failure"],
+    "redactSecrets": true
+  },
+  "garbageCollection": {
+    "frequency": "weekly",
+    "maxFixesPerRun": 3,
+    "scope": ["dead-imports", "duplicate-utils", "layer-violations", "doc-drift"]
+  },
+  "claudeMd": {
+    "path": "CLAUDE.md",
+    "maxInstructions": 200,
+    "maxTokens": 0,
+    "humanLanguage": "en"
+  },
+  "recovery": {
+    "headless": false
+  },
+  "projectMemory": {
+    "enabled": true,
+    "ledgerPath": ".harness/memory/ledger.jsonl",
+    "summaryPath": ".harness/memory/current-summary.md",
+    "maxSummaryEvents": 5,
+    "redactSecrets": true
+  },
+  "projectManagement": {
+    "enabled": true,
+    "statePath": ".harness/project/state.json",
+    "statusReportPath": ".harness/project/status.html",
+    "handoffPath": ".harness/project/handoff.json"
+  },
+  "operationalState": {
+    "enabled": true,
+    "dbPath": ".harness/state/harness.db",
+    "schemaPath": ".harness/state/schema.sql",
+    "script": ".harness/scripts/harness-state.mjs",
+    "retention": {
+      "maxAgeDays": 30,
+      "redactExports": true
+    },
+    "traceQuality": {
+      "checker": ".harness/scripts/harness-state.mjs trace-quality --strict",
+      "minimumByLane": {
+        "tiny": "minimal",
+        "normal": "standard",
+        "high-risk": "detailed"
+      }
+    }
+  },
+  "failureLearning": {
+    "enabled": true,
+    "taxonomyPath": ".harness/failures/taxonomy.json",
+    "recordsDir": ".harness/failures/records",
+    "recordSchemaPath": ".harness/schemas/failure-record.schema.json",
+    "signalBundler": ".harness/scripts/improvement-bundle.mjs",
+    "checker": ".harness/scripts/check-failure-records.mjs",
+    "recorder": ".harness/scripts/record-failure.mjs",
+    "reviewRecorder": ".harness/scripts/record-review-failures.mjs",
+    "maxProposedAgeDays": 14
+  },
+  "taskContracts": {
+    "enabled": true,
+    "contractsDir": ".harness/task-contracts",
+    "schemaPath": ".harness/schemas/task-contract.schema.json",
+    "evidenceDir": ".harness/evidence",
+    "reviewsDir": ".harness/reviews",
+    "evidenceSchemaPath": ".harness/schemas/evidence-bundle.schema.json",
+    "reviewDecisionSchemaPath": ".harness/schemas/review-decision.schema.json",
+    "checker": ".harness/scripts/task-evidence-check.mjs",
+    "reviewCoverageChecker": ".harness/scripts/check-review-coverage.mjs",
+    "stopActiveEvidence": "on-claim",
+    "requireActiveTaskForMutationTargets": true,
+    "permissions": {
+      "highRiskRequiresAllowList": true,
+      "forbidHighRiskWildcards": true,
+      "activeTaskEnv": "AHK_ACTIVE_TASK"
+    }
+  },
+  "evidenceAttestation": {
+    "checker": ".harness/scripts/check-evidence-attestation.mjs",
+    "verifyHashes": true,
+    "replayPlan": true,
+    "requireForPassingEvidence": true
+  },
+  "sessionIsolation": {
+    "enabled": true,
+    "checker": ".harness/scripts/check-session-isolation.mjs",
+    "preparer": ".harness/scripts/prepare-session-worktree.mjs",
+    "activeTaskEnv": "AHK_ACTIVE_TASK",
+    "activeTaskPath": ".harness/active-task.json",
+    "activeTaskEnvPath": ".harness/active-task.env",
+    "worktreesDir": "../.agent-worktrees",
+    "manifestDir": ".harness/sessions",
+    "protectedBranches": ["main", "master", "develop", "release/*"],
+    "branchPrefixes": ["agent/", "codex/"],
+    "requireLinkedWorktree": true,
+    "requireForRiskTiers": ["high-risk"],
+    "requireForMutationTargets": true,
+    "cleanupOnSessionEnd": false
+  },
+  "orchestration": {
+    "enabled": true,
+    "contractsDir": ".harness/orchestration/contracts",
+    "runsDir": ".harness/orchestration",
+    "schemaPath": ".harness/schemas/orchestration-contract.schema.json",
+    "checker": ".harness/scripts/check-orchestration-contracts.mjs",
+    "runtimeValidator": ".harness/scripts/orchestration-schema-check.mjs",
+    "maxConcurrency": 3,
+    "maxAgents": 6,
+    "allowedPatterns": ["pipeline", "fanout", "fanin", "expert-pool", "red-team", "supervisor"],
+    "requireTaskForMutation": true,
+    "requireReviewerLanes": true
+  },
+  "models": {
+    "main": "claude-opus-4-8",
+    "reviewers": "claude-sonnet-4-6",
+    "explore": "claude-haiku-4-5"
+  },
+  "modelRouting": {
+    "reporter": ".harness/scripts/model-routing-report.mjs",
+    "lanes": [
+      {
+        "id": "review",
+        "description": "Read-only reviewer and critique lanes.",
+        "expectedModel": "claude-sonnet-4-6",
+        "matchSkills": ["review-this-pr", "*-reviewer", "security-reviewer", "architecture-reviewer"]
+      },
+      {
+        "id": "high-risk",
+        "description": "High-risk task contracts.",
+        "expectedModel": "claude-sonnet-4-6",
+        "requiresTaskId": true,
+        "riskTiers": ["high-risk"]
+      },
+      {
+        "id": "explore",
+        "description": "Read-only inspection, discovery, and status lanes.",
+        "expectedModel": "claude-haiku-4-5",
+        "matchSkills": ["inspect-*", "map-domain", "project-status", "context-health", "skill-discovery"]
+      },
+      {
+        "id": "eval",
+        "description": "Eval, benchmark, and regression lanes.",
+        "expectedModel": "claude-sonnet-4-6",
+        "matchSkills": ["eval-*", "regression-benchmark", "benchmark-suite", "model-profile"]
+      },
+      {
+        "id": "implementation",
+        "description": "Feature, bugfix, refactor, and story implementation lanes.",
+        "expectedModel": "claude-opus-4-8",
+        "requiresTaskId": true,
+        "matchSkills": ["add-feature", "debug-flow", "refactor-feature", "create-story", "feature-intake"]
+      }
+    ]
+  },
+  "readiness": {
+    "reporter": ".harness/scripts/harness-readiness.mjs",
+    "compileFromStrictness": true,
+    "strictRelease": true,
+    "strictDoctor": false,
+    "reviewPromotion": "fail",
+    "gates": [
+      { "id": "structural-baseline", "command": "node .harness/scripts/check-structural-baseline.mjs", "required": true },
+      { "id": "hook-integrity", "command": "node .harness/scripts/check-hook-integrity.mjs", "required": true },
+      { "id": "structural", "command": "npm run --silent harness:check", "required": true },
+      { "id": "skill-contracts", "command": "node .harness/scripts/check-skill-contracts.mjs", "required": true },
+      { "id": "skill-examples", "command": "node .harness/scripts/check-skill-examples.mjs", "required": true },
+      { "id": "trace-corpus", "command": "node .harness/scripts/check-trace-corpus.mjs", "required": true },
+      { "id": "review-coverage", "command": "node .harness/scripts/check-review-coverage.mjs --strict", "required": true },
+      { "id": "architecture-fitness", "command": "node .harness/scripts/check-architecture-fitness.mjs --strict", "required": true },
+      { "id": "policy-packs", "command": "node .harness/scripts/check-policy-packs.mjs", "required": true },
+      { "id": "stable-schemas", "command": "node .harness/scripts/check-stable-schemas.mjs --strict", "required": true },
+      { "id": "permissions-drift", "command": "node .harness/scripts/check-permissions-drift.mjs", "required": true },
+      { "id": "bypass-audit", "command": "node .harness/scripts/check-bypass-audit.mjs --strict", "required": true },
+      { "id": "eval-tasks", "command": "node .harness/scripts/check-eval-tasks.mjs", "required": true },
+      { "id": "adversarial-suite", "command": "node .harness/scripts/check-adversarial-suite.mjs", "required": true },
+      { "id": "failure-records", "command": "node .harness/scripts/check-failure-records.mjs", "required": true },
+      { "id": "operational-state", "command": "node .harness/scripts/harness-state.mjs check --strict", "required": true },
+      { "id": "harness-report", "command": "node .harness/scripts/harness-report.mjs --json --fail-on=fail --review-promotion=fail", "required": true, "ifExists": ".harness/scripts/harness-report.mjs" },
+      { "id": "orchestration-contracts", "command": "node .harness/scripts/check-orchestration-contracts.mjs --strict", "required": true },
+      { "id": "session-isolation", "command": "node .harness/scripts/check-session-isolation.mjs --strict", "required": true },
+      { "id": "task-evidence", "command": "node .harness/scripts/task-evidence-check.mjs --strict", "required": true },
+      { "id": "evidence-attestation", "command": "node .harness/scripts/check-evidence-attestation.mjs --strict", "required": true },
+      { "id": "model-routing", "command": "node .harness/scripts/model-routing-report.mjs --strict", "required": false },
+      { "id": "runtime-parity", "command": "node .harness/scripts/runtime-parity-report.mjs --strict", "required": false, "ifExists": ".harness/scripts/runtime-parity-report.mjs" },
+      { "id": "runtime-conformance", "command": "node .harness/scripts/runtime-conformance.mjs --strict", "required": false, "ifExists": ".harness/scripts/runtime-conformance.mjs" }
+    ]
+  },
+  "budgets": {
+    "perRunUsd": 2.0,
+    "perDayUsd": 10.0
+  },
+  "contextManagement": {
+    "maxInputTokensPerSession": 160000,
+    "warnAtPercent": 70,
+    "compactAtPercent": 85,
+    "targetOverflowReductionPercent": 40
+  },
+  "provider": {
+    "active": "claude",
+    "config": {
+      "claude": {
+        "model": "claude-sonnet-4-6",
+        "apiKey": "${ANTHROPIC_API_KEY}",
+        "baseUrl": "https://api.anthropic.com/v1"
+      },
+      "openai": {
+        "model": "gpt-4-turbo",
+        "apiKey": "${OPENAI_API_KEY}",
+        "baseUrl": "https://api.openai.com/v1"
+      },
+      "mock": {
+        "responses": ".harness/fixtures/mock-responses.json"
+      }
+    },
+    "routing": {
+      "enabled": false,
+      "rules": [
+        {
+          "condition": "estimatedTokens < 1000",
+          "provider": "claude",
+          "model": "claude-haiku-4-5"
+        },
+        {
+          "condition": "estimatedTokens >= 1000",
+          "provider": "claude",
+          "model": "claude-sonnet-4-6"
+        }
+      ]
+    }
+  }
+}

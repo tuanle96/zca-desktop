@@ -1,0 +1,31 @@
+{
+  "schemaVersion": 1,
+  "id": "debug-flow",
+  "name": "debug-flow",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user reports a bug, unexpected output, or \"this doesn't work\". Runs the dev server, drives the failing flow via Playwright MCP if installed (else captures stdout/stderr), and produces a minimal repro before any fix. Mirrors the OpenAI Chrome-DevTools-Protocol-into-runtime pattern at solo scale — verify the failure before you propose a fix.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(npm run dev*)",
+      "Bash(node ./src/server.js*)",
+      "Bash(npm run start:dev*)",
+      "Bash(uvicorn*)",
+      "Bash(python manage.py runserver*)",
+      "Bash(flask*)",
+      "Bash(python -m app*)",
+      "Bash(go run*)",
+      "Bash(cargo run*)",
+      "Bash(swift run*)",
+      "Bash(./gradlew run*)",
+      "Bash(curl*)",
+      "Bash(playwright*)",
+      "Bash(.harness/scripts/dev-up.sh)"
+    ],
+    "deny": []
+  }
+}

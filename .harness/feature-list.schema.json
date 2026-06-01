@@ -1,0 +1,90 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/feature-list.schema.json",
+  "title": "agent-harness-kit feature list",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["version", "project", "features"],
+  "properties": {
+    "$schema": {
+      "type": "string"
+    },
+    "version": {
+      "type": "string",
+      "minLength": 1
+    },
+    "project": {
+      "type": "string",
+      "minLength": 1
+    },
+    "features": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": true,
+        "required": ["id", "title", "passes"],
+        "properties": {
+          "id": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "passes": {
+            "type": "boolean"
+          },
+          "classification": {
+            "enum": ["tiny", "normal", "high-risk"]
+          },
+          "status": {
+            "type": "string"
+          },
+          "storyPath": {
+            "type": "string",
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "taskContractPath": {
+            "type": "string",
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "evidencePath": {
+            "type": "string",
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          },
+          "allowedLayers": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "requiresAdr": {
+            "type": "boolean"
+          },
+          "requiredReviewers": {
+            "type": "array",
+            "items": { "type": "string", "minLength": 1 },
+            "uniqueItems": true
+          },
+          "domain": {
+            "type": "string"
+          },
+          "steps": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": true,
+              "properties": {
+                "id": { "type": "string" },
+                "title": { "type": "string" },
+                "done": { "type": "boolean" },
+                "passes": { "type": "boolean" }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

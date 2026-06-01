@@ -1,0 +1,9 @@
+{
+  "id": "context-config",
+  "title": "Context management config is present",
+  "category": "regression",
+  "passThreshold": 1,
+  "checks": [
+    { "type": "json-key", "path": ".harness/config.json", "key": "contextManagement.maxInputTokensPerSession" }
+  ]
+}

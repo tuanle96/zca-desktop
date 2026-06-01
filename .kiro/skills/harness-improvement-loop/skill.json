@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "harness-improvement-loop",
+  "name": "harness-improvement-loop",
+  "version": "1.0.0",
+  "description": "Use this skill after a trace-backed agent failure or repeated harness friction. Turns the failure into a ranked harness change, records a prediction, applies the smallest prevention, and reruns the relevant eval/regression gate. This is the agent-harness-kit AHE-lite loop.",
+  "capabilities": [
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "Glob",
+      "Bash(git diff*)",
+      "Bash(npm run harness:eval*)",
+      "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+      "Bash(node .harness/scripts/record-failure.mjs*)",
+      "Bash(node .harness/scripts/check-failure-records.mjs*)",
+      "Bash(node .harness/scripts/harness-report.mjs*)",
+      "Bash(node .harness/scripts/regression-runner.mjs*)"
+    ],
+    "deny": []
+  }
+}

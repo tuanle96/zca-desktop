@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "review-this-pr",
+  "name": "review-this-pr",
+  "version": "1.0.0",
+  "description": "Use this skill to run a deterministic review of the current branch against its base — git diff base...HEAD, structural-test, baseline-monotonic check, and a markdown summary that lists each violating file with its layer rule. Replaces the \"ask the agent to review the diff\" pattern, which routinely misses cross-file drift.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git merge-base*)",
+      "Bash(node .kiro/skills/review-this-pr/scripts/pr-review-driver.mjs*)"
+    ],
+    "deny": []
+  }
+}

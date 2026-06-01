@@ -1,0 +1,96 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/eval-task.schema.json",
+  "title": "agent-harness-kit eval task",
+  "type": "object",
+  "additionalProperties": true,
+  "required": ["id", "input", "expected"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "description": {
+      "type": "string"
+    },
+    "input": {
+      "type": "string",
+      "minLength": 1
+    },
+    "expected": {
+      "type": "object",
+      "additionalProperties": true,
+      "properties": {
+        "filesChanged": {
+          "type": "object",
+          "required": ["min", "max"],
+          "properties": {
+            "min": { "type": "integer", "minimum": 0 },
+            "max": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "requiredFiles": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$))(?!.*\\\\).+$"
+          },
+          "uniqueItems": true
+        },
+        "skillsInvoked": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 },
+          "uniqueItems": true
+        },
+        "structuralTest": {
+          "enum": ["pass", "fail"]
+        },
+        "acceptanceCheck": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "^(?!\\s*(?:[Tt][Bb][Dd]|[Tt][Oo][Dd][Oo]|[Nn]/[Aa]|[Nn][Aa]|[Ff]ill me|[Rr]eplace me)\\s*$).+$"
+        },
+        "acceptanceChecks": {
+          "type": "array",
+          "items": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "^(?!\\s*(?:[Tt][Bb][Dd]|[Tt][Oo][Dd][Oo]|[Nn]/[Aa]|[Nn][Aa]|[Ff]ill me|[Rr]eplace me)\\s*$).+$"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["id", "command"],
+                "properties": {
+                  "id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^[a-z0-9][a-z0-9._-]*$"
+                  },
+                  "command": {
+                    "type": "string",
+                    "minLength": 1,
+                    "pattern": "^(?!\\s*(?:[Tt][Bb][Dd]|[Tt][Oo][Dd][Oo]|[Nn]/[Aa]|[Nn][Aa]|[Ff]ill me|[Rr]eplace me)\\s*$).+$"
+                  },
+                  "timeoutMs": { "type": "integer", "minimum": 1 }
+                }
+              }
+            ]
+          }
+        },
+        "rubric": {
+          "type": "string",
+          "minLength": 1
+        },
+        "noDeterministicChecksJustification": {
+          "type": "string",
+          "minLength": 20
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,34 @@
+{
+  "schemaVersion": 1,
+  "id": "no-internal-deep-imports",
+  "description": "Consumers must import domain public APIs instead of internal/deep modules.",
+  "kind": "forbid-import",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "normal",
+  "appliesTo": ["src/**/*.{ts,tsx,js,jsx,mjs,cjs}", "app/**/*.{ts,tsx,js,jsx,mjs,cjs}", "pages/**/*.{ts,tsx,js,jsx,mjs,cjs}"],
+  "allowPaths": ["src/templates/**"],
+  "forbiddenImports": [
+    {
+      "id": "internal-path",
+      "specifierRegex": "(^|/)internal(/|$)|(^|/)_[^/]+(/|$)",
+      "message": "Import through the domain public API instead of an internal/deep path."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/service/orders.ts",
+        "content": "import { createOrder } from '@/domains/orders';"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/service/orders.ts",
+        "content": "import { createOrder } from '@/domains/orders/internal/create-order';"
+      }
+    ]
+  }
+}

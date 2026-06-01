@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "id": "python-data-no-raw-env-outside-settings",
+  "description": "Python data pipeline code must not read environment variables outside config/settings modules.",
+  "kind": "forbid-pattern",
+  "severity": "block",
+  "owner": "architecture-reviewer",
+  "failureClass": "architecture-drift",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "**/*.py"
+  ],
+  "allowPaths": ["config/**", "settings.py", "src/settings.py", "src/config/**", "src/**/config/**", "src/**/settings.py", "src/templates/**"],
+  "forbiddenPatterns": [
+    {
+      "id": "os-environ",
+      "regex": "\\bos\\.environ\\b",
+      "message": "Pipeline code should receive typed settings instead of reading os.environ directly."
+    },
+    {
+      "id": "os-getenv",
+      "regex": "\\bos\\.getenv\\s*\\(",
+      "message": "Pipeline code should receive typed settings instead of calling os.getenv directly."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/config/settings.py",
+        "content": "import os\nDATABASE_URL = os.getenv('DATABASE_URL')"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/pipelines/import_orders.py",
+        "content": "import os\nDATABASE_URL = os.getenv('DATABASE_URL')"
+      }
+    ]
+  }
+}

@@ -1,0 +1,113 @@
+{
+  "name": "harness",
+  "description": "zca-desktop harness agent — layered architecture, structural gates, and evidence-backed done claims.",
+  "prompt": "You are the harness agent for this project. Follow the rules in .kiro/steering/harness.md. Read .harness/feature_list.json and the matching .harness/task-contracts/ contract before mutating source or config. Never claim a feature done without an evidence bundle.",
+  "tools": [
+    "read",
+    "write",
+    "shell",
+    "grep",
+    "glob",
+    "code",
+    "subagent"
+  ],
+  "allowedTools": [
+    "read",
+    "grep",
+    "glob",
+    "code"
+  ],
+  "resources": [
+    "file://.kiro/steering/**/*.md",
+    "skill://.kiro/skills/**/SKILL.md"
+  ],
+  "toolsSettings": {
+    "write": {
+      "deniedPaths": [
+        ".git/**",
+        "node_modules/**",
+        ".claude/**",
+        ".codex/**",
+        ".harness/structural-baseline.json",
+        ".harness/installed.json"
+      ]
+    },
+    "shell": {
+      "autoAllowReadonly": true,
+      "deniedCommands": [
+        "^git\\s+push",
+        "^git\\s+commit",
+        "rm\\s+-rf\\s+/"
+      ]
+    },
+    "crew": {
+      "availableAgents": [
+        "adapter-compatibility-reviewer",
+        "advisor",
+        "api-consistency-reviewer",
+        "architecture-reviewer",
+        "eval-rubric-reviewer",
+        "performance-reviewer",
+        "release-harness-reviewer",
+        "reliability-reviewer",
+        "security-reviewer",
+        "trace-failure-analyst"
+      ],
+      "trustedAgents": [
+        "adapter-compatibility-reviewer",
+        "advisor",
+        "api-consistency-reviewer",
+        "architecture-reviewer",
+        "eval-rubric-reviewer",
+        "performance-reviewer",
+        "release-harness-reviewer",
+        "reliability-reviewer",
+        "security-reviewer",
+        "trace-failure-analyst"
+      ]
+    }
+  },
+  "hooks": {
+    "agentSpawn": [
+      {
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/session-start.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 30000
+      }
+    ],
+    "userPromptSubmit": [
+      {
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/userprompt-guard.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 5000
+      }
+    ],
+    "preToolUse": [
+      {
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/pretooluse-skill-permission-guard.mjs\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec node \"$AHK_SCRIPT\"'",
+        "timeout_ms": 5000
+      },
+      {
+        "matcher": "shell",
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/pretooluse-bash-guard.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 5000
+      },
+      {
+        "matcher": "write|fs_write",
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/pretooluse-edit-guard.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 5000
+      }
+    ],
+    "postToolUse": [
+      {
+        "matcher": "write|fs_write",
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/structural-test-on-edit.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 30000
+      }
+    ],
+    "stop": [
+      {
+        "command": "bash -lc 'export AHK_RUNTIME=kiro; AHK_SCRIPT=\".harness/scripts/precompletion-checklist.sh\"; AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+        "timeout_ms": 20000
+      }
+    ]
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "inspect-app",
+  "name": "inspect-app",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user asks to \"test the UI\", \"check what the app looks like\", \"inspect the page\", \"verify the dev server is up\", or before claiming a UI feature is done. Boots the dev server via .harness/scripts/dev-up.sh and drives the failing flow through Playwright MCP if installed (else falls back to curl + lightweight HTML capture). Mirrors the OpenAI Chrome-DevTools-Protocol-into-runtime pattern at solo scale — verify the running app, don't trust the type checker alone.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(.harness/scripts/dev-up.sh)",
+      "Bash(curl*)",
+      "Bash(playwright*)"
+    ],
+    "deny": []
+  }
+}

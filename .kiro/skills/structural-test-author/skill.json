@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "structural-test-author",
+  "name": "structural-test-author",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user wants to add a new architectural rule, prevent a recurring agent mistake, or codify a pattern from golden-principles.md. Generates a {{#if isPython}}libcst-based Python{{else}}ts-morph-based TypeScript{{/if}} structural test plus the matching {{#if isPython}}import-linter contract{{else}}eslint-plugin-boundaries rule{{/if}} entry. Always prefer this over leaving rules in prose.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(npm test*)",
+      "Bash(pytest*)"
+    ],
+    "deny": []
+  }
+}

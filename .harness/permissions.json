@@ -1,0 +1,365 @@
+{
+  "version": 1,
+  "default": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "TodoWrite",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(ls*)",
+      "Bash(rg*)",
+      "Bash(find*)",
+      "Bash(node .harness/scripts/*)"
+    ],
+    "deny": [
+      "Bash(git push*)",
+      "Bash(git commit*)"
+    ]
+  },
+  "skills": {
+    "add-adr": {
+      "allow": [
+        "Read",
+        "Write",
+        "Glob"
+      ],
+      "deny": []
+    },
+    "add-feature": {
+      "allow": [
+        "Read",
+        "Edit",
+        "Write",
+        "Bash(npm run*)",
+        "Bash(pytest*)",
+        "Bash(ruff*)",
+        "Bash(git status*)",
+        "Bash(git diff*)",
+        "Bash(git log*)",
+        "Glob",
+        "Grep"
+      ],
+      "deny": []
+    },
+    "benchmark-suite": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/bench-runner.mjs*)",
+        "Bash(node .harness/scripts/bench-compare.mjs*)"
+      ],
+      "deny": []
+    },
+    "context-health": {
+      "allow": [
+        "Read",
+        "Bash(node .kiro/skills/context-health/context-health.mjs*)"
+      ],
+      "deny": []
+    },
+    "create-story": {
+      "allow": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(node .kiro/skills/create-story/create-story.mjs*)"
+      ],
+      "deny": []
+    },
+    "debug-flow": {
+      "allow": [
+        "Read",
+        "Bash(npm run dev*)",
+        "Bash(node ./src/server.js*)",
+        "Bash(npm run start:dev*)",
+        "Bash(uvicorn*)",
+        "Bash(python manage.py runserver*)",
+        "Bash(flask*)",
+        "Bash(python -m app*)",
+        "Bash(go run*)",
+        "Bash(cargo run*)",
+        "Bash(swift run*)",
+        "Bash(./gradlew run*)",
+        "Bash(curl*)",
+        "Bash(playwright*)",
+        "Bash(.harness/scripts/dev-up.sh)"
+      ],
+      "deny": []
+    },
+    "deliver-html": {
+      "allow": [
+        "Read",
+        "Write",
+        "Bash(node .kiro/skills/deliver-html/scripts/wrap-html.mjs*)",
+        "Bash(cat*)",
+        "Bash(ls*)"
+      ],
+      "deny": []
+    },
+    "doc-drift-scan": {
+      "allow": [
+        "Read",
+        "Glob",
+        "Grep",
+        "Bash(test -e*)",
+        "Bash(command -v*)",
+        "Bash(node .kiro/skills/doc-drift-scan/scripts/scan-paths.mjs*)"
+      ],
+      "deny": []
+    },
+    "eval-rubric-author": {
+      "allow": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash(npm run harness:eval*)",
+        "Bash(npm run check:eval-tasks*)",
+        "Bash(node .harness/scripts/eval-runner-v2.mjs*)",
+        "Bash(node .harness/scripts/check-eval-tasks.mjs*)"
+      ],
+      "deny": []
+    },
+    "eval-runner": {
+      "allow": [
+        "Bash(npm run harness:eval*)",
+        "Bash(python -m harness.eval_runner*)",
+        "Read"
+      ],
+      "deny": []
+    },
+    "feature-intake": {
+      "allow": [
+        "Read",
+        "Write",
+        "Edit",
+        "Bash(node .kiro/skills/feature-intake/scripts/classify.mjs*)"
+      ],
+      "deny": []
+    },
+    "garbage-collection": {
+      "allow": [
+        "Read",
+        "Glob",
+        "Grep",
+        "Bash(npm run*)",
+        "Bash(pytest*)",
+        "Bash(ruff*)",
+        "Bash(node .kiro/skills/garbage-collection/scripts/gc-classify.mjs*)",
+        "Bash(git status*)",
+        "Bash(git diff*)",
+        "Bash(git log*)",
+        "Bash(gh pr create*)"
+      ],
+      "deny": []
+    },
+    "harness-improvement-loop": {
+      "allow": [
+        "Read",
+        "Write",
+        "Edit",
+        "Grep",
+        "Glob",
+        "Bash(git diff*)",
+        "Bash(npm run harness:eval*)",
+        "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+        "Bash(node .harness/scripts/record-failure.mjs*)",
+        "Bash(node .harness/scripts/check-failure-records.mjs*)",
+        "Bash(node .harness/scripts/harness-report.mjs*)",
+        "Bash(node .harness/scripts/regression-runner.mjs*)"
+      ],
+      "deny": []
+    },
+    "i18n-add-locale": {
+      "allow": [
+        "Read",
+        "Write",
+        "Bash(node .harness/scripts/locale-scaffold.mjs*)"
+      ],
+      "deny": []
+    },
+    "inspect-app": {
+      "allow": [
+        "Read",
+        "Bash(.harness/scripts/dev-up.sh)",
+        "Bash(curl*)",
+        "Bash(playwright*)"
+      ],
+      "deny": []
+    },
+    "inspect-module": {
+      "allow": [
+        "Read",
+        "Glob",
+        "Grep",
+        "Bash(git log*)",
+        "Bash(git ls-tree*)",
+        "Bash(tree*)",
+        "Bash(node .kiro/skills/inspect-module/scripts/module-summary.mjs*)"
+      ],
+      "deny": []
+    },
+    "map-domain": {
+      "allow": [
+        "Read",
+        "Bash(node .kiro/skills/map-domain/scripts/domain-map.mjs*)"
+      ],
+      "deny": []
+    },
+    "middleware-pipeline": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/middleware-demo.mjs*)"
+      ],
+      "deny": []
+    },
+    "model-profile": {
+      "allow": [
+        "Read",
+        "Write",
+        "Bash(node .harness/scripts/model-routing-report.mjs*)",
+        "Bash(node .harness/scripts/bench-runner.mjs*)",
+        "Bash(node .harness/scripts/bench-compare.mjs*)",
+        "Bash(node .harness/scripts/regression-runner.mjs*)",
+        "Bash(node .harness/scripts/regression-compare.mjs*)"
+      ],
+      "deny": []
+    },
+    "orchestrate": {
+      "allow": [
+        "Read",
+        "Grep",
+        "Glob",
+        "LS",
+        "Bash(node .kiro/skills/orchestrate/orchestrate.mjs*)",
+        "Bash(node .harness/scripts/orchestration-contract-from-task.mjs*)",
+        "Bash(node .harness/scripts/session-replay.mjs*)",
+        "Bash(node .harness/scripts/cost-tracker.mjs*)",
+        "Bash(node .harness/scripts/orchestration-schema-check.mjs*)"
+      ],
+      "deny": [
+        "Write",
+        "Edit",
+        "MultiEdit"
+      ]
+    },
+    "project-status": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/project-status-report.mjs*)",
+        "Bash(node .harness/scripts/project-memory.mjs*)"
+      ],
+      "deny": []
+    },
+    "propose-harness-improvement": {
+      "allow": [
+        "Read",
+        "Edit",
+        "Write",
+        "Bash(git diff*)",
+        "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+        "Bash(node .harness/scripts/record-failure.mjs*)",
+        "Bash(node .harness/scripts/check-failure-records.mjs*)"
+      ],
+      "deny": []
+    },
+    "refactor-feature": {
+      "allow": [
+        "Read",
+        "Edit",
+        "Bash(git diff*)",
+        "Bash(node .kiro/skills/refactor-feature/scripts/feature-diff.mjs*)"
+      ],
+      "deny": []
+    },
+    "regression-benchmark": {
+      "allow": [
+        "Read",
+        "Grep",
+        "Glob",
+        "LS",
+        "Bash(node .harness/scripts/regression-runner.mjs*)",
+        "Bash(node .harness/scripts/regression-compare.mjs*)",
+        "Bash(node .harness/scripts/regression-report.mjs*)"
+      ],
+      "deny": []
+    },
+    "remember-project": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/project-memory.mjs*)"
+      ],
+      "deny": []
+    },
+    "review-this-pr": {
+      "allow": [
+        "Read",
+        "Bash(git diff*)",
+        "Bash(git log*)",
+        "Bash(git merge-base*)",
+        "Bash(node .kiro/skills/review-this-pr/scripts/pr-review-driver.mjs*)"
+      ],
+      "deny": []
+    },
+    "setup-nightly-eval": {
+      "allow": [
+        "Read",
+        "Bash(ls*)",
+        "Bash(cat*)",
+        "Bash(test*)",
+        "Bash(gh workflow run*)",
+        "Bash(gh run watch*)",
+        "Bash(gh secret list*)"
+      ],
+      "deny": []
+    },
+    "skill-discovery": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/skill-discovery.mjs*)",
+        "Bash(node .harness/scripts/skill-load.mjs*)"
+      ],
+      "deny": []
+    },
+    "structural-test-author": {
+      "allow": [
+        "Read",
+        "Edit",
+        "Write",
+        "Bash(npm test*)",
+        "Bash(pytest*)"
+      ],
+      "deny": []
+    },
+    "trace-analyzer": {
+      "allow": [
+        "Read",
+        "Grep",
+        "Glob",
+        "Bash(git diff*)",
+        "Bash(git log*)",
+        "Bash(node .harness/scripts/harness-report.mjs*)"
+      ],
+      "deny": []
+    },
+    "verify-ui": {
+      "allow": [
+        "Bash(node .harness/scripts/verify-ui.mjs*)"
+      ],
+      "deny": []
+    },
+    "write-skill": {
+      "allow": [
+        "Read",
+        "Edit",
+        "Write",
+        "Bash(ls*)"
+      ],
+      "deny": []
+    }
+  }
+}

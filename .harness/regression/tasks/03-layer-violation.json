@@ -1,0 +1,31 @@
+{
+  "id": "03-layer-violation",
+  "failureClass": "layer-violation",
+  "description": "Agent introduced backward import",
+  "input": "Regression task 03-layer-violation: create or edit `.harness/tmp/regression/03-layer-violation/proof.txt` using Write/Edit and include the text `layer-violation` plus a one-line prevention note. Do not edit unrelated files. If this task mentions a required skill in expected checks, invoke it first.",
+  "expected": {
+    "filesChanged": {
+      "min": 1,
+      "max": 4
+    },
+    "requiredFiles": [
+      ".harness/tmp/regression/03-layer-violation/proof.txt"
+    ],
+    "hiddenChecks": [
+      {
+        "type": "file-contains",
+        "path": ".harness/tmp/regression/03-layer-violation/proof.txt",
+        "text": "layer-violation"
+      },
+      {
+        "type": "max-files",
+        "max": 4
+      },
+      {
+        "type": "no-file-contains",
+        "path": ".harness/tmp/regression/03-layer-violation/proof.txt",
+        "text": "backward-import-ok"
+      }
+    ]
+  }
+}

@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "provider-adr-gap",
+  "title": "Provider or dependency contract changes requiring ADR must keep the review gate",
+  "failureMode": "adr-gap",
+  "severity": "high",
+  "probe": "task-evidence-provider-adr-gap",
+  "prevention": {
+    "gate": "task-evidence",
+    "failureClass": "architecture-drift"
+  },
+  "expected": {
+    "exitCode": 1,
+    "stderrIncludes": [
+      "task-evidence-check: FAILED",
+      "requiresAdr=true should require the review gate"
+    ]
+  }
+}

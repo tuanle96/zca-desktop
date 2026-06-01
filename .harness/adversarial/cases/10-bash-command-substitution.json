@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "bash-command-substitution",
+  "title": "Shell command substitution hidden inside a read command is denied",
+  "failureMode": "permission-bypass",
+  "severity": "critical",
+  "probe": "skill-permission-bash-command-substitution",
+  "prevention": {
+    "gate": "skill-permission-guard",
+    "failureClass": "tool-misuse"
+  },
+  "expected": {
+    "exitCode": 0,
+    "stdoutIncludes": [
+      "\"permissionDecision\":\"deny\"",
+      "Task \\\"read-task\\\" is not allowed to use Bash"
+    ]
+  }
+}

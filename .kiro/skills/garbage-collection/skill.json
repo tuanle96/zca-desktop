@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "garbage-collection",
+  "name": "garbage-collection",
+  "version": "1.0.0",
+  "description": "Use this skill on Fridays, before tagging a release, or when the user mentions \"cleanup\", \"tech debt\", \"AI slop\", \"GC\", or \"garbage collection\". Runs the deterministic linters, structural tests, and doc-drift scans, then proposes the top-3 highest-leverage cleanups (with risk/cost/benefit) — does NOT auto-merge. This is the solo-dev shrunk version of OpenAI's Friday garbage-collection ritual.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(npm run*)",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(node .kiro/skills/garbage-collection/scripts/gc-classify.mjs*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(gh pr create*)"
+    ],
+    "deny": []
+  }
+}

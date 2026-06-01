@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "classes": [
+    {
+      "id": "context-miss",
+      "description": "The agent lacked repo-local context or read the wrong context.",
+      "preferredPrevention": "docs"
+    },
+    {
+      "id": "false-done",
+      "description": "The agent claimed completion without sufficient evidence.",
+      "preferredPrevention": "script"
+    },
+    {
+      "id": "architecture-drift",
+      "description": "The change violated intended boundaries, dependency direction, or provider contracts.",
+      "preferredPrevention": "structural-rule"
+    },
+    {
+      "id": "test-gap",
+      "description": "The task was possible to ship because the relevant behavior had no deterministic check.",
+      "preferredPrevention": "eval-task"
+    },
+    {
+      "id": "doc-drift",
+      "description": "Docs, claims, registry, or templates diverged from actual behavior.",
+      "preferredPrevention": "script"
+    },
+    {
+      "id": "tool-misuse",
+      "description": "The agent used the wrong tool, tool mode, command, or rewrite mechanism.",
+      "preferredPrevention": "skill"
+    },
+    {
+      "id": "permission-gap",
+      "description": "Tool permissions allowed too much, denied required work, or drifted from skill contracts.",
+      "preferredPrevention": "permission-policy"
+    },
+    {
+      "id": "runtime-gap",
+      "description": "The harness behaved differently in real Claude/Codex runtime than in synthetic tests.",
+      "preferredPrevention": "hook"
+    },
+    {
+      "id": "eval-gap",
+      "description": "The eval rubric or fixture measured process but missed product truth.",
+      "preferredPrevention": "eval-task"
+    },
+    {
+      "id": "cost-spike",
+      "description": "The agent spent excessive tokens, turns, or API cost for the task risk.",
+      "preferredPrevention": "skill"
+    },
+    {
+      "id": "model-behavior",
+      "description": "The failure is tied to model behavior after the harness supplied adequate context and checks.",
+      "preferredPrevention": "subagent"
+    }
+  ],
+	  "recordSchemaPath": ".harness/schemas/failure-record.schema.json",
+	  "recordsDir": ".harness/failures/records",
+	  "maxProposedAgeDays": 14
+	}

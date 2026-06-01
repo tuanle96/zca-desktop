@@ -1,0 +1,122 @@
+{
+  "schemaVersion": 1,
+  "id": "python-data",
+  "title": "Python Data Pipeline",
+  "description": "Governance defaults for Python data ingestion, transformation, and analytics pipelines where schema validation and safe artifact handling matter.",
+  "stacks": [
+    {
+      "language": "python",
+      "frameworks": ["data-pipeline", "pandas", "polars", "etl"]
+    }
+  ],
+  "strictnessDefault": "standard",
+  "structuralRules": [
+    "no-raw-env-outside-config",
+    "require-validation-at-boundary",
+    "no-internal-deep-imports"
+  ],
+  "fitnessRules": [
+    {
+      "id": "python-data-schema-after-load",
+      "path": "fitness-rules/python-data-schema-after-load.json",
+      "owner": "reliability-reviewer"
+    },
+    {
+      "id": "python-data-no-raw-env-outside-settings",
+      "path": "fitness-rules/python-data-no-raw-env-outside-settings.json",
+      "owner": "architecture-reviewer"
+    },
+    {
+      "id": "python-data-no-unsafe-deserialization",
+      "path": "fitness-rules/python-data-no-unsafe-deserialization.json",
+      "owner": "security-reviewer"
+    }
+  ],
+  "taskContractDefaults": {
+    "scope": {
+      "allowedLayers": ["config", "ingest", "transform", "validate", "store", "report"]
+    },
+    "doneRequires": ["structural", "lint", "tests", "smoke", "review", "evidence-bundle"],
+    "riskRouting": [
+      {
+        "match": ["pipelines/**", "src/**/pipelines/**", "src/**/etl/**", "jobs/**", "src/config/**"],
+        "riskTier": "high-risk",
+        "requiredReviewers": ["advisor", "reliability-reviewer", "security-reviewer"]
+      },
+      {
+        "match": ["notebooks/**", "reports/**", "scripts/**"],
+        "riskTier": "normal",
+        "requiredReviewers": ["advisor", "reliability-reviewer"]
+      }
+    ]
+  },
+  "reviewerDefaults": {
+    "required": ["advisor"],
+    "conditional": [
+      {
+        "reviewer": "reliability-reviewer",
+        "whenChanged": ["pipelines/**", "src/**/pipelines/**", "src/**/etl/**", "jobs/**", "schemas/**"]
+      },
+      {
+        "reviewer": "security-reviewer",
+        "whenChanged": ["src/**/io/**", "src/**/artifacts/**", "src/config/**", "requirements*.txt", "pyproject.toml"]
+      }
+    ]
+  },
+  "evidenceRequirements": [
+    {
+      "id": "data-schema-proof",
+      "whenChanged": ["pipelines/**", "src/**/pipelines/**", "src/**/etl/**", "jobs/**"],
+      "requires": ["attested test command", "schema validation proof", "sample fixture path"]
+    },
+    {
+      "id": "artifact-safety-proof",
+      "whenChanged": ["src/**/io/**", "src/**/artifacts/**", "jobs/**"],
+      "requires": ["safe serialization proof", "no unsafe pickle/joblib load in untrusted paths"]
+    },
+    {
+      "id": "pipeline-smoke-proof",
+      "whenChanged": ["pipelines/**", "src/**/pipelines/**", "scripts/**"],
+      "requires": ["smoke command on tiny fixture", "diff summary", "advisor pass decision"]
+    }
+  ],
+  "evalTemplates": [
+    {
+      "id": "data-load-schema-validation",
+      "description": "A pipeline that loads CSV/JSON/Parquet/Excel data must validate the resulting frame before transform/storage."
+    },
+    {
+      "id": "unsafe-deserialization-block",
+      "description": "Untrusted pipeline code must not use pickle.load, pickle.loads, or joblib.load without an approved trusted boundary."
+    }
+  ],
+  "verifyUiFlows": [
+    {
+      "id": "pipeline-fixture-smoke",
+      "routes": ["fixtures/sample.csv", "fixtures/sample.json"],
+      "assertions": ["pipeline runs against a tiny fixture", "row count and required columns are asserted"]
+    },
+    {
+      "id": "report-artifact-smoke",
+      "routes": ["reports/latest.html", "reports/latest.json"],
+      "assertions": ["report artifact is generated", "summary metrics are present and non-placeholder"]
+    }
+  ],
+  "antiPatterns": [
+    {
+      "id": "dataframe-without-schema",
+      "description": "A pipeline loads a DataFrame from external data and immediately transforms or stores it without validation.",
+      "fix": "Validate with pandera, great_expectations, pydantic, or a local schema.validate step before use."
+    },
+    {
+      "id": "raw-env-in-transform",
+      "description": "Pipeline transform or job code reads os.environ or os.getenv directly.",
+      "fix": "Move environment reads into config/settings modules and pass typed settings into pipeline code."
+    },
+    {
+      "id": "unsafe-model-or-artifact-load",
+      "description": "Pipeline code uses pickle.load, pickle.loads, or joblib.load in untrusted runtime paths.",
+      "fix": "Use safe formats such as JSON/Parquet where possible, or isolate deserialization behind a reviewed trusted artifact loader."
+    }
+  ]
+}

@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "trace-analyzer",
+  "name": "trace-analyzer",
+  "version": "1.0.0",
+  "description": "Use this skill when an eval, regression run, hook, or long agent session fails and the next step depends on trace evidence. Classifies the failure from telemetry, transcripts, eval JSONL, git diff, and hook output before proposing a fix. Prevents prompt-only guesses by requiring a trace-backed failure class.",
+  "capabilities": [
+    "observability",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(node .harness/scripts/harness-report.mjs*)"
+    ],
+    "deny": []
+  }
+}

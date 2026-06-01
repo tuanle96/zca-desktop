@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "id": "python-data-no-unsafe-deserialization",
+  "description": "Python data pipelines must not deserialize pickle/joblib artifacts in untrusted runtime code.",
+  "kind": "forbid-pattern",
+  "severity": "block",
+  "owner": "security-reviewer",
+  "failureClass": "tool-misuse",
+  "prevention": "structural-rule",
+  "strictnessTier": "standard",
+  "appliesTo": [
+    "pipelines/**/*.py",
+    "jobs/**/*.py",
+    "scripts/**/*.py",
+    "src/**/*.py"
+  ],
+  "allowPaths": ["src/trusted_artifacts/**", "src/**/trusted_artifacts/**", "src/templates/**"],
+  "forbiddenPatterns": [
+    {
+      "id": "pickle-load",
+      "regex": "\\bpickle\\.loads?\\s*\\(",
+      "message": "Untrusted pipeline code must not load pickle artifacts directly."
+    },
+    {
+      "id": "joblib-load",
+      "regex": "\\bjoblib\\.load\\s*\\(",
+      "message": "Untrusted pipeline code must not load joblib artifacts directly."
+    }
+  ],
+  "examples": {
+    "pass": [
+      {
+        "path": "src/trusted_artifacts/load_model.py",
+        "content": "import joblib\nmodel = joblib.load(path)"
+      }
+    ],
+    "fail": [
+      {
+        "path": "src/pipelines/score.py",
+        "content": "import pickle\nmodel = pickle.load(open(path, 'rb'))"
+      }
+    ]
+  }
+}

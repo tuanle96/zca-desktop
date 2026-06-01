@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "eval-runner",
+  "name": "eval-runner",
+  "version": "1.0.0",
+  "description": "Use this skill whenever a skill, subagent, or hook is changed, before merging to main, or when the user mentions \"eval\", \"regression test for the harness\", or \"is the harness still working\". This skill is a thin wrapper — it runs a single shell command (`npm run harness:eval` or `python -m harness.eval_runner`) and summarizes the JSONL output. Do not implement the eval logic yourself; the runner is already deterministic.",
+  "capabilities": [
+    "evaluation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Bash(npm run harness:eval*)",
+      "Bash(python -m harness.eval_runner*)",
+      "Read"
+    ],
+    "deny": []
+  }
+}

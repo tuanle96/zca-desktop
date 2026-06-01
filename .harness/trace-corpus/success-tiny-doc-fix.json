@@ -1,0 +1,69 @@
+{
+  "schemaVersion": 1,
+  "id": "success-tiny-doc-fix",
+  "case": "success-tiny",
+  "title": "Tiny documentation fix completed with evidence",
+  "sanitized": true,
+  "source": "synthetic-regression-pattern",
+  "runtime": "claude",
+  "task": {
+    "id": "docs-quickstart-copy",
+    "type": "docs",
+    "riskTier": "tiny",
+    "acceptance": ["quickstart-copy-updated", "markdown-check-passed"]
+  },
+  "outcome": {
+    "status": "pass",
+    "failureClass": null,
+    "blockedBy": []
+  },
+  "modelRouting": {
+    "lane": "explore",
+    "model": "claude-haiku-4-5",
+    "expectedModel": "claude-haiku-4-5",
+    "success": true,
+    "costUsd": 0.004,
+    "inputTokens": 900,
+    "outputTokens": 220
+  },
+  "evalSignals": [
+    {
+      "id": "markdown-check",
+      "kind": "command",
+      "status": "pass",
+      "summary": "Markdown structure check passed."
+    },
+    {
+      "id": "diff-scope",
+      "kind": "gate",
+      "status": "pass",
+      "summary": "Only quickstart documentation changed."
+    }
+  ],
+  "events": [
+    {
+      "step": 1,
+      "actor": "user",
+      "event": "task-requested",
+      "summary": "Asked for a small quickstart copy correction."
+    },
+    {
+      "step": 2,
+      "actor": "agent",
+      "event": "doc-edited",
+      "summary": "Updated the quickstart wording within scope."
+    },
+    {
+      "step": 3,
+      "actor": "harness",
+      "event": "evidence-accepted",
+      "summary": "Evidence bundle contained a passing markdown check."
+    }
+  ],
+  "redactions": [
+    {
+      "kind": "repo",
+      "replacement": "repo://demo"
+    }
+  ]
+}

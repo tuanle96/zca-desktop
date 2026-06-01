@@ -1,0 +1,127 @@
+{
+  "schemaVersion": 1,
+  "id": "api-backend",
+  "title": "API Backend",
+  "description": "Governance defaults for TypeScript API services with route handlers, service/repository boundaries, provider adapters, and HTTP smoke checks.",
+  "stacks": [
+    {
+      "language": "typescript",
+      "frameworks": ["express", "fastify", "hono", "nestjs", "node-api"]
+    },
+    {
+      "language": "javascript",
+      "frameworks": ["express", "fastify", "hono", "node-api"]
+    }
+  ],
+  "strictnessDefault": "standard",
+  "structuralRules": [
+    "no-raw-env-outside-config",
+    "no-provider-bypass",
+    "require-validation-at-boundary",
+    "no-internal-deep-imports"
+  ],
+  "fitnessRules": [
+    {
+      "id": "api-request-input-validated",
+      "path": "fitness-rules/api-request-input-validated.json",
+      "owner": "security-reviewer"
+    },
+    {
+      "id": "api-no-raw-env-outside-config",
+      "path": "fitness-rules/api-no-raw-env-outside-config.json",
+      "owner": "architecture-reviewer"
+    },
+    {
+      "id": "api-provider-sdk-adapter-boundary",
+      "path": "fitness-rules/api-provider-sdk-adapter-boundary.json",
+      "owner": "architecture-reviewer"
+    }
+  ],
+  "taskContractDefaults": {
+    "scope": {
+      "allowedLayers": ["types", "config", "repo", "service", "runtime", "api"]
+    },
+    "doneRequires": ["structural", "lint", "tests", "smoke", "review", "evidence-bundle"],
+    "riskRouting": [
+      {
+        "match": ["src/**/routes/**", "src/**/controllers/**", "src/**/handlers/**", "src/auth/**", "src/providers/**", "src/config/**"],
+        "riskTier": "high-risk",
+        "requiredReviewers": ["advisor", "security-reviewer", "architecture-reviewer"]
+      },
+      {
+        "match": ["src/**/service/**", "src/**/repositories/**", "src/**/repo/**", "package.json"],
+        "riskTier": "normal",
+        "requiredReviewers": ["advisor", "architecture-reviewer"]
+      }
+    ]
+  },
+  "reviewerDefaults": {
+    "required": ["advisor"],
+    "conditional": [
+      {
+        "reviewer": "security-reviewer",
+        "whenChanged": ["src/**/routes/**", "src/**/controllers/**", "src/**/handlers/**", "src/auth/**", "src/config/**"]
+      },
+      {
+        "reviewer": "architecture-reviewer",
+        "whenChanged": ["src/providers/**", "src/**/adapters/**", "src/**/repo/**", "src/**/repositories/**", "package.json"]
+      }
+    ]
+  },
+  "evidenceRequirements": [
+    {
+      "id": "request-validation-proof",
+      "whenChanged": ["src/**/routes/**", "src/**/controllers/**", "src/**/handlers/**"],
+      "requires": ["attested test command", "input validation proof", "advisor pass decision"]
+    },
+    {
+      "id": "provider-adapter-proof",
+      "whenChanged": ["src/providers/**", "src/**/adapters/**", "package.json"],
+      "requires": ["adapter boundary proof", "no direct SDK import outside provider boundary"]
+    },
+    {
+      "id": "api-smoke-proof",
+      "whenChanged": ["src/**/routes/**", "src/**/controllers/**", "src/**/handlers/**", "src/server.*"],
+      "requires": ["HTTP smoke command or artifact", "diff summary", "advisor pass decision"]
+    }
+  ],
+  "evalTemplates": [
+    {
+      "id": "api-route-validation",
+      "description": "A route/controller that reads request body/query/params must validate input before calling service logic."
+    },
+    {
+      "id": "api-provider-boundary",
+      "description": "Provider SDK imports must stay in adapter/provider modules, not service or route code."
+    }
+  ],
+  "verifyUiFlows": [
+    {
+      "id": "health-smoke",
+      "routes": ["/health", "/ready"],
+      "assertions": ["endpoint returns a 2xx response", "response body identifies service readiness"]
+    },
+    {
+      "id": "openapi-smoke",
+      "routes": ["/openapi.json", "/docs"],
+      "assertions": ["contract endpoint is reachable or intentionally disabled", "route list matches changed handlers"]
+    }
+  ],
+  "antiPatterns": [
+    {
+      "id": "unvalidated-request-handler",
+      "description": "A handler reads req.body, req.query, req.params, request.json(), or ctx.req without schema validation.",
+      "fix": "Validate through zod/yup/joi/class-validator or a local request schema before calling service code."
+    },
+    {
+      "id": "provider-sdk-in-service",
+      "description": "A service module imports Stripe, OpenAI, AWS, Firebase, Twilio, or another external SDK directly.",
+      "fix": "Move SDK usage into provider/adapter/integration modules and expose a narrow local interface."
+    },
+    {
+      "id": "raw-env-in-runtime-code",
+      "description": "Route, service, or repository code reads process.env directly.",
+      "fix": "Move environment reads into config/env modules and pass typed config values inward."
+    }
+  ]
+}

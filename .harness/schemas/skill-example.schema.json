@@ -1,0 +1,47 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Skill Example Trace Event",
+  "description": "One JSONL event inside a skill examples/*.trace.jsonl file.",
+  "type": "object",
+  "required": ["schemaVersion", "skill", "traceId", "case", "event"],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "skill": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9-]*$"
+    },
+    "traceId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "case": {
+      "type": "string",
+      "enum": ["good", "bad-false-done", "bad-overbroad-edit"]
+    },
+    "event": {
+      "type": "string",
+      "minLength": 1
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "expectedOutcome": {
+      "type": "string",
+      "enum": ["pass", "continue", "ask-user"]
+    },
+    "expectedBlock": {
+      "type": "string",
+      "minLength": 1
+    },
+    "failureClass": {
+      "type": "string",
+      "enum": ["false-done", "permission-gap"]
+    },
+    "evidence": {
+      "type": "array",
+      "items": { "type": "string" }
+    }
+  },
+  "additionalProperties": true
+}

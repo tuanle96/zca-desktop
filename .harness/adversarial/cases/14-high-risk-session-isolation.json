@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "id": "high-risk-session-isolation",
+  "title": "High-risk mutation on a protected primary worktree is rejected",
+  "failureMode": "isolation-gap",
+  "severity": "high",
+  "probe": "session-isolation-high-risk-primary-worktree",
+  "prevention": {
+    "gate": "session-isolation",
+    "failureClass": "runtime-gap"
+  },
+  "expected": {
+    "exitCode": 2,
+    "stdoutIncludes": [
+      "\"status\": \"failed\"",
+      "\"requiresIsolation\": true",
+      "current branch \\\"main\\\" is protected",
+      "requires a linked git worktree"
+    ]
+  }
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/main/src/templates/.harness/schemas/orchestration-contract.schema.json",
+  "title": "agent-harness-kit orchestration contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schemaVersion",
+    "id",
+    "pattern",
+    "maxConcurrency",
+    "permissionProfile",
+    "requiredArtifacts",
+    "lanes"
+  ],
+  "properties": {
+    "schemaVersion": { "const": 1 },
+    "id": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "taskId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "featureId": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9._-]*$"
+    },
+    "pattern": {
+      "enum": ["pipeline", "fanout", "fanin", "expert-pool", "red-team", "supervisor"]
+    },
+    "maxConcurrency": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "permissionProfile": {
+      "enum": ["read-only", "review-only", "mixed", "mutation"]
+    },
+    "requiredReviewers": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^[a-z0-9][a-z0-9._-]*$"
+      },
+      "uniqueItems": true,
+      "default": []
+    },
+    "requiredArtifacts": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "enum": ["manifest", "summary", "transcripts", "synthesis", "review-decisions", "evidence"]
+      },
+      "uniqueItems": true
+    },
+    "lanes": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["id", "title", "role", "toolPolicy", "prompt", "outputPath"],
+        "allOf": [
+          {
+            "if": {
+              "properties": { "toolPolicy": { "const": "mutating" } },
+              "required": ["toolPolicy"]
+            },
+            "then": {
+              "required": ["requiresEvidence"]
+            }
+          },
+          {
+            "if": {
+              "properties": { "requiredReviewer": { "type": "string" } },
+              "required": ["requiredReviewer"]
+            },
+            "then": {
+              "properties": {
+                "role": { "enum": ["review", "red-team"] },
+                "toolPolicy": { "enum": ["read-only", "review-only"] }
+              }
+            }
+          }
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "title": {
+            "type": "string",
+            "minLength": 1
+          },
+          "role": {
+            "enum": ["explore", "plan", "implementation", "review", "red-team", "synthesis", "supervisor"]
+          },
+          "toolPolicy": {
+            "enum": ["read-only", "review-only", "mutating"]
+          },
+          "prompt": {
+            "type": "string",
+            "minLength": 1
+          },
+          "required": {
+            "type": "boolean",
+            "default": true
+          },
+          "requiredReviewer": {
+            "type": "string",
+            "pattern": "^[a-z0-9][a-z0-9._-]*$"
+          },
+          "requiresEvidence": {
+            "const": true
+          },
+          "outputPath": {
+            "type": "string",
+            "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+          }
+        }
+      }
+    }
+  }
+}

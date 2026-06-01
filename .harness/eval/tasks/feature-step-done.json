@@ -1,0 +1,19 @@
+{
+  "id": "feature-step-done",
+  "description": "Verifies that when an agent implements a feature step, it flips passes:false→true in .harness/feature_list.json AND adds a tests[] reference (or testCommit). Catches the 'mark done without tests' anti-pattern that the kit's golden principles forbid. Graded by .harness/eval/rubrics/feature-step-done.mjs.",
+  "input": ".harness/feature_list.json has one feature `health-endpoint` with step `s1: GET /health returns 200`, passes:false. Implement the endpoint, write a smoke test that hits it, then update .harness/feature_list.json#features[0].steps[0] with passes:true AND tests:[<test_file_path>]. Do not delete or reorder other entries.",
+  "expected": {
+    "filesChanged": { "min": 2, "max": 5 },
+    "requiredFiles": [
+      ".harness/feature_list.json"
+    ],
+    "acceptanceChecks": [
+      {
+        "id": "feature-list-done-proof",
+        "command": "node .claude/skills/refactor-feature/scripts/feature-diff.mjs --before-ref HEAD --after-file .harness/feature_list.json"
+      }
+    ],
+    "tokensMax": 25000,
+    "rubric": ".harness/eval/rubrics/feature-step-done.mjs"
+  }
+}
