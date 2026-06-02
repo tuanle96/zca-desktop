@@ -1,0 +1,96 @@
+{
+    "schemaVersion": 1,
+    "id": "qr-login",
+    "type": "feature",
+    "riskTier": "high-risk",
+    "scope": {
+        "summary": "Interactive QR-code login using zca-rust API::login_qr. The Rust core runs the full QR flow, generates a stable per-account imei (ADR-0004), and assembles a reusable types::Credentials {imei, cookie, user_agent}. The UI shows a Zalo-PC-style QR modal driven by non-secret display events; the resulting credential triple never crosses the IPC boundary into the webview.",
+        "allowedLayers": [
+            "types",
+            "zalo",
+            "command"
+        ],
+        "goals": [
+            "zalo/ run_qr_login wraps API::login_qr, maps LoginQREvent -> non-secret display DTOs, generates a stable per-account imei, and produces types::Credentials from the QR cookie jar + user_agent",
+            "command/ start_qr_login streams QR display events (QRCodeGenerated image/code, QRCodeScanned avatar/name, expiry/declined/success) to the UI via a Tauri channel/event, and on success hands the credential triple to the in-process session store without serializing token values to the UI",
+            "Frontend QR modal renders the QR image, shows a countdown and auto-refreshes on expiry, previews the scanned avatar/name, and surfaces declined/success states",
+            "imei + cookie + user_agent stay in the core; only non-secret QR display data and AccountProfile reach the webview"
+        ],
+        "nonGoals": [
+            "Persisting the issued credential in the OS keychain (secure-cred-store)",
+            "Auto-restoring accounts on startup (session-restore)",
+            "Multi-account concurrency / account switcher UI (session-manager, account-switcher)",
+            "Verifying same-account multi-device coexistence (device-coexistence)",
+            "Patching zca-rust to emit GotLoginInfo / an upstream device imei (ADR-0004 defers this)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "zalo",
+            "description": "zalo/ run_qr_login drives API::login_qr, generates a stable per-account imei, and assembles a valid types::Credentials from the QR result; LoginQREvents map to non-secret display DTOs (no token values).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "cmd",
+            "description": "command/ start_qr_login compiles and streams non-secret QR display events to the UI; the resulting credential triple is kept in the core (no imei/cookie/user_agent serialized across IPC).",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend builds with the QR modal (image render, expiry countdown/auto-refresh, scanned profile preview, declined/success states) wired to the event stream.",
+            "verification": {
+                "command": "bun run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: a real phone scan completes QR login end-to-end and the app reaches the logged-in/listening state; only non-secret diagnostics are captured in evidence.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored qr_login_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": true,
+    "adrPath": ".harness/docs/adr/0004-credential-lifecycle-and-imei-strategy.md",
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(bun run build*)",
+            "Bash(bun run check*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/qr-login.json"
+}

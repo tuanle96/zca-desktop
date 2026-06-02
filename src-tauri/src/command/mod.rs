@@ -11,11 +11,14 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Mutex;
 
-use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage};
+use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent};
 use crate::zalo::{self, Listener, API};
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";
+
+/// Tauri event name the frontend subscribes to for QR-login progress.
+pub const QR_EVENT: &str = "zalo://qr";
 
 /// Holds authenticated sessions and their realtime listeners so both stay alive
 /// for the app lifetime. Registered as Tauri managed state in `run()`.
@@ -29,6 +32,10 @@ pub struct ListenerState {
     /// Live listener handles (kept so their sockets are not dropped).
     listeners: Mutex<Vec<Listener>>,
 }
+
+/// Managed handle to the local SQLite store (ADR-0005). `None` when the store
+/// failed to open (logging still works; persistence becomes a no-op).
+pub struct StoreState(pub Option<Arc<crate::store::Db>>);
 
 /// Import a `ZaloDataExtractor` JSON export.
 ///
@@ -79,21 +86,77 @@ pub async fn login(payload: String) -> Result<AccountProfile, String> {
 pub async fn start_listening(
     app: AppHandle,
     state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
     payload: String,
 ) -> Result<AccountProfile, String> {
     let credentials: Credentials = serde_json::from_str(&payload)
         .map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
-    login_and_listen(&app, &state, credentials).await
+    login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await
 }
 
-/// Shared login + listener-start path used by both the payload and file-backed
-/// commands. Registers the session and spawns the event bridge.
+/// Run the interactive QR-code login flow and, on success, start the realtime
+/// listener for the scanned account (ADR-0004).
+///
+/// QR progress is streamed to the UI as non-secret [`QrLoginEvent`]s on the
+/// `zalo://qr` Tauri event. The credential triple (imei + cookie + user_agent)
+/// the flow produces is assembled and used entirely inside the core — it is
+/// never serialized back across the IPC boundary. Returns the logged-in
+/// [`AccountProfile`] once the socket has started.
+#[tauri::command]
+pub async fn start_qr_login(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
+) -> Result<AccountProfile, String> {
+    tracing::info!("start_qr_login: beginning interactive QR login");
+    // Bridge the sync QR callback to the UI: forward each non-secret stage
+    // event over a channel into `zalo://qr`.
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<QrLoginEvent>(16);
+    let emitter = app.clone();
+    let pump = tokio::spawn(async move {
+        while let Some(event) = rx.recv().await {
+            tracing::debug!(stage = ?std::mem::discriminant(&event), "qr stage event");
+            if emitter.emit(QR_EVENT, &event).is_err() {
+                break; // app shutting down
+            }
+        }
+    });
+
+    let credentials = zalo::run_qr_login(tx).await.map_err(|e| {
+        tracing::error!(error = %e, "start_qr_login: QR flow failed");
+        format!("QR login failed: {e}")
+    })?;
+
+    // Drain any remaining display events before continuing.
+    let _ = pump.await;
+
+    tracing::info!("start_qr_login: QR confirmed, establishing session");
+    let result = login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await;
+    match &result {
+        Ok(profile) => tracing::info!(account_id = %profile.account_id, "start_qr_login: session established"),
+        Err(e) => tracing::error!(error = %e, "start_qr_login: session login failed after QR"),
+    }
+    result
+}
+
+/// Shared login + listener-start path. Registers the session, spawns the event
+/// bridge (which persists every observed message to `store`), and — when
+/// `save_cred` is set — saves the account's encrypted credential for restore.
+///
+/// `credentials` is consumed by the network login; a clone is kept for
+/// credential persistence only when `save_cred` is true. The credential never
+/// crosses IPC.
 async fn login_and_listen(
     app: &AppHandle,
     state: &ListenerState,
     credentials: Credentials,
+    store: Option<&Arc<crate::store::Db>>,
+    save_cred: bool,
 ) -> Result<AccountProfile, String> {
+    // Keep a copy for encrypted credential persistence before login consumes it.
+    let to_persist = if save_cred { Some(credentials.clone()) } else { None };
+
     let api = Arc::new(
         zalo::login(credentials)
             .await
@@ -106,15 +169,30 @@ async fn login_and_listen(
         .await
         .insert(profile.account_id.clone(), api.clone());
 
+    // Persist the account + encrypted credential (best-effort; a store failure
+    // must not break an otherwise-successful login).
+    if let (Some(db), Some(creds)) = (store, to_persist) {
+        match db.save_account(&profile, &creds) {
+            Ok(()) => tracing::info!(account_id = %profile.account_id, "persisted account credential"),
+            Err(e) => tracing::warn!(account_id = %profile.account_id, error = %e, "failed to persist credential"),
+        }
+    }
+
     let (tx, mut rx) = tokio::sync::mpsc::channel::<IncomingMessage>(256);
     let listener = zalo::start_message_listener(api, tx)
         .await
         .map_err(|e| format!("listener failed to start: {e}"))?;
     state.listeners.lock().await.push(listener);
 
+    // The bridge persists each observed message to the local store (ADR-0005)
+    // before forwarding it to the UI, so history survives restarts.
     let app = app.clone();
+    let db = store.cloned();
     tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
+            if let Some(db) = db.as_ref() {
+                persist_incoming(db, &msg);
+            }
             if app.emit(MESSAGE_EVENT, &msg).is_err() {
                 break; // app shutting down
             }
@@ -122,6 +200,83 @@ async fn login_and_listen(
     });
 
     Ok(profile)
+}
+
+/// Persist an incoming message into the local store (best-effort; a store
+/// failure is logged and never breaks the realtime bridge).
+fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
+    let kind = match msg.thread_kind {
+        crate::types::ThreadKind::Group => "group",
+        crate::types::ThreadKind::User => "user",
+    };
+    // Realtime events carry no reliable epoch; stamp with receive time (millis).
+    let ts = now_millis();
+    let bump_unread = !msg.is_self;
+    match db.save_message(
+        &msg.account_id,
+        &msg.thread_id,
+        kind,
+        &msg.msg_id,
+        Some(&msg.from_id),
+        msg.from_name.as_deref(),
+        msg.text.as_deref(),
+        msg.is_self,
+        Some(ts),
+        msg.from_name.as_deref(),
+        None,
+        bump_unread,
+    ) {
+        // Non-secret diagnostics: ids + a body length, never the body text.
+        Ok(()) => tracing::debug!(
+            account_id = %msg.account_id,
+            thread_id = %msg.thread_id,
+            msg_id = %msg.msg_id,
+            is_self = msg.is_self,
+            body_len = msg.text.as_deref().map(str::len).unwrap_or(0),
+            "persisted incoming message"
+        ),
+        Err(e) => tracing::warn!(error = %e, "failed to persist incoming message"),
+    }
+}
+
+fn now_millis() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|d| d.as_millis() as i64)
+        .unwrap_or(0)
+}
+
+/// Restore previously saved accounts on startup: load each from the store,
+/// decrypt its credential, and re-login/listen. Returns the profiles that came
+/// back online. An account whose login fails is marked `reauth-needed` and
+/// skipped so the others still restore.
+#[tauri::command]
+pub async fn restore_sessions(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
+) -> Result<Vec<AccountProfile>, String> {
+    let Some(db) = store.0.clone() else {
+        return Ok(Vec::new());
+    };
+    let saved = db.load_accounts().map_err(|e| format!("failed to load saved accounts: {e}"))?;
+    tracing::info!(count = saved.len(), "restore_sessions: restoring saved accounts");
+
+    let mut restored = Vec::new();
+    for account in saved {
+        let account_id = account.profile.account_id.clone();
+        // Credential is unchanged: persist messages (Some(db)) but not the
+        // credential again (save_cred = false).
+        match login_and_listen(&app, &state, account.credentials, Some(&db), false).await {
+            Ok(profile) => restored.push(profile),
+            Err(e) => {
+                tracing::warn!(account_id = %account_id, error = %e, "restore failed; marking reauth-needed");
+                let _ = db.mark_reauth_needed(&account_id);
+            }
+        }
+    }
+    tracing::info!(restored = restored.len(), "restore_sessions: restore complete");
+    Ok(restored)
 }
 
 /// Resolve the dev credential file. The path is fixed (env `ZALO_CRED_FILE`, or
@@ -177,9 +332,10 @@ pub async fn login_from_file() -> Result<AccountProfile, String> {
 pub async fn start_listening_from_file(
     app: AppHandle,
     state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
 ) -> Result<AccountProfile, String> {
     let credentials = read_dev_credentials()?;
-    login_and_listen(&app, &state, credentials).await
+    login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await
 }
 
 /// Send a plain-text message to a user thread from an already-authenticated
@@ -191,6 +347,7 @@ pub async fn start_listening_from_file(
 #[tauri::command]
 pub async fn send_message(
     state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
     account_id: String,
     thread_id: String,
     text: String,
@@ -208,9 +365,95 @@ pub async fn send_message(
             .cloned()
             .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
     };
-    zalo::send_text(&api, &thread_id, &text)
+    let msg_id = zalo::send_text(&api, &thread_id, &text)
         .await
-        .map_err(|e| format!("send failed: {e}"))
+        .map_err(|e| format!("send failed: {e}"))?;
+
+    // Persist the outgoing message so it survives restart (best-effort). Use a
+    // local id when the API returned an empty one so the row is still stored.
+    if let Some(db) = store.0.as_ref() {
+        let stored_id = if msg_id.is_empty() {
+            format!("local-{}", now_millis())
+        } else {
+            msg_id.clone()
+        };
+        if let Err(e) = db.save_message(
+            &account_id,
+            &thread_id,
+            "user",
+            &stored_id,
+            Some(&account_id),
+            None,
+            Some(&text),
+            true,
+            Some(now_millis()),
+            None,
+            None,
+            false,
+        ) {
+            tracing::warn!(error = %e, "failed to persist outgoing message");
+        } else {
+            tracing::debug!(account_id = %account_id, thread_id = %thread_id, msg_id = %stored_id, body_len = text.len(), "persisted outgoing message");
+        }
+    }
+    Ok(msg_id)
+}
+
+/// Load persisted conversation history (threads + recent messages) for an
+/// account from the local store, so the UI can show prior chats at startup
+/// without waiting for a realtime event.
+#[tauri::command]
+pub fn load_history(
+    store: State<'_, StoreState>,
+    account_id: String,
+) -> Result<crate::types::History, String> {
+    let Some(db) = store.0.as_ref() else {
+        return Ok(crate::types::History { threads: Vec::new(), messages: Vec::new() });
+    };
+    let threads = db.load_threads(&account_id).map_err(|e| format!("load threads failed: {e}"))?;
+    // Cap restore cost; the UI lazy-loads more per thread later if needed.
+    let messages = db
+        .load_recent_messages(&account_id, 2000)
+        .map_err(|e| format!("load messages failed: {e}"))?;
+    tracing::info!(
+        account_id = %account_id,
+        threads = threads.len(),
+        messages = messages.len(),
+        "load_history: hydrated persisted history"
+    );
+    Ok(crate::types::History { threads, messages })
+}
+
+/// Clear a thread's unread counter in the store when the UI opens it.
+#[tauri::command]
+pub fn mark_thread_read(
+    store: State<'_, StoreState>,
+    account_id: String,
+    thread_id: String,
+) -> Result<(), String> {
+    if let Some(db) = store.0.as_ref() {
+        db.clear_unread(&account_id, &thread_id)
+            .map_err(|e| format!("clear unread failed: {e}"))?;
+    }
+    Ok(())
+}
+
+/// Non-secret store diagnostics for verification/logs: how many accounts are
+/// saved, and (for `account_id`) how many threads/messages are persisted.
+/// Returns zeros when no store is open. Never returns any credential data.
+#[tauri::command]
+pub fn store_stats(
+    store: State<'_, StoreState>,
+    account_id: String,
+) -> Result<(i64, i64, i64), String> {
+    let Some(db) = store.0.as_ref() else {
+        return Ok((0, 0, 0));
+    };
+    let accounts = db.count_accounts().map_err(|e| format!("count accounts failed: {e}"))?;
+    let (threads, messages) =
+        db.counts_for(&account_id).map_err(|e| format!("counts failed: {e}"))?;
+    tracing::info!(accounts, threads, messages, account_id = %account_id, "store_stats");
+    Ok((accounts, threads, messages))
 }
 
 /// List the friends/contacts of an authenticated account.
@@ -232,6 +475,41 @@ pub async fn list_contacts(
     zalo::list_contacts(&api)
         .await
         .map_err(|e| format!("failed to load contacts: {e}"))
+}
+
+/// List the groups of an authenticated account (id + name + avatar), so the UI
+/// can resolve a group thread's display name/avatar instead of showing the last
+/// sender. Reuses the stored session for `account_id`.
+#[tauri::command]
+pub async fn list_groups(
+    state: State<'_, ListenerState>,
+    account_id: String,
+) -> Result<Vec<crate::types::Group>, String> {
+    let api = {
+        let sessions = state.sessions.lock().await;
+        sessions
+            .get(&account_id)
+            .cloned()
+            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
+    };
+    zalo::list_groups(&api)
+        .await
+        .map_err(|e| format!("failed to load groups: {e}"))
+}
+
+/// Forward a log line from the webview/UI into the unified tracing sink so
+/// frontend diagnostics land in the same rolling log files as the core.
+///
+/// `level` is one of `error`/`warn`/`info`/`debug` (anything else → `info`).
+/// The UI must not send secrets here; messages are recorded as-is.
+#[tauri::command]
+pub fn log_from_ui(level: String, message: String) {
+    match level.as_str() {
+        "error" => tracing::error!(target: "ui", "{message}"),
+        "warn" => tracing::warn!(target: "ui", "{message}"),
+        "debug" => tracing::debug!(target: "ui", "{message}"),
+        _ => tracing::info!(target: "ui", "{message}"),
+    }
 }
 #[cfg(test)]
 mod tests {

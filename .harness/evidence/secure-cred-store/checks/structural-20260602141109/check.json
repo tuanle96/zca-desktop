@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T14:11:09.330Z",
+  "finishedAt": "2026-06-02T14:11:09.559Z",
+  "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
+  "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stdout.txt",
+  "stderrPath": ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stdout.txt",
+    ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stderr.txt"
+  ]
+}

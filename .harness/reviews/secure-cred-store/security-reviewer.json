@@ -1,0 +1,77 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "secure-cred-store",
+    "featureId": "secure-cred-store",
+    "decision": "needs-human",
+    "createdAt": "2026-06-02T07:10:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/crypto.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/config/redact.rs",
+        "src-tauri/src/config/logging.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        ".gitignore"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/crypto.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/config/redact.rs",
+            "src-tauri/src/config/logging.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/crypto.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/config/redact.rs",
+            "src-tauri/src/config/logging.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the credential-at-rest cipher, the SQLite store, redaction, and the command/IPC boundary for secret leakage and injection."
+    },
+    "confidence": 0.82,
+    "unreviewedRiskAreas": [
+        "live-keychain-roundtrip"
+    ],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "high",
+            "rule": "done-requires-live-proof",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "The keychain seal/open and ciphertext-on-disk invariants are proven only by fixed-key unit tests (crypto.rs). The real-OS-keychain roundtrip (cred_store_roundtrip), QR scan (qr_login_live), and relaunch auto-restore are #[ignore] and have not been run.",
+            "fix": "Run `cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture` and verify relaunch auto-restore on the GUI; capture the results in the evidence bundle before passes:true.",
+            "blocking": false
+        },
+        {
+            "severity": "medium",
+            "rule": "user-data-at-rest",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "Message bodies are stored in SQLite as plaintext. These are user data on the user's own machine (not a bearer token), and ADR-0005 accepts this for the durability goal; whole-DB encryption is deferred.",
+            "fix": "Track whole-DB/at-rest encryption (SQLCipher) as a future ADR; record as an accepted known risk in the evidence bundle.",
+            "blocking": false
+        },
+        {
+            "severity": "info",
+            "rule": "raw-capture-optin",
+            "file": "src-tauri/src/config/logging.rs",
+            "evidence": "Raw capture is redacted by default; only the loudly-warned ZCA_LOG_RAW=1 opt-in writes unredacted payloads, intended for local debugging. The single capture_raw call site logs cookie names + counts only, not values.",
+            "fix": "Keep ZCA_LOG_RAW off in any shared/CI environment; no code change required.",
+            "blocking": false
+        }
+    ],
+    "summary": "Security review of the encrypted credential store + QR/persistence/logging changes. Code-level security is sound: credentials are AES-256-GCM sealed (random 12-byte nonce, 32-byte key) under a keychain-held master key and stored as ciphertext (asserted by a default unit test); AES-GCM errors are opaque and a truncated blob is rejected without panic; the keychain holds only the master key. redact.rs masks every real Zalo secret cookie name (zpw_sek/zpsid/zpw_enk/imei/cookie/secret/token/session) and raw capture is redacted by default. All SQL is positional-parameter bound (no injection). No command returns or accepts credential/token values; the token-bearing GotLoginInfo QR event is dropped before the webview (test-asserted); restore_sessions/load_history return only non-secret/user-data DTOs. Decision is needs-human, not pass, because the live smoke proofs (real keychain roundtrip + relaunch auto-restore) are #[ignore] and unrun. No blocking findings."
+}

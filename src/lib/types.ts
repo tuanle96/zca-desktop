@@ -11,12 +11,40 @@ export type CredentialSummary = {
 export type AccountProfile = {
     accountId: string;
     displayName: string | null;
+    avatar: string | null;
 };
+
+// Non-secret QR-login progress, mirrored from the core `QrLoginEvent`
+// (zalo://qr). Internally tagged on `stage`; carries only display data — never
+// imei/cookie/userAgent.
+export type QrLoginEvent =
+    | { stage: "generated"; image: string; expiresInSecs: number }
+    | { stage: "scanned"; displayName: string; avatar: string }
+    | { stage: "declined" }
+    | { stage: "expired" }
+    | { stage: "success" };
+
+// UI-side phase for the QR login modal, derived from the event stream.
+export type QrPhase =
+    | "idle"
+    | "loading"
+    | "waiting-scan"
+    | "scanned"
+    | "success"
+    | "declined"
+    | "expired"
+    | "error";
 
 export type Contact = {
     userId: string;
     displayName: string;
     zaloName: string | null;
+    avatar: string | null;
+};
+
+export type Group = {
+    groupId: string;
+    name: string;
     avatar: string | null;
 };
 
@@ -53,4 +81,33 @@ export type Conversation = {
     lastSnippet: string;
     lastAt: number;
     unread: number;
+    /** Avatar URL for the peer/group, when known (resolved from contacts). */
+    avatar: string | null;
+};
+
+// Persisted history reloaded from the local store at login/restore.
+export type StoredThread = {
+    accountId: string;
+    threadId: string;
+    kind: ThreadKind;
+    title: string | null;
+    avatar: string | null;
+    lastAt: number | null;
+    unread: number;
+};
+
+export type StoredMessage = {
+    accountId: string;
+    threadId: string;
+    msgId: string;
+    fromId: string | null;
+    fromName: string | null;
+    body: string | null;
+    outgoing: boolean;
+    ts: number | null;
+};
+
+export type History = {
+    threads: StoredThread[];
+    messages: StoredMessage[];
 };

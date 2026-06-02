@@ -1,0 +1,95 @@
+{
+    "schemaVersion": 1,
+    "id": "message-cache",
+    "type": "feature",
+    "riskTier": "high-risk",
+    "scope": {
+        "summary": "Persist every observed conversation, message, and attachment metadata into the SQLite store (ADR-0005) so chat history survives restarts and Zalo-side message loss. The store/ layer gains thread/message/attachment repositories; the command layer persists on listener ingest and on send, and exposes a history-load path; the frontend hydrates threads + messages from the DB at login/restore so the conversation list is no longer empty until a realtime message arrives.",
+        "allowedLayers": [
+            "types",
+            "store",
+            "command"
+        ],
+        "goals": [
+            "store/: save_message (upsert thread + insert message, dedupe by (account_id,msg_id)), save_attachment, load_threads, load_messages(thread,limit); rusqlite confined to store",
+            "command/: persist incoming messages (listener bridge) and outgoing sends; load_history command returns persisted threads + recent messages for an account",
+            "types/: StoredThread + StoredMessage DTOs (camelCase) returned to the UI",
+            "Frontend hydrates conversations + thread messages from load_history at login/restore; realtime messages continue to append and persist"
+        ],
+        "nonGoals": [
+            "Downloading attachment binaries to disk (store URL + metadata only this slice)",
+            "Backfilling history that predates first login (no upstream recent-conversations/1:1 history API)",
+            "Whole-database encryption (future ADR)",
+            "Multi-account SessionManager refactor (session-manager)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "store",
+            "description": "store/ round-trips a thread + messages: save_message persists and dedupes; load_threads/load_messages return them ordered; attachment metadata persists.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "cmd",
+            "description": "command/ persists incoming + outgoing messages and load_history returns persisted threads/messages; compiles with no token values across IPC.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend builds and hydrates the conversation list + active thread from persisted history at login/restore.",
+            "verification": {
+                "command": "bun run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live/manual: a received/sent message is written to SQLite; relaunch shows the thread + message history without a new realtime event. Evidence captures only non-secret diagnostics.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored message_cache_roundtrip --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": true,
+    "adrPath": ".harness/docs/adr/0005-local-persistence-sqlite-and-encrypted-credential-store.md",
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(bun run build*)",
+            "Bash(bun run check*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/message-cache.json"
+}
