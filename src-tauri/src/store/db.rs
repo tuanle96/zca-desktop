@@ -343,6 +343,30 @@ impl Db {
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
     }
 
+    /// Count saved accounts — a cheap, non-secret diagnostic for the UI/logs to
+    /// confirm persistence happened without reading any credential.
+    pub fn count_accounts(&self) -> Result<i64, StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let n: i64 = conn.query_row("SELECT COUNT(*) FROM accounts", [], |r| r.get(0))?;
+        Ok(n)
+    }
+
+    /// Count persisted threads + messages for an account — non-secret diagnostic.
+    pub fn counts_for(&self, account_id: &str) -> Result<(i64, i64), StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let threads: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM threads WHERE account_id = ?1",
+            rusqlite::params![account_id],
+            |r| r.get(0),
+        )?;
+        let messages: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM messages WHERE account_id = ?1",
+            rusqlite::params![account_id],
+            |r| r.get(0),
+        )?;
+        Ok((threads, messages))
+    }
+
     /// Raw ciphertext blob for an account — test helper to assert that what we
     /// persisted is not plaintext.
     #[cfg(test)]

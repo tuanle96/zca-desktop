@@ -45,6 +45,7 @@ pub fn run() {
             command::list_contacts,
             command::load_history,
             command::mark_thread_read,
+            command::store_stats,
             command::cred_file_summary,
             command::login_from_file,
             command::start_listening_from_file,
@@ -63,7 +64,8 @@ fn open_store() -> Option<std::sync::Arc<store::Db>> {
     let path = dir.join("zca.db");
     match store::Db::open(&path) {
         Ok(db) => {
-            tracing::info!(db = %path.display(), "local store opened");
+            let saved = db.count_accounts().unwrap_or(0);
+            tracing::info!(db = %path.display(), saved_accounts = saved, "local store opened");
             Some(std::sync::Arc::new(db))
         }
         Err(e) => {

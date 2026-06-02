@@ -212,7 +212,7 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
     // Realtime events carry no reliable epoch; stamp with receive time (millis).
     let ts = now_millis();
     let bump_unread = !msg.is_self;
-    if let Err(e) = db.save_message(
+    match db.save_message(
         &msg.account_id,
         &msg.thread_id,
         kind,
@@ -226,7 +226,16 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
         None,
         bump_unread,
     ) {
-        tracing::warn!(error = %e, "failed to persist incoming message");
+        // Non-secret diagnostics: ids + a body length, never the body text.
+        Ok(()) => tracing::debug!(
+            account_id = %msg.account_id,
+            thread_id = %msg.thread_id,
+            msg_id = %msg.msg_id,
+            is_self = msg.is_self,
+            body_len = msg.text.as_deref().map(str::len).unwrap_or(0),
+            "persisted incoming message"
+        ),
+        Err(e) => tracing::warn!(error = %e, "failed to persist incoming message"),
     }
 }
 
@@ -266,6 +275,7 @@ pub async fn restore_sessions(
             }
         }
     }
+    tracing::info!(restored = restored.len(), "restore_sessions: restore complete");
     Ok(restored)
 }
 
@@ -382,6 +392,8 @@ pub async fn send_message(
             false,
         ) {
             tracing::warn!(error = %e, "failed to persist outgoing message");
+        } else {
+            tracing::debug!(account_id = %account_id, thread_id = %thread_id, msg_id = %stored_id, body_len = text.len(), "persisted outgoing message");
         }
     }
     Ok(msg_id)
@@ -403,6 +415,12 @@ pub fn load_history(
     let messages = db
         .load_recent_messages(&account_id, 2000)
         .map_err(|e| format!("load messages failed: {e}"))?;
+    tracing::info!(
+        account_id = %account_id,
+        threads = threads.len(),
+        messages = messages.len(),
+        "load_history: hydrated persisted history"
+    );
     Ok(crate::types::History { threads, messages })
 }
 
@@ -418,6 +436,24 @@ pub fn mark_thread_read(
             .map_err(|e| format!("clear unread failed: {e}"))?;
     }
     Ok(())
+}
+
+/// Non-secret store diagnostics for verification/logs: how many accounts are
+/// saved, and (for `account_id`) how many threads/messages are persisted.
+/// Returns zeros when no store is open. Never returns any credential data.
+#[tauri::command]
+pub fn store_stats(
+    store: State<'_, StoreState>,
+    account_id: String,
+) -> Result<(i64, i64, i64), String> {
+    let Some(db) = store.0.as_ref() else {
+        return Ok((0, 0, 0));
+    };
+    let accounts = db.count_accounts().map_err(|e| format!("count accounts failed: {e}"))?;
+    let (threads, messages) =
+        db.counts_for(&account_id).map_err(|e| format!("counts failed: {e}"))?;
+    tracing::info!(accounts, threads, messages, account_id = %account_id, "store_stats");
+    Ok((accounts, threads, messages))
 }
 
 /// List the friends/contacts of an authenticated account.
