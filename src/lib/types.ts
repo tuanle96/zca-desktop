@@ -42,6 +42,12 @@ export type Contact = {
     avatar: string | null;
 };
 
+export type Group = {
+    groupId: string;
+    name: string;
+    avatar: string | null;
+};
+
 export type ThreadKind = "user" | "group";
 
 export type IncomingMessage = {

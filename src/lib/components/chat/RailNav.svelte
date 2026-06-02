@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MessageCircle, Users, Cloud, Settings } from "@lucide/svelte";
+  import { MessageCircle, Users, Cloud, Settings, Plus } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { session } from "$lib/session.svelte";
 
@@ -26,24 +26,50 @@
   ];
 </script>
 
-<nav class="bg-brand text-brand-foreground flex w-16 shrink-0 flex-col items-center gap-1 py-4">
-  <!-- Account avatar with a live-listening status dot -->
-  <div class="relative mb-4" title={session.profile?.displayName ?? "Tài khoản"}>
-    <Avatar.Root class="size-11 border-2 border-white/40">
-      {#if session.profile?.avatar}
-        <Avatar.Image src={session.profile.avatar} alt={session.profile.displayName ?? "avatar"} />
-      {/if}
-      <Avatar.Fallback class="bg-white/20 text-sm font-medium text-white">
-        {initials(session.profile?.displayName ?? null)}
-      </Avatar.Fallback>
-    </Avatar.Root>
-    <span
-      class="border-brand absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 {session.listening
-        ? 'bg-green-400'
-        : 'bg-white/40'}"
-      title={session.listening ? "Đang lắng nghe" : "Ngoại tuyến"}
-    ></span>
+<nav class="bg-brand text-brand-foreground flex w-16 shrink-0 flex-col items-center gap-1 py-3">
+  <!-- Account switcher rail: one avatar per logged-in account -->
+  <div class="flex flex-col items-center gap-2 pb-2">
+    {#each session.accounts as acc (acc.accountId)}
+      <button
+        type="button"
+        onclick={() => session.switchAccount(acc.accountId)}
+        title={acc.displayName ?? acc.accountId}
+        aria-label={acc.displayName ?? acc.accountId}
+        class="relative rounded-full transition {acc.accountId === session.activeAccountId
+          ? 'ring-2 ring-white ring-offset-2 ring-offset-[var(--brand)]'
+          : 'opacity-70 hover:opacity-100'}"
+      >
+        <Avatar.Root class="size-10">
+          {#if acc.avatar}
+            <Avatar.Image src={acc.avatar} alt={acc.displayName ?? "avatar"} />
+          {/if}
+          <Avatar.Fallback class="bg-white/20 text-xs font-medium text-white">
+            {initials(acc.displayName)}
+          </Avatar.Fallback>
+        </Avatar.Root>
+        {#if acc.unread > 0 && acc.accountId !== session.activeAccountId}
+          <span
+            class="border-brand absolute -right-1 -top-1 flex h-4 min-w-4 items-center justify-center rounded-full border-2 bg-red-500 px-1 text-[10px] font-medium text-white"
+          >
+            {acc.unread > 99 ? "99+" : acc.unread}
+          </span>
+        {/if}
+      </button>
+    {/each}
+
+    <!-- Add another account -->
+    <button
+      type="button"
+      onclick={() => session.addAccount()}
+      title="Thêm tài khoản"
+      aria-label="Thêm tài khoản"
+      class="flex size-10 items-center justify-center rounded-full border border-dashed border-white/40 transition-colors hover:bg-white/10"
+    >
+      <Plus class="size-5" />
+    </button>
   </div>
+
+  <div class="mb-2 h-px w-8 bg-white/20"></div>
 
   {#each navItems as item (item.id)}
     <button

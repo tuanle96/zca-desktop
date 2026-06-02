@@ -11,7 +11,7 @@ pub mod qr;
 pub mod stored;
 
 pub use account::{AccountId, AccountProfile, CredentialSummary};
-pub use contact::Contact;
+pub use contact::{Contact, Group};
 pub use credentials::{Cookie, CredentialError, Credentials};
 pub use events::{IncomingMessage, ThreadKind};
 pub use qr::QrLoginEvent;
