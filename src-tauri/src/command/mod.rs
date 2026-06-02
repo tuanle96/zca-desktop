@@ -11,11 +11,14 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Mutex;
 
-use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage};
+use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent};
 use crate::zalo::{self, Listener, API};
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";
+
+/// Tauri event name the frontend subscribes to for QR-login progress.
+pub const QR_EVENT: &str = "zalo://qr";
 
 /// Holds authenticated sessions and their realtime listeners so both stay alive
 /// for the app lifetime. Registered as Tauri managed state in `run()`.
@@ -29,6 +32,10 @@ pub struct ListenerState {
     /// Live listener handles (kept so their sockets are not dropped).
     listeners: Mutex<Vec<Listener>>,
 }
+
+/// Managed handle to the local SQLite store (ADR-0005). `None` when the store
+/// failed to open (logging still works; persistence becomes a no-op).
+pub struct StoreState(pub Option<Arc<crate::store::Db>>);
 
 /// Import a `ZaloDataExtractor` JSON export.
 ///
@@ -79,21 +86,75 @@ pub async fn login(payload: String) -> Result<AccountProfile, String> {
 pub async fn start_listening(
     app: AppHandle,
     state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
     payload: String,
 ) -> Result<AccountProfile, String> {
     let credentials: Credentials = serde_json::from_str(&payload)
         .map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
-    login_and_listen(&app, &state, credentials).await
+    login_and_listen(&app, &state, credentials, store.0.as_ref()).await
 }
 
-/// Shared login + listener-start path used by both the payload and file-backed
-/// commands. Registers the session and spawns the event bridge.
+/// Run the interactive QR-code login flow and, on success, start the realtime
+/// listener for the scanned account (ADR-0004).
+///
+/// QR progress is streamed to the UI as non-secret [`QrLoginEvent`]s on the
+/// `zalo://qr` Tauri event. The credential triple (imei + cookie + user_agent)
+/// the flow produces is assembled and used entirely inside the core — it is
+/// never serialized back across the IPC boundary. Returns the logged-in
+/// [`AccountProfile`] once the socket has started.
+#[tauri::command]
+pub async fn start_qr_login(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
+) -> Result<AccountProfile, String> {
+    tracing::info!("start_qr_login: beginning interactive QR login");
+    // Bridge the sync QR callback to the UI: forward each non-secret stage
+    // event over a channel into `zalo://qr`.
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<QrLoginEvent>(16);
+    let emitter = app.clone();
+    let pump = tokio::spawn(async move {
+        while let Some(event) = rx.recv().await {
+            tracing::debug!(stage = ?std::mem::discriminant(&event), "qr stage event");
+            if emitter.emit(QR_EVENT, &event).is_err() {
+                break; // app shutting down
+            }
+        }
+    });
+
+    let credentials = zalo::run_qr_login(tx).await.map_err(|e| {
+        tracing::error!(error = %e, "start_qr_login: QR flow failed");
+        format!("QR login failed: {e}")
+    })?;
+
+    // Drain any remaining display events before continuing.
+    let _ = pump.await;
+
+    tracing::info!("start_qr_login: QR confirmed, establishing session");
+    let result = login_and_listen(&app, &state, credentials, store.0.as_ref()).await;
+    match &result {
+        Ok(profile) => tracing::info!(account_id = %profile.account_id, "start_qr_login: session established"),
+        Err(e) => tracing::error!(error = %e, "start_qr_login: session login failed after QR"),
+    }
+    result
+}
+
+/// Shared login + listener-start path. Registers the session, spawns the event
+/// bridge, and (when `persist` carries the store) saves the account with its
+/// encrypted credential for session restore.
+///
+/// `credentials` is consumed by the network login; a clone is kept for
+/// persistence only when a store is provided. The credential never crosses IPC.
 async fn login_and_listen(
     app: &AppHandle,
     state: &ListenerState,
     credentials: Credentials,
+    persist: Option<&Arc<crate::store::Db>>,
 ) -> Result<AccountProfile, String> {
+    // Keep a copy for encrypted persistence before the login consumes it.
+    let to_persist = persist.map(|_| credentials.clone());
+
     let api = Arc::new(
         zalo::login(credentials)
             .await
@@ -105,6 +166,15 @@ async fn login_and_listen(
         .lock()
         .await
         .insert(profile.account_id.clone(), api.clone());
+
+    // Persist the account + encrypted credential (best-effort; a store failure
+    // must not break an otherwise-successful login).
+    if let (Some(db), Some(creds)) = (persist, to_persist) {
+        match db.save_account(&profile, &creds) {
+            Ok(()) => tracing::info!(account_id = %profile.account_id, "persisted account credential"),
+            Err(e) => tracing::warn!(account_id = %profile.account_id, error = %e, "failed to persist credential"),
+        }
+    }
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<IncomingMessage>(256);
     let listener = zalo::start_message_listener(api, tx)
@@ -122,6 +192,37 @@ async fn login_and_listen(
     });
 
     Ok(profile)
+}
+
+/// Restore previously saved accounts on startup: load each from the store,
+/// decrypt its credential, and re-login/listen. Returns the profiles that came
+/// back online. An account whose login fails is marked `reauth-needed` and
+/// skipped so the others still restore.
+#[tauri::command]
+pub async fn restore_sessions(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
+) -> Result<Vec<AccountProfile>, String> {
+    let Some(db) = store.0.clone() else {
+        return Ok(Vec::new());
+    };
+    let saved = db.load_accounts().map_err(|e| format!("failed to load saved accounts: {e}"))?;
+    tracing::info!(count = saved.len(), "restore_sessions: restoring saved accounts");
+
+    let mut restored = Vec::new();
+    for account in saved {
+        let account_id = account.profile.account_id.clone();
+        // Credential is unchanged, so do not re-persist (persist = None).
+        match login_and_listen(&app, &state, account.credentials, None).await {
+            Ok(profile) => restored.push(profile),
+            Err(e) => {
+                tracing::warn!(account_id = %account_id, error = %e, "restore failed; marking reauth-needed");
+                let _ = db.mark_reauth_needed(&account_id);
+            }
+        }
+    }
+    Ok(restored)
 }
 
 /// Resolve the dev credential file. The path is fixed (env `ZALO_CRED_FILE`, or
@@ -177,9 +278,10 @@ pub async fn login_from_file() -> Result<AccountProfile, String> {
 pub async fn start_listening_from_file(
     app: AppHandle,
     state: State<'_, ListenerState>,
+    store: State<'_, StoreState>,
 ) -> Result<AccountProfile, String> {
     let credentials = read_dev_credentials()?;
-    login_and_listen(&app, &state, credentials).await
+    login_and_listen(&app, &state, credentials, store.0.as_ref()).await
 }
 
 /// Send a plain-text message to a user thread from an already-authenticated
@@ -232,6 +334,21 @@ pub async fn list_contacts(
     zalo::list_contacts(&api)
         .await
         .map_err(|e| format!("failed to load contacts: {e}"))
+}
+
+/// Forward a log line from the webview/UI into the unified tracing sink so
+/// frontend diagnostics land in the same rolling log files as the core.
+///
+/// `level` is one of `error`/`warn`/`info`/`debug` (anything else → `info`).
+/// The UI must not send secrets here; messages are recorded as-is.
+#[tauri::command]
+pub fn log_from_ui(level: String, message: String) {
+    match level.as_str() {
+        "error" => tracing::error!(target: "ui", "{message}"),
+        "warn" => tracing::warn!(target: "ui", "{message}"),
+        "debug" => tracing::debug!(target: "ui", "{message}"),
+        _ => tracing::info!(target: "ui", "{message}"),
+    }
 }
 #[cfg(test)]
 mod tests {
