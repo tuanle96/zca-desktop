@@ -2,28 +2,63 @@
   import { invoke } from "@tauri-apps/api/core";
   import { Button } from "$lib/components/ui/button/index.js";
 
-  let name = $state("");
-  let greetMsg = $state("");
+  type CredentialSummary = {
+    imeiLen: number;
+    cookieCount: number;
+    userAgentLen: number;
+    language: string;
+  };
 
-  async function greet() {
-    greetMsg = await invoke("greet", { name });
+  let payload = $state("");
+  let summary = $state<CredentialSummary | null>(null);
+  let error = $state("");
+  let busy = $state(false);
+
+  async function importCredentials() {
+    error = "";
+    summary = null;
+    busy = true;
+    try {
+      summary = await invoke<CredentialSummary>("import_credentials", { payload });
+    } catch (e) {
+      error = String(e);
+    } finally {
+      busy = false;
+    }
   }
 </script>
 
-<main class="flex min-h-screen flex-col items-center justify-center gap-6 p-8">
-  <h1 class="text-3xl font-bold tracking-tight">Zalo Desktop</h1>
-  <p class="text-muted-foreground text-sm">Tauri v2 · Svelte 5 · Tailwind v4 · shadcn-svelte</p>
+<main class="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
+  <header class="space-y-1">
+    <h1 class="text-3xl font-bold tracking-tight">Zalo Desktop</h1>
+    <p class="text-muted-foreground text-sm">Import a ZaloDataExtractor JSON export to validate an account.</p>
+  </header>
 
-  <form class="flex w-full max-w-sm items-center gap-2" onsubmit={(e) => { e.preventDefault(); greet(); }}>
-    <input
-      bind:value={name}
-      placeholder="Tên..."
-      class="border-input bg-background flex-1 rounded-md border px-3 py-2 text-sm"
-    />
-    <Button type="submit">Greet</Button>
+  <form class="flex flex-col gap-3" onsubmit={(e) => { e.preventDefault(); importCredentials(); }}>
+    <textarea
+      bind:value={payload}
+      rows="8"
+      placeholder={'{ "imei": "...", "cookie": [...], "userAgent": "..." }'}
+      class="border-input bg-background rounded-md border px-3 py-2 font-mono text-xs"
+    ></textarea>
+    <Button type="submit" disabled={busy || payload.trim().length === 0}>
+      {busy ? "Validating…" : "Import credentials"}
+    </Button>
   </form>
 
-  {#if greetMsg}
-    <p class="text-sm">{greetMsg}</p>
+  {#if error}
+    <p class="text-destructive text-sm" role="alert">{error}</p>
+  {/if}
+
+  {#if summary}
+    <div class="rounded-md border p-4 text-sm" role="status">
+      <p class="font-medium">Credentials look valid</p>
+      <ul class="text-muted-foreground mt-2 space-y-1">
+        <li>Cookies: {summary.cookieCount}</li>
+        <li>Language: {summary.language}</li>
+        <li>imei length: {summary.imeiLen}</li>
+        <li>userAgent length: {summary.userAgentLen}</li>
+      </ul>
+    </div>
   {/if}
 </main>
