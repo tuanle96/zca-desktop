@@ -3,21 +3,21 @@
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { session } from "$lib/session.svelte";
 
-  type Item = { id: string; label: string; icon: typeof MessageCircle };
-  const items: Item[] = [
-    { id: "chats", label: "Tin nhắn", icon: MessageCircle },
-    { id: "contacts", label: "Danh bạ", icon: Users },
-    { id: "cloud", label: "Cloud", icon: Cloud },
-  ];
-
-  let active = $state("chats");
-
   function initials(name: string | null): string {
     if (!name) return "?";
     const parts = name.trim().split(/\s+/);
     const first = parts[0]?.[0] ?? "";
     const last = parts.length > 1 ? parts[parts.length - 1][0] : "";
     return (first + last).toUpperCase() || "?";
+  }
+
+  function showChats() {
+    session.view = "chats";
+  }
+
+  function showContacts() {
+    session.view = "contacts";
+    if (!session.contactsLoaded && session.profile) session.loadContacts();
   }
 </script>
 
@@ -28,19 +28,38 @@
     </Avatar.Fallback>
   </Avatar.Root>
 
-  {#each items as item (item.id)}
-    <button
-      type="button"
-      onclick={() => (active = item.id)}
-      title={item.label}
-      aria-label={item.label}
-      class="flex size-12 items-center justify-center rounded-xl transition-colors {active === item.id
-        ? 'bg-white/20'
-        : 'hover:bg-white/10'}"
-    >
-      <item.icon class="size-6" />
-    </button>
-  {/each}
+  <button
+    type="button"
+    onclick={showChats}
+    title="Tin nhắn"
+    aria-label="Tin nhắn"
+    class="flex size-12 items-center justify-center rounded-xl transition-colors {session.view === 'chats'
+      ? 'bg-white/20'
+      : 'hover:bg-white/10'}"
+  >
+    <MessageCircle class="size-6" />
+  </button>
+
+  <button
+    type="button"
+    onclick={showContacts}
+    title="Danh bạ"
+    aria-label="Danh bạ"
+    class="flex size-12 items-center justify-center rounded-xl transition-colors {session.view === 'contacts'
+      ? 'bg-white/20'
+      : 'hover:bg-white/10'}"
+  >
+    <Users class="size-6" />
+  </button>
+
+  <button
+    type="button"
+    title="Cloud"
+    aria-label="Cloud"
+    class="flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
+  >
+    <Cloud class="size-6" />
+  </button>
 
   <button
     type="button"

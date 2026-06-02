@@ -7,6 +7,7 @@ import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import type {
     AccountProfile,
     ChatMessage,
+    Contact,
     Conversation,
     CredentialSummary,
     IncomingMessage,
@@ -30,6 +31,11 @@ class SessionStore {
     activeThreadId = $state<string | null>(null);
     /** messages keyed by threadId */
     private threads = $state<Record<string, ChatMessage[]>>({});
+
+    contacts = $state<Contact[]>([]);
+    contactsLoaded = $state(false);
+    /** which middle/main pane is shown: chats or contacts */
+    view = $state<"chats" | "contacts">("chats");
 
     private unlisten: UnlistenFn | null = null;
 
@@ -59,6 +65,24 @@ class SessionStore {
             this.profile = await invoke<AccountProfile>("start_listening_from_file");
             this.listening = true;
         });
+        // Best-effort: warm the address book once logged in.
+        if (this.profile) this.loadContacts();
+    }
+
+    async loadContacts() {
+        if (!this.profile) return;
+        await this.run(async () => {
+            this.contacts = await invoke<Contact[]>("list_contacts", {
+                accountId: this.profile!.accountId,
+            });
+            this.contactsLoaded = true;
+        });
+    }
+
+    /** Open (or focus) a DM thread with a contact, using their name as title. */
+    startChatWith(contact: Contact) {
+        this.view = "chats";
+        this.openThread(contact.userId, contact.displayName);
     }
 
     selectThread(threadId: string) {

@@ -45,7 +45,7 @@
     </p>
   </section>
 {:else}
-  <section class="flex flex-1 flex-col">
+  <section class="flex min-h-0 flex-1 flex-col">
     <header class="flex items-center gap-3 border-b px-4 py-3">
       <Avatar.Root class="size-10">
         <Avatar.Fallback class="bg-brand/10 text-brand text-sm font-medium">
@@ -66,7 +66,7 @@
       </div>
     </header>
 
-    <div bind:this={scroller} class="bg-muted/30 flex-1 overflow-y-auto px-4 py-4">
+    <div bind:this={scroller} class="bg-muted/30 min-h-0 flex-1 overflow-y-auto px-4 py-4">
       {#if messages.length === 0}
         <p class="text-muted-foreground py-10 text-center text-sm">
           Chưa có tin nhắn trong hội thoại này.

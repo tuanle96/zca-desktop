@@ -21,6 +21,7 @@ pub fn run() {
             command::login,
             command::start_listening,
             command::send_message,
+            command::list_contacts,
             command::cred_file_summary,
             command::login_from_file,
             command::start_listening_from_file

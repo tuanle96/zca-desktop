@@ -30,7 +30,7 @@
   }
 </script>
 
-<aside class="bg-background flex w-80 shrink-0 flex-col border-r">
+<aside class="bg-background flex h-full w-80 shrink-0 flex-col overflow-hidden border-r">
   <div class="flex items-center gap-2 p-3">
     <div class="bg-muted flex flex-1 items-center gap-2 rounded-full px-3 py-2">
       <Search class="text-muted-foreground size-4" />
@@ -50,7 +50,7 @@
     </button>
   </div>
 
-  <ScrollArea class="flex-1">
+  <ScrollArea class="min-h-0 flex-1">
     {#if filtered.length === 0}
       <div class="text-muted-foreground px-4 py-10 text-center text-sm">
         {#if session.conversations.length === 0}
