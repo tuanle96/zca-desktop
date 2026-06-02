@@ -10,7 +10,7 @@ use std::sync::Mutex;
 
 use rusqlite::Connection;
 
-use crate::types::{AccountProfile, Credentials};
+use crate::types::{AccountProfile, Credentials, StoredMessage, StoredThread, ThreadKind};
 
 use super::crypto::{self, CryptoError};
 
@@ -200,6 +200,149 @@ impl Db {
         Ok(())
     }
 
+    /// Persist one observed message and upsert its thread row (ADR-0005).
+    ///
+    /// Messages are deduplicated by `(account_id, msg_id)`; re-observing a
+    /// message (e.g. self-echo) is a no-op insert. The thread row tracks the
+    /// latest activity + a best-effort title/avatar.
+    #[allow(clippy::too_many_arguments)]
+    pub fn save_message(
+        &self,
+        account_id: &str,
+        thread_id: &str,
+        kind: &str,
+        msg_id: &str,
+        from_id: Option<&str>,
+        from_name: Option<&str>,
+        body: Option<&str>,
+        outgoing: bool,
+        ts: Option<i64>,
+        thread_title: Option<&str>,
+        thread_avatar: Option<&str>,
+        bump_unread: bool,
+    ) -> Result<(), StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+
+        // Insert the message; ignore if we have already stored this msg_id.
+        let inserted = conn.execute(
+            "INSERT INTO messages (account_id, thread_id, msg_id, from_id, from_name, body, outgoing, kind, ts)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'text', ?8)
+             ON CONFLICT(account_id, msg_id) DO NOTHING",
+            rusqlite::params![
+                account_id,
+                thread_id,
+                msg_id,
+                from_id,
+                from_name,
+                body,
+                outgoing as i64,
+                ts
+            ],
+        )?;
+
+        // A duplicate message must not bump the thread/unread counters.
+        if inserted == 0 {
+            return Ok(());
+        }
+
+        let unread_delta = if bump_unread { 1 } else { 0 };
+        conn.execute(
+            "INSERT INTO threads (account_id, thread_id, kind, title, avatar, last_at, unread)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7)
+             ON CONFLICT(account_id, thread_id) DO UPDATE SET
+                kind = excluded.kind,
+                title = COALESCE(excluded.title, threads.title),
+                avatar = COALESCE(excluded.avatar, threads.avatar),
+                last_at = MAX(COALESCE(excluded.last_at, 0), COALESCE(threads.last_at, 0)),
+                unread = threads.unread + ?7",
+            rusqlite::params![account_id, thread_id, kind, thread_title, thread_avatar, ts, unread_delta],
+        )?;
+        Ok(())
+    }
+
+    /// Persist attachment metadata for a stored message (URL + descriptors).
+    #[allow(clippy::too_many_arguments)]
+    pub fn save_attachment(
+        &self,
+        account_id: &str,
+        msg_id: &str,
+        kind: Option<&str>,
+        url: Option<&str>,
+        filename: Option<&str>,
+        size: Option<i64>,
+        meta: Option<&str>,
+    ) -> Result<(), StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        conn.execute(
+            "INSERT INTO attachments (account_id, msg_id, kind, url, local_path, filename, size, meta)
+             VALUES (?1, ?2, ?3, ?4, NULL, ?5, ?6, ?7)",
+            rusqlite::params![account_id, msg_id, kind, url, filename, size, meta],
+        )?;
+        Ok(())
+    }
+
+    /// Mark a thread read (clear its unread counter) — used when the UI opens it.
+    pub fn clear_unread(&self, account_id: &str, thread_id: &str) -> Result<(), StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        conn.execute(
+            "UPDATE threads SET unread = 0 WHERE account_id = ?1 AND thread_id = ?2",
+            rusqlite::params![account_id, thread_id],
+        )?;
+        Ok(())
+    }
+
+    /// Load all persisted threads for an account, most-recent first.
+    pub fn load_threads(&self, account_id: &str) -> Result<Vec<StoredThread>, StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let mut stmt = conn.prepare(
+            "SELECT thread_id, kind, title, avatar, last_at, unread
+             FROM threads WHERE account_id = ?1
+             ORDER BY COALESCE(last_at, 0) DESC",
+        )?;
+        let rows = stmt.query_map(rusqlite::params![account_id], |row| {
+            Ok(StoredThread {
+                account_id: account_id.to_string(),
+                thread_id: row.get(0)?,
+                kind: thread_kind_from_str(&row.get::<_, String>(1)?),
+                title: row.get(2)?,
+                avatar: row.get(3)?,
+                last_at: row.get(4)?,
+                unread: row.get(5)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
+    /// Load the most recent `limit` messages for an account (newest threads'
+    /// activity first within each thread), returned oldest-first per thread for
+    /// direct rendering. `limit` caps total rows to keep restore cheap.
+    pub fn load_recent_messages(
+        &self,
+        account_id: &str,
+        limit: i64,
+    ) -> Result<Vec<StoredMessage>, StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let mut stmt = conn.prepare(
+            "SELECT thread_id, msg_id, from_id, from_name, body, outgoing, ts
+             FROM messages WHERE account_id = ?1
+             ORDER BY COALESCE(ts, 0) ASC
+             LIMIT ?2",
+        )?;
+        let rows = stmt.query_map(rusqlite::params![account_id, limit], |row| {
+            Ok(StoredMessage {
+                account_id: account_id.to_string(),
+                thread_id: row.get(0)?,
+                msg_id: row.get(1)?,
+                from_id: row.get(2)?,
+                from_name: row.get(3)?,
+                body: row.get(4)?,
+                outgoing: row.get::<_, i64>(5)? != 0,
+                ts: row.get(6)?,
+            })
+        })?;
+        Ok(rows.collect::<Result<Vec<_>, _>>()?)
+    }
+
     /// Raw ciphertext blob for an account — test helper to assert that what we
     /// persisted is not plaintext.
     #[cfg(test)]
@@ -222,6 +365,15 @@ fn now_secs() -> i64 {
         .duration_since(std::time::UNIX_EPOCH)
         .map(|d| d.as_secs() as i64)
         .unwrap_or(0)
+}
+
+/// Map the persisted kind string back to the typed `ThreadKind` (defaults to
+/// `User` for any unrecognized value).
+fn thread_kind_from_str(s: &str) -> ThreadKind {
+    match s {
+        "group" => ThreadKind::Group,
+        _ => ThreadKind::User,
+    }
 }
 
 #[cfg(test)]
@@ -259,6 +411,50 @@ mod tests {
         // roundtrip test; here we ensure delete on an absent id is a no-op.
         db.mark_reauth_needed("nope").expect("mark");
         db.delete_account("nope").expect("delete");
+    }
+
+    /// migrate + thread/message persistence round-trips: save_message stores a
+    /// message and upserts its thread; load_threads/load_recent_messages return
+    /// them; a duplicate msg_id is a no-op (no double unread).
+    #[test]
+    fn message_persistence_roundtrips_and_dedupes() {
+        let db = temp_db();
+        let acc = "100000";
+        db.save_message(acc, "thread-1", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
+            .expect("save m1");
+        db.save_message(acc, "thread-1", "user", "m2", Some("u2"), Some("Bob"), Some("there"), false, Some(2000), Some("Bob"), None, true)
+            .expect("save m2");
+        // Duplicate m1 — must not insert again or double the unread count.
+        db.save_message(acc, "thread-1", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
+            .expect("dup m1");
+
+        let threads = db.load_threads(acc).expect("threads");
+        assert_eq!(threads.len(), 1);
+        assert_eq!(threads[0].thread_id, "thread-1");
+        assert_eq!(threads[0].unread, 2, "two distinct inbound msgs => unread 2");
+        assert_eq!(threads[0].last_at, Some(2000));
+
+        let msgs = db.load_recent_messages(acc, 100).expect("messages");
+        assert_eq!(msgs.len(), 2, "duplicate must not create a third row");
+        assert_eq!(msgs[0].msg_id, "m1", "oldest-first ordering");
+        assert_eq!(msgs[1].body.as_deref(), Some("there"));
+
+        db.clear_unread(acc, "thread-1").expect("clear");
+        assert_eq!(db.load_threads(acc).expect("threads2")[0].unread, 0);
+    }
+
+    /// Attachment metadata persists alongside a message.
+    #[test]
+    fn attachment_metadata_persists() {
+        let db = temp_db();
+        let acc = "100000";
+        db.save_message(acc, "t1", "user", "m1", None, None, Some("file"), false, Some(1), None, None, false)
+            .expect("msg");
+        db.save_attachment(acc, "m1", Some("image"), Some("https://cdn/x.jpg"), Some("x.jpg"), Some(2048), None)
+            .expect("attachment");
+        // No dedicated loader yet; absence of error + the message row is enough
+        // for this slice (loader lands when the UI renders attachments).
+        assert_eq!(db.load_recent_messages(acc, 10).expect("m").len(), 1);
     }
 
     /// Live: full save -> load roundtrip through the OS keychain + AES-GCM, and

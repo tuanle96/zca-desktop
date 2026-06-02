@@ -78,3 +78,30 @@ export type Conversation = {
     /** Avatar URL for the peer/group, when known (resolved from contacts). */
     avatar: string | null;
 };
+
+// Persisted history reloaded from the local store at login/restore.
+export type StoredThread = {
+    accountId: string;
+    threadId: string;
+    kind: ThreadKind;
+    title: string | null;
+    avatar: string | null;
+    lastAt: number | null;
+    unread: number;
+};
+
+export type StoredMessage = {
+    accountId: string;
+    threadId: string;
+    msgId: string;
+    fromId: string | null;
+    fromName: string | null;
+    body: string | null;
+    outgoing: boolean;
+    ts: number | null;
+};
+
+export type History = {
+    threads: StoredThread[];
+    messages: StoredMessage[];
+};
