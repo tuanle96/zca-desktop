@@ -1,8 +1,17 @@
 {
   "name": "zca-desktop",
   "version": "0.1.0",
-  "description": "",
+  "description": "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust + SvelteKit). Personal, noncommercial use only.",
   "type": "module",
+  "author": "Lê Anh Tuấn (tuanle96)",
+  "homepage": "https://github.com/tuanle96/zca-desktop",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tuanle96/zca-desktop.git"
+  },
+  "bugs": {
+    "url": "https://github.com/tuanle96/zca-desktop/issues"
+  },
   "scripts": {
     "dev": "vite dev",
     "build": "vite build",
@@ -12,7 +21,7 @@
     "check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
     "tauri": "tauri"
   },
-  "license": "MIT",
+  "license": "PolyForm-Noncommercial-1.0.0",
   "dependencies": {
     "@tauri-apps/api": "^2",
     "@tauri-apps/plugin-opener": "^2"
