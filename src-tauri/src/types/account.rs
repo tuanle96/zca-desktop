@@ -16,6 +16,9 @@ pub struct AccountProfile {
     pub account_id: AccountId,
     #[serde(default)]
     pub display_name: Option<String>,
+    /// Public avatar URL for the logged-in account, when available.
+    #[serde(default)]
+    pub avatar: Option<String>,
 }
 
 /// Non-secret result of importing a credential payload.

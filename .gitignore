@@ -17,6 +17,10 @@ dist-ssr
 cookies.json
 /credentials/
 
+# Local debug logs + raw API captures (may contain redacted/raw payloads)
+/logs/
+*.log
+
 # Harness local runtime state
 .harness/state/harness.db
 .harness/state/harness.db-*

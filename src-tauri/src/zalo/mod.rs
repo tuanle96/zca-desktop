@@ -15,14 +15,46 @@ pub use zca_rust::{Result as ZaloResult, ZaloError, API};
 use std::sync::Arc;
 use tokio::sync::mpsc;
 
+use reqwest::cookie::{CookieStore, Jar};
+use zca_rust::apis::login_qr::{login_qr, LoginQREvent, LoginQROptions, LoginQRResult};
 use zca_rust::apis::send_message::MessageContent as SendContent;
+use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::ListenerEvent;
 use zca_rust::models::{Message, MessageContent as ZcaMessageContent, ThreadType};
 use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
 use zca_rust::context::Options;
 use zca_rust::Zalo;
 
-use crate::types::{AccountProfile, Contact, Credentials, IncomingMessage, ThreadKind};
+use crate::types::{
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, ThreadKind,
+};
+
+/// Default desktop browser User-Agent for the QR login flow.
+///
+/// Mirrors the upstream `zca-js` default so the generated device identity
+/// (`imei`, derived from the UA) and the login requests look like a normal
+/// desktop browser. The same UA is stored in the resulting [`Credentials`] so
+/// later cookie-based logins stay consistent with the device that scanned.
+const DEFAULT_QR_USER_AGENT: &str =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0";
+
+/// Zalo hosts whose cookies make up an authenticated session. The QR cookie jar
+/// is opaque (reqwest only exposes `name=value` per URL), so we read each host
+/// and merge the pairs when rebuilding [`Credentials`]. Auth cookies can sit on
+/// the apex `.zalo.me` or on specific subdomains (the login call itself goes to
+/// `wpa.chat.zalo.me`), so we query a broad host set and de-duplicate by name.
+const ZALO_COOKIE_HOSTS: [&str; 5] = [
+    "https://zalo.me/",
+    "https://chat.zalo.me/",
+    "https://wpa.chat.zalo.me/",
+    "https://id.zalo.me/",
+    "https://jr.chat.zalo.me/",
+];
+
+/// How long a generated QR stays valid before the core aborts the wait and
+/// emits `Expired`. Matches the upstream client's 100s window. Surfaced to the
+/// UI in [`QrLoginEvent::Generated`] so the countdown stays in sync.
+const QR_VALIDITY_SECS: u64 = 100;
 
 /// Map the core credential DTO into the `zca-rust` credential type.
 ///
@@ -69,28 +101,161 @@ pub async fn login_profile(credentials: Credentials) -> ZaloResult<AccountProfil
     Ok(profile_of(&api).await)
 }
 
+/// Run the interactive QR-code login flow (ADR-0004).
+///
+/// Drives `zca-rust`'s `login_qr`, forwarding each stage to the UI as a
+/// non-secret [`QrLoginEvent`] over `events`. On success it assembles a
+/// reusable [`Credentials`] triple from the QR cookie jar plus a freshly
+/// generated, stable device `imei` and the User-Agent used for the flow.
+///
+/// Security: the returned [`Credentials`] (imei + cookie + user_agent) is a
+/// bearer token. It stays in the core — only the non-secret display events
+/// cross `events` to the UI. The caller persists/uses the triple; it is never
+/// serialized back across the IPC boundary.
+pub async fn run_qr_login(events: mpsc::Sender<QrLoginEvent>) -> ZaloResult<Credentials> {
+    let user_agent = DEFAULT_QR_USER_AGENT.to_string();
+    let options = LoginQROptions {
+        user_agent: user_agent.clone(),
+        qr_timeout: std::time::Duration::from_secs(QR_VALIDITY_SECS),
+    };
+
+    // `callback` is sync (`FnMut`); forward each stage to the async channel with
+    // a non-blocking send. Dropping a display event is non-fatal (the flow keeps
+    // running) — only the final credential matters for correctness.
+    let result: LoginQRResult = login_qr(options, |event| {
+        if let Some(mapped) = map_qr_event(&event) {
+            let _ = events.try_send(mapped);
+        }
+    })
+    .await?;
+
+    let credentials = credentials_from_qr(&result, &user_agent)?;
+    let _ = events.try_send(QrLoginEvent::Success);
+    Ok(credentials)
+}
+
+/// Map a `zca-rust` `LoginQREvent` to a non-secret [`QrLoginEvent`] for the UI.
+///
+/// `GotLoginInfo` (which would carry token values) is deliberately dropped here
+/// — the credential triple is assembled in the core, never surfaced to the UI.
+fn map_qr_event(event: &LoginQREvent) -> Option<QrLoginEvent> {
+    match event {
+        LoginQREvent::QRCodeGenerated { image, .. } => {
+            Some(QrLoginEvent::Generated {
+                image: image.clone(),
+                expires_in_secs: QR_VALIDITY_SECS,
+            })
+        }
+        LoginQREvent::QRCodeScanned { avatar, display_name } => Some(QrLoginEvent::Scanned {
+            display_name: display_name.clone(),
+            avatar: avatar.clone(),
+        }),
+        LoginQREvent::QRCodeDeclined { .. } => Some(QrLoginEvent::Declined),
+        LoginQREvent::QRCodeExpired => Some(QrLoginEvent::Expired),
+        // Token-bearing event: kept in the core, never forwarded to the UI.
+        LoginQREvent::GotLoginInfo { .. } => None,
+    }
+}
+
+/// Assemble a reusable [`Credentials`] from a successful QR login (ADR-0004).
+///
+/// The QR flow yields cookies (in an opaque jar) + the account's public profile
+/// but no device identity, so we generate a stable `imei` with
+/// `generate_zalo_uuid` (`randomUUID + "-" + MD5(user_agent)`, matching the
+/// upstream client) and pair it with the cookies read back out of the jar.
+fn credentials_from_qr(result: &LoginQRResult, user_agent: &str) -> ZaloResult<Credentials> {
+    let cookie = cookies_from_jar(&result.cookie_jar);
+
+    // Diagnostics: record which cookie NAMES the QR jar yielded (values are
+    // redacted by the capture sink). The Zalo session needs specific auth
+    // cookies (e.g. zpsid/zpw_sek); a missing/short set here is the likely
+    // cause of a downstream `missing zpw_enk` at cookie-login.
+    let cookie_names: Vec<&str> = cookie.iter().map(|c| c.name.as_str()).collect();
+    tracing::info!(count = cookie.len(), names = ?cookie_names, "qr: cookies extracted from jar");
+    crate::config::logging::capture_raw(
+        "qr.cookies_from_jar",
+        &serde_json::json!({ "count": cookie.len(), "names": cookie_names }).to_string(),
+    );
+
+    if cookie.is_empty() {
+        return Err(ZaloError::api("QR login returned no session cookies"));
+    }
+    let credentials = Credentials {
+        imei: generate_zalo_uuid(user_agent),
+        cookie,
+        user_agent: user_agent.to_string(),
+        language: "vi".to_string(),
+    };
+    // Defensive: reuse the same validation the cookie-import path enforces.
+    credentials.validate().map_err(|e| ZaloError::api(e.to_string()))?;
+    Ok(credentials)
+}
+
+/// Read cookies back out of the QR-login cookie jar into core [`Cookie`] DTOs.
+///
+/// reqwest's `Jar` is opaque (only `CookieStore::cookies(url) -> name=value`
+/// pairs are exposed), so we query each known Zalo host and merge the pairs,
+/// de-duplicating by cookie name. Domains are recorded per host so the
+/// re-login path can repopulate the jar.
+fn cookies_from_jar(jar: &Arc<Jar>) -> Vec<Cookie> {
+    let mut seen = std::collections::HashSet::new();
+    let mut cookies = Vec::new();
+    for host in ZALO_COOKIE_HOSTS {
+        let url = match host.parse::<reqwest::Url>() {
+            Ok(u) => u,
+            Err(_) => continue,
+        };
+        let Some(header) = jar.cookies(&url) else { continue };
+        let Ok(header_str) = header.to_str() else { continue };
+        for pair in header_str.split(';') {
+            let pair = pair.trim();
+            let Some((name, value)) = pair.split_once('=') else { continue };
+            let name = name.trim();
+            if name.is_empty() || !seen.insert(name.to_string()) {
+                continue;
+            }
+            cookies.push(Cookie {
+                // Zalo session cookies are apex-scoped; tag them `.zalo.me` so
+                // re-population attaches them to every *.zalo.me request the
+                // login flow makes (id/wpa/chat/...), not just one subdomain.
+                domain: ".zalo.me".to_string(),
+                name: name.to_string(),
+                value: value.trim().to_string(),
+                path: "/".to_string(),
+                expiration_date: None,
+                host_only: false,
+                http_only: false,
+                same_site: None,
+                secure: true,
+                session: false,
+                store_id: None,
+            });
+        }
+    }
+    cookies
+}
+
 /// Build the public [`AccountProfile`] for an already-authenticated [`API`].
 ///
 /// `account_id` comes from `getOwnId` (always present after login); the display
 /// name is best-effort (a failed fetch leaves it `None`).
 pub async fn profile_of(api: &API) -> AccountProfile {
+    let (display_name, avatar) = fetch_profile_fields(api).await;
     AccountProfile {
         account_id: api.get_own_id().to_string(),
-        display_name: fetch_display_name(api).await,
+        display_name,
+        avatar,
     }
 }
 
-/// Best-effort own display name; returns `None` on any error or empty value.
-async fn fetch_display_name(api: &API) -> Option<String> {
-    let info = zca_rust::apis::fetch_account_info::fetch_account_info(api.get_context())
-        .await
-        .ok()?;
-    let name = info.profile.display_name.trim();
-    if name.is_empty() {
-        None
-    } else {
-        Some(name.to_string())
-    }
+/// Best-effort own display name + avatar URL. Returns `(None, None)` on any
+/// error; an empty value for either field becomes `None`.
+async fn fetch_profile_fields(api: &API) -> (Option<String>, Option<String>) {
+    let Ok(info) = zca_rust::apis::fetch_account_info::fetch_account_info(api.get_context()).await
+    else {
+        return (None, None);
+    };
+    (non_empty(&info.profile.display_name), non_empty(&info.profile.avatar))
 }
 
 /// WebSocket URLs for the realtime listener, taken from the post-login info
@@ -229,6 +394,43 @@ pub async fn list_contacts(api: &API) -> ZaloResult<Vec<Contact>> {
     Ok(contacts)
 }
 
+/// Fetch the account's groups and map them into core [`Group`] DTOs (id + name
+/// + avatar), used to resolve a group thread's display name/avatar.
+///
+/// Two-step like the upstream client: `get_all_groups` lists the group ids,
+/// then `get_group_info` returns each group's details. Confined to the `zalo`
+/// layer so higher layers never see `zca-rust`'s `GroupInfo`.
+pub async fn list_groups(api: &API) -> ZaloResult<Vec<Group>> {
+    let all = api.get_all_groups().await?;
+    let ids: Vec<String> = all.grid_ver_map.into_keys().collect();
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let info = api.get_group_info(&ids).await?;
+    let mut groups: Vec<Group> = info
+        .grid_info_map
+        .into_iter()
+        .filter_map(|(group_id, value)| {
+            // Each value is a GroupInfo-shaped JSON object; pull name + avatar.
+            let name = value.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+            let avatar = value
+                .get("fullAvt")
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .or_else(|| value.get("avt").and_then(|v| v.as_str()))
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty());
+            if name.is_empty() {
+                None
+            } else {
+                Some(Group { group_id, name, avatar })
+            }
+        })
+        .collect();
+    groups.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(groups)
+}
+
 /// Resolve a user's uid from a phone number (best-effort; tolerates Zalo's
 /// "not a contact" code 216 internally). Used by live tests to address a real
 /// recipient without hard-coding ids.
@@ -270,6 +472,149 @@ mod tests {
         let err = login_profile(blank_credentials()).await.expect_err("empty creds must error");
         assert!(matches!(err, ZaloError::Api { .. }), "expected API error, got {err}");
     }
+
+    /// The QR display mapping forwards the renderable image, the scanned
+    /// account's public name/avatar, and coarse stages — and never forwards the
+    /// token-bearing `GotLoginInfo` event to the UI.
+    #[test]
+    fn map_qr_event_forwards_only_non_secret_stages() {
+        let generated = map_qr_event(&LoginQREvent::QRCodeGenerated {
+            code: "secret-code".to_string(),
+            image: "BASE64PNG".to_string(),
+            token: "secret-token".to_string(),
+        });
+        assert_eq!(
+            generated,
+            Some(QrLoginEvent::Generated {
+                image: "BASE64PNG".to_string(),
+                expires_in_secs: QR_VALIDITY_SECS,
+            })
+        );
+
+        let scanned = map_qr_event(&LoginQREvent::QRCodeScanned {
+            avatar: "https://avatar".to_string(),
+            display_name: "Tuấn".to_string(),
+        });
+        assert_eq!(
+            scanned,
+            Some(QrLoginEvent::Scanned {
+                display_name: "Tuấn".to_string(),
+                avatar: "https://avatar".to_string(),
+            })
+        );
+
+        assert_eq!(
+            map_qr_event(&LoginQREvent::QRCodeDeclined { code: "c".to_string() }),
+            Some(QrLoginEvent::Declined)
+        );
+        assert_eq!(map_qr_event(&LoginQREvent::QRCodeExpired), Some(QrLoginEvent::Expired));
+
+        // Token-bearing event must be dropped, never surfaced to the UI.
+        let leaked = map_qr_event(&LoginQREvent::GotLoginInfo {
+            cookies: Vec::new(),
+            imei: "device-imei".to_string(),
+            user_agent: "ua".to_string(),
+        });
+        assert_eq!(leaked, None, "GotLoginInfo must not be forwarded to the UI");
+    }
+
+    /// The generated device imei follows the upstream shape
+    /// (`<uuid>-<md5(user_agent)>`): a v4 UUID, a hyphen, then a 32-hex digest.
+    /// It must also be stable across the same flow (stored for re-login).
+    #[test]
+    fn generated_imei_has_expected_shape() {
+        let imei = generate_zalo_uuid(DEFAULT_QR_USER_AGENT);
+        // uuid (36 chars: 8-4-4-4-12) + '-' + md5 hex (32 chars)
+        assert_eq!(imei.len(), 36 + 1 + 32, "imei = uuid + '-' + md5 hex, got: {imei}");
+        let md5_part = &imei[imei.len() - 32..];
+        assert!(
+            md5_part.chars().all(|c| c.is_ascii_hexdigit()),
+            "trailing md5 segment must be hex, got: {md5_part}"
+        );
+    }
+
+    /// Cookies read back out of an empty jar yield an empty set, and
+    /// `credentials_from_qr` rejects a session with no cookies rather than
+    /// producing an invalid credential.
+    #[test]
+    fn credentials_from_qr_requires_cookies() {
+        let result = LoginQRResult {
+            user_info: zca_rust::apis::login_qr::LoginUserInfo {
+                name: "Tuấn".to_string(),
+                avatar: String::new(),
+            },
+            cookie_jar: Arc::new(Jar::default()),
+        };
+        match credentials_from_qr(&result, DEFAULT_QR_USER_AGENT) {
+            Ok(_) => panic!("empty cookie jar must not produce credentials"),
+            Err(err) => assert!(
+                matches!(err, ZaloError::Api { .. }),
+                "expected API error for empty jar, got {err}"
+            ),
+        }
+    }
+
+    /// Cookies set on a Zalo host are read back into core DTOs with a non-empty
+    /// name/value and a Zalo domain, de-duplicated by name across hosts.
+    #[test]
+    fn cookies_from_jar_reads_zalo_host_cookies() {
+        let jar = Arc::new(Jar::default());
+        let url = "https://chat.zalo.me/".parse::<reqwest::Url>().unwrap();
+        jar.add_cookie_str("zpsid=abc123; Domain=chat.zalo.me; Path=/", &url);
+        jar.add_cookie_str("zpw_sek=def456; Domain=chat.zalo.me; Path=/", &url);
+
+        let cookies = cookies_from_jar(&jar);
+        assert!(cookies.iter().any(|c| c.name == "zpsid" && c.value == "abc123"));
+        assert!(cookies.iter().any(|c| c.name == "zpw_sek" && c.value == "def456"));
+        assert!(
+            cookies.iter().all(|c| c.domain.contains("zalo.me") && !c.value.is_empty()),
+            "every cookie must carry a zalo.me domain and a value"
+        );
+    }
+
+    /// Live QR login. Ignored by default: it opens a REAL QR login that must be
+    /// scanned + confirmed on a phone within the timeout, then asserts a usable
+    /// credential triple comes back (proven by logging in with it and reading a
+    /// non-empty account id). Prints only non-secret diagnostics. Run with:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored qr_login_live --nocapture
+    #[tokio::test]
+    #[ignore = "interactive: requires scanning a real QR on a phone"]
+    async fn qr_login_live() {
+        let (tx, mut rx) = mpsc::channel::<QrLoginEvent>(16);
+        let printer = tokio::spawn(async move {
+            while let Some(event) = rx.recv().await {
+                match event {
+                    QrLoginEvent::Generated { image, expires_in_secs } => {
+                        println!(
+                            "qr_login_live: QR generated (base64 png len={}, expires_in={}s)",
+                            image.len(),
+                            expires_in_secs
+                        );
+                    }
+                    QrLoginEvent::Scanned { display_name, .. } => {
+                        println!("qr_login_live: scanned by '{display_name}' — confirm on phone");
+                    }
+                    QrLoginEvent::Declined => println!("qr_login_live: declined on phone"),
+                    QrLoginEvent::Expired => println!("qr_login_live: QR expired"),
+                    QrLoginEvent::Success => println!("qr_login_live: login confirmed"),
+                }
+            }
+        });
+
+        let credentials = run_qr_login(tx).await.expect("QR login flow failed");
+        credentials.validate().expect("QR credentials must be valid");
+        let _ = printer.await;
+
+        // Prove the issued triple is a usable session.
+        let profile = login_profile(credentials).await.expect("login with QR credentials failed");
+        assert!(!profile.account_id.is_empty(), "account_id must be non-empty after QR login");
+        println!(
+            "qr_login_live OK: uid_len={} has_display_name={}",
+            profile.account_id.len(),
+            profile.display_name.is_some()
+        );
+    }
+
 
     /// Live single-login smoke. Ignored by default: it performs a REAL network
     /// login and requires a populated `.zalo-cred.json` (gitignored) at the repo
