@@ -148,3 +148,15 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Security: credential never plaintext on disk (AES-GCM), only master key in keychain, never crosses IPC. Test asserts on-disk blob is ciphertext (no plaintext cookie value).
 - Gates: cargo build OK, clippy --all-targets -D warnings clean, cargo test 21 passed/8 ignored (crypto seal/open + wrong-key + truncated + json-roundtrip + db migrate/delete; cred_store_roundtrip #[ignore] touches real keychain), svelte-check 0/0, vite build OK, architecture-fitness --strict OK (store layer recognized).
 - Pending for secure-cred-store passes:true: live cred_store_roundtrip + relaunch auto-restore smoke, advisor+security+architecture review, evidence bundle. Slice 2 (message-cache: persist messages/attachments) is the next feature.
+
+## Slice 2 message-cache + review round (2026-06-02)
+- message-cache (ADR-0005 slice 2): store/db.rs gains thread/message/attachment repositories (save_message upsert+dedupe by (account_id,msg_id)+unread, save_attachment, load_threads, load_recent_messages, clear_unread); types/stored.rs StoredThread/StoredMessage/History; command/ persists incoming (listener bridge) + outgoing (send) messages, load_history + mark_thread_read commands, restore persists messages too; frontend session.hydrateHistory() loads threads+messages at login/restore so prior chats show without a realtime event; selectThread persists read state. Anti message-loss: every observed message mirrored to SQLite.
+- Gates: cargo build OK, clippy --all-targets -D warnings clean, cargo test 23 passed/8 ignored (message dedupe/threads/attachment tests new), svelte-check 0/0, vite build OK, architecture-fitness --strict OK.
+- Commits: feat/qr-login-persistence-logging branch — 7fac2d7 (qr-login+persistence+logging+UI) and 782cf20 (message-cache). Pushed (PR link available). NOT merged to main.
+- Reviews (read-only) for secure-cred-store: advisor + security-reviewer + architecture-reviewer all = needs-human, NO blocking findings. Code verified sound (AES-256-GCM at rest, keychain master key, store-confined deps, no token across IPC, parameterized SQL, redaction covers zpw_sek/zpsid). Persisted under .harness/reviews/secure-cred-store/. qr-login advisor decision recorded earlier (needs-human).
+- Readiness: all REQUIRED gates green (task-evidence, evidence-attestation, review-coverage, architecture-fitness, permissions-drift, structural, hooks, schemas). Optional harness-report flags the needs-human reviews (correct signal).
+- BLOCKED ON USER (device-only live smoke) before passes:true for qr-login / secure-cred-store / message-cache:
+  1. `cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture` (keychain+ciphertext roundtrip)
+  2. QR scan live + tắt/mở lại app to verify auto-restore + history hydration on the GUI
+  3. then author evidence bundles + flip reviewers to pass + set passes:true
+- Accepted known risk to record in evidence: message bodies stored plaintext at rest (user data, not bearer token; whole-DB encryption deferred to a future ADR per ADR-0005).
