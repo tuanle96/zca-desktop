@@ -131,7 +131,7 @@
     {
       "id": "single-login",
       "title": "Phase 1: Log in one account and display own profile (get_own_id)",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/single-login.json",
       "evidencePath": ".harness/evidence/single-login.json",
@@ -139,17 +139,17 @@
         {
           "id": "zalo",
           "title": "zalo/: login() returns API facade, fetch own profile",
-          "done": false
+          "done": true
         },
         {
           "id": "cmd",
           "title": "command/: login command returns AccountProfile to UI",
-          "done": false
+          "done": true
         },
         {
           "id": "smoke",
           "title": "UI shows logged-in account id/name",
-          "done": false
+          "done": true
         }
       ]
     },

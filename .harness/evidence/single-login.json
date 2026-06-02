@@ -1,0 +1,158 @@
+{
+    "schemaVersion": 1,
+    "taskId": "single-login",
+    "featureId": "single-login",
+    "status": "pass",
+    "createdAt": "2026-06-02T03:44:22.588Z",
+    "diffSummary": "Implemented single-account login. zalo/login_profile maps types::Credentials into zca-rust (mapping kept inside the zalo layer so types stays zca-rust-free), logs in, and returns AccountProfile (own id via get_own_id + best-effort display name via fetch_account_info). command/login parses+validates the JSON payload at the boundary and returns only the non-secret AccountProfile. lib.rs registers the command. The frontend adds a Log in button that shows the account id/name. A live #[ignore] smoke (single_login_live) reads the gitignored .zalo-cred.json and performed a real login (uid_len=19, has_display_name=true); the attested stdout sidecar was scanned and contains no token values.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src/routes/+page.svelte"
+    ],
+    "checks": [
+        {
+            "name": "smoke",
+            "acceptanceId": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored single_login_live --nocapture",
+            "status": "pass",
+            "summary": "Live single-login against real .zalo-cred.json: login_profile returned a non-empty account id (uid_len=19) and a display name. Output is non-secret only.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:44:22.588Z",
+            "finishedAt": "2026-06-02T03:44:23.319Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+            "stdoutHash": "sha256:875a74a0b93fc1dc1cc9541e923ab84bd04f066e1a30beedf11c35e5a3385020",
+            "stderrHash": "sha256:8ac360473be4eaa9ad0f6c835daf2826ec96c5f1eba80fe810097364ed4f1181",
+            "stdoutPath": ".harness/evidence/single-login/checks/smoke-20260602034422/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/smoke-20260602034422/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/smoke-20260602034422/stdout.txt",
+                ".harness/evidence/single-login/checks/smoke-20260602034422/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "acceptanceId": "zalo",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: 7 passed offline (login_profile rejects empty creds; import_credentials suite); live smoke ignored by default.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:44:55.826Z",
+            "finishedAt": "2026-06-02T03:44:56.273Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+            "stdoutHash": "sha256:d66a1fda11f722323d1d192c6ee608dbe9e36a0ac84c71fd12c5c9839d0186a1",
+            "stderrHash": "sha256:359a2b02a4916924e94c2c8069dc00ad7b596e0915aeae5067b2ef7af18d8d7b",
+            "stdoutPath": ".harness/evidence/single-login/checks/tests-20260602034455/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/tests-20260602034455/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/tests-20260602034455/stdout.txt",
+                ".harness/evidence/single-login/checks/tests-20260602034455/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with login command + login_profile + credential mapping.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:44:56.713Z",
+            "finishedAt": "2026-06-02T03:44:57.284Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:4618eeba4e21359898995b7f544b56cd4d474efe9641525e1447388aaa8fabe6",
+            "stdoutPath": ".harness/evidence/single-login/checks/lint-20260602034456/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/lint-20260602034456/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/lint-20260602034456/stdout.txt",
+                ".harness/evidence/single-login/checks/lint-20260602034456/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "acceptanceId": "cmd",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles the login command + zalo login_profile.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:45:05.931Z",
+            "finishedAt": "2026-06-02T03:45:06.267Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:5604fc8f0c276397a55db4bd7008236712075c0ad37d3b3a0f1fe362b1b85a36",
+            "stdoutPath": ".harness/evidence/single-login/checks/rust.build-20260602034505/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/rust.build-20260602034505/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/rust.build-20260602034505/stdout.txt",
+                ".harness/evidence/single-login/checks/rust.build-20260602034505/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend build succeeds with the login UI (svelte-check 0/0; adapter-static wrote build/).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:46:45.349Z",
+            "finishedAt": "2026-06-02T03:46:47.826Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:cf5f07ec89f2499cf0b02f83c3cb335b91b0aa0928eb450fbd663e5ad62366bf",
+            "stdoutHash": "sha256:6dbbc7a12c58024c4156e23da2d32f4b966f9dfbe83b6e3c9b27ed7d1fa80238",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/single-login/checks/frontend.build-20260602034645/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/frontend.build-20260602034645/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/frontend.build-20260602034645/stdout.txt",
+                ".harness/evidence/single-login/checks/frontend.build-20260602034645/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T03:45:07.116Z",
+            "finishedAt": "2026-06-02T03:45:07.518Z",
+            "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+            "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/single-login/checks/structural-20260602034507/stdout.txt",
+            "stderrPath": ".harness/evidence/single-login/checks/structural-20260602034507/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/single-login/checks/structural-20260602034507/stdout.txt",
+                ".harness/evidence/single-login/checks/structural-20260602034507/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/single-login/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/single-login/security-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/single-login/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [],
+    "updatedAt": "2026-06-02T03:46:47.826Z"
+}

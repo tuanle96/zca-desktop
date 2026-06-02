@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: 7 passed offline (login_profile rejects empty creds; import_credentials suite); live smoke ignored by default.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T03:44:55.826Z",
+  "finishedAt": "2026-06-02T03:44:56.273Z",
+  "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+  "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+  "stdoutHash": "sha256:d66a1fda11f722323d1d192c6ee608dbe9e36a0ac84c71fd12c5c9839d0186a1",
+  "stderrHash": "sha256:359a2b02a4916924e94c2c8069dc00ad7b596e0915aeae5067b2ef7af18d8d7b",
+  "stdoutPath": ".harness/evidence/single-login/checks/tests-20260602034455/stdout.txt",
+  "stderrPath": ".harness/evidence/single-login/checks/tests-20260602034455/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/single-login/checks/tests-20260602034455/stdout.txt",
+    ".harness/evidence/single-login/checks/tests-20260602034455/stderr.txt"
+  ]
+}

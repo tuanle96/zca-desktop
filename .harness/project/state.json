@@ -71,7 +71,7 @@
             {
               "id": "tests-pass",
               "title": "Relevant cargo tests pass",
-              "done": false
+              "done": true
             }
           ]
         }

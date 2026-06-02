@@ -1,0 +1,47 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "single-login",
+    "featureId": "single-login",
+    "decision": "pass",
+    "createdAt": "2026-06-02T03:52:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Two layers touched (zalo + command). command depends on zalo + types; zalo depends on types + zca-rust; no back-edges. types stays zca-rust-free because the credential mapping lives in the zalo layer."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "to_zca_credentials maps types::Credentials into zca_rust::Credentials inside the zalo layer, so zca-rust stays behind the zalo boundary and the forward-only order types → … → zalo → … → command holds with no back-edge from types into zalo.",
+            "fix": "Keep all zca-rust type mapping inside zalo/ as more endpoints are wrapped."
+        }
+    ],
+    "summary": "Cross-layer change (zalo + command) reviewed for layering. command/login -> zalo/login_profile -> zca-rust is forward-only; types remains free of zca-rust because the credential mapping is confined to zalo. No layer back-edges. Approve."
+}

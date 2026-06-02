@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the login command + zalo login_profile.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T03:45:05.931Z",
+  "finishedAt": "2026-06-02T03:45:06.267Z",
+  "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+  "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:5604fc8f0c276397a55db4bd7008236712075c0ad37d3b3a0f1fe362b1b85a36",
+  "stdoutPath": ".harness/evidence/single-login/checks/rust.build-20260602034505/stdout.txt",
+  "stderrPath": ".harness/evidence/single-login/checks/rust.build-20260602034505/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/single-login/checks/rust.build-20260602034505/stdout.txt",
+    ".harness/evidence/single-login/checks/rust.build-20260602034505/stderr.txt"
+  ]
+}

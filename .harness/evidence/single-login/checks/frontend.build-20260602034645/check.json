@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "Frontend build succeeds with the login UI (svelte-check 0/0; adapter-static wrote build/).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T03:46:45.349Z",
+  "finishedAt": "2026-06-02T03:46:47.826Z",
+  "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+  "workingTreeHash": "sha256:cf5f07ec89f2499cf0b02f83c3cb335b91b0aa0928eb450fbd663e5ad62366bf",
+  "stdoutHash": "sha256:6dbbc7a12c58024c4156e23da2d32f4b966f9dfbe83b6e3c9b27ed7d1fa80238",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/single-login/checks/frontend.build-20260602034645/stdout.txt",
+  "stderrPath": ".harness/evidence/single-login/checks/frontend.build-20260602034645/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/single-login/checks/frontend.build-20260602034645/stdout.txt",
+    ".harness/evidence/single-login/checks/frontend.build-20260602034645/stderr.txt"
+  ]
+}

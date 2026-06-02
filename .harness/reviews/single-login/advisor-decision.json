@@ -1,0 +1,51 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "single-login",
+    "featureId": "single-login",
+    "decision": "pass",
+    "createdAt": "2026-06-02T03:50:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary",
+        "layering"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the full login path: command/login validates then delegates; zalo/login_profile maps creds + returns AccountProfile; lib.rs registers the command. Live smoke proved a real login."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "login_profile returns only AccountProfile (account_id + optional display_name); credentials are consumed in the zalo layer and never returned or logged. The live smoke prints only uid length + has_display_name.",
+            "fix": "Preserve this no-secret-egress property when session-manager holds the API handle and when secure-cred-store persists credentials."
+        }
+    ],
+    "summary": "single-login is proven end-to-end: a real account logged in (uid_len=19, display name present) via the live smoke, and the offline suite guards the empty-credential path. command/login validates at the boundary and returns only the non-secret AccountProfile; zalo/login_profile is the sole zca-rust caller. No secrets cross IPC or appear in evidence. Safe to mark done."
+}

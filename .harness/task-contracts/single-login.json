@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "id": "single-login",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Log in one account from imported credentials and surface its public profile: zalo/ login_profile() returns AccountProfile, command/ login returns it to the UI, verified by a live single-login smoke.",
+        "goals": [
+            "zalo/ login_profile maps types::Credentials into zca-rust and returns AccountProfile (own id + best-effort display name)",
+            "command/ login parses+validates the payload and returns AccountProfile (no token values cross IPC)",
+            "Live smoke logs in a real account and the UI shows its id/name"
+        ],
+        "nonGoals": [
+            "Persisting credentials or the session (Phase 3 keychain)",
+            "Realtime listener / incoming messages (listener-events)",
+            "Multi-account concurrency (session-manager)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "zalo",
+            "description": "zalo/ login_profile returns an API-backed AccountProfile; empty credentials are rejected offline.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "cmd",
+            "description": "command/ login returns AccountProfile to the UI after validating the payload.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "A real account logs in and the resolved profile has a non-empty account id (UI shows account id/name).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored single_login_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/single-login.json"
+}

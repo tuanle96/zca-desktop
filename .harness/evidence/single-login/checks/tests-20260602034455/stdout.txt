@@ -1,0 +1,23 @@
+
+running 8 tests
+test zalo::tests::single_login_live ... ignored, requires real .zalo-cred.json; performs a live network login
+test command::tests::import_rejects_malformed_json ... ok
+test command::tests::import_defaults_language ... ok
+test command::tests::import_accepts_valid_payload ... ok
+test command::tests::import_rejects_empty_cookies ... ok
+test command::tests::import_rejects_missing_imei ... ok
+test zalo::tests::login_rejects_empty_credentials ... ok
+test zalo::tests::login_profile_rejects_empty_credentials ... ok
+
+test result: ok. 7 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

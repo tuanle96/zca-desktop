@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored single_login_live --nocapture",
+  "status": "pass",
+  "summary": "Live single-login against real .zalo-cred.json: login_profile returned a non-empty account id (uid_len=19) and a display name. Output is non-secret only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T03:44:22.588Z",
+  "finishedAt": "2026-06-02T03:44:23.319Z",
+  "gitHead": "a421554f3a8f770480ac718b2124be23b71b1a54",
+  "workingTreeHash": "sha256:3f62b1c6b2cba73071ad2af5da298034f4e4e999cd23d1803f2ed982a3be8bd5",
+  "stdoutHash": "sha256:875a74a0b93fc1dc1cc9541e923ab84bd04f066e1a30beedf11c35e5a3385020",
+  "stderrHash": "sha256:8ac360473be4eaa9ad0f6c835daf2826ec96c5f1eba80fe810097364ed4f1181",
+  "stdoutPath": ".harness/evidence/single-login/checks/smoke-20260602034422/stdout.txt",
+  "stderrPath": ".harness/evidence/single-login/checks/smoke-20260602034422/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/single-login/checks/smoke-20260602034422/stdout.txt",
+    ".harness/evidence/single-login/checks/smoke-20260602034422/stderr.txt"
+  ]
+}

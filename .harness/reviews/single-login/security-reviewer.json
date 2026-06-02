@@ -1,0 +1,55 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "single-login",
+    "featureId": "single-login",
+    "decision": "pass",
+    "createdAt": "2026-06-02T03:51:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary",
+        "input-validation"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Traced credential handling end to end across the trust boundary: UI -> command/login (validate) -> zalo/login_profile (zca-rust) -> AccountProfile back to UI."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "Bearer tokens (imei/cookie/userAgent) enter only via the payload, are mapped to zca-rust inside the zalo layer, and are never logged. The command returns AccountProfile (id + optional name) only; the live smoke output is limited to uid length + has_display_name, confirmed by a secret-leak scan of the attested stdout sidecar.",
+            "fix": "When secure-cred-store lands, store these via the OS keychain only and keep them out of logs, app-data files, and IPC responses."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "External input (the JSON payload) is parsed and validated at the command boundary (golden principle #2) before any network use; malformed JSON / missing fields are rejected with value-free errors.",
+            "fix": "Keep validating at the command boundary as new account commands are added."
+        }
+    ],
+    "summary": "Security review of the live-login path: credentials are validated at the command boundary and confined to the zalo layer; no token values are logged or returned across IPC, and the attested smoke sidecar was scanned and contains no secrets. Session handle is not yet persisted (Phase 3). No blocking findings."
+}

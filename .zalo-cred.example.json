@@ -1,0 +1,16 @@
+{
+    "_comment": "TEMPLATE ONLY — no real values. Copy this to .zalo-cred.json (gitignored) and paste your ZaloDataExtractor export there. Never commit real credentials; imei + cookie + userAgent are bearer tokens.",
+    "imei": "PASTE_YOUR_IMEI_HERE",
+    "userAgent": "PASTE_YOUR_USER_AGENT_HERE",
+    "language": "vi",
+    "cookie": [
+        {
+            "domain": ".zalo.me",
+            "name": "PASTE_COOKIE_NAME",
+            "value": "PASTE_COOKIE_VALUE",
+            "path": "/",
+            "secure": true,
+            "httpOnly": true
+        }
+    ]
+}

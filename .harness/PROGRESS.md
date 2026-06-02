@@ -48,3 +48,12 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - 6 cargo tests: valid import, malformed JSON, empty cookies, blank imei, language default, plus the existing zalo login test.
 - Reviews: advisor pass + architecture-reviewer pass (cross-layer types+command, forward-only DAG verified).
 - Gates: cargo build/clippy -D warnings/test OK, svelte-check 0/0, npm run build OK, harness-readiness --strict PASSED, review-coverage --strict OK (5 pass decisions).
+
+## Phase 1 — single-login (2026-06-02) [LIVE]
+- 2026-06-02 03:46 | single-login | done
+- zalo/login_profile: maps types::Credentials -> zca_rust::Credentials (mapping stays inside the zalo layer so types is zca-rust-free), logs in, returns AccountProfile (get_own_id + best-effort fetch_account_info display name).
+- command/login: validates payload at the boundary, returns only the non-secret AccountProfile; lib.rs registers it. UI adds a Log in button showing account id/name.
+- LIVE smoke: single_login_live (#[ignore]) read the gitignored .zalo-cred.json and logged in a real account — uid_len=19, has_display_name=true. Attested stdout sidecar scanned: no token values present.
+- Reviews: advisor + security-reviewer + architecture-reviewer all pass.
+- Gates: cargo build/clippy -D warnings/test (7 offline + 1 live) OK, svelte-check 0/0, npm build OK, harness-readiness --strict PASSED, review-coverage --strict OK (8 pass decisions).
+- MVP checklist: tests-pass -> done.
