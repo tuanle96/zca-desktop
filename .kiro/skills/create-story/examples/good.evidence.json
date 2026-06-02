@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "create-story",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.story-sample",
+  "featureId": "feat.story-sample",
+  "diffSummary": "Generate a story packet under .harness from a single feature entry",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/check-eval-tasks.mjs",
+      "summary": "Story references a valid feature id"
+    },
+    {
+      "status": "pass",
+      "command": "git status --porcelain",
+      "summary": "Only the story packet file is created"
+    }
+  ]
+}

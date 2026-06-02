@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.verifyui-sample"}
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"verify-ui attempted to edit src/app.html, outside its declared permission scope"}

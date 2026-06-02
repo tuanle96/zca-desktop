@@ -15,3 +15,10 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - tauri-scaffold marked passes:true with proof: task contract + attested evidence bundle (frontend.build + rust.build via evidence-run). Window smoke verified via user screenshot.
 - Removed orphan placeholder task contracts (health-endpoint, not-found-page).
 - Gates green: task-evidence-check OK, evidence-attestation OK, doctor readiness preflight OK.
+
+## Readiness fix — harness-config-skillsdir (2026-06-01)
+- 2026-06-01 15:50 | harness-config-skillsdir | done
+- Strict readiness was RED: `.harness/config.json` (skillExamples.skillsDir .claude/skills -> .kiro/skills) sat in the git diff with no owning evidence, failing task-evidence + evidence-attestation.
+- Registered a `harness`-type task: task contract + attested evidence bundle (structural no-op + check-skill-examples, both via evidence-run) + mandatory advisor pass decision; flipped the feature to passes:true so strict current-diff coverage includes the config change.
+- `package.json` (harness:check script) was already covered by tauri-scaffold; `.harness/scripts/harness-check.mjs` is harness tooling.
+- Gates green: `harness-readiness.mjs --strict` PASSED (all 14 gates); task-evidence --verify-hashes --replay-plan OK; trace-quality --strict OK.

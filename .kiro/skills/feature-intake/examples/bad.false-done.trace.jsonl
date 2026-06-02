@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.intake-sample"}
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"feature-intake claimed the request was captured but .harness/feature_list.json was never modified"}

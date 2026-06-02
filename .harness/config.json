@@ -151,7 +151,7 @@
   },
   "skillExamples": {
     "enabled": true,
-    "skillsDir": ".claude/skills",
+    "skillsDir": ".kiro/skills",
     "examplesDirName": "examples",
     "checker": ".harness/scripts/check-skill-examples.mjs",
     "requiredCoreSkills": ["feature-intake", "create-story", "add-feature", "debug-flow", "inspect-app", "orchestrate", "verify-ui", "harness-improvement-loop"]

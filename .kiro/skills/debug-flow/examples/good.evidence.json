@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "debug-flow",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.debug-sample",
+  "featureId": "feat.debug-sample",
+  "diffSummary": "Reproduce a failing behavior, fix root cause, and add a regression check",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "npm run --silent harness:check",
+      "summary": "Structural test stays green after the fix"
+    },
+    {
+      "status": "pass",
+      "command": "git diff --stat",
+      "summary": "Fix is minimal and localized to the root cause"
+    }
+  ]
+}

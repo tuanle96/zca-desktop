@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.inspect-sample"}
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"inspect-app attempted to edit src-tauri/src/lib.rs, outside its declared permission scope"}

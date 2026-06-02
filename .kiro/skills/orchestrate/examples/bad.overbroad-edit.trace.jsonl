@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.orchestrate-sample"}
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"orchestrate attempted to edit .harness/scripts/harness-readiness.mjs, outside its declared permission scope"}

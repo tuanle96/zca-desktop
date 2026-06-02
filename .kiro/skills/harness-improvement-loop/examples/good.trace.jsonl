@@ -1,0 +1,4 @@
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.good","case":"good","event":"skill_invoked","taskId":"task.harnessloop-sample"}
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.good","case":"good","event":"gap_identified"}
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.good","case":"good","event":"improvement_applied"}
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.good","case":"good","event":"readiness_reverified","expectedOutcome":"pass"}

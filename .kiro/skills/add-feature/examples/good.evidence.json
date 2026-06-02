@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "add-feature",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.addfeature-sample",
+  "featureId": "feat.addfeature-sample",
+  "diffSummary": "Implement one feature increment behind the structural test gate",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "npm run --silent harness:check",
+      "summary": "Structural test passes for the changed files"
+    },
+    {
+      "status": "pass",
+      "command": "git diff --stat",
+      "summary": "Change is scoped to the feature's layer"
+    }
+  ]
+}

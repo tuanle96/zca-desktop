@@ -1,0 +1,57 @@
+{
+    "schemaVersion": 1,
+    "id": "harness-config-skillsdir",
+    "type": "harness",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Repoint skillExamples.skillsDir to .kiro/skills and wire the harness:check structural entry point so readiness gates run against the Kiro runtime layout.",
+        "goals": [
+            "skillExamples.skillsDir resolves to .kiro/skills under the Kiro runtime",
+            "npm run harness:check delegates to the engine-aware structural wrapper (no-op pass while engine=none)",
+            "check-skill-examples validates the required core skills under the new dir"
+        ],
+        "nonGoals": [
+            "Enabling a real structural engine (still gated by ADR-0003)",
+            "Any src-tauri/src source change",
+            "Any auth/secret/trust-boundary change"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "structural-noop",
+            "description": "npm run harness:check exits 0 as an engine-aware no-op while structuralTest.engine=none.",
+            "verification": {
+                "command": "npm run --silent harness:check"
+            }
+        },
+        {
+            "id": "skillsdir-repoint",
+            "description": "check-skill-examples resolves skillsDir=.kiro/skills and validates the required core skills + example files.",
+            "verification": {
+                "command": "node .harness/scripts/check-skill-examples.mjs"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/harness-config-skillsdir.json"
+}

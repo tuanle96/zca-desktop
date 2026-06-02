@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.story-sample"}
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"create-story attempted to edit package.json, outside its declared permission scope"}

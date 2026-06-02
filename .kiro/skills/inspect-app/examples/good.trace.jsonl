@@ -1,0 +1,3 @@
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.good","case":"good","event":"skill_invoked","taskId":"task.inspect-sample"}
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.good","case":"good","event":"layers_enumerated"}
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.good","case":"good","event":"summary_emitted","expectedOutcome":"pass"}

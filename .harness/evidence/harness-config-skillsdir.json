@@ -1,0 +1,66 @@
+{
+    "schemaVersion": 1,
+    "taskId": "harness-config-skillsdir",
+    "featureId": "harness-config-skillsdir",
+    "status": "pass",
+    "createdAt": "2026-06-01T15:45:39.085Z",
+    "diffSummary": "Repointed .harness/config.json#skillExamples.skillsDir from .claude/skills to .kiro/skills (Kiro runtime layout), added the harness:check npm script, and added .harness/scripts/harness-check.mjs as the engine-aware structural entry point. While structuralTest.engine=none (ADR-0003) harness:check is a clean no-op pass; check-skill-examples now resolves and validates the required core skills under .kiro/skills. No src-tauri/src source touched.",
+    "changedFiles": [
+        ".harness/config.json",
+        ".harness/scripts/harness-check.mjs",
+        "package.json"
+    ],
+    "checks": [
+        {
+            "name": "structural",
+            "acceptanceId": "structural-noop",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check is a clean no-op pass (structuralTest.engine=none) via the new package.json script + .harness/scripts/harness-check.mjs wrapper.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-01T15:45:39.085Z",
+            "finishedAt": "2026-06-01T15:45:39.430Z",
+            "gitHead": "795176e922f9d41baeb81431ba9fa6487b8ab641",
+            "workingTreeHash": "sha256:97d9d3d5bc0449e7bff3c432e90ed210ca2a1342c70ffe84c8bdd6c5e140f853",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stdout.txt",
+            "stderrPath": ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stdout.txt",
+                ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stderr.txt"
+            ]
+        },
+        {
+            "name": "skill-examples",
+            "acceptanceId": "skillsdir-repoint",
+            "command": "node .harness/scripts/check-skill-examples.mjs",
+            "status": "pass",
+            "summary": "check-skill-examples resolves skillsDir=.kiro/skills and validates all required core skills + example files.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-01T15:45:50.364Z",
+            "finishedAt": "2026-06-01T15:45:50.456Z",
+            "gitHead": "795176e922f9d41baeb81431ba9fa6487b8ab641",
+            "workingTreeHash": "sha256:97d9d3d5bc0449e7bff3c432e90ed210ca2a1342c70ffe84c8bdd6c5e140f853",
+            "stdoutHash": "sha256:a37e39d0880041860e6674b13c966bf7c0b613b6ccaf6f7ef24d2945d588f3ce",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/harness-config-skillsdir/checks/skill-examples-20260601154550/stdout.txt",
+            "stderrPath": ".harness/evidence/harness-config-skillsdir/checks/skill-examples-20260601154550/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/harness-config-skillsdir/checks/skill-examples-20260601154550/stdout.txt",
+                ".harness/evidence/harness-config-skillsdir/checks/skill-examples-20260601154550/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/harness-config-skillsdir/advisor-decision.json"
+        }
+    ],
+    "knownRisks": [],
+    "updatedAt": "2026-06-01T15:45:50.456Z"
+}

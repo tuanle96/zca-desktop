@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.debug-sample"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"debug-flow attempted to edit src-tauri/src/main.rs, outside its declared permission scope"}

@@ -1,0 +1,48 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "harness-config-skillsdir",
+    "featureId": "harness-config-skillsdir",
+    "decision": "pass",
+    "createdAt": "2026-06-01T15:50:00.000Z",
+    "checkedFiles": [
+        ".harness/config.json",
+        ".harness/scripts/harness-check.mjs",
+        "package.json"
+    ],
+    "checkedInvariants": [
+        "harness-config-integrity",
+        "skill-examples-dir",
+        "structural-noop-engine-none"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            ".harness/config.json",
+            ".harness/scripts/harness-check.mjs",
+            "package.json"
+        ],
+        "reviewedFiles": [
+            ".harness/config.json",
+            ".harness/scripts/harness-check.mjs",
+            "package.json"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Harness-only change: skillExamples.skillsDir repoint to .kiro/skills, the harness:check npm script, and its engine-aware wrapper. No src-tauri/src source touched."
+    },
+    "confidence": 0.92,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/scripts/harness-check.mjs",
+            "evidence": "harness-check.mjs reads structuralTest.engine and returns a no-op pass (exit 0) while engine=none, matching ADR-0003; it only delegates to a runner once an engine + adapter exist.",
+            "fix": "No change required; revisit when the Rust structural adapter is wired and engine flips off none."
+        }
+    ],
+    "summary": "Harness control-plane fix only: skillExamples.skillsDir now points at the Kiro runtime (.kiro/skills), and harness:check is wired as an engine-aware structural no-op (ADR-0003). No source, auth, secret, trust-boundary, or layer change. Attested structural + skill-examples checks pass against the new layout. Safe to mark done."
+}

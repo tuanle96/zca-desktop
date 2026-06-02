@@ -1,0 +1,4 @@
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.good","case":"good","event":"skill_invoked","taskId":"task.story-sample"}
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.good","case":"good","event":"feature_selected"}
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.good","case":"good","event":"story_packet_written"}
+{"schemaVersion":1,"skill":"create-story","traceId":"create-story.good","case":"good","event":"story_complete","expectedOutcome":"pass"}

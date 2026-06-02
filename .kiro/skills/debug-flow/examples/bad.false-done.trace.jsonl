@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.debug-sample"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"debug-flow declared the bug fixed without reproducing it or verifying the fix"}

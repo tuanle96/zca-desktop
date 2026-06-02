@@ -1,0 +1,5 @@
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.good","case":"good","event":"skill_invoked","taskId":"task.addfeature-sample"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.good","case":"good","event":"feature_list_read"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.good","case":"good","event":"increment_implemented"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.good","case":"good","event":"structural_test_passed"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.good","case":"good","event":"feature_marked_done","expectedOutcome":"pass"}

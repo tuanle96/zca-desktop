@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "npm run harness:check is a clean no-op pass (structuralTest.engine=none) via the new package.json script + .harness/scripts/harness-check.mjs wrapper.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-01T15:45:39.085Z",
+  "finishedAt": "2026-06-01T15:45:39.430Z",
+  "gitHead": "795176e922f9d41baeb81431ba9fa6487b8ab641",
+  "workingTreeHash": "sha256:97d9d3d5bc0449e7bff3c432e90ed210ca2a1342c70ffe84c8bdd6c5e140f853",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stdout.txt",
+  "stderrPath": ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stdout.txt",
+    ".harness/evidence/harness-config-skillsdir/checks/structural-20260601154539/stderr.txt"
+  ]
+}

@@ -1,0 +1,5 @@
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.good","case":"good","event":"skill_invoked","taskId":"task.debug-sample"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.good","case":"good","event":"repro_captured"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.good","case":"good","event":"root_cause_found"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.good","case":"good","event":"fix_applied"}
+{"schemaVersion":1,"skill":"debug-flow","traceId":"debug-flow.good","case":"good","event":"regression_verified","expectedOutcome":"pass"}
