@@ -1,0 +1,96 @@
+//! `command` layer — Tauri command handlers; the boundary the UI calls
+//! (ADR-0003, top of the forward-only order).
+//!
+//! Commands validate external input at this boundary (golden principle #2) and
+//! return only non-secret DTOs to the frontend. Credential token values
+//! (imei/cookie/userAgent) are never serialized back across the IPC bridge.
+
+use crate::types::{CredentialSummary, Credentials};
+
+/// Import a `ZaloDataExtractor` JSON export.
+///
+/// Parses the raw JSON, validates required fields, and returns a non-secret
+/// [`CredentialSummary`]. The credential token values stay in the core and are
+/// never returned to the UI. Errors are plain messages with no token values.
+///
+/// Note: this command does not persist anything yet — secure storage lands in
+/// the Phase 3 keychain feature.
+#[tauri::command]
+pub fn import_credentials(payload: String) -> Result<CredentialSummary, String> {
+    let credentials: Credentials = serde_json::from_str(&payload)
+        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    credentials.validate().map_err(|e| e.to_string())?;
+    Ok(CredentialSummary {
+        imei_len: credentials.imei.len(),
+        cookie_count: credentials.cookie.len(),
+        user_agent_len: credentials.user_agent.len(),
+        language: credentials.language.clone(),
+    })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn valid_payload() -> String {
+        // Synthetic, non-real values — exercises parsing/validation only.
+        serde_json::json!({
+            "imei": "test-imei-0000",
+            "cookie": [{ "domain": ".zalo.me", "name": "zpsid", "value": "x" }],
+            "userAgent": "Mozilla/5.0 (Test)",
+            "language": "vi"
+        })
+        .to_string()
+    }
+
+    #[test]
+    fn import_accepts_valid_payload() {
+        let summary = import_credentials(valid_payload()).expect("valid payload must import");
+        assert_eq!(summary.cookie_count, 1);
+        assert_eq!(summary.language, "vi");
+        assert!(summary.imei_len > 0 && summary.user_agent_len > 0);
+    }
+
+    #[test]
+    fn import_rejects_malformed_json() {
+        let err = import_credentials("{ not json ".to_string()).expect_err("malformed JSON must fail");
+        assert!(err.contains("invalid credential JSON"), "got: {err}");
+    }
+
+    #[test]
+    fn import_rejects_empty_cookies() {
+        let payload = serde_json::json!({
+            "imei": "test-imei-0000",
+            "cookie": [],
+            "userAgent": "Mozilla/5.0 (Test)"
+        })
+        .to_string();
+        let err = import_credentials(payload).expect_err("empty cookies must fail");
+        assert!(err.contains("at least one cookie"), "got: {err}");
+    }
+
+    #[test]
+    fn import_rejects_missing_imei() {
+        let payload = serde_json::json!({
+            "imei": "   ",
+            "cookie": [{ "domain": ".zalo.me", "name": "zpsid", "value": "x" }],
+            "userAgent": "Mozilla/5.0 (Test)"
+        })
+        .to_string();
+        let err = import_credentials(payload).expect_err("blank imei must fail");
+        assert!(err.contains("imei"), "got: {err}");
+    }
+
+    /// Defaulting: language is optional in the export and defaults to "vi".
+    #[test]
+    fn import_defaults_language() {
+        let payload = serde_json::json!({
+            "imei": "test-imei-0000",
+            "cookie": [{ "domain": ".zalo.me", "name": "zpsid", "value": "x" }],
+            "userAgent": "Mozilla/5.0 (Test)"
+        })
+        .to_string();
+        let summary = import_credentials(payload).expect("must import");
+        assert_eq!(summary.language, "vi");
+    }
+}

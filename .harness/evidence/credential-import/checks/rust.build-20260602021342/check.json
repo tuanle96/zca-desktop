@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the types + command layers and registers the import_credentials command.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T02:13:42.174Z",
+  "finishedAt": "2026-06-02T02:13:42.699Z",
+  "gitHead": "e27594f3f1b41a81fa74ce30e8f6fa1f0e0a645a",
+  "workingTreeHash": "sha256:ac8457ba07597f3d0604b13ce7fb62a5003f12b2f1e98a0db6388d0464c550ea",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:9c73735a1033f44f00ea48e15c38d73843ff5a391557aac653bd81d564a34b5f",
+  "stdoutPath": ".harness/evidence/credential-import/checks/rust.build-20260602021342/stdout.txt",
+  "stderrPath": ".harness/evidence/credential-import/checks/rust.build-20260602021342/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/credential-import/checks/rust.build-20260602021342/stdout.txt",
+    ".harness/evidence/credential-import/checks/rust.build-20260602021342/stderr.txt"
+  ]
+}

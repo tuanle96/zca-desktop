@@ -1,0 +1,56 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "credential-import",
+    "featureId": "credential-import",
+    "decision": "pass",
+    "createdAt": "2026-06-02T02:20:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/types/account.rs",
+        "src-tauri/src/types/credentials.rs",
+        "src-tauri/src/types/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "layering"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/types/account.rs",
+            "src-tauri/src/types/credentials.rs",
+            "src-tauri/src/types/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/types/account.rs",
+            "src-tauri/src/types/credentials.rs",
+            "src-tauri/src/types/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the full credential path: types DTOs, validation, and the command handler. The frontend +page.svelte only renders the non-secret summary."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/types/credentials.rs",
+            "evidence": "Credentials carries no Debug derive and CredentialError messages contain no token values; import_credentials returns only CredentialSummary (lengths + counts), so imei/cookie/userAgent never cross the IPC boundary.",
+            "fix": "Keep this no-secret-egress property when secure-cred-store (keychain) and single-login are added."
+        }
+    ],
+    "summary": "credential-import validates ZaloDataExtractor JSON at the command boundary (golden principle #2) and returns a non-secret CredentialSummary. No credential token values are logged or returned across IPC, and nothing is persisted (storage deferred to Phase 3). Six cargo tests cover valid import, malformed JSON, empty cookies, blank imei, and the language default. Build + clippy -D warnings clean. Safe to mark done."
+}

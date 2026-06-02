@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: 6 passed incl. import_credentials accepts valid, rejects malformed JSON / empty cookies / blank imei, and defaults language.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T02:13:21.094Z",
+  "finishedAt": "2026-06-02T02:13:22.350Z",
+  "gitHead": "e27594f3f1b41a81fa74ce30e8f6fa1f0e0a645a",
+  "workingTreeHash": "sha256:ac8457ba07597f3d0604b13ce7fb62a5003f12b2f1e98a0db6388d0464c550ea",
+  "stdoutHash": "sha256:6de1db777d290ade2d938644459859c1d0e1346101d4494a9d8c8b8b7fffab5b",
+  "stderrHash": "sha256:4c9c300505b5aedec0692e40e9c82963d78237c0c36149f094990879a4d13bbb",
+  "stdoutPath": ".harness/evidence/credential-import/checks/tests-20260602021321/stdout.txt",
+  "stderrPath": ".harness/evidence/credential-import/checks/tests-20260602021321/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/credential-import/checks/tests-20260602021321/stdout.txt",
+    ".harness/evidence/credential-import/checks/tests-20260602021321/stderr.txt"
+  ]
+}

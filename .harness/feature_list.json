@@ -106,7 +106,7 @@
     {
       "id": "credential-import",
       "title": "Phase 1: Import account credentials (ZaloDataExtractor JSON) via file picker/paste",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/credential-import.json",
       "evidencePath": ".harness/evidence/credential-import.json",
@@ -114,17 +114,17 @@
         {
           "id": "type",
           "title": "types/: Credentials + AccountProfile DTOs",
-          "done": false
+          "done": true
         },
         {
           "id": "cmd",
           "title": "command/: import_credentials tauri command validates JSON",
-          "done": false
+          "done": true
         },
         {
           "id": "smoke",
           "title": "Invalid JSON rejected with clear error; valid parsed",
-          "done": false
+          "done": true
         }
       ]
     },

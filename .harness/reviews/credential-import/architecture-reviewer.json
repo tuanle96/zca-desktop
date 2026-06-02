@@ -1,0 +1,53 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "credential-import",
+    "featureId": "credential-import",
+    "decision": "pass",
+    "createdAt": "2026-06-02T02:21:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/types/account.rs",
+        "src-tauri/src/types/credentials.rs",
+        "src-tauri/src/types/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/types/account.rs",
+            "src-tauri/src/types/credentials.rs",
+            "src-tauri/src/types/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/types/account.rs",
+            "src-tauri/src/types/credentials.rs",
+            "src-tauri/src/types/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Two layers touched (types + command). Verified forward-only direction: command imports types; types imports nothing from the core; neither imports zca-rust (kept behind the zalo layer)."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/types/mod.rs",
+            "evidence": "types/ depends on serde only (no core layers, no zca-rust); command/ depends on types/ only. Dependency direction matches types→…→command with no back-edges, so the forward-only DAG (ADR-0003) holds.",
+            "fix": "When the zalo layer maps types::Credentials into zca_rust::Credentials, keep the mapping inside zalo/ so types stays zca-rust-free."
+        }
+    ],
+    "summary": "Cross-layer change spanning types + command reviewed for layering. Forward-only order types → config → store → zalo → session → command is preserved: command imports types, types is self-contained (serde only), and zca-rust stays behind the zalo boundary. No layer back-edges introduced. Approve."
+}

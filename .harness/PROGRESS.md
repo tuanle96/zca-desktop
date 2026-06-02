@@ -39,3 +39,12 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Gates: cargo build (config parses) OK, npm run check 0/0, npm run build OK, harness-readiness --strict PASSED, review-coverage --strict OK (advisor pass).
 - Accepted risk csp-runtime-unverified (low, acceptedUntil 2026-07-01): live CSP header to be GUI-verified via inspect-app before credentials land.
 - Note: bun.lock present but bun not installed; @types/node installed via npm --no-save --no-package-lock to avoid a competing lockfile.
+
+## Phase 1 — credential-import (2026-06-02)
+- 2026-06-02 02:20 | credential-import | done
+- Added the `types/` layer: Credentials + Cookie + CredentialError (credentials.rs), AccountId + AccountProfile + CredentialSummary (account.rs). Pure data, no zca-rust dependency (ADR-0003 lowest layer).
+- Added the `command/` layer: import_credentials parses ZaloDataExtractor JSON, validates required fields, returns a non-secret CredentialSummary (lengths + counts only). Token values never cross IPC; nothing persisted (Phase 3).
+- Minimal frontend (+page.svelte): paste JSON → invoke → render summary / error.
+- 6 cargo tests: valid import, malformed JSON, empty cookies, blank imei, language default, plus the existing zalo login test.
+- Reviews: advisor pass + architecture-reviewer pass (cross-layer types+command, forward-only DAG verified).
+- Gates: cargo build/clippy -D warnings/test OK, svelte-check 0/0, npm run build OK, harness-readiness --strict PASSED, review-coverage --strict OK (5 pass decisions).
