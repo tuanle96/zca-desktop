@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture",
+  "status": "pass",
+  "summary": "Live keychain + AES-256-GCM credential roundtrip: ciphertext on disk, decrypts in memory (real macOS keychain).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T14:09:54.351Z",
+  "finishedAt": "2026-06-02T14:09:56.283Z",
+  "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
+  "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
+  "stdoutHash": "sha256:fb3fb3d34e323e115c5771722bf81133ffb8f74f625f35a97fe323f1d61da75c",
+  "stderrHash": "sha256:a9722faade396bd663e24d0d9f499f6a76c4b1b2df834c21dd7949ba55001239",
+  "stdoutPath": ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stdout.txt",
+  "stderrPath": ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stdout.txt",
+    ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stderr.txt"
+  ]
+}

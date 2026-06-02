@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the store layer (rusqlite bundled + keyring + aes-gcm) + persistence wiring.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T14:11:08.398Z",
+  "finishedAt": "2026-06-02T14:11:09.153Z",
+  "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
+  "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:7b89f9d8b45896e66051e0a6a0854f36f5acdc9e450391ac977c70c47d4c66e3",
+  "stdoutPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stdout.txt",
+  "stderrPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stdout.txt",
+    ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stderr.txt"
+  ]
+}

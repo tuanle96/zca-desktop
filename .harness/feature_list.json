@@ -393,7 +393,8 @@
         {
           "id": "smoke",
           "title": "Creds round-trip via keychain; SQLite row is ciphertext (no plaintext); relaunch auto-restores without QR",
-          "done": false
+          "done": false,
+          "notes": "Keychain+AES-GCM ciphertext roundtrip PROVEN live (attested evidence: cred_store_roundtrip). Relaunch GUI auto-restore still pending a device run."
         }
       ]
     },
