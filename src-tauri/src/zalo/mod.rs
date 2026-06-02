@@ -337,4 +337,37 @@ mod tests {
             msg.is_self
         );
     }
+
+    /// Live send-text smoke. Ignored by default. Logs in and sends ONE real text
+    /// message to the authorized recipient (Lê Anh Tuấn, resolved by phone),
+    /// asserting a non-empty message id comes back. Run explicitly:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_text_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; sends ONE real message to the authorized recipient"]
+    async fn send_text_live() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials.validate().expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+
+        let recipient_phone =
+            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let thread_id = find_user_uid(&api, &recipient_phone)
+            .await
+            .expect("could not resolve recipient by phone");
+
+        let marker = format!(
+            "zca-desktop send-text test {}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+        );
+        let msg_id = send_text(&api, &thread_id, &marker).await.expect("send_text failed");
+
+        assert!(!msg_id.is_empty(), "send_text must return a message id");
+        println!("send_text_live OK: delivered, msg_id_len={}", msg_id.len());
+    }
 }

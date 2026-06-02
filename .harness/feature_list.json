@@ -181,7 +181,7 @@
     {
       "id": "send-text",
       "title": "Phase 1: Send a text message to a thread from the UI",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/send-text.json",
       "evidencePath": ".harness/evidence/send-text.json",
@@ -189,17 +189,17 @@
         {
           "id": "cmd",
           "title": "command/: send_message command (thread_id, ThreadType)",
-          "done": false
+          "done": true
         },
         {
           "id": "ui",
           "title": "Composer sends + optimistic render",
-          "done": false
+          "done": true
         },
         {
           "id": "smoke",
           "title": "Message delivered (verified against live)",
-          "done": false
+          "done": true
         }
       ]
     },

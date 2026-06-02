@@ -479,17 +479,17 @@ function explainPermission({ compiled, skillId, taskId, tool }) {
   if (!parsed.raw) errors.push("--tool is required for permissions explain");
   const skill = skillId
     ? {
-        id: skillId,
-        found: Boolean(compiled.sources[skillId]),
-      }
+      id: skillId,
+      found: Boolean(compiled.sources[skillId]),
+    }
     : null;
   const task = taskId
     ? {
-        id: taskId,
-        found: Boolean(compiled.tasks[taskId]),
-        riskTier: compiled.tasks[taskId]?.riskTier || "",
-        source: compiled.tasks[taskId]?.source || "",
-      }
+      id: taskId,
+      found: Boolean(compiled.tasks[taskId]),
+      riskTier: compiled.tasks[taskId]?.riskTier || "",
+      source: compiled.tasks[taskId]?.source || "",
+    }
     : null;
   if (skillId && !skill.found) reasons.push(`skill "${skillId}" has no compiled policy; using default policy fallback`);
   if (taskId && !task.found) errors.push(`${taskId}: no compiled task policy found`);
@@ -639,11 +639,20 @@ export async function runPermissionsCompileCli(argv = [], { exit = true, silent 
     warnings,
     errors,
   };
-  if (!silent) {
-    if (opts.json) process.stdout.write(`${JSON.stringify(payload, null, 2)}\n`);
-    else process.stdout.write(renderText(payload));
-  }
   const exitCode = errors.length === 0 ? 0 : 1;
+  if (!silent) {
+    const text = opts.json ? `${JSON.stringify(payload, null, 2)}\n` : renderText(payload);
+    if (exit) {
+      // Write, then exit only after stdout has flushed. When stdout is a pipe
+      // (e.g. spawned by harness-report), a bare process.exit() can truncate a
+      // large buffered write, so defer the exit to the write callback.
+      process.exitCode = exitCode;
+      process.stdout.write(text, () => process.exit(exitCode));
+      return { payload, exitCode };
+    }
+    process.stdout.write(text);
+    return { payload, exitCode };
+  }
   if (exit) process.exit(exitCode);
   return { payload, exitCode };
 }

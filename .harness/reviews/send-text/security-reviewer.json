@@ -1,0 +1,55 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "send-text",
+    "featureId": "send-text",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:41:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked the send boundary, session reuse, and live-smoke output for leakage."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "send_message reuses an in-memory session keyed by account_id instead of accepting credentials from the UI; thread_id and text are validated (non-empty) at the boundary. The live-smoke sidecar was scanned and contains no credential values and no recipient phone number; only a message-id length is printed.",
+            "fix": "Add per-account rate limiting / send throttling before bulk or automated sends to reduce ban risk (project risk r1)."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "send_text passes the message body straight to zca-rust send_message; no logging of message content. The recipient is addressed by an explicit thread_id, not a credential.",
+            "fix": "Keep message bodies out of any future debug logging."
+        }
+    ],
+    "summary": "Security review of the send path: no credentials cross IPC (session reused from state), inputs validated at the boundary, and the attested live-smoke sidecar is free of secrets and the recipient phone number. Recommended (non-blocking) follow-up: per-account send throttling. No blocking findings."
+}

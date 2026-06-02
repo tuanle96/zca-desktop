@@ -36,6 +36,10 @@
   let error = $state("");
   let busy = $state(false);
 
+  let threadId = $state("");
+  let outgoing = $state("");
+  let sentMsgId = $state("");
+
   let unlisten: UnlistenFn | null = null;
 
   async function importCredentials() {
@@ -83,10 +87,28 @@
     }
   }
 
+  async function sendMessage() {
+    error = "";
+    sentMsgId = "";
+    busy = true;
+    try {
+      if (!profile) throw new Error("log in first");
+      sentMsgId = await invoke<string>("send_message", {
+        accountId: profile.accountId,
+        threadId,
+        text: outgoing,
+      });
+      outgoing = "";
+    } catch (e) {
+      error = String(e);
+    } finally {
+      busy = false;
+    }
+  }
+
   onDestroy(() => {
     unlisten?.();
-  });
-</script>
+  });</script>
 
 <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
   <header class="space-y-1">
@@ -138,10 +160,35 @@
     </div>
   {/if}
 
+  {#if profile}
+    <section class="flex flex-col gap-3">
+      <h2 class="text-sm font-medium">Send a message</h2>
+      <form class="flex flex-col gap-2" onsubmit={(e) => { e.preventDefault(); sendMessage(); }}>
+        <input
+          bind:value={threadId}
+          placeholder="thread id (recipient uid)"
+          class="border-input bg-background rounded-md border px-3 py-2 text-sm"
+        />
+        <div class="flex gap-2">
+          <input
+            bind:value={outgoing}
+            placeholder="Message…"
+            class="border-input bg-background flex-1 rounded-md border px-3 py-2 text-sm"
+          />
+          <Button type="submit" disabled={busy || threadId.trim().length === 0 || outgoing.trim().length === 0}>
+            Send
+          </Button>
+        </div>
+      </form>
+      {#if sentMsgId}
+        <p class="text-muted-foreground text-xs">Sent · msgId {sentMsgId}</p>
+      {/if}
+    </section>
+  {/if}
+
   {#if messages.length > 0}
     <section class="flex flex-col gap-2">
-      <h2 class="text-sm font-medium">Incoming messages</h2>
-      <ul class="flex flex-col gap-2">
+      <h2 class="text-sm font-medium">Incoming messages</h2>      <ul class="flex flex-col gap-2">
         {#each messages as m (m.msgId)}
           <li class="rounded-md border p-3 text-sm">
             <p class="text-muted-foreground text-xs">

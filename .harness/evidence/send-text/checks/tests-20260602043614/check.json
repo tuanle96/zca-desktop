@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: 7 passed offline (command/zalo guards); 3 live tests ignored by default.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:36:14.869Z",
+  "finishedAt": "2026-06-02T04:36:16.358Z",
+  "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+  "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+  "stdoutHash": "sha256:3a4c7c3e3146628183dbb01febce460fbba658b876da95543a96674fb7de3e2f",
+  "stderrHash": "sha256:2d459828b008601785d33e660aa3c7aa28409fefcaee6988222529671d24a13c",
+  "stdoutPath": ".harness/evidence/send-text/checks/tests-20260602043614/stdout.txt",
+  "stderrPath": ".harness/evidence/send-text/checks/tests-20260602043614/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/send-text/checks/tests-20260602043614/stdout.txt",
+    ".harness/evidence/send-text/checks/tests-20260602043614/stderr.txt"
+  ]
+}

@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "id": "send-text",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Send a text message to a thread from the UI: a send_message command reuses an authenticated session from managed state and delegates to the zalo layer, verified by a live send.",
+        "goals": [
+            "command/ send_message validates thread_id/text and reuses the stored session for account_id",
+            "Sessions are kept in managed state on login so credentials are never re-sent from the UI",
+            "Live smoke delivers one real text message and Zalo returns a message id"
+        ],
+        "nonGoals": [
+            "Optimistic UI rendering / message echo reconciliation",
+            "Rich content (stickers/links/attachments) — Phase 4",
+            "Multi-account routing (session-manager, per-account-routing)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "cmd",
+            "description": "command/ send_message validates input, reuses the stored session, and returns a message id from the zalo layer.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend composer sends via send_message; build succeeds.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "A real text message is delivered to the authorized recipient and Zalo returns a non-empty message id.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_text_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/send-text.json"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_text_live --nocapture",
+  "status": "pass",
+  "summary": "Live send-text: logged in and sent ONE real text message to the authorized recipient (resolved by phone); Zalo returned a non-empty message id. Non-secret output only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:35:53.588Z",
+  "finishedAt": "2026-06-02T04:35:55.508Z",
+  "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+  "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+  "stdoutHash": "sha256:ef18c12108292b645809d28daa0c1c1b6a1862089ce8d1d75422951debf56739",
+  "stderrHash": "sha256:88d1a9595e2b6cf6a3716d254297f08fb6b109638261ef0416f97ee7e12b0614",
+  "stdoutPath": ".harness/evidence/send-text/checks/smoke-20260602043553/stdout.txt",
+  "stderrPath": ".harness/evidence/send-text/checks/smoke-20260602043553/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/send-text/checks/smoke-20260602043553/stdout.txt",
+    ".harness/evidence/send-text/checks/smoke-20260602043553/stderr.txt"
+  ]
+}

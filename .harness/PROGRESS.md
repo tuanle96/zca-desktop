@@ -67,3 +67,15 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Reviews: advisor + security + reliability + architecture all pass.
 - Gates: cargo build/clippy -D warnings/test (7 offline + 1 live) OK, svelte-check 0/0, npm build OK, harness-readiness --strict PASSED, review-coverage --strict OK (12 pass decisions).
 - Note: sending to own uid returned code 114; round trip uses a real recipient + self_listen instead.
+
+## Phase 1 — send-text (2026-06-02) [LIVE]
+- 2026-06-02 04:36 | send-text | done
+- command/send_message: validates thread_id/text, reuses an authenticated session from ListenerState (now HashMap<AccountId, Arc<API>> populated on start_listening), delegates to zalo/send_text. Credentials never re-sent from the UI.
+- Frontend composer (thread id + message) calls send_message and shows the returned msgId.
+- LIVE send: one real text delivered to the authorized recipient (Lê Anh Tuấn, resolved by phone); Zalo returned a msgId. Attested sidecar scanned: no credentials, no recipient phone.
+- Reviews: advisor + security + architecture pass. Accepted risk send-throttle-missing (medium, until 2026-07-15): add per-account send throttling in the session layer.
+- Gates: cargo build/clippy -D warnings/test (7 offline + 1 live) OK, svelte-check 0/0, npm build OK, review-coverage --strict OK (15 pass decisions), harness-readiness --strict PASSED.
+
+## Harness fix — permissions-compiler stdout truncation (2026-06-02)
+- harness-report's `harness:report` gate went RED: it spawns `permissions-compile.mjs diff --json` and parses stdout, but the compiled JSON grew past the ~64KB stdout pipe buffer and `process.exit()` truncated the write before flush.
+- Root-cause fix in `.harness/scripts/_lib/permissions/compiler.mjs`: defer `process.exit()` to the `process.stdout.write` callback so the full payload flushes. Verified full 67KB JSON now parses via spawnSync. (Golden principle #7: fix the mechanism.)

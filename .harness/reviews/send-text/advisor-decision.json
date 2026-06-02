@@ -1,0 +1,51 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "send-text",
+    "featureId": "send-text",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:40:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the send path: command/send_message reuses the stored session and delegates to zalo/send_text. Live send delivered one real message."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "send_message takes account_id + thread_id + text and looks up an already-authenticated session from managed state; the UI never re-sends credentials, and only a message id string is returned.",
+            "fix": "When session-manager lands, key sends by the active account and add rate-limit guards to avoid spam-like behavior (project risk r1)."
+        }
+    ],
+    "summary": "send-text is proven live: one real text message was delivered to the authorized recipient and Zalo returned a message id. The command validates input at the boundary and reuses the stored session rather than re-accepting credentials; send is delegated to the zalo layer. No secrets cross IPC. Build, clippy -D warnings, 7 offline tests, and the live send all pass. Safe to mark done."
+}

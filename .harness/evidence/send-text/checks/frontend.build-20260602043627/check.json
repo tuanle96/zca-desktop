@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "Frontend build succeeds with the send-message UI (svelte-check 0/0; adapter-static wrote build/).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:36:27.319Z",
+  "finishedAt": "2026-06-02T04:36:31.785Z",
+  "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+  "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+  "stdoutHash": "sha256:3bb06fe7dda72c9526306e31d07d7429b50a43aece3c293c65449c9652ba2992",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/send-text/checks/frontend.build-20260602043627/stdout.txt",
+  "stderrPath": ".harness/evidence/send-text/checks/frontend.build-20260602043627/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/send-text/checks/frontend.build-20260602043627/stdout.txt",
+    ".harness/evidence/send-text/checks/frontend.build-20260602043627/stderr.txt"
+  ]
+}

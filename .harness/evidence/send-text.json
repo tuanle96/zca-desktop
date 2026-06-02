@@ -1,0 +1,170 @@
+{
+    "schemaVersion": 1,
+    "taskId": "send-text",
+    "featureId": "send-text",
+    "status": "pass",
+    "createdAt": "2026-06-02T04:35:53.588Z",
+    "diffSummary": "Added text sending. command/ gains a send_message command that validates thread_id/text, looks up an already-authenticated session from ListenerState (now a HashMap<AccountId, Arc<API>> populated on start_listening), and delegates to zalo::send_text — credentials are never re-sent from the UI. The frontend adds a composer (thread id + message) that calls send_message and shows the returned message id. Verified live: one real text message was delivered to the authorized recipient (resolved by phone) and Zalo returned a non-empty message id; the attested smoke sidecar was scanned and contains no credential values or recipient phone number.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src/routes/+page.svelte"
+    ],
+    "checks": [
+        {
+            "name": "smoke",
+            "acceptanceId": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_text_live --nocapture",
+            "status": "pass",
+            "summary": "Live send-text: logged in and sent ONE real text message to the authorized recipient (resolved by phone); Zalo returned a non-empty message id. Non-secret output only.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:35:53.588Z",
+            "finishedAt": "2026-06-02T04:35:55.508Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:ef18c12108292b645809d28daa0c1c1b6a1862089ce8d1d75422951debf56739",
+            "stderrHash": "sha256:88d1a9595e2b6cf6a3716d254297f08fb6b109638261ef0416f97ee7e12b0614",
+            "stdoutPath": ".harness/evidence/send-text/checks/smoke-20260602043553/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/smoke-20260602043553/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/smoke-20260602043553/stdout.txt",
+                ".harness/evidence/send-text/checks/smoke-20260602043553/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: 7 passed offline (command/zalo guards); 3 live tests ignored by default.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:36:14.869Z",
+            "finishedAt": "2026-06-02T04:36:16.358Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:3a4c7c3e3146628183dbb01febce460fbba658b876da95543a96674fb7de3e2f",
+            "stderrHash": "sha256:2d459828b008601785d33e660aa3c7aa28409fefcaee6988222529671d24a13c",
+            "stdoutPath": ".harness/evidence/send-text/checks/tests-20260602043614/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/tests-20260602043614/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/tests-20260602043614/stdout.txt",
+                ".harness/evidence/send-text/checks/tests-20260602043614/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with send_message command + session store.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:36:15.931Z",
+            "finishedAt": "2026-06-02T04:36:16.548Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:4618eeba4e21359898995b7f544b56cd4d474efe9641525e1447388aaa8fabe6",
+            "stdoutPath": ".harness/evidence/send-text/checks/lint-20260602043615/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/lint-20260602043615/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/lint-20260602043615/stdout.txt",
+                ".harness/evidence/send-text/checks/lint-20260602043615/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "acceptanceId": "cmd",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles the send_message command + session store.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:36:25.596Z",
+            "finishedAt": "2026-06-02T04:36:27.778Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:4666500e66c6a3cddf1644842a3cf49146d1389402894ae7db9d9f170f247ff8",
+            "stdoutPath": ".harness/evidence/send-text/checks/rust.build-20260602043625/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/rust.build-20260602043625/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/rust.build-20260602043625/stdout.txt",
+                ".harness/evidence/send-text/checks/rust.build-20260602043625/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "acceptanceId": "ui",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend build succeeds with the send-message UI (svelte-check 0/0; adapter-static wrote build/).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:36:27.319Z",
+            "finishedAt": "2026-06-02T04:36:31.785Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:3bb06fe7dda72c9526306e31d07d7429b50a43aece3c293c65449c9652ba2992",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/send-text/checks/frontend.build-20260602043627/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/frontend.build-20260602043627/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/frontend.build-20260602043627/stdout.txt",
+                ".harness/evidence/send-text/checks/frontend.build-20260602043627/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:36:40.674Z",
+            "finishedAt": "2026-06-02T04:36:41.044Z",
+            "gitHead": "14492ff2a8e3bf753b1271de666f05700c5c6bee",
+            "workingTreeHash": "sha256:212a29c3b3b152f78989601082f3bf796f306056edf8c9db7a61f4c16bae5e3a",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/send-text/checks/structural-20260602043640/stdout.txt",
+            "stderrPath": ".harness/evidence/send-text/checks/structural-20260602043640/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/send-text/checks/structural-20260602043640/stdout.txt",
+                ".harness/evidence/send-text/checks/structural-20260602043640/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/send-text/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/send-text/security-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/send-text/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "send-throttle-missing",
+            "severity": "medium",
+            "description": "There is no per-account send rate limit yet; bulk or automated sends could look spam-like and risk an account ban (project risk r1).",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "advisor",
+            "acceptanceReason": "MVP only sends user-initiated single messages; throttling is scheduled with session-manager.",
+            "mitigation": "Add per-account send throttling/guards in the session layer before any automated or bulk sending is enabled.",
+            "acceptedUntil": "2026-07-15T00:00:00.000Z"
+        }
+    ],
+    "updatedAt": "2026-06-02T04:36:41.044Z"
+}

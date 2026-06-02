@@ -1,0 +1,47 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "send-text",
+    "featureId": "send-text",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:42:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Two layers touched (zalo + command). The session store lives in the command layer as a precursor to session-manager; send is delegated to zalo."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "send_message stays in the command layer and calls zalo::send_text; the in-command HashMap<AccountId, Arc<API>> is a minimal session holder that will be lifted into the dedicated session layer by the session-manager feature. No zca-rust types leak above zalo. Forward-only order preserved.",
+            "fix": "Move the session store into the session/ layer when session-manager is implemented; keep send delegation in zalo."
+        }
+    ],
+    "summary": "Cross-layer change (zalo + command) reviewed for layering. send_message reuses a command-layer session store and delegates the network send to zalo; zca-rust stays confined to zalo. The session holder is acknowledged as a temporary precursor to the session layer. Forward-only DAG preserved. Approve."
+}
