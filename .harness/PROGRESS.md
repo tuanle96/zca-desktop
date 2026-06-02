@@ -30,3 +30,12 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Offline test: `zalo::login` rejects empty credentials via zca-rust validation (no network call). Credentials never logged (no Debug derive upstream).
 - Gates green: cargo build OK (~37s cold), clippy --all-targets -D warnings clean, cargo test 1 passed; harness-readiness --strict PASSED; review-coverage --strict OK (advisor pass).
 - Decision d7 recorded (pinned git rev, rustls, no new ADR).
+
+## Hardening — app-csp-hardening (2026-06-02)
+- 2026-06-02 01:15 | app-csp-hardening | done
+- Set a restrictive baseline CSP on the Tauri webview (was csp:null): script-src 'self', explicit IPC connect-src so invoke/listen still work — closes the main XSS-exec vector before any credential handling.
+- Fixed the scaffold placeholder window/document title -> "Zalo Desktop".
+- Added @types/node + removed a now-stale @ts-expect-error in vite.config.js -> svelte-check 0 errors / 0 warnings.
+- Gates: cargo build (config parses) OK, npm run check 0/0, npm run build OK, harness-readiness --strict PASSED, review-coverage --strict OK (advisor pass).
+- Accepted risk csp-runtime-unverified (low, acceptedUntil 2026-07-01): live CSP header to be GUI-verified via inspect-app before credentials land.
+- Note: bun.lock present but bun not installed; @types/node installed via npm --no-save --no-package-lock to avoid a competing lockfile.

@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build validates tauri.conf.json with the new CSP (tauri-build parses config at build time).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T01:10:51.278Z",
+  "finishedAt": "2026-06-02T01:10:51.911Z",
+  "gitHead": "f27d12eb1d1c2dce8e690e85ea84aeba1f7102a0",
+  "workingTreeHash": "sha256:564c501d3e1b49e15ae4611bd7640594e043f0f93e6b3118e8754f0e4e20fe23",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:c54bca416b8a09e3c2018b0ada16771065b3b9b5469242539af42bc53077e2cf",
+  "stdoutPath": ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stdout.txt",
+  "stderrPath": ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stdout.txt",
+    ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stderr.txt"
+  ]
+}

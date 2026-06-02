@@ -1,0 +1,59 @@
+{
+    "schemaVersion": 1,
+    "id": "app-csp-hardening",
+    "type": "refactor",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Pre-credential hardening: set a baseline Content-Security-Policy on the Tauri webview, fix the placeholder window title, and resolve the svelte-check @types/node gap before any credential handling lands.",
+        "goals": [
+            "tauri.conf.json sets a restrictive CSP (was null) that still allows Tauri IPC",
+            "Frontend type-check is clean (0 errors, 0 warnings)",
+            "Window/document title is the product name, not the scaffold placeholder"
+        ],
+        "nonGoals": [
+            "Any credential import, storage, or login (later features)",
+            "Tightening capabilities/permissions ACL (separate task)",
+            "Runtime webview CSP enforcement verification (requires GUI; deferred to inspect-app)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "csp-set",
+            "description": "tauri.conf.json defines a non-null CSP and the Tauri config still builds.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "typecheck-clean",
+            "description": "svelte-check reports 0 errors and 0 warnings after adding @types/node and removing the stale ts-expect-error.",
+            "verification": {
+                "command": "npm run check"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "tests",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/app-csp-hardening.json"
+}

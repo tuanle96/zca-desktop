@@ -54,6 +54,31 @@
       ]
     },
     {
+      "id": "app-csp-hardening",
+      "title": "Harness: pre-credential hardening — baseline CSP, product title, clean type-check",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/app-csp-hardening.json",
+      "evidencePath": ".harness/evidence/app-csp-hardening.json",
+      "steps": [
+        {
+          "id": "csp",
+          "title": "tauri.conf.json sets a restrictive CSP (was null), IPC still allowed",
+          "done": true
+        },
+        {
+          "id": "title",
+          "title": "src/app.html title -> Zalo Desktop (no scaffold placeholder)",
+          "done": true
+        },
+        {
+          "id": "typecheck",
+          "title": "@types/node added; stale ts-expect-error removed; svelte-check 0/0",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "zca-dep-wired",
       "title": "Phase 1: zca-rust added as git dependency and compiles into src-tauri",
       "passes": true,

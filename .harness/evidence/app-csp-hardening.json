@@ -1,0 +1,99 @@
+{
+    "schemaVersion": 1,
+    "taskId": "app-csp-hardening",
+    "featureId": "app-csp-hardening",
+    "status": "pass",
+    "createdAt": "2026-06-02T01:10:51.278Z",
+    "diffSummary": "Pre-credential hardening. Set a restrictive Content-Security-Policy on the Tauri webview in src-tauri/tauri.conf.json (was csp:null): script-src 'self', style-src 'self' 'unsafe-inline' (Svelte/Tailwind inline styles), img-src self+asset protocol, connect-src 'self' ipc: http://ipc.localhost so Tauri IPC keeps working. Fixed the placeholder window/document title in src/app.html to 'Zalo Desktop'. Added @types/node to package.json devDependencies and removed the now-stale @ts-expect-error in vite.config.js, making svelte-check report 0 errors / 0 warnings. No credential, login, or storage code introduced.",
+    "changedFiles": [
+        "src-tauri/tauri.conf.json",
+        "src/app.html",
+        "vite.config.js",
+        "package.json"
+    ],
+    "checks": [
+        {
+            "name": "rust.build",
+            "acceptanceId": "csp-set",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build validates tauri.conf.json with the new CSP (tauri-build parses config at build time).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T01:10:51.278Z",
+            "finishedAt": "2026-06-02T01:10:51.911Z",
+            "gitHead": "f27d12eb1d1c2dce8e690e85ea84aeba1f7102a0",
+            "workingTreeHash": "sha256:564c501d3e1b49e15ae4611bd7640594e043f0f93e6b3118e8754f0e4e20fe23",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:c54bca416b8a09e3c2018b0ada16771065b3b9b5469242539af42bc53077e2cf",
+            "stdoutPath": ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stdout.txt",
+            "stderrPath": ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stdout.txt",
+                ".harness/evidence/app-csp-hardening/checks/rust.build-20260602011051/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "acceptanceId": "typecheck-clean",
+            "command": "npm run check",
+            "status": "pass",
+            "summary": "npm run check (svelte-check) is clean: 0 errors, 0 warnings after adding @types/node and removing the stale ts-expect-error.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T01:10:57.791Z",
+            "finishedAt": "2026-06-02T01:10:59.443Z",
+            "gitHead": "f27d12eb1d1c2dce8e690e85ea84aeba1f7102a0",
+            "workingTreeHash": "sha256:564c501d3e1b49e15ae4611bd7640594e043f0f93e6b3118e8754f0e4e20fe23",
+            "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/app-csp-hardening/checks/tests-20260602011057/stdout.txt",
+            "stderrPath": ".harness/evidence/app-csp-hardening/checks/tests-20260602011057/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/app-csp-hardening/checks/tests-20260602011057/stdout.txt",
+                ".harness/evidence/app-csp-hardening/checks/tests-20260602011057/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T01:11:07.164Z",
+            "finishedAt": "2026-06-02T01:11:07.471Z",
+            "gitHead": "f27d12eb1d1c2dce8e690e85ea84aeba1f7102a0",
+            "workingTreeHash": "sha256:564c501d3e1b49e15ae4611bd7640594e043f0f93e6b3118e8754f0e4e20fe23",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/app-csp-hardening/checks/structural-20260602011107/stdout.txt",
+            "stderrPath": ".harness/evidence/app-csp-hardening/checks/structural-20260602011107/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/app-csp-hardening/checks/structural-20260602011107/stdout.txt",
+                ".harness/evidence/app-csp-hardening/checks/structural-20260602011107/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/app-csp-hardening/advisor-decision.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "csp-runtime-unverified",
+            "severity": "low",
+            "description": "The CSP is set in config and validated by build, but the live header in the packaged webview is not GUI-verified in this task.",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "advisor",
+            "acceptanceReason": "Pre-credential hardening; runtime verification is a documented non-goal to be done via inspect-app (Playwright) before credentials land.",
+            "mitigation": "Verify the response CSP header with the inspect-app skill when dev-server work resumes, before any credential handling feature is marked done.",
+            "acceptedUntil": "2026-07-01T00:00:00.000Z"
+        }
+    ],
+    "updatedAt": "2026-06-02T01:11:07.471Z"
+}

@@ -1,0 +1,57 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "app-csp-hardening",
+    "featureId": "app-csp-hardening",
+    "decision": "pass",
+    "createdAt": "2026-06-02T01:15:00.000Z",
+    "checkedFiles": [
+        "src-tauri/tauri.conf.json",
+        "src/app.html",
+        "vite.config.js",
+        "package.json"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "network-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/tauri.conf.json",
+            "src/app.html",
+            "vite.config.js",
+            "package.json"
+        ],
+        "reviewedFiles": [
+            "src-tauri/tauri.conf.json",
+            "src/app.html",
+            "vite.config.js",
+            "package.json"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "CSP restricts default-src to self with explicit ipc:/http://ipc.localhost connect-src so Tauri IPC keeps working; img-src allows the asset protocol; style-src keeps 'unsafe-inline' for Svelte-injected styles."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/tauri.conf.json",
+            "evidence": "style-src keeps 'unsafe-inline' because Svelte/Tailwind inject inline <style> at runtime; script-src is 'self' only (no unsafe-inline/eval), so the main XSS-execution vector is closed before any credential handling.",
+            "fix": "Revisit removing style 'unsafe-inline' via nonce/hash if a stricter policy is needed once the UI stabilizes; not blocking for pre-credential hardening."
+        },
+        {
+            "severity": "info",
+            "evidence": "Runtime CSP enforcement in the packaged webview is not GUI-verified here; only config parse + build are proven.",
+            "fix": "Verify the live header via the inspect-app skill (Playwright) when the dev server work resumes; tracked as a non-goal of this task."
+        }
+    ],
+    "summary": "Pre-credential hardening only: replaced csp:null with a restrictive baseline CSP (script-src 'self', explicit IPC connect-src), fixed the placeholder window title, and closed the @types/node type-check gap (removing a now-stale ts-expect-error). No credential, login, or storage code introduced. cargo build validates the config, svelte-check is clean (0/0), structural no-op passes. Safe to mark done; runtime CSP header verification deferred to inspect-app as a documented non-goal."
+}
