@@ -7,8 +7,10 @@ pub mod account;
 pub mod contact;
 pub mod credentials;
 pub mod events;
+pub mod qr;
 
 pub use account::{AccountId, AccountProfile, CredentialSummary};
 pub use contact::Contact;
 pub use credentials::{Cookie, CredentialError, Credentials};
 pub use events::{IncomingMessage, ThreadKind};
+pub use qr::QrLoginEvent;

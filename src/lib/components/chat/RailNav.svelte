@@ -19,38 +19,46 @@
     session.view = "contacts";
     if (!session.contactsLoaded && session.profile) session.loadContacts();
   }
+
+  const navItems = [
+    { id: "chats" as const, icon: MessageCircle, label: "Tin nhắn", onClick: showChats },
+    { id: "contacts" as const, icon: Users, label: "Danh bạ", onClick: showContacts },
+  ];
 </script>
 
-<nav class="bg-brand text-brand-foreground flex w-16 shrink-0 flex-col items-center gap-2 py-4">
-  <Avatar.Root class="mb-3 size-11 border-2 border-white/40">
-    <Avatar.Fallback class="bg-white/20 text-sm font-medium text-white">
-      {initials(session.profile?.displayName ?? null)}
-    </Avatar.Fallback>
-  </Avatar.Root>
+<nav class="bg-brand text-brand-foreground flex w-16 shrink-0 flex-col items-center gap-1 py-4">
+  <!-- Account avatar with a live-listening status dot -->
+  <div class="relative mb-4" title={session.profile?.displayName ?? "Tài khoản"}>
+    <Avatar.Root class="size-11 border-2 border-white/40">
+      {#if session.profile?.avatar}
+        <Avatar.Image src={session.profile.avatar} alt={session.profile.displayName ?? "avatar"} />
+      {/if}
+      <Avatar.Fallback class="bg-white/20 text-sm font-medium text-white">
+        {initials(session.profile?.displayName ?? null)}
+      </Avatar.Fallback>
+    </Avatar.Root>
+    <span
+      class="border-brand absolute -bottom-0.5 -right-0.5 size-3.5 rounded-full border-2 {session.listening
+        ? 'bg-green-400'
+        : 'bg-white/40'}"
+      title={session.listening ? "Đang lắng nghe" : "Ngoại tuyến"}
+    ></span>
+  </div>
 
-  <button
-    type="button"
-    onclick={showChats}
-    title="Tin nhắn"
-    aria-label="Tin nhắn"
-    class="flex size-12 items-center justify-center rounded-xl transition-colors {session.view === 'chats'
-      ? 'bg-white/20'
-      : 'hover:bg-white/10'}"
-  >
-    <MessageCircle class="size-6" />
-  </button>
-
-  <button
-    type="button"
-    onclick={showContacts}
-    title="Danh bạ"
-    aria-label="Danh bạ"
-    class="flex size-12 items-center justify-center rounded-xl transition-colors {session.view === 'contacts'
-      ? 'bg-white/20'
-      : 'hover:bg-white/10'}"
-  >
-    <Users class="size-6" />
-  </button>
+  {#each navItems as item (item.id)}
+    <button
+      type="button"
+      onclick={item.onClick}
+      title={item.label}
+      aria-label={item.label}
+      class="relative flex size-12 items-center justify-center rounded-xl transition-colors {session.view ===
+      item.id
+        ? 'bg-white/20'
+        : 'hover:bg-white/10'}"
+    >
+      <item.icon class="size-6" />
+    </button>
+  {/each}
 
   <button
     type="button"

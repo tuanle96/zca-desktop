@@ -1,0 +1,87 @@
+{
+    "schemaVersion": 1,
+    "id": "secure-cred-store",
+    "type": "feature",
+    "riskTier": "high-risk",
+    "scope": {
+        "summary": "Local persistence foundation (ADR-0005): a `store` layer backed by bundled SQLite (rusqlite) plus an encrypted credential store. A random 32-byte master key is held in the OS keychain (keyring); the credential triple {imei, cookie, user_agent} is AES-256-GCM encrypted with that key and stored in SQLite keyed by account_id. On startup, saved accounts are re-logged-in/listened automatically (session restore), fixing the 'restart -> back to QR' UX. Credentials are never written in plaintext and never cross IPC.",
+        "allowedLayers": [
+            "types",
+            "config",
+            "store",
+            "command"
+        ],
+        "goals": [
+            "store/: rusqlite (bundled) connection + schema/migrations (accounts, credentials); typed repository functions — no raw SQL above store",
+            "store/: keyring-backed master key (generate-once, load) + AES-256-GCM encrypt/decrypt of the credential blob; rusqlite/keyring/aes-gcm types never leak above store",
+            "command/: after QR/cookie login, persist account + encrypted credential; on startup, load saved accounts, decrypt, and re-login/listen each (reuse login_and_listen); expired credential flips account state to reauth-needed without disturbing other accounts",
+            "Credentials are AES-GCM encrypted at rest; only the master key lives in the keychain; no plaintext secret on disk and no token values across IPC"
+        ],
+        "nonGoals": [
+            "Message/attachment persistence (message-cache slice 2)",
+            "Multi-account SessionManager refactor (session-manager) — reuse the current in-process store path",
+            "Whole-database encryption / SQLCipher (future ADR)",
+            "Backfilling history that predates first login (no upstream API)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "store",
+            "description": "store/ creates the SQLite schema and round-trips an encrypted credential: save -> load decrypts to the same triple; a wrong/absent master key fails to decrypt. rusqlite/keyring/aes-gcm confined to store.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "cmd",
+            "description": "command/ persists the account + encrypted credential after login and exposes a startup restore path; compiles and keeps token values out of IPC DTOs.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live/manual: after QR login the credential round-trips via keychain+SQLite; relaunch auto-restores the account (no QR). Evidence captures only non-secret diagnostics; the SQLite credentials row is verified to be ciphertext (no plaintext cookie/imei).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": true,
+    "adrPath": ".harness/docs/adr/0005-local-persistence-sqlite-and-encrypted-credential-store.md",
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/secure-cred-store.json"
+}

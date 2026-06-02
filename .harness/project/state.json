@@ -206,6 +206,11 @@
       "id": "d7",
       "title": "zca-rust consumed as a pinned git rev (08698e1c), rustls TLS — no native bindings, no new ADR",
       "status": "accepted"
+    },
+    {
+      "id": "d8",
+      "title": "Local persistence (ADR-0005): bundled SQLite (rusqlite) for accounts/threads/messages; credential triple AES-256-GCM encrypted with a master key held in the OS keychain (keyring), never plaintext on disk; session auto-restore on startup",
+      "status": "accepted"
     }
   ],
   "updatedAt": "2026-06-02T06:26:22.193Z",

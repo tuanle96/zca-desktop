@@ -28,11 +28,37 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 # zca-rust: unofficial Zalo API client (rustls TLS — no native bindings). Git
 # dependency per state.json decision d2; pinned to a rev for reproducible builds.
-zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "08698e1cd4b51a07a021b215cc25dab1b875b656" }
+# Pinned to fix/login-qr-userinfo-optional (c95c88b): (1) trailing QR userinfo
+# probe best-effort (missing `info` can't fail a successful login); (2) enforces
+# qr_timeout so an unscanned QR expires; (3) check_session follows the full
+# redirect chain so chat.zalo.me cookies (zpw_sek) are set before login —
+# fixes `missing zpw_enk` after a QR scan. Re-pin to main once merged.
+zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "c95c88b3ad6ac161dfcaa87003171c50a0425faa" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+# Structured logging + rolling file capture (config layer). Pure Rust, no native
+# bindings (no ADR needed). `tracing` is already in the tree via zca-rust.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
 # reqwest: only used in the zalo layer to read cookies back out of the QR-login
 # cookie jar (reqwest::cookie::{Jar, CookieStore}) when assembling Credentials.
 # Pinned to the same version + rustls TLS that zca-rust already resolves, so no
 # new native binding and no new ADR (ADR-0004).
 reqwest = { version = "0.12", default-features = false, features = ["cookies", "rustls-tls"] }
+# Local persistence (store layer, ADR-0005). rusqlite `bundled` compiles a
+# pinned SQLite in-tree (no system lib). keyring holds the single master key in
+# the OS keychain; aes-gcm encrypts the credential blob at rest (pure Rust).
+rusqlite = { version = "0.37", features = ["bundled"] }
+aes-gcm = "0.10"
+rand = "0.8"
+thiserror = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["sync-secret-service"] }
 

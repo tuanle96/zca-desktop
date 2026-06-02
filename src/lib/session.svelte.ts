@@ -4,6 +4,7 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import { log } from "./log";
 import type {
     AccountProfile,
     ChatMessage,
@@ -11,9 +12,12 @@ import type {
     Conversation,
     CredentialSummary,
     IncomingMessage,
+    QrLoginEvent,
+    QrPhase,
 } from "./types";
 
 const MESSAGE_EVENT = "zalo://message";
+const QR_EVENT = "zalo://qr";
 
 function snippet(text: string | null): string {
     if (!text) return "[non-text message]";
@@ -26,6 +30,8 @@ class SessionStore {
     listening = $state(false);
     busy = $state(false);
     error = $state("");
+    /** True while the startup session-restore attempt is in flight. */
+    restoring = $state(true);
 
     conversations = $state<Conversation[]>([]);
     activeThreadId = $state<string | null>(null);
@@ -37,7 +43,27 @@ class SessionStore {
     /** which middle/main pane is shown: chats or contacts */
     view = $state<"chats" | "contacts">("chats");
 
+    // --- QR login state (derived from the zalo://qr event stream). The QR is
+    // the app's login gate: while `profile` is null the UI shows the QR screen
+    // and nothing else. The credential triple never enters the webview. ---
+    qrPhase = $state<QrPhase>("idle");
+    /** base64-encoded PNG of the current QR code, when one is shown */
+    qrImage = $state<string | null>(null);
+    /** public name/avatar of the account that scanned, once scanned */
+    qrScannedName = $state<string | null>(null);
+    qrScannedAvatar = $state<string | null>(null);
+    qrError = $state("");
+    /** Seconds remaining before the current QR expires (0 when not counting). */
+    qrSecondsLeft = $state(0);
+
     private unlisten: UnlistenFn | null = null;
+    private unlistenQr: UnlistenFn | null = null;
+    private qrTimer: ReturnType<typeof setInterval> | null = null;
+
+    /** True once an account is authenticated; gates the chat shell. */
+    get loggedIn(): boolean {
+        return this.profile !== null;
+    }
 
     get activeMessages(): ChatMessage[] {
         return this.activeThreadId ? (this.threads[this.activeThreadId] ?? []) : [];
@@ -69,6 +95,124 @@ class SessionStore {
         if (this.profile) this.loadContacts();
     }
 
+    /**
+     * On app start, try to restore a previously saved account from the local
+     * store (decrypted in the core; credentials never enter the webview). If an
+     * account comes back online the chat shell unlocks without a QR scan.
+     */
+    async restore(): Promise<boolean> {
+        let restored = false;
+        await this.run(async () => {
+            await this.ensureListener();
+            const profiles = await invoke<AccountProfile[]>("restore_sessions");
+            if (profiles.length > 0) {
+                this.profile = profiles[0];
+                this.listening = true;
+                restored = true;
+                log.info(`restore: ${profiles.length} account(s) restored`);
+            }
+        });
+        this.restoring = false;
+        if (restored && this.profile) this.loadContacts();
+        return restored;
+    }
+
+    /**
+     * Run the interactive QR login flow. This is the app's login gate: the core
+     * streams non-secret progress over `zalo://qr` (so the QR appears as soon as
+     * it is generated), and the credential triple never enters the webview. On
+     * success the account is logged in and listening, and the chat shell unlocks.
+     */
+    async startQrLogin() {
+        if (this.busy) return;
+        this.qrPhase = "loading";
+        this.qrImage = null;
+        this.qrScannedName = null;
+        this.qrScannedAvatar = null;
+        this.qrError = "";
+
+        await this.ensureQrListener();
+        await this.ensureListener();
+
+        this.error = "";
+        this.busy = true;
+        try {
+            log.info("qr-login: starting interactive QR flow");
+            // Resolves only after scan + confirm complete and the listener starts.
+            this.profile = await invoke<AccountProfile>("start_qr_login");
+            this.listening = true;
+            this.qrPhase = "success";
+            log.info(`qr-login: success, account=${this.profile?.accountId ?? "?"}`);
+            this.loadContacts();
+        } catch (e) {
+            // A declined/expired stage already set a friendlier phase; only fall
+            // back to a generic error when we're still mid-flight. (The async
+            // event listener may have mutated qrPhase, so compare via a set to
+            // avoid misleading literal-narrowing.)
+            this.qrError = String(e);
+            log.error(`qr-login: failed: ${this.qrError}`);
+            const friendlyTerminal: QrPhase[] = ["declined", "expired"];
+            if (!friendlyTerminal.includes(this.qrPhase)) {
+                this.qrPhase = "error";
+            }
+        } finally {
+            this.busy = false;
+        }
+    }
+
+    private async ensureQrListener() {
+        if (this.unlistenQr) return;
+        this.unlistenQr = await listen<QrLoginEvent>(QR_EVENT, (event) => {
+            this.applyQrEvent(event.payload);
+        });
+    }
+
+    private applyQrEvent(event: QrLoginEvent) {
+        switch (event.stage) {
+            case "generated":
+                this.qrImage = event.image;
+                this.qrScannedName = null;
+                this.qrScannedAvatar = null;
+                this.qrPhase = "waiting-scan";
+                this.startQrCountdown(event.expiresInSecs);
+                break;
+            case "scanned":
+                this.qrScannedName = event.displayName;
+                this.qrScannedAvatar = event.avatar || null;
+                this.qrPhase = "scanned";
+                this.stopQrCountdown();
+                break;
+            case "declined":
+                this.qrPhase = "declined";
+                this.stopQrCountdown();
+                break;
+            case "expired":
+                this.qrPhase = "expired";
+                this.stopQrCountdown();
+                break;
+            case "success":
+                this.qrPhase = "success";
+                this.stopQrCountdown();
+                break;
+        }
+    }
+
+    private startQrCountdown(seconds: number) {
+        this.stopQrCountdown();
+        this.qrSecondsLeft = Math.max(0, Math.floor(seconds));
+        this.qrTimer = setInterval(() => {
+            this.qrSecondsLeft = Math.max(0, this.qrSecondsLeft - 1);
+            if (this.qrSecondsLeft === 0) this.stopQrCountdown();
+        }, 1000);
+    }
+
+    private stopQrCountdown() {
+        if (this.qrTimer) {
+            clearInterval(this.qrTimer);
+            this.qrTimer = null;
+        }
+    }
+
     async loadContacts() {
         if (!this.profile) return;
         await this.run(async () => {
@@ -76,6 +220,11 @@ class SessionStore {
                 accountId: this.profile!.accountId,
             });
             this.contactsLoaded = true;
+            // Backfill avatars into any conversation rows created before the
+            // address book loaded (e.g. realtime messages that arrived first).
+            this.conversations = this.conversations.map((c) =>
+                c.avatar ? c : { ...c, avatar: this.avatarFor(c.threadId) },
+            );
         });
     }
 
@@ -126,6 +275,9 @@ class SessionStore {
     dispose() {
         this.unlisten?.();
         this.unlisten = null;
+        this.unlistenQr?.();
+        this.unlistenQr = null;
+        this.stopQrCountdown();
     }
 
     private async ensureListener() {
@@ -133,6 +285,11 @@ class SessionStore {
         this.unlisten = await listen<IncomingMessage>(MESSAGE_EVENT, (event) => {
             this.ingest(event.payload);
         });
+    }
+
+    /** Resolve a peer's avatar URL from the loaded contacts, by user/thread id. */
+    private avatarFor(threadId: string): string | null {
+        return this.contacts.find((c) => c.userId === threadId)?.avatar ?? null;
     }
 
     private ingest(msg: IncomingMessage) {
@@ -172,6 +329,8 @@ class SessionStore {
                 lastSnippet,
                 lastAt: message.at,
                 unread: meta?.bumpUnread ? current.unread + 1 : current.unread,
+                // Backfill the avatar if contacts loaded after the row was created.
+                avatar: current.avatar ?? this.avatarFor(message.threadId),
             };
             const rest = this.conversations.filter((_, i) => i !== idx);
             this.conversations = [updated, ...rest];
@@ -183,6 +342,7 @@ class SessionStore {
                 lastSnippet,
                 lastAt: message.at,
                 unread: meta?.bumpUnread ? 1 : 0,
+                avatar: this.avatarFor(message.threadId),
             };
             this.conversations = [convo, ...this.conversations];
             if (!this.activeThreadId) this.activeThreadId = convo.threadId;
@@ -196,7 +356,15 @@ class SessionStore {
         if (!this.threads[id]) this.threads = { ...this.threads, [id]: [] };
         if (!this.conversations.some((c) => c.threadId === id)) {
             this.conversations = [
-                { threadId: id, kind: "user", title: title || id, lastSnippet: "", lastAt: Date.now(), unread: 0 },
+                {
+                    threadId: id,
+                    kind: "user",
+                    title: title || id,
+                    lastSnippet: "",
+                    lastAt: Date.now(),
+                    unread: 0,
+                    avatar: this.avatarFor(id),
+                },
                 ...this.conversations,
             ];
         }

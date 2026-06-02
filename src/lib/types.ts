@@ -11,7 +11,29 @@ export type CredentialSummary = {
 export type AccountProfile = {
     accountId: string;
     displayName: string | null;
+    avatar: string | null;
 };
+
+// Non-secret QR-login progress, mirrored from the core `QrLoginEvent`
+// (zalo://qr). Internally tagged on `stage`; carries only display data — never
+// imei/cookie/userAgent.
+export type QrLoginEvent =
+    | { stage: "generated"; image: string; expiresInSecs: number }
+    | { stage: "scanned"; displayName: string; avatar: string }
+    | { stage: "declined" }
+    | { stage: "expired" }
+    | { stage: "success" };
+
+// UI-side phase for the QR login modal, derived from the event stream.
+export type QrPhase =
+    | "idle"
+    | "loading"
+    | "waiting-scan"
+    | "scanned"
+    | "success"
+    | "declined"
+    | "expired"
+    | "error";
 
 export type Contact = {
     userId: string;
@@ -53,4 +75,6 @@ export type Conversation = {
     lastSnippet: string;
     lastAt: number;
     unread: number;
+    /** Avatar URL for the peer/group, when known (resolved from contacts). */
+    avatar: string | null;
 };

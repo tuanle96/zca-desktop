@@ -254,6 +254,43 @@
       ]
     },
     {
+      "id": "qr-login",
+      "title": "Phase 2: Interactive QR-code login (zca-rust login_qr) issues a reusable credential; token never enters the webview",
+      "passes": false,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/qr-login.json",
+      "evidencePath": ".harness/evidence/qr-login.json",
+      "steps": [
+        {
+          "id": "zalo",
+          "title": "zalo/: run_qr_login wraps API::login_qr, generates a stable per-account imei, and assembles types::Credentials {imei, cookie, user_agent} from the QR result (ADR-0004)",
+          "done": false
+        },
+        {
+          "id": "cmd",
+          "title": "command/: start_qr_login streams non-secret QR display events (image/code/status/scanned profile) to the UI via a Tauri channel/event; the resulting credential triple stays in the core",
+          "done": false
+        },
+        {
+          "id": "ui",
+          "title": "Zalo-PC-style QR modal: render QR, countdown + auto-refresh on expiry, scanned avatar/name preview, success/declined states wired to the event stream",
+          "done": false
+        },
+        {
+          "id": "smoke",
+          "title": "Live: a real phone scan completes login end-to-end and the app reaches the logged-in/listening state; evidence captures only non-secret diagnostics",
+          "done": false
+        }
+      ]
+    },
+    {
       "id": "session-manager",
       "title": "Phase 2: SessionManager holds N concurrent API+Listener sessions keyed by account",
       "passes": false,
@@ -333,17 +370,29 @@
       "title": "Phase 3: Credentials stored in OS keychain (keyring), never plaintext on disk",
       "passes": false,
       "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
       "taskContractPath": ".harness/task-contracts/secure-cred-store.json",
       "evidencePath": ".harness/evidence/secure-cred-store.json",
       "steps": [
         {
           "id": "store",
-          "title": "store/: keyring-backed CredentialStore (save/load/delete)",
-          "done": false
+          "title": "store/: SQLite (rusqlite bundled) schema + keyring master key + AES-256-GCM credential encrypt/decrypt; save/load/delete (ADR-0005)",
+          "done": true
+        },
+        {
+          "id": "restore",
+          "title": "command/: persist account+encrypted credential after login; restore_sessions re-logs-in saved accounts on startup (UI auto-restore, QR gate only when none)",
+          "done": true
         },
         {
           "id": "smoke",
-          "title": "Creds round-trip via keychain; no secrets in app data dir",
+          "title": "Creds round-trip via keychain; SQLite row is ciphertext (no plaintext); relaunch auto-restores without QR",
           "done": false
         }
       ]
