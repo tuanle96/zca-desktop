@@ -1,9 +1,13 @@
 [package]
 name = "zca-desktop"
 version = "0.1.0"
-description = "A Tauri App"
-authors = ["you"]
+description = "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust). Personal, noncommercial use only."
+authors = ["Lê Anh Tuấn (tuanle96) <justin.le.1105@gmail.com>"]
 edition = "2021"
+license = "PolyForm-Noncommercial-1.0.0"
+repository = "https://github.com/tuanle96/zca-desktop"
+homepage = "https://github.com/tuanle96/zca-desktop"
+publish = false
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
@@ -26,4 +30,9 @@ serde_json = "1"
 # dependency per state.json decision d2; pinned to a rev for reproducible builds.
 zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "08698e1cd4b51a07a021b215cc25dab1b875b656" }
 tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+# reqwest: only used in the zalo layer to read cookies back out of the QR-login
+# cookie jar (reqwest::cookie::{Jar, CookieStore}) when assembling Credentials.
+# Pinned to the same version + rustls TLS that zca-rust already resolves, so no
+# new native binding and no new ADR (ADR-0004).
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "rustls-tls"] }
 

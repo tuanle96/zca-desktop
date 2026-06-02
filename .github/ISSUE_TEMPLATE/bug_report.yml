@@ -1,0 +1,51 @@
+name: Bug report
+description: Report a problem with zca-desktop
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting a bug. **Never include credentials, cookies, or
+        personal message content.** Redact anything sensitive.
+  - type: checkboxes
+    attributes:
+      label: Pre-flight
+      options:
+        - label: I have read the [DISCLAIMER](../blob/main/DISCLAIMER.md) and understand this is an unofficial client.
+          required: true
+        - label: This is not a security/credential issue (those go through [SECURITY.md](../blob/main/SECURITY.md)).
+          required: true
+        - label: My report contains no real credentials or private message content.
+          required: true
+  - type: textarea
+    attributes:
+      label: Description
+      description: What happened, and what did you expect to happen?
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. ...
+        2. ...
+        3. ...
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: OS and version
+      placeholder: "macOS 15.1 / Windows 11 / Ubuntu 24.04"
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: App / commit version
+      placeholder: "0.1.0 or git commit sha"
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Logs
+      description: Relevant logs with sensitive values redacted.
+      render: shell

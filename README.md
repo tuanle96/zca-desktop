@@ -6,7 +6,10 @@ Cross-platform **Zalo desktop client** built with **Tauri v2 + Rust**, powered b
 - **Multi-account**: several accounts logged in at the same time, each with its own realtime listener.
 - **Multi-device**: coexists with the user's other Zalo devices (phone/web) without forcing a logout.
 
-> ⚠️ Unofficial. Not affiliated with Zalo / VNG. Personal-use tool — use at your own risk.
+> ⚠️ **Unofficial. Not affiliated with Zalo / VNG.** Personal-use tool — **use at your
+> own risk.** Using an unofficial client can get your Zalo account **rate-limited,
+> suspended, or permanently banned**, and may violate Zalo's Terms of Service. Read the
+> full [DISCLAIMER](./DISCLAIMER.md) before using.
 
 ## Stack
 - **Core**: Rust (Tauri v2) — hosts a `SessionManager` of `zca-rust` `API` + `Listener` sessions.
@@ -23,3 +26,26 @@ model + harness control center.
 
 ## Status
 Phase 0 (research + harness bootstrap) complete. Phase 1 (Tauri scaffold) is next.
+
+## Contributing
+Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
+
+In short:
+- Every contributor must agree to the [Contributor License Agreement](./CLA.md) and
+  sign off their commits (`git commit -s`).
+- Be respectful — see the [Code of Conduct](./CODE_OF_CONDUCT.md).
+- No spam-like or bulk-automation features (ban risk for users).
+- Never commit credentials or secrets.
+
+Found a security or credential-handling issue? Report it privately — see
+[SECURITY.md](./SECURITY.md). Do not open a public issue.
+
+## License
+zca-desktop is licensed under the **[PolyForm Noncommercial License 1.0.0](./LICENSE)**.
+
+- ✅ **Free** for personal, hobby, educational, research, and other **noncommercial** use.
+- ❌ **Commercial use is not permitted** under this license.
+
+If you need a commercial license, contact the maintainer. See the full terms in
+[LICENSE](./LICENSE), the usage caveats in [DISCLAIMER.md](./DISCLAIMER.md), and the
+[PolyForm FAQ](https://polyformproject.org/licenses/) for background.
