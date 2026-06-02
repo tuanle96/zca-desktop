@@ -1,0 +1,48 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "dev-session-loader",
+    "featureId": "dev-session-loader",
+    "decision": "pass",
+    "createdAt": "2026-06-02T05:05:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the file-backed commands and registration. The UI change (+page.svelte) removes the credential textarea; the dev config helper is non-source."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "The credential is read by the core from a fixed repo-local path (env ZALO_CRED_FILE or repo-root .zalo-cred.json); the UI passes no path, so this cannot read arbitrary files. The token never enters the webview. Live login as the real account confirmed via the file path and the GUI.",
+            "fix": "Replace this dev affordance with a file picker + OS keychain in secure-cred-store before any release build."
+        }
+    ],
+    "summary": "dev-session-loader moves credential reading into the Rust core: cred_file_summary/login_from_file/start_listening_from_file read a fixed repo-local .zalo-cred.json, and the UI now uses buttons with no credential textarea so the bearer token never reaches the webview DOM. Path is non-Ut-controllable; missing-file errors are value-free. Live login proven (uid present) plus GUI verification. Explicitly a dev affordance superseded by secure-cred-store. Safe to mark done."
+}

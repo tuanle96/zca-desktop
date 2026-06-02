@@ -1,0 +1,170 @@
+{
+    "schemaVersion": 1,
+    "taskId": "dev-session-loader",
+    "featureId": "dev-session-loader",
+    "status": "pass",
+    "createdAt": "2026-06-02T05:01:06.708Z",
+    "diffSummary": "Made the desktop app log in / listen without putting the bearer token in the webview. command/ adds cred_file_summary, login_from_file, and start_listening_from_file, which read a fixed repo-local session file (env ZALO_CRED_FILE or repo-root .zalo-cred.json) — the UI supplies no path, so arbitrary file reads are not possible. login/listen logic was refactored into a shared login_and_listen helper. The frontend (+page.svelte) now uses buttons (Check session / Log in / Log in + listen) instead of a credential textarea, so imei/cookie/userAgent never enter the DOM. Verified live: the core read .zalo-cred.json (8 cookies, vi) and logged in (uid_len=19, display name present), and GUI login as the real account was confirmed via tauri dev. Added a src-tauri/tauri.dev-npm.conf.json helper so tauri dev can run with npm (bun not installed). Offline tests cover the fixed-path guarantee and the value-free missing-file error.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src/routes/+page.svelte",
+        "src-tauri/tauri.dev-npm.conf.json"
+    ],
+    "checks": [
+        {
+            "name": "smoke",
+            "acceptanceId": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_file_summary_live login_from_file_live --nocapture",
+            "status": "pass",
+            "summary": "Live file-backed flow: cred_file_summary reads .zalo-cred.json (counts only) and login_from_file logs in (uid present). Plus GUI-verified login as 'Tuan' via tauri dev. Non-secret output only.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:06.708Z",
+            "finishedAt": "2026-06-02T05:01:07.906Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:d3d14f4a21eef3bdc6b7ec5e0e014877b9a1c428708d2416f15c7b4d4a036c9e",
+            "stderrHash": "sha256:7cddf1ecf570548215da448270e61b46886793347c6dd3712516db0d169a9235",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "acceptanceId": "path-safety",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: 8 passed offline incl. dev_cred_path repo-local + missing-file error guards; 5 live tests ignored.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:28.925Z",
+            "finishedAt": "2026-06-02T05:01:30.169Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:45a5d2317ff5a810c9cf526716741e1e66c14461867b04960ecab3bb00ea18ea",
+            "stderrHash": "sha256:6512f60519900a25011ee2c7e5bf61cedcb3e9dded3bd7ac27528c35719b174e",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with file-backed commands + tests.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:30.403Z",
+            "finishedAt": "2026-06-02T05:01:31.746Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:c4b4f734d25a6ba7fc07edf0f5b7a3c46f9b009dd556d59397b76862635a5f8a",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/lint-20260602050130/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/lint-20260602050130/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/lint-20260602050130/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/lint-20260602050130/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles the file-backed login/listen commands.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:40.469Z",
+            "finishedAt": "2026-06-02T05:01:42.408Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:3b4ceed1776e20151ea9863b9c68eb927d411484e9b5efe8fa7d344ebb0b89ed",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "acceptanceId": "ui",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend build succeeds with the file-backed buttons UI (svelte-check 0/0; adapter-static wrote build/).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:41.975Z",
+            "finishedAt": "2026-06-02T05:01:45.124Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:b146e2069182ed72a2a575c66421d957abf41f8a36ad846a5faa7d2800fed4d2",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/frontend.build-20260602050141/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/frontend.build-20260602050141/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/frontend.build-20260602050141/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/frontend.build-20260602050141/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:01:52.611Z",
+            "finishedAt": "2026-06-02T05:01:52.969Z",
+            "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+            "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/dev-session-loader/checks/structural-20260602050152/stdout.txt",
+            "stderrPath": ".harness/evidence/dev-session-loader/checks/structural-20260602050152/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/dev-session-loader/checks/structural-20260602050152/stdout.txt",
+                ".harness/evidence/dev-session-loader/checks/structural-20260602050152/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/dev-session-loader/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/dev-session-loader/security-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/dev-session-loader/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "dev-cred-file-affordance",
+            "severity": "medium",
+            "description": "Credentials are read from a repo-root .zalo-cred.json for dev/testing rather than from a user file picker + OS keychain.",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "security-reviewer",
+            "acceptanceReason": "Dev/test affordance only; the file is gitignored and the path is not UI-controllable. The release flow is the secure-cred-store feature.",
+            "mitigation": "Replace with a file picker + OS keychain in secure-cred-store; keep .zalo-cred.json gitignored in the meantime.",
+            "acceptedUntil": "2026-07-15T00:00:00.000Z"
+        }
+    ],
+    "updatedAt": "2026-06-02T05:01:52.969Z"
+}

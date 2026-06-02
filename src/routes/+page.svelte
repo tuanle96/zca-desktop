@@ -28,7 +28,6 @@
     isSelf: boolean;
   };
 
-  let payload = $state("");
   let summary = $state<CredentialSummary | null>(null);
   let profile = $state<AccountProfile | null>(null);
   let messages = $state<IncomingMessage[]>([]);
@@ -42,13 +41,11 @@
 
   let unlisten: UnlistenFn | null = null;
 
-  async function importCredentials() {
+  async function checkSession() {
     error = "";
-    summary = null;
-    profile = null;
     busy = true;
     try {
-      summary = await invoke<CredentialSummary>("import_credentials", { payload });
+      summary = await invoke<CredentialSummary>("cred_file_summary");
     } catch (e) {
       error = String(e);
     } finally {
@@ -61,7 +58,7 @@
     profile = null;
     busy = true;
     try {
-      profile = await invoke<AccountProfile>("login", { payload });
+      profile = await invoke<AccountProfile>("login_from_file");
     } catch (e) {
       error = String(e);
     } finally {
@@ -78,7 +75,7 @@
           messages = [event.payload, ...messages].slice(0, 50);
         });
       }
-      profile = await invoke<AccountProfile>("start_listening", { payload });
+      profile = await invoke<AccountProfile>("start_listening_from_file");
       listening = true;
     } catch (e) {
       error = String(e);
@@ -108,33 +105,28 @@
 
   onDestroy(() => {
     unlisten?.();
-  });</script>
+  });
+</script>
 
 <main class="mx-auto flex min-h-screen max-w-xl flex-col gap-6 p-8">
   <header class="space-y-1">
     <h1 class="text-3xl font-bold tracking-tight">Zalo Desktop</h1>
-    <p class="text-muted-foreground text-sm">Import a ZaloDataExtractor JSON export, then log in and listen.</p>
+    <p class="text-muted-foreground text-sm">
+      Session is read from <code>.zalo-cred.json</code> by the core — credentials never enter this window.
+    </p>
   </header>
 
-  <form class="flex flex-col gap-3" onsubmit={(e) => { e.preventDefault(); importCredentials(); }}>
-    <textarea
-      bind:value={payload}
-      rows="8"
-      placeholder={'{ "imei": "...", "cookie": [...], "userAgent": "..." }'}
-      class="border-input bg-background rounded-md border px-3 py-2 font-mono text-xs"
-    ></textarea>
-    <div class="flex gap-2">
-      <Button type="submit" variant="outline" disabled={busy || payload.trim().length === 0}>
-        {busy ? "Working…" : "Validate"}
-      </Button>
-      <Button type="button" variant="outline" onclick={login} disabled={busy || payload.trim().length === 0}>
-        {busy ? "Working…" : "Log in"}
-      </Button>
-      <Button type="button" onclick={startListening} disabled={busy || listening || payload.trim().length === 0}>
-        {listening ? "Listening…" : "Log in + listen"}
-      </Button>
-    </div>
-  </form>
+  <div class="flex flex-wrap gap-2">
+    <Button type="button" variant="outline" onclick={checkSession} disabled={busy}>
+      Check session file
+    </Button>
+    <Button type="button" variant="outline" onclick={login} disabled={busy}>
+      {busy ? "Working…" : "Log in"}
+    </Button>
+    <Button type="button" onclick={startListening} disabled={busy || listening}>
+      {listening ? "Listening…" : "Log in + listen"}
+    </Button>
+  </div>
 
   {#if error}
     <p class="text-destructive text-sm" role="alert">{error}</p>
@@ -150,7 +142,7 @@
     </div>
   {:else if summary}
     <div class="rounded-md border p-4 text-sm" role="status">
-      <p class="font-medium">Credentials look valid</p>
+      <p class="font-medium">Session file looks valid</p>
       <ul class="text-muted-foreground mt-2 space-y-1">
         <li>Cookies: {summary.cookieCount}</li>
         <li>Language: {summary.language}</li>
@@ -188,7 +180,8 @@
 
   {#if messages.length > 0}
     <section class="flex flex-col gap-2">
-      <h2 class="text-sm font-medium">Incoming messages</h2>      <ul class="flex flex-col gap-2">
+      <h2 class="text-sm font-medium">Incoming messages</h2>
+      <ul class="flex flex-col gap-2">
         {#each messages as m (m.msgId)}
           <li class="rounded-md border p-3 text-sm">
             <p class="text-muted-foreground text-xs">

@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "id": "dev-session-loader",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Let the desktop app log in / listen by having the Rust core read .zalo-cred.json from disk, so the bearer token never enters the webview. Replaces the paste-JSON box with file-backed buttons for GUI testing.",
+        "goals": [
+            "command/ exposes cred_file_summary, login_from_file, start_listening_from_file reading a fixed repo-local session path",
+            "The credential path is fixed (env ZALO_CRED_FILE or repo-root .zalo-cred.json); the UI cannot supply an arbitrary path",
+            "Frontend uses buttons (Check session / Log in / Log in + listen) with no credential textarea"
+        ],
+        "nonGoals": [
+            "Final credential UX (file picker + OS keychain) — that is secure-cred-store",
+            "Persisting the session anywhere",
+            "Multi-account selection"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "path-safety",
+            "description": "The dev cred path is fixed and repo-local; a missing file returns a clear value-free error.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend builds with the file-backed buttons UI (no credential textarea).",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: the core reads .zalo-cred.json and logs in (account id present); GUI login verified via tauri dev.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_file_summary_live login_from_file_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/dev-session-loader.json"
+}

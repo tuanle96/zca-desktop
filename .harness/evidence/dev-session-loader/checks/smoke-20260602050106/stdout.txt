@@ -1,0 +1,19 @@
+
+running 2 tests
+cred_file_summary_live OK: cookies=8 imei_len=69 ua_len=117 lang=vi
+test command::tests::cred_file_summary_live ... ok
+login_from_file_live OK: uid_len=19 has_display_name=true
+test command::tests::login_from_file_live ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.17s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

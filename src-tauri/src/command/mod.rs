@@ -84,7 +84,16 @@ pub async fn start_listening(
     let credentials: Credentials = serde_json::from_str(&payload)
         .map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
+    login_and_listen(&app, &state, credentials).await
+}
 
+/// Shared login + listener-start path used by both the payload and file-backed
+/// commands. Registers the session and spawns the event bridge.
+async fn login_and_listen(
+    app: &AppHandle,
+    state: &ListenerState,
+    credentials: Credentials,
+) -> Result<AccountProfile, String> {
     let api = Arc::new(
         zalo::login(credentials)
             .await
@@ -103,7 +112,7 @@ pub async fn start_listening(
         .map_err(|e| format!("listener failed to start: {e}"))?;
     state.listeners.lock().await.push(listener);
 
-    // Forward each bridged message to the frontend.
+    let app = app.clone();
     tokio::spawn(async move {
         while let Some(msg) = rx.recv().await {
             if app.emit(MESSAGE_EVENT, &msg).is_err() {
@@ -113,6 +122,64 @@ pub async fn start_listening(
     });
 
     Ok(profile)
+}
+
+/// Resolve the dev credential file. The path is fixed (env `ZALO_CRED_FILE`, or
+/// the gitignored `.zalo-cred.json` at the repo root) — the UI never supplies a
+/// path, so this cannot be used to read arbitrary files. Dev affordance only;
+/// the real flow is a file picker / OS keychain (secure-cred-store).
+fn dev_cred_path() -> std::path::PathBuf {
+    if let Ok(p) = std::env::var("ZALO_CRED_FILE") {
+        return std::path::PathBuf::from(p);
+    }
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../.zalo-cred.json")
+}
+
+/// Read + validate credentials from the dev session file. Never returns or logs
+/// token values.
+fn read_dev_credentials() -> Result<Credentials, String> {
+    let path = dev_cred_path();
+    let raw = std::fs::read_to_string(&path).map_err(|_| {
+        "no session file found — copy .zalo-cred.example.json to .zalo-cred.json at the repo root".to_string()
+    })?;
+    let credentials: Credentials =
+        serde_json::from_str(&raw).map_err(|e| format!("invalid .zalo-cred.json: {e}"))?;
+    credentials.validate().map_err(|e| e.to_string())?;
+    Ok(credentials)
+}
+
+/// Non-secret summary of the dev session file so the UI can confirm it is
+/// present and well-formed without ever loading the token values.
+#[tauri::command]
+pub fn cred_file_summary() -> Result<CredentialSummary, String> {
+    let credentials = read_dev_credentials()?;
+    Ok(CredentialSummary {
+        imei_len: credentials.imei.len(),
+        cookie_count: credentials.cookie.len(),
+        user_agent_len: credentials.user_agent.len(),
+        language: credentials.language.clone(),
+    })
+}
+
+/// Log in using the dev session file and return the account profile. The
+/// credential never enters the UI.
+#[tauri::command]
+pub async fn login_from_file() -> Result<AccountProfile, String> {
+    let credentials = read_dev_credentials()?;
+    zalo::login_profile(credentials)
+        .await
+        .map_err(|e| format!("login failed: {e}"))
+}
+
+/// Log in using the dev session file and start the realtime listener. The
+/// credential is read by the core from disk and never enters the UI.
+#[tauri::command]
+pub async fn start_listening_from_file(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+) -> Result<AccountProfile, String> {
+    let credentials = read_dev_credentials()?;
+    login_and_listen(&app, &state, credentials).await
 }
 
 /// Send a plain-text message to a user thread from an already-authenticated
@@ -209,5 +276,63 @@ mod tests {
         .to_string();
         let summary = import_credentials(payload).expect("must import");
         assert_eq!(summary.language, "vi");
+    }
+
+    /// The dev cred path is fixed and repo-local, and a missing/unreadable file
+    /// yields a clear, value-free error. Combined into one test because both
+    /// touch the shared ZALO_CRED_FILE env var (parallel tests would race).
+    #[test]
+    fn dev_cred_path_is_repo_local_and_missing_file_errors() {
+        let saved = std::env::var("ZALO_CRED_FILE").ok();
+
+        std::env::remove_var("ZALO_CRED_FILE");
+        let path = dev_cred_path();
+        assert!(
+            path.to_string_lossy().ends_with(".zalo-cred.json"),
+            "default dev cred path must be the repo-root .zalo-cred.json"
+        );
+
+        std::env::set_var("ZALO_CRED_FILE", "/nonexistent/zca-no-such-cred.json");
+        // Credentials has no Debug derive, so match instead of expect_err.
+        let result = read_dev_credentials();
+        match result {
+            Ok(_) => panic!("missing file must error"),
+            Err(err) => assert!(err.contains("no session file found"), "got: {err}"),
+        }
+
+        match saved {
+            Some(v) => std::env::set_var("ZALO_CRED_FILE", v),
+            None => std::env::remove_var("ZALO_CRED_FILE"),
+        }
+    }
+
+    /// Live: cred_file_summary reads the real .zalo-cred.json and reports only
+    /// non-secret counts/lengths. Ignored by default.
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_file_summary_live --nocapture
+    #[test]
+    #[ignore = "requires real .zalo-cred.json"]
+    fn cred_file_summary_live() {
+        let summary = cred_file_summary().expect("session file must load");
+        assert!(summary.cookie_count > 0, "expected at least one cookie");
+        assert!(summary.imei_len > 0 && summary.user_agent_len > 0);
+        println!(
+            "cred_file_summary_live OK: cookies={} imei_len={} ua_len={} lang={}",
+            summary.cookie_count, summary.imei_len, summary.user_agent_len, summary.language
+        );
+    }
+
+    /// Live: login_from_file logs in using the on-disk session and returns a
+    /// non-empty account id. Ignored by default.
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored login_from_file_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; performs a live login"]
+    async fn login_from_file_live() {
+        let profile = login_from_file().await.expect("file-backed login failed");
+        assert!(!profile.account_id.is_empty(), "account_id must be non-empty");
+        println!(
+            "login_from_file_live OK: uid_len={} has_display_name={}",
+            profile.account_id.len(),
+            profile.display_name.is_some()
+        );
     }
 }

@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_file_summary_live login_from_file_live --nocapture",
+  "status": "pass",
+  "summary": "Live file-backed flow: cred_file_summary reads .zalo-cred.json (counts only) and login_from_file logs in (uid present). Plus GUI-verified login as 'Tuan' via tauri dev. Non-secret output only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:01:06.708Z",
+  "finishedAt": "2026-06-02T05:01:07.906Z",
+  "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+  "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+  "stdoutHash": "sha256:d3d14f4a21eef3bdc6b7ec5e0e014877b9a1c428708d2416f15c7b4d4a036c9e",
+  "stderrHash": "sha256:7cddf1ecf570548215da448270e61b46886793347c6dd3712516db0d169a9235",
+  "stdoutPath": ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stdout.txt",
+  "stderrPath": ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stdout.txt",
+    ".harness/evidence/dev-session-loader/checks/smoke-20260602050106/stderr.txt"
+  ]
+}

@@ -1,0 +1,44 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "dev-session-loader",
+    "featureId": "dev-session-loader",
+    "decision": "pass",
+    "createdAt": "2026-06-02T05:07:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Single layer touched (command). Login/listen logic refactored into a shared login_and_listen helper; file commands reuse zalo login/send."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "New commands live in the command layer and delegate to zalo (login/profile_of/start_message_listener); no zca-rust types leak above zalo. The std::fs read is plain file I/O in the command layer, acceptable as a dev affordance until a config/store-layer credential source replaces it.",
+            "fix": "When secure-cred-store lands, move credential acquisition into the store layer and have the command call that, keeping file I/O out of command."
+        }
+    ],
+    "summary": "Single-layer (command) change that refactors login/listen into a shared helper and adds file-backed variants delegating to zalo. Forward-only layering preserved; zca-rust stays in zalo. The file read is a documented dev affordance to be relocated to the store layer with secure-cred-store. Approve."
+}

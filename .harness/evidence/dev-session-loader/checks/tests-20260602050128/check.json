@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: 8 passed offline incl. dev_cred_path repo-local + missing-file error guards; 5 live tests ignored.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:01:28.925Z",
+  "finishedAt": "2026-06-02T05:01:30.169Z",
+  "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+  "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+  "stdoutHash": "sha256:45a5d2317ff5a810c9cf526716741e1e66c14461867b04960ecab3bb00ea18ea",
+  "stderrHash": "sha256:6512f60519900a25011ee2c7e5bf61cedcb3e9dded3bd7ac27528c35719b174e",
+  "stdoutPath": ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stdout.txt",
+  "stderrPath": ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stdout.txt",
+    ".harness/evidence/dev-session-loader/checks/tests-20260602050128/stderr.txt"
+  ]
+}

@@ -1,0 +1,52 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "dev-session-loader",
+    "featureId": "dev-session-loader",
+    "decision": "pass",
+    "createdAt": "2026-06-02T05:06:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Threat-modeled the path source, the webview boundary, and the live-smoke output."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "high",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "Moving credential reading into the core is a net security improvement: the previous paste-JSON path put the bearer token into the webview DOM, whereas now the token is read from disk by Rust and only non-secret DTOs (CredentialSummary lengths/counts, AccountProfile id/name) cross IPC. The dev path is fixed (env or repo-root constant) and not UI-supplied, so no arbitrary-file-read via IPC. The attested live-smoke sidecar was scanned and contains no token values.",
+            "fix": "For release, source credentials from a user file picker + OS keychain (secure-cred-store) rather than a repo-root file, and clear them from memory on logout."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "read_dev_credentials validates required fields and returns a generic 'no session file found' message on read failure — no path internals or token values are leaked in errors.",
+            "fix": "Keep error messages value-free as the keychain flow is added."
+        }
+    ],
+    "summary": "Security review: the change keeps bearer tokens out of the webview by reading .zalo-cred.json in the core; only non-secret DTOs cross IPC, the path is not UI-controllable, errors are value-free, and the attested smoke sidecar is secret-free. This is a dev affordance to be replaced by keychain-backed loading. No blocking findings."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the file-backed login/listen commands.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:01:40.469Z",
+  "finishedAt": "2026-06-02T05:01:42.408Z",
+  "gitHead": "a2309661c26b4e2568690ff5487f9edcbb51f233",
+  "workingTreeHash": "sha256:e48d107efe76c35fcedbccb3dd5cbcf9a807fa935ab20cb3341296c3779bae97",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:3b4ceed1776e20151ea9863b9c68eb927d411484e9b5efe8fa7d344ebb0b89ed",
+  "stdoutPath": ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stdout.txt",
+  "stderrPath": ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stdout.txt",
+    ".harness/evidence/dev-session-loader/checks/rust.build-20260602050140/stderr.txt"
+  ]
+}

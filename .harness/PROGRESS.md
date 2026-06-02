@@ -79,3 +79,12 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 ## Harness fix — permissions-compiler stdout truncation (2026-06-02)
 - harness-report's `harness:report` gate went RED: it spawns `permissions-compile.mjs diff --json` and parses stdout, but the compiled JSON grew past the ~64KB stdout pipe buffer and `process.exit()` truncated the write before flush.
 - Root-cause fix in `.harness/scripts/_lib/permissions/compiler.mjs`: defer `process.exit()` to the `process.stdout.write` callback so the full payload flushes. Verified full 67KB JSON now parses via spawnSync. (Golden principle #7: fix the mechanism.)
+
+## Phase 1 — dev-session-loader (2026-06-02) [LIVE + GUI]
+- 2026-06-02 05:01 | dev-session-loader | done
+- Security-driven change (user flagged credential paste leaks the token): the Rust core now reads .zalo-cred.json from a fixed repo-local path (env ZALO_CRED_FILE or repo root); the UI supplies no path, so no arbitrary file read.
+- command/: cred_file_summary, login_from_file, start_listening_from_file; login/listen refactored into a shared login_and_listen helper. Frontend replaced the credential textarea with buttons (Check session / Log in / Log in + listen) — imei/cookie/userAgent never enter the webview DOM.
+- GUI verified via `tauri dev` (npm fallback override tauri.dev-npm.conf.json since bun is absent): logged in as the real account, profile shown.
+- Live file smoke: cred_file_summary (8 cookies, vi) + login_from_file (uid_len=19, display name). Sidecar scanned: no secrets.
+- Reviews: advisor + security + architecture pass. Accepted risk dev-cred-file-affordance (medium, until 2026-07-15): replace with file picker + OS keychain in secure-cred-store.
+- Gates: cargo build/clippy -D warnings/test (8 offline + 2 live) OK, svelte-check 0/0, npm build OK, review-coverage --strict OK (18 pass decisions), harness-readiness --strict PASSED.

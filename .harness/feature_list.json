@@ -204,6 +204,31 @@
       ]
     },
     {
+      "id": "dev-session-loader",
+      "title": "Phase 1: Desktop app logs in/listens from .zalo-cred.json read by the core (token never enters the webview)",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/dev-session-loader.json",
+      "evidencePath": ".harness/evidence/dev-session-loader.json",
+      "steps": [
+        {
+          "id": "cmd",
+          "title": "command/: cred_file_summary + login_from_file + start_listening_from_file (fixed repo-local path)",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "title": "Frontend buttons replace the credential textarea",
+          "done": true
+        },
+        {
+          "id": "smoke",
+          "title": "Live: core reads .zalo-cred.json and logs in; GUI verified",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "session-manager",
       "title": "Phase 2: SessionManager holds N concurrent API+Listener sessions keyed by account",
       "passes": false,
