@@ -26,7 +26,7 @@ use zca_rust::context::Options;
 use zca_rust::Zalo;
 
 use crate::types::{
-    AccountProfile, Contact, Cookie, Credentials, IncomingMessage, QrLoginEvent, ThreadKind,
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, ThreadKind,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -392,6 +392,43 @@ pub async fn list_contacts(api: &API) -> ZaloResult<Vec<Contact>> {
         .collect();
     contacts.sort_by(|a, b| a.display_name.to_lowercase().cmp(&b.display_name.to_lowercase()));
     Ok(contacts)
+}
+
+/// Fetch the account's groups and map them into core [`Group`] DTOs (id + name
+/// + avatar), used to resolve a group thread's display name/avatar.
+///
+/// Two-step like the upstream client: `get_all_groups` lists the group ids,
+/// then `get_group_info` returns each group's details. Confined to the `zalo`
+/// layer so higher layers never see `zca-rust`'s `GroupInfo`.
+pub async fn list_groups(api: &API) -> ZaloResult<Vec<Group>> {
+    let all = api.get_all_groups().await?;
+    let ids: Vec<String> = all.grid_ver_map.into_keys().collect();
+    if ids.is_empty() {
+        return Ok(Vec::new());
+    }
+    let info = api.get_group_info(&ids).await?;
+    let mut groups: Vec<Group> = info
+        .grid_info_map
+        .into_iter()
+        .filter_map(|(group_id, value)| {
+            // Each value is a GroupInfo-shaped JSON object; pull name + avatar.
+            let name = value.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+            let avatar = value
+                .get("fullAvt")
+                .and_then(|v| v.as_str())
+                .filter(|s| !s.is_empty())
+                .or_else(|| value.get("avt").and_then(|v| v.as_str()))
+                .map(|s| s.to_string())
+                .filter(|s| !s.is_empty());
+            if name.is_empty() {
+                None
+            } else {
+                Some(Group { group_id, name, avatar })
+            }
+        })
+        .collect();
+    groups.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    Ok(groups)
 }
 
 /// Resolve a user's uid from a phone number (best-effort; tolerates Zalo's

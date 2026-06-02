@@ -477,6 +477,26 @@ pub async fn list_contacts(
         .map_err(|e| format!("failed to load contacts: {e}"))
 }
 
+/// List the groups of an authenticated account (id + name + avatar), so the UI
+/// can resolve a group thread's display name/avatar instead of showing the last
+/// sender. Reuses the stored session for `account_id`.
+#[tauri::command]
+pub async fn list_groups(
+    state: State<'_, ListenerState>,
+    account_id: String,
+) -> Result<Vec<crate::types::Group>, String> {
+    let api = {
+        let sessions = state.sessions.lock().await;
+        sessions
+            .get(&account_id)
+            .cloned()
+            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
+    };
+    zalo::list_groups(&api)
+        .await
+        .map_err(|e| format!("failed to load groups: {e}"))
+}
+
 /// Forward a log line from the webview/UI into the unified tracing sink so
 /// frontend diagnostics land in the same rolling log files as the core.
 ///

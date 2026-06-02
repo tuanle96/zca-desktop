@@ -43,6 +43,7 @@ pub fn run() {
             command::restore_sessions,
             command::send_message,
             command::list_contacts,
+            command::list_groups,
             command::load_history,
             command::mark_thread_read,
             command::store_stats,

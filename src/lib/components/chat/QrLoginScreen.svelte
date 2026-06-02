@@ -1,13 +1,15 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { Loader2, RotateCw, CircleCheck, Smartphone, ScanLine, LogIn } from "@lucide/svelte";
+  import { Loader2, RotateCw, CircleCheck, Smartphone, ScanLine, LogIn, X } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { session } from "$lib/session.svelte";
 
-  // Auto-start the QR flow when the login gate mounts so the code appears
-  // immediately — no extra click, matching the Zalo PC login screen.
+  // `adding` = shown as an overlay to add another account (cancellable);
+  // otherwise this is the full-screen login gate (auto-starts the flow).
+  let { adding = false }: { adding?: boolean } = $props();
+
   onMount(() => {
-    session.startQrLogin();
+    if (!adding) session.startQrLogin();
   });
 
   const showRetry = $derived(
@@ -47,7 +49,18 @@
 </script>
 
 <div class="from-brand/10 via-background to-background flex h-screen w-screen items-center justify-center bg-gradient-to-b p-6">
-  <div class="bg-card flex w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
+  <div class="bg-card relative flex w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
+    {#if adding}
+      <button
+        type="button"
+        onclick={() => session.cancelAddAccount()}
+        title="Đóng"
+        aria-label="Đóng"
+        class="text-muted-foreground hover:bg-muted hover:text-foreground absolute right-3 top-3 z-10 flex size-8 items-center justify-center rounded-md transition-colors"
+      >
+        <X class="size-5" />
+      </button>
+    {/if}
     <!-- Left: brand + QR -->
     <div class="flex flex-1 flex-col items-center border-r px-8 py-10 text-center">
       <h1 class="text-brand text-4xl font-extrabold tracking-tight">Zalo</h1>
@@ -128,14 +141,16 @@
         {/each}
       </ol>
 
-      <button
-        type="button"
-        onclick={() => session.loginAndListen()}
-        disabled={session.busy}
-        class="text-muted-foreground/70 hover:text-foreground mt-2 self-start text-xs underline underline-offset-2 transition"
-      >
-        Đăng nhập từ phiên đã lưu
-      </button>
+      {#if !adding}
+        <button
+          type="button"
+          onclick={() => session.loginAndListen()}
+          disabled={session.busy}
+          class="text-muted-foreground/70 hover:text-foreground mt-2 self-start text-xs underline underline-offset-2 transition"
+        >
+          Đăng nhập từ phiên đã lưu
+        </button>
+      {/if}
 
       {#if session.error && !errorText}
         <p class="text-destructive text-xs" role="alert">{session.error}</p>

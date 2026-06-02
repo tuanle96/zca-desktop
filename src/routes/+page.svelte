@@ -25,6 +25,11 @@
       <ChatPane />
     </div>
   </div>
+  {#if session.qrAdding}
+    <div class="fixed inset-0 z-50">
+      <QrLoginScreen adding />
+    </div>
+  {/if}
 {:else if session.restoring}
   <div class="bg-background flex h-screen w-screen flex-col items-center justify-center gap-3">
     <Loader2 class="text-brand size-9 animate-spin" />

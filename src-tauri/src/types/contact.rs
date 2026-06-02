@@ -21,3 +21,17 @@ pub struct Contact {
     #[serde(default)]
     pub avatar: Option<String>,
 }
+
+/// A group/conversation entry used to resolve a group thread's name + avatar
+/// (a group `thread_id` is the group id). Pure data; the `zalo` layer maps
+/// `zca-rust`'s `GroupInfo` into this.
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "camelCase")]
+pub struct Group {
+    /// The group id (also the thread id for group messages).
+    pub group_id: String,
+    pub name: String,
+    /// Group avatar URL, when present.
+    #[serde(default)]
+    pub avatar: Option<String>,
+}

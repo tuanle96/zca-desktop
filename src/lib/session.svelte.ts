@@ -1,6 +1,8 @@
 // Reactive session state for the chat UI. Wraps the Tauri command/event API
 // and derives conversation rows + per-thread message lists from the live
-// zalo://message stream. No mock data — everything here reflects real IPC.
+// zalo://message stream. Multi-account: each logged-in account keeps its own
+// data bucket; the UI shows the active account and a rail of all accounts.
+// No mock data — everything here reflects real IPC.
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
@@ -11,6 +13,7 @@ import type {
     Contact,
     Conversation,
     CredentialSummary,
+    Group,
     History,
     IncomingMessage,
     QrLoginEvent,
@@ -25,8 +28,59 @@ function snippet(text: string | null): string {
     return text.length > 48 ? `${text.slice(0, 48)}…` : text;
 }
 
+/** All per-account data. The active account's slice is mirrored into the
+ * top-level reactive fields below; background accounts live here and keep
+ * accumulating realtime messages. */
+type AccountData = {
+    profile: AccountProfile;
+    conversations: Conversation[];
+    threads: Record<string, ChatMessage[]>;
+    contacts: Contact[];
+    contactsLoaded: boolean;
+    groups: Group[];
+    groupsLoaded: boolean;
+    activeThreadId: string | null;
+};
+
+/** A compact account entry for the left account rail. */
+export type AccountTab = {
+    accountId: string;
+    displayName: string | null;
+    avatar: string | null;
+    unread: number;
+};
+
+function emptyAccount(profile: AccountProfile): AccountData {
+    return {
+        profile,
+        conversations: [],
+        threads: {},
+        contacts: [],
+        contactsLoaded: false,
+        groups: [],
+        groupsLoaded: false,
+        activeThreadId: null,
+    };
+}
+
 class SessionStore {
+    // --- active-account view (mirrors the active bucket; reactive) ---
     profile = $state<AccountProfile | null>(null);
+    conversations = $state<Conversation[]>([]);
+    activeThreadId = $state<string | null>(null);
+    private threads = $state<Record<string, ChatMessage[]>>({});
+    contacts = $state<Contact[]>([]);
+    contactsLoaded = $state(false);
+    groups = $state<Group[]>([]);
+    groupsLoaded = $state(false);
+
+    // --- multi-account ---
+    /** Account rail entries (all logged-in accounts). Reactive. */
+    accounts = $state<AccountTab[]>([]);
+    activeAccountId = $state<string | null>(null);
+    /** Background buckets for non-active accounts (and the active one, synced on switch). */
+    private buckets = new Map<string, AccountData>();
+
     sessionSummary = $state<CredentialSummary | null>(null);
     listening = $state(false);
     busy = $state(false);
@@ -34,34 +88,26 @@ class SessionStore {
     /** True while the startup session-restore attempt is in flight. */
     restoring = $state(true);
 
-    conversations = $state<Conversation[]>([]);
-    activeThreadId = $state<string | null>(null);
-    /** messages keyed by threadId */
-    private threads = $state<Record<string, ChatMessage[]>>({});
-
-    contacts = $state<Contact[]>([]);
-    contactsLoaded = $state(false);
     /** which middle/main pane is shown: chats or contacts */
     view = $state<"chats" | "contacts">("chats");
 
-    // --- QR login state (derived from the zalo://qr event stream). The QR is
-    // the app's login gate: while `profile` is null the UI shows the QR screen
-    // and nothing else. The credential triple never enters the webview. ---
+    // --- QR login state (zalo://qr stream). Shown full-screen as the login
+    // gate when no account is logged in, or as an overlay when adding another
+    // account. The credential triple never enters the webview. ---
     qrPhase = $state<QrPhase>("idle");
-    /** base64-encoded PNG of the current QR code, when one is shown */
     qrImage = $state<string | null>(null);
-    /** public name/avatar of the account that scanned, once scanned */
     qrScannedName = $state<string | null>(null);
     qrScannedAvatar = $state<string | null>(null);
     qrError = $state("");
-    /** Seconds remaining before the current QR expires (0 when not counting). */
     qrSecondsLeft = $state(0);
+    /** True while a QR flow for an ADDITIONAL account is in progress (overlay). */
+    qrAdding = $state(false);
 
     private unlisten: UnlistenFn | null = null;
     private unlistenQr: UnlistenFn | null = null;
     private qrTimer: ReturnType<typeof setInterval> | null = null;
 
-    /** True once an account is authenticated; gates the chat shell. */
+    /** True once at least one account is authenticated; gates the chat shell. */
     get loggedIn(): boolean {
         return this.profile !== null;
     }
@@ -80,55 +126,59 @@ class SessionStore {
         });
     }
 
-    async login() {
-        await this.run(async () => {
-            this.profile = await invoke<AccountProfile>("login_from_file");
-        });
-    }
-
     async loginAndListen() {
         await this.run(async () => {
             await this.ensureListener();
-            this.profile = await invoke<AccountProfile>("start_listening_from_file");
+            const profile = await invoke<AccountProfile>("start_listening_from_file");
+            this.adoptAccount(profile);
             this.listening = true;
         });
-        // Best-effort: warm the address book once logged in.
-        if (this.profile) {
-            this.loadContacts();
-            this.hydrateHistory();
-        }
+        if (this.profile) this.warmUp();
     }
 
     /**
-     * On app start, try to restore a previously saved account from the local
-     * store (decrypted in the core; credentials never enter the webview). If an
-     * account comes back online the chat shell unlocks without a QR scan.
+     * On app start, restore previously saved accounts from the local store
+     * (decrypted in the core; credentials never enter the webview). Every
+     * restored account is added to the rail; the first becomes active.
      */
     async restore(): Promise<boolean> {
         let restored = false;
         await this.run(async () => {
             await this.ensureListener();
             const profiles = await invoke<AccountProfile[]>("restore_sessions");
+            for (const p of profiles) this.adoptAccount(p, { activate: false });
             if (profiles.length > 0) {
-                this.profile = profiles[0];
+                this.activate(profiles[0].accountId);
                 this.listening = true;
                 restored = true;
                 log.info(`restore: ${profiles.length} account(s) restored`);
             }
         });
         this.restoring = false;
-        if (restored && this.profile) {
-            this.loadContacts();
-            this.hydrateHistory();
+        if (restored) {
+            // Warm every restored account so background unread badges are right.
+            for (const tab of this.accounts) this.warmUp(tab.accountId);
         }
         return restored;
     }
 
+    /** Trigger the QR flow to ADD another account (while already logged in). */
+    async addAccount() {
+        this.qrAdding = true;
+        await this.startQrLogin();
+    }
+
+    /** Cancel an in-progress "add account" QR overlay. */
+    cancelAddAccount() {
+        this.qrAdding = false;
+        this.qrPhase = "idle";
+        this.stopQrCountdown();
+    }
+
     /**
-     * Run the interactive QR login flow. This is the app's login gate: the core
-     * streams non-secret progress over `zalo://qr` (so the QR appears as soon as
-     * it is generated), and the credential triple never enters the webview. On
-     * success the account is logged in and listening, and the chat shell unlocks.
+     * Run the interactive QR login flow. Login gate for the first account, or
+     * the "add account" overlay for subsequent ones. On success the account is
+     * added to the rail and becomes active.
      */
     async startQrLogin() {
         if (this.busy) return;
@@ -145,18 +195,14 @@ class SessionStore {
         this.busy = true;
         try {
             log.info("qr-login: starting interactive QR flow");
-            // Resolves only after scan + confirm complete and the listener starts.
-            this.profile = await invoke<AccountProfile>("start_qr_login");
+            const profile = await invoke<AccountProfile>("start_qr_login");
+            this.adoptAccount(profile);
             this.listening = true;
             this.qrPhase = "success";
-            log.info(`qr-login: success, account=${this.profile?.accountId ?? "?"}`);
-            this.loadContacts();
-            this.hydrateHistory();
+            this.qrAdding = false;
+            log.info(`qr-login: success, account=${profile.accountId}`);
+            this.warmUp();
         } catch (e) {
-            // A declined/expired stage already set a friendlier phase; only fall
-            // back to a generic error when we're still mid-flight. (The async
-            // event listener may have mutated qrPhase, so compare via a set to
-            // avoid misleading literal-narrowing.)
             this.qrError = String(e);
             log.error(`qr-login: failed: ${this.qrError}`);
             const friendlyTerminal: QrPhase[] = ["declined", "expired"];
@@ -167,6 +213,91 @@ class SessionStore {
             this.busy = false;
         }
     }
+
+    // --- account management -------------------------------------------------
+
+    /** Add (or refresh) an account bucket + rail entry. Activates by default. */
+    private adoptAccount(profile: AccountProfile, opts: { activate?: boolean } = {}) {
+        const activate = opts.activate ?? true;
+        if (!this.buckets.has(profile.accountId)) {
+            this.buckets.set(profile.accountId, emptyAccount(profile));
+        } else {
+            this.buckets.get(profile.accountId)!.profile = profile;
+        }
+        if (!this.accounts.some((a) => a.accountId === profile.accountId)) {
+            this.accounts = [
+                ...this.accounts,
+                {
+                    accountId: profile.accountId,
+                    displayName: profile.displayName,
+                    avatar: profile.avatar,
+                    unread: 0,
+                },
+            ];
+        }
+        if (activate) this.activate(profile.accountId);
+    }
+
+    /** Switch the active account: persist the current view back to its bucket,
+     * then load the target bucket into the reactive view fields. */
+    switchAccount(accountId: string) {
+        if (accountId === this.activeAccountId) return;
+        this.activate(accountId);
+    }
+
+    private activate(accountId: string) {
+        const target = this.buckets.get(accountId);
+        if (!target) return;
+        // Save current active view back to its bucket.
+        if (this.activeAccountId) {
+            const cur = this.buckets.get(this.activeAccountId);
+            if (cur) {
+                cur.conversations = this.conversations;
+                cur.threads = this.threads;
+                cur.contacts = this.contacts;
+                cur.contactsLoaded = this.contactsLoaded;
+                cur.groups = this.groups;
+                cur.groupsLoaded = this.groupsLoaded;
+                cur.activeThreadId = this.activeThreadId;
+            }
+        }
+        // Load the target bucket into the reactive view.
+        this.activeAccountId = accountId;
+        this.profile = target.profile;
+        this.conversations = target.conversations;
+        this.threads = target.threads;
+        this.contacts = target.contacts;
+        this.contactsLoaded = target.contactsLoaded;
+        this.groups = target.groups;
+        this.groupsLoaded = target.groupsLoaded;
+        this.activeThreadId = target.activeThreadId;
+        this.view = "chats";
+        // The active account's unread badge clears on switch.
+        this.setAccountUnread(accountId, 0);
+    }
+
+    private setAccountUnread(accountId: string, n: number) {
+        this.accounts = this.accounts.map((a) =>
+            a.accountId === accountId ? { ...a, unread: n } : a,
+        );
+    }
+
+    private bumpAccountUnread(accountId: string) {
+        this.accounts = this.accounts.map((a) =>
+            a.accountId === accountId ? { ...a, unread: a.unread + 1 } : a,
+        );
+    }
+
+    /** Load directories + history for `accountId` (defaults to active). */
+    private warmUp(accountId?: string) {
+        const id = accountId ?? this.activeAccountId;
+        if (!id) return;
+        this.loadContacts(id);
+        this.loadGroups(id);
+        this.hydrateHistory(id);
+    }
+
+    // --- QR event plumbing --------------------------------------------------
 
     private async ensureQrListener() {
         if (this.unlistenQr) return;
@@ -221,39 +352,86 @@ class SessionStore {
         }
     }
 
-    async loadContacts() {
-        if (!this.profile) return;
-        await this.run(async () => {
-            this.contacts = await invoke<Contact[]>("list_contacts", {
-                accountId: this.profile!.accountId,
+    // --- directories (operate on a specific account bucket) -----------------
+
+    async loadContacts(accountId?: string) {
+        const id = accountId ?? this.activeAccountId;
+        if (!id) return;
+        try {
+            const contacts = await invoke<Contact[]>("list_contacts", { accountId: id });
+            this.withBucket(id, (b) => {
+                b.contacts = contacts;
+                b.contactsLoaded = true;
             });
-            this.contactsLoaded = true;
-            // Backfill avatars into any conversation rows created before the
-            // address book loaded (e.g. realtime messages that arrived first).
-            this.conversations = this.conversations.map((c) =>
-                c.avatar ? c : { ...c, avatar: this.avatarFor(c.threadId) },
-            );
-        });
+            if (id === this.activeAccountId) {
+                this.contacts = contacts;
+                this.contactsLoaded = true;
+                this.refreshConversationIdentities();
+            }
+        } catch (e) {
+            log.error(`list_contacts failed: ${String(e)}`);
+        }
     }
 
-    /**
-     * Hydrate conversations + per-thread messages from the local store so chat
-     * history is visible immediately at login/restore — before (and regardless
-     * of) any realtime event. Merges with whatever is already in memory.
-     */
-    async hydrateHistory() {
-        if (!this.profile) return;
-        const accountId = this.profile.accountId;
+    async loadGroups(accountId?: string) {
+        const id = accountId ?? this.activeAccountId;
+        if (!id) return;
+        try {
+            const groups = await invoke<Group[]>("list_groups", { accountId: id });
+            this.withBucket(id, (b) => {
+                b.groups = groups;
+                b.groupsLoaded = true;
+            });
+            if (id === this.activeAccountId) {
+                this.groups = groups;
+                this.groupsLoaded = true;
+                this.refreshConversationIdentities();
+            }
+        } catch (e) {
+            log.error(`list_groups failed: ${String(e)}`);
+        }
+    }
+
+    private groupForIn(b: AccountData, threadId: string): Group | undefined {
+        return b.groups.find((g) => g.groupId === threadId);
+    }
+
+    private titleForIn(b: AccountData, threadId: string, kind: "user" | "group", fallback: string): string {
+        if (kind === "group") return this.groupForIn(b, threadId)?.name || fallback;
+        return b.contacts.find((c) => c.userId === threadId)?.displayName || fallback;
+    }
+
+    private avatarForIn(b: AccountData, threadId: string, kind: "user" | "group"): string | null {
+        if (kind === "group") return this.groupForIn(b, threadId)?.avatar ?? null;
+        return b.contacts.find((c) => c.userId === threadId)?.avatar ?? null;
+    }
+
+    private refreshConversationIdentities() {
+        const b = this.activeBucket();
+        if (!b) return;
+        this.conversations = this.conversations.map((c) => ({
+            ...c,
+            title: this.titleForIn(b, c.threadId, c.kind, c.title),
+            avatar: this.avatarForIn(b, c.threadId, c.kind) ?? c.avatar,
+        }));
+    }
+
+    /** Hydrate conversations + per-thread messages from the local store for an
+     * account so chat history shows immediately at login/restore. */
+    async hydrateHistory(accountId?: string) {
+        const id = accountId ?? this.activeAccountId;
+        if (!id) return;
         let history: History;
         try {
-            history = await invoke<History>("load_history", { accountId });
+            history = await invoke<History>("load_history", { accountId: id });
         } catch (e) {
             log.error(`load_history failed: ${String(e)}`);
             return;
         }
+        const b = this.buckets.get(id);
+        if (!b) return;
 
-        // Rebuild the message threads map from persisted rows.
-        const threads: Record<string, ChatMessage[]> = { ...this.threads };
+        const threads: Record<string, ChatMessage[]> = { ...b.threads };
         for (const m of history.messages) {
             const list = threads[m.threadId] ?? (threads[m.threadId] = []);
             if (list.some((x) => x.id === m.msgId)) continue;
@@ -266,33 +444,40 @@ class SessionStore {
                 at: m.ts ?? 0,
             });
         }
-        for (const id of Object.keys(threads)) {
-            threads[id].sort((a, b) => a.at - b.at);
-        }
-        this.threads = threads;
+        for (const tid of Object.keys(threads)) threads[tid].sort((a, c) => a.at - c.at);
+        b.threads = threads;
 
-        // Merge persisted threads into the conversation list (don't clobber any
-        // live rows already present).
-        const byId = new Map(this.conversations.map((c) => [c.threadId, c]));
+        const byId = new Map(b.conversations.map((c) => [c.threadId, c]));
         for (const t of history.threads) {
             const msgs = threads[t.threadId] ?? [];
             const last = msgs[msgs.length - 1];
-            const title = t.title || t.threadId;
             const existing = byId.get(t.threadId);
+            const title = this.titleForIn(b, t.threadId, t.kind, existing?.title || t.title || t.threadId);
+            const avatar =
+                this.avatarForIn(b, t.threadId, t.kind) ?? existing?.avatar ?? t.avatar ?? null;
             byId.set(t.threadId, {
                 threadId: t.threadId,
                 kind: t.kind,
-                title: existing?.title || title,
+                title,
                 lastSnippet: last ? snippet(last.body) : (existing?.lastSnippet ?? ""),
                 lastAt: t.lastAt ?? existing?.lastAt ?? 0,
                 unread: t.unread ?? existing?.unread ?? 0,
-                avatar: existing?.avatar ?? t.avatar ?? this.avatarFor(t.threadId),
+                avatar,
             });
         }
-        this.conversations = [...byId.values()].sort((a, b) => b.lastAt - a.lastAt);
+        b.conversations = [...byId.values()].sort((a, c) => c.lastAt - a.lastAt);
+
+        // Reflect into the active view + the account's rail unread total.
+        const totalUnread = b.conversations.reduce((s, c) => s + c.unread, 0);
+        if (id !== this.activeAccountId) this.setAccountUnread(id, totalUnread);
+        if (id === this.activeAccountId) {
+            this.threads = b.threads;
+            this.conversations = b.conversations;
+        }
     }
 
-    /** Open (or focus) a DM thread with a contact, using their name as title. */
+    // --- thread + message ops (active account) ------------------------------
+
     startChatWith(contact: Contact) {
         this.view = "chats";
         this.openThread(contact.userId, contact.displayName);
@@ -305,11 +490,11 @@ class SessionStore {
             this.conversations = this.conversations.map((c) =>
                 c.threadId === threadId ? { ...c, unread: 0 } : c,
             );
-            // Persist the read state so it survives restart.
             if (this.profile) {
-                invoke("mark_thread_read", { accountId: this.profile.accountId, threadId }).catch(
-                    () => { },
-                );
+                invoke("mark_thread_read", {
+                    accountId: this.profile.accountId,
+                    threadId,
+                }).catch(() => { });
             }
         }
     }
@@ -326,7 +511,7 @@ class SessionStore {
                 threadId,
                 text,
             });
-            this.appendMessage(
+            this.appendToActive(
                 {
                     id: msgId || `local-${Date.now()}`,
                     threadId,
@@ -357,14 +542,27 @@ class SessionStore {
         });
     }
 
-    /** Resolve a peer's avatar URL from the loaded contacts, by user/thread id. */
-    private avatarFor(threadId: string): string | null {
-        return this.contacts.find((c) => c.userId === threadId)?.avatar ?? null;
+    private activeBucket(): AccountData | undefined {
+        return this.activeAccountId ? this.buckets.get(this.activeAccountId) : undefined;
     }
 
+    private withBucket(accountId: string, fn: (b: AccountData) => void) {
+        const b = this.buckets.get(accountId);
+        if (b) fn(b);
+    }
+
+    /** Route an incoming message to its account bucket. If it's the active
+     * account, also update the reactive view; otherwise bump its rail badge. */
     private ingest(msg: IncomingMessage) {
+        const b = this.buckets.get(msg.accountId);
+        if (!b) return; // event for an account we don't track
         const name = msg.fromName ?? msg.fromId;
-        this.appendMessage(
+        const title = this.titleForIn(b, msg.threadId, msg.threadKind, name);
+        const isActive = msg.accountId === this.activeAccountId;
+        const bumpUnread = !msg.isSelf && !(isActive && msg.threadId === this.activeThreadId);
+
+        this.appendToBucket(
+            b,
             {
                 id: msg.msgId,
                 threadId: msg.threadId,
@@ -374,70 +572,99 @@ class SessionStore {
                 at: Date.now(),
             },
             snippet(msg.text),
-            { kind: msg.threadKind, title: name, bumpUnread: !msg.isSelf && msg.threadId !== this.activeThreadId },
+            { kind: msg.threadKind, title, bumpUnread },
         );
+
+        if (isActive) {
+            // Mirror into the reactive view.
+            this.threads = b.threads;
+            this.conversations = b.conversations;
+        } else if (bumpUnread) {
+            this.bumpAccountUnread(msg.accountId);
+        }
     }
 
-    private appendMessage(
+    /** Append into a specific bucket (no reactive mirror). Returns nothing. */
+    private appendToBucket(
+        b: AccountData,
         message: ChatMessage,
         lastSnippet: string,
-        meta?: { kind: "user" | "group"; title: string; bumpUnread: boolean },
+        meta: { kind: "user" | "group"; title: string; bumpUnread: boolean },
     ) {
-        const existing = this.threads[message.threadId] ?? [];
+        const existing = b.threads[message.threadId] ?? [];
         if (existing.some((m) => m.id === message.id)) return; // dedupe by msg id
-        this.threads = {
-            ...this.threads,
-            [message.threadId]: [...existing, message],
-        };
+        b.threads = { ...b.threads, [message.threadId]: [...existing, message] };
 
-        const idx = this.conversations.findIndex((c) => c.threadId === message.threadId);
+        const idx = b.conversations.findIndex((c) => c.threadId === message.threadId);
         if (idx >= 0) {
-            const current = this.conversations[idx];
+            const current = b.conversations[idx];
             const updated: Conversation = {
                 ...current,
-                title: meta?.title ?? current.title,
+                title: this.titleForIn(b, message.threadId, current.kind, meta.title ?? current.title),
                 lastSnippet,
                 lastAt: message.at,
-                unread: meta?.bumpUnread ? current.unread + 1 : current.unread,
-                // Backfill the avatar if contacts loaded after the row was created.
-                avatar: current.avatar ?? this.avatarFor(message.threadId),
+                unread: meta.bumpUnread ? current.unread + 1 : current.unread,
+                avatar: current.avatar ?? this.avatarForIn(b, message.threadId, current.kind),
             };
-            const rest = this.conversations.filter((_, i) => i !== idx);
-            this.conversations = [updated, ...rest];
+            b.conversations = [updated, ...b.conversations.filter((_, i) => i !== idx)];
         } else {
-            const convo: Conversation = {
-                threadId: message.threadId,
-                kind: meta?.kind ?? "user",
-                title: meta?.title ?? message.threadId,
-                lastSnippet,
-                lastAt: message.at,
-                unread: meta?.bumpUnread ? 1 : 0,
-                avatar: this.avatarFor(message.threadId),
-            };
-            this.conversations = [convo, ...this.conversations];
-            if (!this.activeThreadId) this.activeThreadId = convo.threadId;
+            b.conversations = [
+                {
+                    threadId: message.threadId,
+                    kind: meta.kind,
+                    title: meta.title ?? message.threadId,
+                    lastSnippet,
+                    lastAt: message.at,
+                    unread: meta.bumpUnread ? 1 : 0,
+                    avatar: this.avatarForIn(b, message.threadId, meta.kind),
+                },
+                ...b.conversations,
+            ];
+            if (b.activeThreadId === null && b === this.activeBucket()) {
+                b.activeThreadId = message.threadId;
+                this.activeThreadId = message.threadId;
+            }
         }
+    }
+
+    /** Append an outgoing message to the active account + mirror the view. */
+    private appendToActive(message: ChatMessage, lastSnippet: string) {
+        const b = this.activeBucket();
+        if (!b) return;
+        this.appendToBucket(b, message, lastSnippet, {
+            kind: this.conversations.find((c) => c.threadId === message.threadId)?.kind ?? "user",
+            title:
+                this.conversations.find((c) => c.threadId === message.threadId)?.title ??
+                message.threadId,
+            bumpUnread: false,
+        });
+        this.threads = b.threads;
+        this.conversations = b.conversations;
     }
 
     /** Start (or reuse) a conversation for a thread id typed by the user. */
     openThread(threadId: string, title?: string) {
         const id = threadId.trim();
-        if (!id) return;
-        if (!this.threads[id]) this.threads = { ...this.threads, [id]: [] };
-        if (!this.conversations.some((c) => c.threadId === id)) {
-            this.conversations = [
+        const b = this.activeBucket();
+        if (!id || !b) return;
+        if (!b.threads[id]) b.threads = { ...b.threads, [id]: [] };
+        if (!b.conversations.some((c) => c.threadId === id)) {
+            b.conversations = [
                 {
                     threadId: id,
                     kind: "user",
-                    title: title || id,
+                    title: this.titleForIn(b, id, "user", title || id),
                     lastSnippet: "",
                     lastAt: Date.now(),
                     unread: 0,
-                    avatar: this.avatarFor(id),
+                    avatar: this.avatarForIn(b, id, "user"),
                 },
-                ...this.conversations,
+                ...b.conversations,
             ];
         }
+        b.activeThreadId = id;
+        this.threads = b.threads;
+        this.conversations = b.conversations;
         this.activeThreadId = id;
     }
 
