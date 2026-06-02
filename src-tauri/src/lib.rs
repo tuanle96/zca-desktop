@@ -20,7 +20,10 @@ pub fn run() {
             command::import_credentials,
             command::login,
             command::start_listening,
-            command::send_message
+            command::send_message,
+            command::cred_file_summary,
+            command::login_from_file,
+            command::start_listening_from_file
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
