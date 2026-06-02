@@ -5,7 +5,7 @@
 //! return only non-secret DTOs to the frontend. Credential token values
 //! (imei/cookie/userAgent) are never serialized back across the IPC bridge.
 
-use crate::types::{CredentialSummary, Credentials};
+use crate::types::{AccountProfile, CredentialSummary, Credentials};
 
 /// Import a `ZaloDataExtractor` JSON export.
 ///
@@ -26,6 +26,23 @@ pub fn import_credentials(payload: String) -> Result<CredentialSummary, String> 
         user_agent_len: credentials.user_agent.len(),
         language: credentials.language.clone(),
     })
+}
+
+/// Log in one account from a `ZaloDataExtractor` JSON export and return its
+/// public profile (account id + best-effort display name).
+///
+/// Parses + validates the payload at this boundary, then delegates the network
+/// login to the `zalo` layer. Only the non-secret [`AccountProfile`] crosses
+/// back to the UI; credential token values never leave the core. Nothing is
+/// persisted yet (Phase 3 keychain).
+#[tauri::command]
+pub async fn login(payload: String) -> Result<AccountProfile, String> {
+    let credentials: Credentials = serde_json::from_str(&payload)
+        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    credentials.validate().map_err(|e| e.to_string())?;
+    crate::zalo::login_profile(credentials)
+        .await
+        .map_err(|e| format!("login failed: {e}"))
 }
 
 #[cfg(test)]
