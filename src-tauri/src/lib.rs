@@ -19,7 +19,8 @@ pub fn run() {
             greet,
             command::import_credentials,
             command::login,
-            command::start_listening
+            command::start_listening,
+            command::send_message
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

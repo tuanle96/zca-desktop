@@ -5,21 +5,28 @@
 //! return only non-secret DTOs to the frontend. Credential token values
 //! (imei/cookie/userAgent) are never serialized back across the IPC bridge.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Mutex;
 
-use crate::types::{AccountProfile, CredentialSummary, Credentials, IncomingMessage};
-use crate::zalo::{self, Listener};
+use crate::types::{AccountId, AccountProfile, CredentialSummary, Credentials, IncomingMessage};
+use crate::zalo::{self, Listener, API};
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";
 
-/// Holds the running realtime listener(s) so their sockets stay alive for the
-/// app lifetime. Registered as Tauri managed state in `run()`.
+/// Holds authenticated sessions and their realtime listeners so both stay alive
+/// for the app lifetime. Registered as Tauri managed state in `run()`.
+///
+/// This is the minimal single-process session store; the multi-account
+/// `SessionManager` (session-manager feature) will generalize it.
 #[derive(Default)]
 pub struct ListenerState {
+    /// Authenticated API handles keyed by account id.
+    sessions: Mutex<HashMap<AccountId, Arc<API>>>,
+    /// Live listener handles (kept so their sockets are not dropped).
     listeners: Mutex<Vec<Listener>>,
 }
 
@@ -84,6 +91,11 @@ pub async fn start_listening(
             .map_err(|e| format!("login failed: {e}"))?,
     );
     let profile = zalo::profile_of(&api).await;
+    state
+        .sessions
+        .lock()
+        .await
+        .insert(profile.account_id.clone(), api.clone());
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<IncomingMessage>(256);
     let listener = zalo::start_message_listener(api, tx)
@@ -103,6 +115,36 @@ pub async fn start_listening(
     Ok(profile)
 }
 
+/// Send a plain-text message to a user thread from an already-authenticated
+/// account, returning the new message id.
+///
+/// Requires a prior `login`/`start_listening` for `account_id` (the session is
+/// reused from managed state — credentials are never re-sent from the UI).
+/// `thread_id` and `text` are validated at this boundary.
+#[tauri::command]
+pub async fn send_message(
+    state: State<'_, ListenerState>,
+    account_id: String,
+    thread_id: String,
+    text: String,
+) -> Result<String, String> {
+    if thread_id.trim().is_empty() {
+        return Err("thread_id is required".to_string());
+    }
+    if text.trim().is_empty() {
+        return Err("message text is required".to_string());
+    }
+    let api = {
+        let sessions = state.sessions.lock().await;
+        sessions
+            .get(&account_id)
+            .cloned()
+            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
+    };
+    zalo::send_text(&api, &thread_id, &text)
+        .await
+        .map_err(|e| format!("send failed: {e}"))
+}
 #[cfg(test)]
 mod tests {
     use super::*;
