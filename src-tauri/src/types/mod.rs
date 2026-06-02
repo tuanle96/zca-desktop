@@ -5,6 +5,8 @@
 
 pub mod account;
 pub mod credentials;
+pub mod events;
 
 pub use account::{AccountId, AccountProfile, CredentialSummary};
 pub use credentials::{Cookie, CredentialError, Credentials};
+pub use events::{IncomingMessage, ThreadKind};
