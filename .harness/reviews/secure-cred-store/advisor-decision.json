@@ -1,0 +1,78 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "secure-cred-store",
+    "featureId": "secure-cred-store",
+    "decision": "needs-human",
+    "createdAt": "2026-06-02T07:13:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/crypto.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        ".harness/task-contracts/secure-cred-store.json",
+        ".harness/docs/adr/0005-local-persistence-sqlite-and-encrypted-credential-store.md",
+        ".harness/reviews/secure-cred-store/security-reviewer.json",
+        ".harness/reviews/secure-cred-store/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "layering",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/crypto.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/crypto.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Concur with security + architecture reviewers; verified the encrypted-at-rest credential path and the done-gate status."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [
+        "live-keychain-roundtrip",
+        "relaunch-auto-restore"
+    ],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "high",
+            "rule": "smoke-gate-unrun",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "doneRequires includes `smoke`, but cred_store_roundtrip (real OS keychain + AES-GCM roundtrip + ciphertext-on-disk + relaunch auto-restore) is #[ignore] and is one of the 8 ignored tests — not run.",
+            "fix": "Run `cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture` and verify GUI relaunch auto-restore.",
+            "blocking": false
+        },
+        {
+            "severity": "high",
+            "rule": "evidence-bundle-missing",
+            "evidence": "No evidence bundle exists at .harness/evidence/secure-cred-store.json, so there is no machine-readable proof linking the gates + reviewer artifacts.",
+            "fix": "Author the attested evidence bundle (build/lint/tests/smoke + the three reviewer artifacts) before passes:true; record message-plaintext-at-rest as an ADR-0005-accepted known risk.",
+            "blocking": false
+        },
+        {
+            "severity": "high",
+            "rule": "reviewers-not-pass",
+            "evidence": "security-reviewer and architecture-reviewer both returned needs-human (no blocking findings) pending the unrun smoke; required reviewers must reach pass for a done claim.",
+            "fix": "Re-run both reviewers to pass after the live smoke + evidence bundle land.",
+            "blocking": false
+        },
+        {
+            "severity": "info",
+            "rule": "code-sound",
+            "evidence": "crypto.rs AES-256-GCM seal/open is correct (random nonce, 32-byte keychain master key, opaque errors, truncated-blob guard, ciphertext-not-plaintext asserted); rusqlite/keyring/aes-gcm confined to store; no token across IPC; cargo build/clippy -D warnings clean and 23 tests pass.",
+            "fix": "No code change needed; proceed to the live-proof + evidence steps.",
+            "blocking": false
+        }
+    ],
+    "summary": "secure-cred-store is implemented soundly — AES-256-GCM credential-at-rest under a single keychain master key, ciphertext-only in SQLite (unit-test asserted), store-confined native deps, no token across IPC, and clean build/lint/23 tests. But it cannot honestly be marked done: the `smoke` gate (live keychain roundtrip + relaunch auto-restore) is #[ignore] and unrun, no evidence bundle exists, and both required reviewers returned needs-human pending that proof. Decision: needs-human. Keep feature_list passes:false until the live smoke runs, the evidence bundle is authored, and the reviewers move to pass."
+}

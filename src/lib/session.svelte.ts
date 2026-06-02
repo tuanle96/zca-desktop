@@ -11,6 +11,7 @@ import type {
     Contact,
     Conversation,
     CredentialSummary,
+    History,
     IncomingMessage,
     QrLoginEvent,
     QrPhase,
@@ -92,7 +93,10 @@ class SessionStore {
             this.listening = true;
         });
         // Best-effort: warm the address book once logged in.
-        if (this.profile) this.loadContacts();
+        if (this.profile) {
+            this.loadContacts();
+            this.hydrateHistory();
+        }
     }
 
     /**
@@ -113,7 +117,10 @@ class SessionStore {
             }
         });
         this.restoring = false;
-        if (restored && this.profile) this.loadContacts();
+        if (restored && this.profile) {
+            this.loadContacts();
+            this.hydrateHistory();
+        }
         return restored;
     }
 
@@ -144,6 +151,7 @@ class SessionStore {
             this.qrPhase = "success";
             log.info(`qr-login: success, account=${this.profile?.accountId ?? "?"}`);
             this.loadContacts();
+            this.hydrateHistory();
         } catch (e) {
             // A declined/expired stage already set a friendlier phase; only fall
             // back to a generic error when we're still mid-flight. (The async
@@ -228,6 +236,62 @@ class SessionStore {
         });
     }
 
+    /**
+     * Hydrate conversations + per-thread messages from the local store so chat
+     * history is visible immediately at login/restore — before (and regardless
+     * of) any realtime event. Merges with whatever is already in memory.
+     */
+    async hydrateHistory() {
+        if (!this.profile) return;
+        const accountId = this.profile.accountId;
+        let history: History;
+        try {
+            history = await invoke<History>("load_history", { accountId });
+        } catch (e) {
+            log.error(`load_history failed: ${String(e)}`);
+            return;
+        }
+
+        // Rebuild the message threads map from persisted rows.
+        const threads: Record<string, ChatMessage[]> = { ...this.threads };
+        for (const m of history.messages) {
+            const list = threads[m.threadId] ?? (threads[m.threadId] = []);
+            if (list.some((x) => x.id === m.msgId)) continue;
+            list.push({
+                id: m.msgId,
+                threadId: m.threadId,
+                body: m.body ?? "[non-text message]",
+                outgoing: m.outgoing,
+                authorName: m.fromName,
+                at: m.ts ?? 0,
+            });
+        }
+        for (const id of Object.keys(threads)) {
+            threads[id].sort((a, b) => a.at - b.at);
+        }
+        this.threads = threads;
+
+        // Merge persisted threads into the conversation list (don't clobber any
+        // live rows already present).
+        const byId = new Map(this.conversations.map((c) => [c.threadId, c]));
+        for (const t of history.threads) {
+            const msgs = threads[t.threadId] ?? [];
+            const last = msgs[msgs.length - 1];
+            const title = t.title || t.threadId;
+            const existing = byId.get(t.threadId);
+            byId.set(t.threadId, {
+                threadId: t.threadId,
+                kind: t.kind,
+                title: existing?.title || title,
+                lastSnippet: last ? snippet(last.body) : (existing?.lastSnippet ?? ""),
+                lastAt: t.lastAt ?? existing?.lastAt ?? 0,
+                unread: t.unread ?? existing?.unread ?? 0,
+                avatar: existing?.avatar ?? t.avatar ?? this.avatarFor(t.threadId),
+            });
+        }
+        this.conversations = [...byId.values()].sort((a, b) => b.lastAt - a.lastAt);
+    }
+
     /** Open (or focus) a DM thread with a contact, using their name as title. */
     startChatWith(contact: Contact) {
         this.view = "chats";
@@ -241,6 +305,12 @@ class SessionStore {
             this.conversations = this.conversations.map((c) =>
                 c.threadId === threadId ? { ...c, unread: 0 } : c,
             );
+            // Persist the read state so it survives restart.
+            if (this.profile) {
+                invoke("mark_thread_read", { accountId: this.profile.accountId, threadId }).catch(
+                    () => { },
+                );
+            }
         }
     }
 

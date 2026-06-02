@@ -402,17 +402,29 @@
       "title": "Phase 3: Threads/messages cached in SQLite and reloaded on restart",
       "passes": false,
       "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
       "taskContractPath": ".harness/task-contracts/message-cache.json",
       "evidencePath": ".harness/evidence/message-cache.json",
       "steps": [
         {
           "id": "store",
-          "title": "store/: sqlx/rusqlite schema for accounts/threads/messages",
-          "done": false
+          "title": "store/: rusqlite threads/messages/attachments repositories (save_message dedupe, load_threads/load_recent_messages, clear_unread)",
+          "done": true
+        },
+        {
+          "id": "wire",
+          "title": "command/: persist incoming (listener) + outgoing (send) messages; load_history + mark_thread_read; frontend hydrates history at login/restore",
+          "done": true
         },
         {
           "id": "smoke",
-          "title": "Restart restores recent threads without refetch",
+          "title": "Restart restores recent threads + messages without a new realtime event",
           "done": false
         }
       ]
