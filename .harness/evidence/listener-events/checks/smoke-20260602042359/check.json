@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored listener_receives_live --nocapture",
+  "status": "pass",
+  "summary": "Live listener round trip: self_listen login -> start_message_listener bridge -> sent a unique marker to the authorized recipient -> the bridge surfaced it as a core IncomingMessage (thread_kind=User, msg_id present). Non-secret output only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:23:59.192Z",
+  "finishedAt": "2026-06-02T04:24:03.999Z",
+  "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+  "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+  "stdoutHash": "sha256:e766499e1597569f38c949c2db0bb3e74f45d37d7298cfffd1f8b6a93e54e0cc",
+  "stderrHash": "sha256:07e68418055baf986fdc98686783a35404869ba1cb89d734a6312f5e3f6232ad",
+  "stdoutPath": ".harness/evidence/listener-events/checks/smoke-20260602042359/stdout.txt",
+  "stderrPath": ".harness/evidence/listener-events/checks/smoke-20260602042359/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/listener-events/checks/smoke-20260602042359/stdout.txt",
+    ".harness/evidence/listener-events/checks/smoke-20260602042359/stderr.txt"
+  ]
+}

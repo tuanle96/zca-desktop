@@ -1,0 +1,165 @@
+{
+    "schemaVersion": 1,
+    "taskId": "listener-events",
+    "featureId": "listener-events",
+    "status": "pass",
+    "createdAt": "2026-06-02T04:23:59.192Z",
+    "diffSummary": "Bridged the zca-rust WebSocket Listener into the core. types/events.rs adds IncomingMessage + ThreadKind DTOs (no zca-rust dep). zalo/ builds the Listener from login_info.zpw_ws, maps ListenerEvent::Message into IncomingMessage (mapping confined to the zalo layer), and forwards over an mpsc channel via start_message_listener; it also adds login_with(self_listen), profile_of, and send_text. command/start_listening logs in, spawns the bridge, emits each message as a zalo://message Tauri event, and retains the Listener in ListenerState managed state. The frontend subscribes to zalo://message and renders incoming messages. Verified live: a real message round-tripped through the websocket and surfaced as IncomingMessage (thread_kind=User, msg_id present, is_self=true); the attested smoke sidecar was scanned and contains no credential values or recipient phone number.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src/routes/+page.svelte"
+    ],
+    "checks": [
+        {
+            "name": "smoke",
+            "acceptanceId": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored listener_receives_live --nocapture",
+            "status": "pass",
+            "summary": "Live listener round trip: self_listen login -> start_message_listener bridge -> sent a unique marker to the authorized recipient -> the bridge surfaced it as a core IncomingMessage (thread_kind=User, msg_id present). Non-secret output only.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:23:59.192Z",
+            "finishedAt": "2026-06-02T04:24:03.999Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:e766499e1597569f38c949c2db0bb3e74f45d37d7298cfffd1f8b6a93e54e0cc",
+            "stderrHash": "sha256:07e68418055baf986fdc98686783a35404869ba1cb89d734a6312f5e3f6232ad",
+            "stdoutPath": ".harness/evidence/listener-events/checks/smoke-20260602042359/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/smoke-20260602042359/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/smoke-20260602042359/stdout.txt",
+                ".harness/evidence/listener-events/checks/smoke-20260602042359/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "acceptanceId": "zalo",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: 7 passed offline (listener mapping/login guards + import suite); 2 live tests ignored by default.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:24:25.835Z",
+            "finishedAt": "2026-06-02T04:24:27.576Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:6c9bccd1bdac92a5fbe8158a63b5a287b3678a89f9a4f9499a7453e4240decbd",
+            "stderrHash": "sha256:88d1a9595e2b6cf6a3716d254297f08fb6b109638261ef0416f97ee7e12b0614",
+            "stdoutPath": ".harness/evidence/listener-events/checks/tests-20260602042425/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/tests-20260602042425/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/tests-20260602042425/stdout.txt",
+                ".harness/evidence/listener-events/checks/tests-20260602042425/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with the listener bridge + start_listening command.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:24:27.105Z",
+            "finishedAt": "2026-06-02T04:24:27.815Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:520a2dfdec7786fd380c2ba4d4a0c5f0b1cb1b39a1783b8a6bbf09dd0c7a25da",
+            "stdoutPath": ".harness/evidence/listener-events/checks/lint-20260602042427/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/lint-20260602042427/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/lint-20260602042427/stdout.txt",
+                ".harness/evidence/listener-events/checks/lint-20260602042427/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles the listener bridge + start_listening command.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:24:35.554Z",
+            "finishedAt": "2026-06-02T04:24:36.910Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:cfa8462a457061c0f25f9e9e8ea623e522b51c251f82f026a6a2db3b89bd0ba6",
+            "stdoutPath": ".harness/evidence/listener-events/checks/rust.build-20260602042435/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/rust.build-20260602042435/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/rust.build-20260602042435/stdout.txt",
+                ".harness/evidence/listener-events/checks/rust.build-20260602042435/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "acceptanceId": "ui",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend build succeeds with the zalo://message subscription UI (svelte-check 0/0; adapter-static wrote build/).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:24:37.162Z",
+            "finishedAt": "2026-06-02T04:24:39.986Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:25837d09865fff1c7b29c59c67664bed3847289b34216cba18fc2896e658ec22",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stdout.txt",
+                ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T04:24:47.683Z",
+            "finishedAt": "2026-06-02T04:24:47.972Z",
+            "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+            "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/listener-events/checks/structural-20260602042447/stdout.txt",
+            "stderrPath": ".harness/evidence/listener-events/checks/structural-20260602042447/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/listener-events/checks/structural-20260602042447/stdout.txt",
+                ".harness/evidence/listener-events/checks/structural-20260602042447/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/listener-events/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/listener-events/security-reviewer.json"
+        },
+        {
+            "name": "reliability-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/listener-events/reliability-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/listener-events/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [],
+    "updatedAt": "2026-06-02T04:24:47.972Z"
+}

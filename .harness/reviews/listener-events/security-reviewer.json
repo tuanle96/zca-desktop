@@ -1,0 +1,61 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "listener-events",
+    "featureId": "listener-events",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:31:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary",
+        "input-validation"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked what crosses the IPC boundary on the inbound event path and what the live smoke prints."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "start_listening validates the credential payload at the command boundary, confines credentials/session to the zalo layer, and emits only IncomingMessage (no tokens) over zalo://message. The live smoke output was scanned: it contains no imei/cookie/userAgent values and no recipient phone number.",
+            "fix": "When session-manager persists sessions, keep emitting only non-secret DTOs and never log message content at info level by default."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/types/events.rs",
+            "evidence": "IncomingMessage models untrusted server data as plain typed fields with optional text; non-text content maps to None rather than executing or interpolating server strings.",
+            "fix": "Continue treating listener payloads as untrusted as more event kinds are mapped."
+        }
+    ],
+    "summary": "Security review of the realtime inbound path: credentials stay in the zalo layer, only non-secret IncomingMessage DTOs cross IPC, and the attested live-smoke sidecar was verified free of credentials and the recipient phone number. Server event data is treated as untrusted typed data. No blocking findings."
+}

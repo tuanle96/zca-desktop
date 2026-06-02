@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --all-targets -- -D warnings clean with the listener bridge + start_listening command.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:24:27.105Z",
+  "finishedAt": "2026-06-02T04:24:27.815Z",
+  "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+  "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:520a2dfdec7786fd380c2ba4d4a0c5f0b1cb1b39a1783b8a6bbf09dd0c7a25da",
+  "stdoutPath": ".harness/evidence/listener-events/checks/lint-20260602042427/stdout.txt",
+  "stderrPath": ".harness/evidence/listener-events/checks/lint-20260602042427/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/listener-events/checks/lint-20260602042427/stdout.txt",
+    ".harness/evidence/listener-events/checks/lint-20260602042427/stderr.txt"
+  ]
+}

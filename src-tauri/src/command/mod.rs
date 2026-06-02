@@ -5,7 +5,23 @@
 //! return only non-secret DTOs to the frontend. Credential token values
 //! (imei/cookie/userAgent) are never serialized back across the IPC bridge.
 
-use crate::types::{AccountProfile, CredentialSummary, Credentials};
+use std::sync::Arc;
+
+use tauri::{AppHandle, Emitter, State};
+use tokio::sync::Mutex;
+
+use crate::types::{AccountProfile, CredentialSummary, Credentials, IncomingMessage};
+use crate::zalo::{self, Listener};
+
+/// Tauri event name the frontend subscribes to for incoming chat messages.
+pub const MESSAGE_EVENT: &str = "zalo://message";
+
+/// Holds the running realtime listener(s) so their sockets stay alive for the
+/// app lifetime. Registered as Tauri managed state in `run()`.
+#[derive(Default)]
+pub struct ListenerState {
+    listeners: Mutex<Vec<Listener>>,
+}
 
 /// Import a `ZaloDataExtractor` JSON export.
 ///
@@ -43,6 +59,48 @@ pub async fn login(payload: String) -> Result<AccountProfile, String> {
     crate::zalo::login_profile(credentials)
         .await
         .map_err(|e| format!("login failed: {e}"))
+}
+
+/// Log in and start forwarding incoming chat messages to the frontend as
+/// `zalo://message` Tauri events. Returns the account profile once the realtime
+/// socket has started.
+///
+/// The credential payload is validated at the boundary; only non-secret
+/// [`IncomingMessage`] DTOs are emitted to the UI. The listener handle is kept
+/// in managed state so the socket stays open for the app lifetime.
+#[tauri::command]
+pub async fn start_listening(
+    app: AppHandle,
+    state: State<'_, ListenerState>,
+    payload: String,
+) -> Result<AccountProfile, String> {
+    let credentials: Credentials = serde_json::from_str(&payload)
+        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    credentials.validate().map_err(|e| e.to_string())?;
+
+    let api = Arc::new(
+        zalo::login(credentials)
+            .await
+            .map_err(|e| format!("login failed: {e}"))?,
+    );
+    let profile = zalo::profile_of(&api).await;
+
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<IncomingMessage>(256);
+    let listener = zalo::start_message_listener(api, tx)
+        .await
+        .map_err(|e| format!("listener failed to start: {e}"))?;
+    state.listeners.lock().await.push(listener);
+
+    // Forward each bridged message to the frontend.
+    tokio::spawn(async move {
+        while let Some(msg) = rx.recv().await {
+            if app.emit(MESSAGE_EVENT, &msg).is_err() {
+                break; // app shutting down
+            }
+        }
+    });
+
+    Ok(profile)
 }
 
 #[cfg(test)]

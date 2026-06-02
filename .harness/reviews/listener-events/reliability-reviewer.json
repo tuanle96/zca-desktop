@@ -1,0 +1,60 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "reliability-reviewer",
+    "taskId": "listener-events",
+    "featureId": "listener-events",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:32:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "async-boundary",
+        "background-task-lifecycle"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Focus on the spawned bridge task, channel backpressure, and listener handle lifetime."
+    },
+    "confidence": 0.82,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "Both bridge tasks exit cleanly on a dropped receiver: the zalo->core forwarder breaks when out.send errors, and the core->frontend forwarder breaks when app.emit errors. The Listener handle is retained in ListenerState so the socket is not dropped immediately after start_listening returns. Reconnect/backoff is handled inside zca-rust (start(true) with retry_on_close).",
+            "fix": "Add an explicit stop/teardown command and per-account handle tracking when session-manager lands (multi-account lifecycle)."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "Bounded mpsc channels (256/16) provide backpressure; the bridge does not use unbounded buffering or a busy-loop. The live smoke bounds its wait with a 20s timeout rather than blocking forever.",
+            "fix": "Surface Disconnected/Closed listener events to the UI so a dropped socket is visible; track as a follow-up for session-manager."
+        }
+    ],
+    "summary": "Reliability review of the spawned bridge: tasks terminate on receiver drop, channels are bounded, the listener handle is kept alive in managed state, and reconnect is delegated to zca-rust's retry loop. Known follow-ups (explicit teardown, surfacing disconnect to UI) are non-blocking and belong to session-manager. No blocking findings."
+}

@@ -14,10 +14,12 @@ fn greet(name: &str) -> String {
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
+        .manage(command::ListenerState::default())
         .invoke_handler(tauri::generate_handler![
             greet,
             command::import_credentials,
-            command::login
+            command::login,
+            command::start_listening
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

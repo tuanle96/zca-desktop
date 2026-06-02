@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: 7 passed offline (listener mapping/login guards + import suite); 2 live tests ignored by default.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:24:25.835Z",
+  "finishedAt": "2026-06-02T04:24:27.576Z",
+  "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+  "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+  "stdoutHash": "sha256:6c9bccd1bdac92a5fbe8158a63b5a287b3678a89f9a4f9499a7453e4240decbd",
+  "stderrHash": "sha256:88d1a9595e2b6cf6a3716d254297f08fb6b109638261ef0416f97ee7e12b0614",
+  "stdoutPath": ".harness/evidence/listener-events/checks/tests-20260602042425/stdout.txt",
+  "stderrPath": ".harness/evidence/listener-events/checks/tests-20260602042425/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/listener-events/checks/tests-20260602042425/stdout.txt",
+    ".harness/evidence/listener-events/checks/tests-20260602042425/stderr.txt"
+  ]
+}

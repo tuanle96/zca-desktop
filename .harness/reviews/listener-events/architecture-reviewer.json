@@ -1,0 +1,53 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "listener-events",
+    "featureId": "listener-events",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:33:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Three layers touched (types + zalo + command). Verified forward-only direction and that zca-rust event types are mapped to the DTO inside zalo."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "to_incoming_message maps zca-rust Message into types::IncomingMessage inside the zalo layer; command depends on zalo + types; types/events depends only on types/account. No back-edges, so the forward-only order types -> ... -> zalo -> ... -> command holds.",
+            "fix": "Keep ListenerEvent mapping in zalo as more event kinds (typing/seen/reactions) are surfaced."
+        }
+    ],
+    "summary": "Cross-layer change (types + zalo + command) reviewed for layering. The new IncomingMessage DTO lives in types; zca-rust ListenerEvent is mapped to it inside zalo; command consumes only core types and emits the DTO. Forward-only DAG preserved, zca-rust confined to zalo. Approve."
+}

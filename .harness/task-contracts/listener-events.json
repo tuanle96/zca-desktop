@@ -1,0 +1,72 @@
+{
+    "schemaVersion": 1,
+    "id": "listener-events",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Bridge the zca-rust WebSocket Listener into the core and forward incoming chat messages to the frontend as zalo://message Tauri events, verified by a live round trip.",
+        "goals": [
+            "zalo/ starts the Listener from login info and maps ListenerEvent::Message into a core IncomingMessage DTO (zca-rust types stay in the zalo layer)",
+            "command/ start_listening logs in, spawns the bridge, and emits zalo://message events; the listener handle is kept in managed state",
+            "Live smoke: a real message round-trips through the websocket and is surfaced as IncomingMessage"
+        ],
+        "nonGoals": [
+            "Persisting messages (Phase 3 cache)",
+            "Multi-account concurrency / per-account routing (session-manager, per-account-routing)",
+            "Non-message events (typing, seen, reactions) beyond what is needed here",
+            "Rich/attachment message bodies (Phase 4)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "zalo",
+            "description": "zalo/ spawns the Listener and maps ListenerEvent::Message into IncomingMessage; offline guards (empty creds) still hold.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend subscribes to zalo://message and renders incoming messages; build succeeds.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "A real incoming message is surfaced through the bridge in realtime (live websocket round trip).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored listener_receives_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "reliability-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/listener-events.json"
+}

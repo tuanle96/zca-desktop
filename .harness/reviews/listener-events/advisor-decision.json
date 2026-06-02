@@ -1,0 +1,57 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "listener-events",
+    "featureId": "listener-events",
+    "decision": "pass",
+    "createdAt": "2026-06-02T04:30:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary",
+        "layering"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the full realtime path: zalo bridge -> IncomingMessage DTO -> command emit. Live round trip proved a real message is surfaced."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/types/events.rs",
+            "evidence": "IncomingMessage carries only display fields (thread/sender/text/msg_id/timestamp) — no credential or session state. The zalo bridge maps zca-rust's Message into this DTO so the UI never sees zca-rust types.",
+            "fix": "Keep secrets out of the event DTO as richer message types are added in Phase 4."
+        }
+    ],
+    "summary": "listener-events is proven live: a real message round-tripped through the zca-rust websocket and was surfaced as a core IncomingMessage, then emitted as a zalo://message Tauri event. zca-rust types stay confined to the zalo layer; the event DTO carries no secrets. Build, clippy -D warnings, 7 offline tests, and the live smoke all pass. Safe to mark done."
+}

@@ -156,7 +156,7 @@
     {
       "id": "listener-events",
       "title": "Phase 1: WebSocket Listener forwards incoming messages to frontend as Tauri events",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/listener-events.json",
       "evidencePath": ".harness/evidence/listener-events.json",
@@ -164,17 +164,17 @@
         {
           "id": "zalo",
           "title": "zalo/: spawn Listener, bridge mpsc -> app.emit",
-          "done": false
+          "done": true
         },
         {
           "id": "ui",
           "title": "Frontend subscribes to zalo://message events",
-          "done": false
+          "done": true
         },
         {
           "id": "smoke",
           "title": "Incoming message appears in UI in realtime",
-          "done": false
+          "done": true
         }
       ]
     },

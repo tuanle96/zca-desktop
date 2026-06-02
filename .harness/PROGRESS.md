@@ -57,3 +57,13 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Reviews: advisor + security-reviewer + architecture-reviewer all pass.
 - Gates: cargo build/clippy -D warnings/test (7 offline + 1 live) OK, svelte-check 0/0, npm build OK, harness-readiness --strict PASSED, review-coverage --strict OK (8 pass decisions).
 - MVP checklist: tests-pass -> done.
+
+## Phase 1 — listener-events (2026-06-02) [LIVE]
+- 2026-06-02 04:24 | listener-events | done
+- types/events.rs: IncomingMessage + ThreadKind DTOs (no zca-rust dep).
+- zalo/: start_message_listener builds the Listener from login_info.zpw_ws, maps ListenerEvent::Message -> IncomingMessage (mapping confined to zalo), forwards over mpsc. Also added login_with(self_listen), profile_of, send_text.
+- command/start_listening: login -> spawn bridge -> emit zalo://message Tauri events; Listener kept alive in ListenerState managed state. Frontend subscribes and renders incoming messages.
+- LIVE round trip: self_listen login + send marker to authorized recipient (resolved by phone) -> bridge surfaced it (thread_kind=User, msg_id present, is_self=true). Attested sidecar scanned: no credentials, no recipient phone.
+- Reviews: advisor + security + reliability + architecture all pass.
+- Gates: cargo build/clippy -D warnings/test (7 offline + 1 live) OK, svelte-check 0/0, npm build OK, harness-readiness --strict PASSED, review-coverage --strict OK (12 pass decisions).
+- Note: sending to own uid returned code 114; round trip uses a real recipient + self_listen instead.

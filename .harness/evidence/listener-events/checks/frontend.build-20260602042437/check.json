@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "Frontend build succeeds with the zalo://message subscription UI (svelte-check 0/0; adapter-static wrote build/).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T04:24:37.162Z",
+  "finishedAt": "2026-06-02T04:24:39.986Z",
+  "gitHead": "77bde91619186ceee26b8ff8bc7791a0bf38d8b3",
+  "workingTreeHash": "sha256:4efa58a1a5df9eb72bfa5d2f8a85ff6732d4e0cbe620a63f4f9a80d9460913f9",
+  "stdoutHash": "sha256:25837d09865fff1c7b29c59c67664bed3847289b34216cba18fc2896e658ec22",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stdout.txt",
+  "stderrPath": ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stdout.txt",
+    ".harness/evidence/listener-events/checks/frontend.build-20260602042437/stderr.txt"
+  ]
+}
