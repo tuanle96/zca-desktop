@@ -99,3 +99,15 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Reviews: advisor + architecture pass. Accepted risk ui-placeholders (low, until 2026-08-01): secondary rail tabs + header icons are visual-only.
 - Gates: svelte-check 0/0, npm build OK, cargo build OK, attested ui check, harness-readiness --strict PASSED, review-coverage --strict OK (20 pass decisions).
 - Note: bun.lock stale for bits-ui (bun absent); refresh with bun install on a bun-equipped machine.
+
+## Phase 4 (early) — thread-list / contacts (2026-06-02) [LIVE + GUI]
+- 2026-06-02 06:16 | thread-list | done
+- types/contact.rs: Contact DTO (no zca-rust). zalo/list_contacts maps get_all_friends User -> Contact (sorted, zca-rust confined to zalo). command/list_contacts reuses the stored session.
+- Frontend: ContactList (Danh bạ) pane — avatars, search, A–Z groups; rail nav switches chats/contacts; clicking a contact opens a DM. Avatars load from Zalo CDN (CSP img-src widened to *.zadn.vn / *.zalo.me).
+- LIVE: list_contacts loaded 85 real contacts. Real browser verify-ui passed.
+- Scroll fix: shadcn ScrollArea inside a flex column needs min-h-0 on every flex ancestor; added across list/chat panes + page wrapper. Excluded .harness/** from the Vite dev watcher so verify-ui runs don't reload the app.
+- Reviews: advisor + security + architecture pass. Gates: cargo build/clippy/test, svelte-check 0/0, npm build, attested ui, harness-readiness --strict PASSED.
+- Scope note: feature narrowed to friends/contacts; groups (get_all_groups) deferred.
+
+## Memory checkpoint (2026-06-02)
+- Recorded shared memory (`.harness/memory/ledger.jsonl`): credential-never-in-webview decision, live-verification pattern, UI/core IPC-only + no-mock-data decision, consolidated dev-affordance risks, and a Phase 1 handoff note. current-summary.md refreshed.

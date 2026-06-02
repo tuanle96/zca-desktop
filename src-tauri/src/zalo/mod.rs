@@ -22,7 +22,7 @@ use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
 use zca_rust::context::Options;
 use zca_rust::Zalo;
 
-use crate::types::{AccountProfile, Credentials, IncomingMessage, ThreadKind};
+use crate::types::{AccountProfile, Contact, Credentials, IncomingMessage, ThreadKind};
 
 /// Map the core credential DTO into the `zca-rust` credential type.
 ///
@@ -204,6 +204,31 @@ pub async fn send_text(api: &API, thread_id: &str, text: &str) -> ZaloResult<Str
     Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
 }
 
+/// Fetch the account's friends and map them into core [`Contact`] DTOs.
+///
+/// Confined to the `zalo` layer so higher layers never see `zca-rust`'s `User`.
+/// Returns contacts sorted by display name (case-insensitive).
+pub async fn list_contacts(api: &API) -> ZaloResult<Vec<Contact>> {
+    use zca_rust::models::AvatarSize;
+    // Upstream default page size; one page covers a normal address book.
+    let users = api.get_all_friends(20000, 1, AvatarSize::Small).await?;
+    let mut contacts: Vec<Contact> = users
+        .into_iter()
+        .map(|u| Contact {
+            user_id: u.user_id,
+            display_name: if u.display_name.trim().is_empty() {
+                u.zalo_name.clone()
+            } else {
+                u.display_name.clone()
+            },
+            zalo_name: non_empty(&u.zalo_name),
+            avatar: non_empty(&u.avatar),
+        })
+        .collect();
+    contacts.sort_by(|a, b| a.display_name.to_lowercase().cmp(&b.display_name.to_lowercase()));
+    Ok(contacts)
+}
+
 /// Resolve a user's uid from a phone number (best-effort; tolerates Zalo's
 /// "not a contact" code 216 internally). Used by live tests to address a real
 /// recipient without hard-coding ids.
@@ -369,5 +394,27 @@ mod tests {
 
         assert!(!msg_id.is_empty(), "send_text must return a message id");
         println!("send_text_live OK: delivered, msg_id_len={}", msg_id.len());
+    }
+
+    /// Live: list_contacts loads the real friend list. Ignored by default.
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored list_contacts_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; reads the live friend list"]
+    async fn list_contacts_live() {
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials.validate().expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+        let contacts = list_contacts(&api).await.expect("list_contacts failed");
+
+        // Non-secret diagnostics only: count + whether entries are well-formed.
+        assert!(
+            contacts.iter().all(|c| !c.user_id.is_empty() && !c.display_name.is_empty()),
+            "every contact must have a uid and a display name"
+        );
+        println!("list_contacts_live OK: {} contact(s) loaded", contacts.len());
     }
 }

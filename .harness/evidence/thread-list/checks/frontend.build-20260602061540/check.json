@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "Frontend build with contacts pane + scroll fixes (min-h-0 flex chain); svelte-check 0/0; adapter-static wrote build/.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T06:15:40.515Z",
+  "finishedAt": "2026-06-02T06:15:50.016Z",
+  "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+  "workingTreeHash": "sha256:8dc770a8e31abf8ee1b38bbfa76cba9d0b8f00f015495aca47245bfdeab6a8dc",
+  "stdoutHash": "sha256:6c0652573fde8a78fb467ca19c8acc7375d491f72c4985ebbfae67a37b8b3eb0",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stdout.txt",
+  "stderrPath": ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stdout.txt",
+    ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stderr.txt"
+  ]
+}

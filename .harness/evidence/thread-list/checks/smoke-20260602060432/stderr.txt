@@ -1,0 +1,5 @@
+   Compiling zca-desktop v0.1.0 (/Users/tuan/Dev/VibeLab/zca-desktop/src-tauri)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 4.11s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/zca_desktop_lib-72e34ebc06bfaff7)
+     Running unittests src/main.rs (src-tauri/target/debug/deps/zca_desktop-1186543915e1151d)
+   Doc-tests zca_desktop_lib

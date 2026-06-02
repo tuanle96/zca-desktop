@@ -11,7 +11,7 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 use tokio::sync::Mutex;
 
-use crate::types::{AccountId, AccountProfile, CredentialSummary, Credentials, IncomingMessage};
+use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage};
 use crate::zalo::{self, Listener, API};
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
@@ -211,6 +211,27 @@ pub async fn send_message(
     zalo::send_text(&api, &thread_id, &text)
         .await
         .map_err(|e| format!("send failed: {e}"))
+}
+
+/// List the friends/contacts of an authenticated account.
+///
+/// Reuses the stored session for `account_id` (log in first). Returns non-secret
+/// [`Contact`] DTOs sorted by display name.
+#[tauri::command]
+pub async fn list_contacts(
+    state: State<'_, ListenerState>,
+    account_id: String,
+) -> Result<Vec<Contact>, String> {
+    let api = {
+        let sessions = state.sessions.lock().await;
+        sessions
+            .get(&account_id)
+            .cloned()
+            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
+    };
+    zalo::list_contacts(&api)
+        .await
+        .map_err(|e| format!("failed to load contacts: {e}"))
 }
 #[cfg(test)]
 mod tests {

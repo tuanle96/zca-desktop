@@ -1,0 +1,20 @@
+{
+  "name": "ui",
+  "command": "node .harness/scripts/verify-ui.mjs --url=http://localhost:1420",
+  "status": "pass",
+  "summary": "Real browser validation with the scrollable contacts pane: page-load 200, screenshot, 0 console errors, 0 network failures.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T06:16:02.981Z",
+  "finishedAt": "2026-06-02T06:16:04.410Z",
+  "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+  "workingTreeHash": "sha256:2f5fd9355b0fe2bb588042d6537a9d08340850d5784a96f3831b033b38ef8e97",
+  "stdoutHash": "sha256:c8cafbfeba2e143e3af242891d757fc459bc9962b17a3ed0d79a205c0c588093",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/thread-list/checks/ui-20260602061602/stdout.txt",
+  "stderrPath": ".harness/evidence/thread-list/checks/ui-20260602061602/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/thread-list/checks/ui-20260602061602/stdout.txt",
+    ".harness/evidence/thread-list/checks/ui-20260602061602/stderr.txt"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "thread-list",
+    "featureId": "thread-list",
+    "decision": "pass",
+    "createdAt": "2026-06-02T06:18:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/types/contact.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "vite.config.js",
+        "src-tauri/tauri.conf.json",
+        "src/lib/components/chat/ContactList.svelte",
+        "src/lib/components/chat/RailNav.svelte"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "ui-uses-ipc-only",
+        "no-mock-data"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the contact path end to end: zalo::list_contacts mapping, command, DTO, and the UI store/pane. The live test loaded 85 real contacts."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "ui",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/types/contact.rs",
+            "evidence": "Contact carries only public fields (uid/displayName/zaloName/avatar) — no credential/session data. list_contacts reuses the stored session and returns these DTOs; nothing secret crosses IPC, and the live smoke prints only a count.",
+            "fix": "Keep avatars/display fields the only contact data surfaced; never attach session/token data to a Contact."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/tauri.conf.json",
+            "evidence": "CSP img-src extended to Zalo CDNs (*.zadn.vn, *.zalo.me) so contact avatars render; script-src/connect-src unchanged. Avatars are images only, no script/connect surface added.",
+            "fix": "Keep the avatar CDN allowlist tight; do not broaden script-src/connect-src for media."
+        }
+    ],
+    "summary": "thread-list loads the real friend list via get_all_friends, mapped to non-secret Contact DTOs inside the zalo layer, and renders a scrollable A–Z Danh bạ pane wired through IPC (no mock data). Live smoke loaded 85 contacts; build/clippy/type-check pass and real browser validation passed. CSP widened only for avatar images. Safe to mark done."
+}

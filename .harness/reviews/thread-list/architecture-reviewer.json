@@ -1,0 +1,62 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "thread-list",
+    "featureId": "thread-list",
+    "decision": "pass",
+    "createdAt": "2026-06-02T06:20:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/types/contact.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "vite.config.js"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "ui-core-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "types + zalo + command touched in the core; ui consumes via IPC only."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "Contact DTO lives in types/; zalo::list_contacts maps zca-rust User -> Contact (zca-rust confined to zalo); command::list_contacts depends on zalo + types. Forward-only types -> ... -> zalo -> ... -> command holds. The ui reads contacts only through the list_contacts command.",
+            "fix": "When groups (get_all_groups) are added, keep the User/Group mapping inside zalo and add a parallel Group DTO in types."
+        }
+    ],
+    "summary": "Cross-layer change (types + zalo + command) for the contacts feature reviewed for layering. The new Contact DTO sits in types, zca-rust mapping stays in zalo, command exposes it, and the ui consumes via IPC — forward-only DAG and ui/core boundary preserved. Approve."
+}

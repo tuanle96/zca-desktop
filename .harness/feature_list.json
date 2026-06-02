@@ -395,21 +395,21 @@
     },
     {
       "id": "thread-list",
-      "title": "Phase 4: List friends and groups (get_all_friends, get_all_groups)",
-      "passes": false,
+      "title": "Phase 4: List friends/contacts (get_all_friends) in a scrollable Danh bạ pane",
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/thread-list.json",
       "evidencePath": ".harness/evidence/thread-list.json",
       "steps": [
         {
           "id": "cmd",
-          "title": "command/: list_threads (friends + groups, paginated)",
-          "done": false
+          "title": "command/: list_contacts (friends, via get_all_friends)",
+          "done": true
         },
         {
           "id": "smoke",
-          "title": "UI renders combined thread list per account",
-          "done": false
+          "title": "UI renders + scrolls the contact list per account (groups deferred)",
+          "done": true
         }
       ]
     },

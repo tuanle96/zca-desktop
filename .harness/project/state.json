@@ -137,9 +137,41 @@
       "title": "zca-rust endpoints only 43/149 verified live",
       "severity": "P2",
       "mitigation": "Build on verified endpoints first; gate unverified behind live-test evidence."
+    },
+    {
+      "id": "mem_20260602062602_risk_v59x5r",
+      "ts": "2026-06-02T06:26:02.854Z",
+      "title": "Dev affordances pending replacement: .zalo-cred.json file loader (-> secure-cred-store OS keychain), no per-account send throttle (ban risk r1), in-command session store (-> session/ layer), UI placeholder tabs/icons, and a stale bun.lock for bits-ui/@types/node since bun is not installed.",
+      "status": "open",
+      "severity": "medium",
+      "scope": {}
     }
   ],
   "decisions": [
+    {
+      "id": "mem_20260602062549_decision_xqches",
+      "ts": "2026-06-02T06:25:49.707Z",
+      "summary": "Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.",
+      "why": "Keeps the ADR-0003 ui/core boundary clean and avoids fixtures that drift from real behavior.",
+      "scope": {},
+      "artifacts": []
+    },
+    {
+      "id": "mem_20260602062528_decision_epltkj",
+      "ts": "2026-06-02T06:25:28.903Z",
+      "summary": "Live Zalo features are verified with #[ignore] cargo tests that read .zalo-cred.json, run locally (bash tool runs on the user's Mac, normal IP); evidence captures only non-secret diagnostics and every smoke sidecar is scanned for token/PII leakage before commit.",
+      "why": "Live login/listen/send/contacts need a real session; this pattern proves them without leaking bearer tokens into the committed evidence trail.",
+      "scope": {},
+      "artifacts": []
+    },
+    {
+      "id": "mem_20260602062459_decision_cn42y4",
+      "ts": "2026-06-02T06:24:59.972Z",
+      "summary": "Credentials are read by the Rust core from .zalo-cred.json (dev) / OS keychain (planned); they MUST never enter the webview/UI. UI uses file-backed commands + non-secret DTOs only.",
+      "why": "Pasting the imei+cookie+userAgent bearer token into the webview DOM leaks it; the core-read pattern keeps the token out of the UI.",
+      "scope": {},
+      "artifacts": []
+    },
     {
       "id": "d1",
       "title": "Tauri v2 + Rust core hosts zca-rust sessions; webview = UI",
@@ -176,5 +208,6 @@
       "status": "accepted"
     }
   ],
-  "updatedAt": "2026-06-02T01:10:00.000Z"
+  "updatedAt": "2026-06-02T06:26:22.193Z",
+  "lastMemoryEventAt": "2026-06-02T06:26:22.193Z"
 }

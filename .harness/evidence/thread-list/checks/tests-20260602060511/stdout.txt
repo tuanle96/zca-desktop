@@ -1,0 +1,29 @@
+
+running 14 tests
+test command::tests::cred_file_summary_live ... ignored, requires real .zalo-cred.json
+test command::tests::login_from_file_live ... ignored, requires real .zalo-cred.json; performs a live login
+test zalo::tests::list_contacts_live ... ignored, requires real .zalo-cred.json; reads the live friend list
+test zalo::tests::listener_receives_live ... ignored, requires real .zalo-cred.json; performs a live websocket round trip
+test zalo::tests::send_text_live ... ignored, requires real .zalo-cred.json; sends ONE real message to the authorized recipient
+test zalo::tests::single_login_live ... ignored, requires real .zalo-cred.json; performs a live network login
+test command::tests::dev_cred_path_is_repo_local_and_missing_file_errors ... ok
+test command::tests::import_rejects_malformed_json ... ok
+test command::tests::import_defaults_language ... ok
+test command::tests::import_accepts_valid_payload ... ok
+test command::tests::import_rejects_empty_cookies ... ok
+test command::tests::import_rejects_missing_imei ... ok
+test zalo::tests::login_profile_rejects_empty_credentials ... ok
+test zalo::tests::login_rejects_empty_credentials ... ok
+
+test result: ok. 8 passed; 0 failed; 6 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

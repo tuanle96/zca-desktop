@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --all-targets -- -D warnings clean with list_contacts command + contact DTO.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T06:05:13.775Z",
+  "finishedAt": "2026-06-02T06:05:16.164Z",
+  "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+  "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:4648ffafb14c8a2f905ea77ce0ddad7fa8ad83a4f87011a1e6c7ef442c11b02e",
+  "stdoutPath": ".harness/evidence/thread-list/checks/lint-20260602060513/stdout.txt",
+  "stderrPath": ".harness/evidence/thread-list/checks/lint-20260602060513/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/thread-list/checks/lint-20260602060513/stdout.txt",
+    ".harness/evidence/thread-list/checks/lint-20260602060513/stderr.txt"
+  ]
+}

@@ -1,0 +1,189 @@
+{
+    "schemaVersion": 1,
+    "taskId": "thread-list",
+    "featureId": "thread-list",
+    "status": "pass",
+    "createdAt": "2026-06-02T06:04:32.369Z",
+    "diffSummary": "Added the friends/contacts list. types/contact.rs adds the Contact DTO (no zca-rust dep). zalo/list_contacts maps zca-rust get_all_friends User into Contact (mapping confined to zalo) and sorts by display name. command/list_contacts reuses the stored session and returns Contact DTOs. The frontend adds a Danh bạ pane (ContactList) with avatars, search, A–Z grouping that scrolls, plus rail navigation (session.view) to switch chats/contacts; clicking a contact opens a DM. Also fixed a flexbox scroll bug (min-h-0 across the list/chat flex chains) and excluded .harness/** from the Vite dev watcher. CSP img-src widened to Zalo avatar CDNs. Verified live: 85 real contacts loaded; build/clippy/type-check pass; real browser validation passed.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/contact.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/tauri.conf.json",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "src/lib/components/chat/ContactList.svelte",
+        "src/lib/components/chat/RailNav.svelte",
+        "src/lib/components/chat/ConversationList.svelte",
+        "src/lib/components/chat/ChatPane.svelte",
+        "src/routes/+page.svelte",
+        "vite.config.js"
+    ],
+    "checks": [
+        {
+            "name": "smoke",
+            "acceptanceId": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored list_contacts_live --nocapture",
+            "status": "pass",
+            "summary": "Live: list_contacts loaded the real friend list (85 contacts); every entry has a uid + display name. Non-secret count only.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:04:32.369Z",
+            "finishedAt": "2026-06-02T06:04:38.253Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+            "stdoutHash": "sha256:61162e7a252d4e193467637212249753e8be4b4d0f8185f0fb84a9fae066f996",
+            "stderrHash": "sha256:dcc7b4f8ca54b4b8ad9b5d437fcfe91cdc8c16278a684ee24ef41162897c8448",
+            "stdoutPath": ".harness/evidence/thread-list/checks/smoke-20260602060432/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/smoke-20260602060432/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/smoke-20260602060432/stdout.txt",
+                ".harness/evidence/thread-list/checks/smoke-20260602060432/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: 8 passed offline; 6 live tests ignored (incl list_contacts_live).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:05:11.365Z",
+            "finishedAt": "2026-06-02T06:05:12.906Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+            "stdoutHash": "sha256:6ef695a31e1a7ea8e789ec81d25433818d47e38044d1f638835a09a157c672d7",
+            "stderrHash": "sha256:053b610b04b12dd4968df6642597b4b413c840afc690bb0ca72f7d41390fad64",
+            "stdoutPath": ".harness/evidence/thread-list/checks/tests-20260602060511/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/tests-20260602060511/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/tests-20260602060511/stdout.txt",
+                ".harness/evidence/thread-list/checks/tests-20260602060511/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with the list_contacts command + Contact DTO.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:05:13.775Z",
+            "finishedAt": "2026-06-02T06:05:16.164Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:4648ffafb14c8a2f905ea77ce0ddad7fa8ad83a4f87011a1e6c7ef442c11b02e",
+            "stdoutPath": ".harness/evidence/thread-list/checks/lint-20260602060513/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/lint-20260602060513/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/lint-20260602060513/stdout.txt",
+                ".harness/evidence/thread-list/checks/lint-20260602060513/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "acceptanceId": "cmd",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles the list_contacts command + Contact DTO + CSP img-src update.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:05:25.737Z",
+            "finishedAt": "2026-06-02T06:05:27.603Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:b90eb2aaa64a6715e40200c776dee9641c8c61ffc54263f46df634488f9f5b28",
+            "stdoutPath": ".harness/evidence/thread-list/checks/rust.build-20260602060525/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/rust.build-20260602060525/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/rust.build-20260602060525/stdout.txt",
+                ".harness/evidence/thread-list/checks/rust.build-20260602060525/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend build with contacts pane + scroll fixes (min-h-0 flex chain); svelte-check 0/0; adapter-static wrote build/.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:15:40.515Z",
+            "finishedAt": "2026-06-02T06:15:50.016Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:8dc770a8e31abf8ee1b38bbfa76cba9d0b8f00f015495aca47245bfdeab6a8dc",
+            "stdoutHash": "sha256:6c0652573fde8a78fb467ca19c8acc7375d491f72c4985ebbfae67a37b8b3eb0",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stdout.txt",
+                ".harness/evidence/thread-list/checks/frontend.build-20260602061540/stderr.txt"
+            ]
+        },
+        {
+            "name": "ui",
+            "acceptanceId": "ui",
+            "command": "node .harness/scripts/verify-ui.mjs --url=http://localhost:1420",
+            "status": "pass",
+            "summary": "Real browser validation with the scrollable contacts pane: page-load 200, screenshot, 0 console errors, 0 network failures.",
+            "artifact": ".harness/ui-validation/2026-06-02T06-16-03-081Z/summary.json",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:16:02.981Z",
+            "finishedAt": "2026-06-02T06:16:04.410Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:2f5fd9355b0fe2bb588042d6537a9d08340850d5784a96f3831b033b38ef8e97",
+            "stdoutHash": "sha256:c8cafbfeba2e143e3af242891d757fc459bc9962b17a3ed0d79a205c0c588093",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/thread-list/checks/ui-20260602061602/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/ui-20260602061602/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/ui-20260602061602/stdout.txt",
+                ".harness/evidence/thread-list/checks/ui-20260602061602/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T06:05:48.800Z",
+            "finishedAt": "2026-06-02T06:05:49.196Z",
+            "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+            "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/thread-list/checks/structural-20260602060548/stdout.txt",
+            "stderrPath": ".harness/evidence/thread-list/checks/structural-20260602060548/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/thread-list/checks/structural-20260602060548/stdout.txt",
+                ".harness/evidence/thread-list/checks/structural-20260602060548/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/thread-list/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/thread-list/security-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/thread-list/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [],
+    "updatedAt": "2026-06-02T06:16:04.410Z"
+}

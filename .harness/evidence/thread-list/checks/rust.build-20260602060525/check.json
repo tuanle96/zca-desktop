@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the list_contacts command + contact DTO + CSP img-src update.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T06:05:25.737Z",
+  "finishedAt": "2026-06-02T06:05:27.603Z",
+  "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+  "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:b90eb2aaa64a6715e40200c776dee9641c8c61ffc54263f46df634488f9f5b28",
+  "stdoutPath": ".harness/evidence/thread-list/checks/rust.build-20260602060525/stdout.txt",
+  "stderrPath": ".harness/evidence/thread-list/checks/rust.build-20260602060525/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/thread-list/checks/rust.build-20260602060525/stdout.txt",
+    ".harness/evidence/thread-list/checks/rust.build-20260602060525/stderr.txt"
+  ]
+}

@@ -13,6 +13,13 @@ export type AccountProfile = {
     displayName: string | null;
 };
 
+export type Contact = {
+    userId: string;
+    displayName: string;
+    zaloName: string | null;
+    avatar: string | null;
+};
+
 export type ThreadKind = "user" | "group";
 
 export type IncomingMessage = {

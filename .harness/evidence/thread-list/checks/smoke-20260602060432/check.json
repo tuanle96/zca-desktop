@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored list_contacts_live --nocapture",
+  "status": "pass",
+  "summary": "Live: list_contacts loads the real friend list (85 contacts) and every entry has a uid + display name. Non-secret count only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T06:04:32.369Z",
+  "finishedAt": "2026-06-02T06:04:38.253Z",
+  "gitHead": "733bc3d542029b58f6cce6fbd0a71e0fe244d471",
+  "workingTreeHash": "sha256:62b9f2dcb71837bc549c76208689d751a75b54e358c966f090f2f9d7bf367902",
+  "stdoutHash": "sha256:61162e7a252d4e193467637212249753e8be4b4d0f8185f0fb84a9fae066f996",
+  "stderrHash": "sha256:dcc7b4f8ca54b4b8ad9b5d437fcfe91cdc8c16278a684ee24ef41162897c8448",
+  "stdoutPath": ".harness/evidence/thread-list/checks/smoke-20260602060432/stdout.txt",
+  "stderrPath": ".harness/evidence/thread-list/checks/smoke-20260602060432/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/thread-list/checks/smoke-20260602060432/stdout.txt",
+    ".harness/evidence/thread-list/checks/smoke-20260602060432/stderr.txt"
+  ]
+}

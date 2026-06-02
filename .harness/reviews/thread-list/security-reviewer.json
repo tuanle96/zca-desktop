@@ -1,0 +1,72 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "thread-list",
+    "featureId": "thread-list",
+    "decision": "pass",
+    "createdAt": "2026-06-02T06:19:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/types/contact.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "vite.config.js",
+        "src-tauri/tauri.conf.json"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary",
+        "network-boundary",
+        "input-validation"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/types/contact.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "vite.config.js"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Focused on what leaves the core (Contact DTOs), the CSP change, and the live-smoke output."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "file": "src-tauri/tauri.conf.json",
+            "evidence": "CSP img-src was widened to https://*.zadn.vn / https://*.zalo.me (Zalo avatar CDNs) so contact photos load. This is image-only; script-src stays 'self' and connect-src stays self+ipc, so no new code-execution or data-exfil channel. The contacts smoke sidecar was scanned and contains no credential values — only a contact count.",
+            "fix": "Keep the avatar allowlist to Zalo domains; if avatars move to a core-proxied asset later, narrow img-src back to self/asset."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "list_contacts requires an existing in-memory session keyed by account_id (no credentials from the UI); it returns only public Contact fields. Friend display data is treated as untrusted and rendered as text/escaped image src.",
+            "fix": "Continue returning only non-secret contact fields as more profile endpoints are wrapped."
+        }
+    ],
+    "summary": "Security review of the contacts path: credentials stay in the core (session reused, not re-sent), only non-secret Contact DTOs cross IPC, and the attested smoke sidecar is secret-free. The CSP change is an image-only allowlist for Zalo avatar CDNs with no script/connect broadening. No blocking findings."
+}

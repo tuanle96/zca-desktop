@@ -1,0 +1,72 @@
+{
+    "schemaVersion": 1,
+    "id": "thread-list",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Load the account's friends/contacts (get_all_friends) and render them in a scrollable, A–Z grouped Danh bạ pane; clicking a contact opens a DM thread.",
+        "goals": [
+            "zalo/ list_contacts maps zca-rust get_all_friends User into core Contact DTOs (sorted, zca-rust confined to zalo)",
+            "command/ list_contacts reuses the stored session and returns non-secret Contact DTOs",
+            "A Danh bạ pane lists contacts with avatars, search, A–Z groups, and scrolls; selecting a contact starts a chat"
+        ],
+        "nonGoals": [
+            "Loading groups (get_all_groups) — later",
+            "Persisting contacts (Phase 3 cache)",
+            "Deriving the recent-conversation list from server history (still event-derived)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "cmd",
+            "description": "command/ list_contacts reuses the session and returns Contact DTOs; build compiles.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "The Danh bạ pane renders + scrolls the full list; real browser validation passes.",
+            "verification": {
+                "artifact": ".harness/ui-validation/2026-06-02T06-16-03-081Z/summary.json"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: list_contacts loads the real friend list, every entry has a uid + display name.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored list_contacts_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(npx:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "ui",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/thread-list.json"
+}
