@@ -1,0 +1,20 @@
+{
+  "name": "ui",
+  "command": "node .harness/scripts/verify-ui.mjs --url=http://localhost:1420",
+  "status": "pass",
+  "summary": "Real browser validation (verify-ui golden path) against the running app: page-load 200, screenshot captured, 0 console errors, 0 network failures.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:48:40.634Z",
+  "finishedAt": "2026-06-02T05:48:42.055Z",
+  "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+  "workingTreeHash": "sha256:1af6fc1d685f9937a840789ab4267b379dedb259a8e48379dc2c6f973b148331",
+  "stdoutHash": "sha256:9c5e77e98b7001d12b1bcf9fad4fffe97f5e84d1f7d764a37b234e94e10db13f",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stdout.txt",
+  "stderrPath": ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stdout.txt",
+    ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stderr.txt"
+  ]
+}

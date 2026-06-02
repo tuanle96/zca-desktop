@@ -229,6 +229,31 @@
       ]
     },
     {
+      "id": "chat-ui-redesign",
+      "title": "Phase 1: Zalo-style 3-pane chat UI (shadcn-svelte) wired to live login/listen/send",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/chat-ui-redesign.json",
+      "evidencePath": ".harness/evidence/chat-ui-redesign.json",
+      "steps": [
+        {
+          "id": "components",
+          "title": "shadcn-svelte rail + conversation list + chat pane, Zalo brand theme",
+          "done": true
+        },
+        {
+          "id": "store",
+          "title": "Reactive session store derives conversations/messages from zalo://message (no mock data)",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "title": "Real browser verify-ui golden path passes against the running app",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "session-manager",
       "title": "Phase 2: SessionManager holds N concurrent API+Listener sessions keyed by account",
       "passes": false,

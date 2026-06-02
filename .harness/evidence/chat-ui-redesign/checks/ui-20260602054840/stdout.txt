@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "evidenceKind": "browser",
+  "evidenceUsable": true,
+  "runId": "2026-06-02T05-48-40-740Z",
+  "artifactDir": ".harness/ui-validation/2026-06-02T05-48-40-740Z",
+  "report": ".harness/ui-validation/2026-06-02T05-48-40-740Z/report.html",
+  "screenshots": [
+    ".harness/ui-validation/2026-06-02T05-48-40-740Z/screenshots/home.png"
+  ]
+}

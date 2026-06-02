@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "Frontend production build of the 3-pane chat UI (svelte-check 0/0; adapter-static wrote build/).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:42:09.556Z",
+  "finishedAt": "2026-06-02T05:42:17.718Z",
+  "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+  "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+  "stdoutHash": "sha256:1d6a3207cb07bbf869b6fbe9e343da7b1bd6f9eb6ba7a791b3f10adf146706e3",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stdout.txt",
+  "stderrPath": ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stdout.txt",
+    ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stderr.txt"
+  ]
+}

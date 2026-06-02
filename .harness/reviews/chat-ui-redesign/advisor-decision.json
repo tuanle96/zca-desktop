@@ -1,0 +1,74 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "chat-ui-redesign",
+    "featureId": "chat-ui-redesign",
+    "decision": "pass",
+    "createdAt": "2026-06-02T05:45:00.000Z",
+    "checkedFiles": [
+        "package.json",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "src/lib/components/ui/avatar/index.ts",
+        "src/lib/components/ui/input/index.ts",
+        "src/lib/components/ui/scroll-area/index.ts",
+        "src/lib/components/ui/separator/index.ts",
+        "src/routes/+page.svelte",
+        "src/lib/components/chat/ChatPane.svelte",
+        "src/lib/components/chat/ConversationList.svelte",
+        "src/lib/components/chat/ConnectBar.svelte",
+        "src/lib/components/chat/RailNav.svelte",
+        "src/app.css"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "ui-uses-ipc-only",
+        "no-mock-data"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "package.json",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "src/lib/components/ui/avatar/index.ts",
+            "src/lib/components/ui/input/index.ts",
+            "src/lib/components/ui/scroll-area/index.ts",
+            "src/lib/components/ui/separator/index.ts"
+        ],
+        "reviewedFiles": [
+            "package.json",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "src/lib/components/ui/avatar/index.ts",
+            "src/lib/components/ui/input/index.ts",
+            "src/lib/components/ui/scroll-area/index.ts",
+            "src/lib/components/ui/separator/index.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the session store, DTO mirrors, shadcn component entry points, the page composition, and CSS theme; the .svelte components are display-only."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "tests",
+        "ui"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "The UI talks to the core only through invoke()/listen() against the existing command boundary; conversations and messages are derived from the live zalo://message stream and real send_message responses — no mock/sample data. No credential values are referenced in the frontend.",
+            "fix": "Keep deriving UI state from IPC; when persistence lands, hydrate from the store layer rather than embedding fixtures."
+        },
+        {
+            "severity": "low",
+            "file": "package.json",
+            "evidence": "bits-ui (shadcn-svelte runtime dep) added to devDependencies; Playwright installed locally for verify-ui but intentionally not added to the manifest (browser tooling, not an app dep).",
+            "fix": "Run bun install on a bun-equipped machine to refresh bun.lock for bits-ui; document Playwright as an optional dev tool."
+        }
+    ],
+    "summary": "chat-ui-redesign is a frontend-only Zalo-style 3-pane layout built with shadcn-svelte and wired entirely to the existing IPC commands + zalo://message stream (no mock data, no credentials in the webview). Type-check 0/0, production build passes, and real browser validation (verify-ui golden path) passed with a screenshot. Secondary nav/icons are acknowledged visual placeholders. Safe to mark done."
+}

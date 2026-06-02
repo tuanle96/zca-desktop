@@ -1,0 +1,85 @@
+{
+  "passed": true,
+  "evidenceKind": "browser",
+  "evidenceUsable": true,
+  "url": "http://localhost:1420",
+  "route": "/",
+  "durationMs": 796,
+  "checks": [
+    {
+      "name": "page-load",
+      "passed": true,
+      "detail": "200 http://localhost:1420/"
+    },
+    {
+      "name": "screenshot",
+      "passed": true,
+      "detail": ".harness/ui-validation/2026-06-02T05-48-40-740Z/screenshots/home.png"
+    },
+    {
+      "name": "console-errors",
+      "passed": true,
+      "detail": "0 errors"
+    },
+    {
+      "name": "network-failures",
+      "passed": true,
+      "detail": "0 failures"
+    }
+  ],
+  "assertions": [
+    {
+      "name": "page-load",
+      "passed": true,
+      "detail": "200 http://localhost:1420/"
+    },
+    {
+      "name": "screenshot",
+      "passed": true,
+      "detail": ".harness/ui-validation/2026-06-02T05-48-40-740Z/screenshots/home.png"
+    },
+    {
+      "name": "console-errors",
+      "passed": true,
+      "detail": "0 errors"
+    },
+    {
+      "name": "network-failures",
+      "passed": true,
+      "detail": "0 failures"
+    }
+  ],
+  "console": [
+    {
+      "type": "debug",
+      "text": "[vite] connecting...",
+      "location": {
+        "url": "http://localhost:1420/@vite/client",
+        "line": 788,
+        "column": 8,
+        "lineNumber": 788,
+        "columnNumber": 8
+      }
+    },
+    {
+      "type": "debug",
+      "text": "[vite] connected.",
+      "location": {
+        "url": "http://localhost:1420/@vite/client",
+        "line": 911,
+        "column": 14,
+        "lineNumber": 911,
+        "columnNumber": 14
+      }
+    }
+  ],
+  "networkFailures": [],
+  "screenshots": [
+    ".harness/ui-validation/2026-06-02T05-48-40-740Z/screenshots/home.png"
+  ],
+  "domSnapshotPath": ".harness/ui-validation/2026-06-02T05-48-40-740Z/dom.html",
+  "domSnapshotHash": "sha256:38c9accd4ab01639f4e9e73a70dbc22c1a57c5b79f94a8ca24dbdba261852b03",
+  "runId": "2026-06-02T05-48-40-740Z",
+  "artifactDir": ".harness/ui-validation/2026-06-02T05-48-40-740Z",
+  "serverLogs": []
+}

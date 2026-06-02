@@ -1,0 +1,64 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "chat-ui-redesign",
+    "featureId": "chat-ui-redesign",
+    "decision": "pass",
+    "createdAt": "2026-06-02T05:46:00.000Z",
+    "checkedFiles": [
+        "package.json",
+        "src/lib/session.svelte.ts",
+        "src/lib/types.ts",
+        "src/lib/components/ui/avatar/index.ts",
+        "src/lib/components/ui/input/index.ts",
+        "src/lib/components/ui/scroll-area/index.ts",
+        "src/lib/components/ui/separator/index.ts",
+        "src/routes/+page.svelte",
+        "src/lib/components/chat/ChatPane.svelte",
+        "src/lib/components/chat/ConversationList.svelte",
+        "src/lib/components/chat/ConnectBar.svelte",
+        "src/lib/components/chat/RailNav.svelte"
+    ],
+    "checkedInvariants": [
+        "ui-core-boundary",
+        "layering"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "package.json",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "src/lib/components/ui/avatar/index.ts",
+            "src/lib/components/ui/input/index.ts",
+            "src/lib/components/ui/scroll-area/index.ts",
+            "src/lib/components/ui/separator/index.ts"
+        ],
+        "reviewedFiles": [
+            "package.json",
+            "src/lib/session.svelte.ts",
+            "src/lib/types.ts",
+            "src/lib/components/ui/avatar/index.ts",
+            "src/lib/components/ui/input/index.ts",
+            "src/lib/components/ui/scroll-area/index.ts",
+            "src/lib/components/ui/separator/index.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Verified the ui unit only crosses into the core through command/ via invoke/listen, per ADR-0003."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "All changes are in the SvelteKit ui unit (src/). It depends on the Rust core only through Tauri invoke()/listen() against command/ (login_from_file, start_listening_from_file, send_message, cred_file_summary; zalo://message). No direct reference to zalo/session/store internals, consistent with ADR-0003 (ui is a separate unit talking to command/).",
+            "fix": "Keep IPC the only ui->core channel; introduce a thin client module if the invoke surface grows."
+        }
+    ],
+    "summary": "Frontend-only change confined to the ui unit (src/). The new session store + components reach the Rust core exclusively through the command/ IPC boundary and the zalo://message event, preserving the ADR-0003 separation. No Rust layers touched. Approve."
+}

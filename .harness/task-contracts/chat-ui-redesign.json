@@ -1,0 +1,70 @@
+{
+    "schemaVersion": 1,
+    "id": "chat-ui-redesign",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Redesign the desktop UI into a Zalo-style 3-pane chat layout with shadcn-svelte (icon rail, conversation list, chat pane), wired to the real login/listen/send commands and the zalo://message stream — no mock data.",
+        "goals": [
+            "shadcn-svelte components (avatar, input, scroll-area, separator) added and themed with a Zalo brand blue",
+            "A reactive session store derives conversation rows + per-thread messages from the live zalo://message stream",
+            "Real browser validation passes against the running app (verify-ui golden path)"
+        ],
+        "nonGoals": [
+            "Wiring the secondary rail tabs (contacts/cloud/settings) and header action icons — visual placeholders",
+            "Persisting conversations/messages (Phase 3 cache)",
+            "Any Rust core change (frontend-only)",
+            "Final credential UX (secure-cred-store)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "typecheck",
+            "description": "svelte-check passes with 0 errors and 0 warnings across the new components + session store.",
+            "verification": {
+                "command": "npm run check"
+            }
+        },
+        {
+            "id": "build",
+            "description": "The frontend production build succeeds.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Real browser validation of the running app passes (page-load, screenshot, console-errors, network-failures).",
+            "verification": {
+                "artifact": ".harness/ui-validation/2026-06-02T05-48-40-740Z/summary.json"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(npm:*)",
+            "Bash(npx:*)",
+            "Bash(node:*)",
+            "Bash(cargo:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "tests",
+        "ui",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/chat-ui-redesign.json"
+}

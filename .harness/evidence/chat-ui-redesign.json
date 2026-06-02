@@ -1,0 +1,155 @@
+{
+    "schemaVersion": 1,
+    "taskId": "chat-ui-redesign",
+    "featureId": "chat-ui-redesign",
+    "status": "pass",
+    "createdAt": "2026-06-02T05:41:32.617Z",
+    "diffSummary": "Redesigned the desktop UI into a Zalo-style 3-pane layout with shadcn-svelte: a brand-blue icon RailNav, a ConversationList (search + rows with avatar/snippet/time/unread badge), a ChatPane (contact header, message bubbles, composer), and a ConnectBar for login/listen/open-thread. Added a reactive session store (src/lib/session.svelte.ts) that wraps the existing Tauri commands (cred_file_summary/login_from_file/start_listening_from_file/send_message) and derives conversation rows + per-thread message lists from the live zalo://message stream — no mock data. Added shadcn-svelte components (avatar/input/scroll-area/separator) and bits-ui; introduced a Zalo brand color in app.css. Frontend-only: the Rust core is unchanged. Verified with a real browser verify-ui golden-path run against the running app (page-load 200, screenshot captured, 0 console errors, 0 network failures).",
+    "changedFiles": [
+        "package.json",
+        "src/app.css",
+        "src/routes/+page.svelte",
+        "src/lib/types.ts",
+        "src/lib/session.svelte.ts",
+        "src/lib/components/chat/RailNav.svelte",
+        "src/lib/components/chat/ConversationList.svelte",
+        "src/lib/components/chat/ChatPane.svelte",
+        "src/lib/components/chat/ConnectBar.svelte",
+        "src/lib/components/ui/avatar/index.ts",
+        "src/lib/components/ui/input/index.ts",
+        "src/lib/components/ui/scroll-area/index.ts",
+        "src/lib/components/ui/separator/index.ts"
+    ],
+    "checks": [
+        {
+            "name": "tests",
+            "acceptanceId": "typecheck",
+            "command": "npm run check",
+            "status": "pass",
+            "summary": "svelte-check (type-check) clean: 0 errors, 0 warnings across the new chat components + session store.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:42:10.330Z",
+            "finishedAt": "2026-06-02T05:42:13.175Z",
+            "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+            "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+            "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/tests-20260602054210/stdout.txt",
+            "stderrPath": ".harness/evidence/chat-ui-redesign/checks/tests-20260602054210/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/chat-ui-redesign/checks/tests-20260602054210/stdout.txt",
+                ".harness/evidence/chat-ui-redesign/checks/tests-20260602054210/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "acceptanceId": "build",
+            "command": "npm run build",
+            "status": "pass",
+            "summary": "Frontend production build of the 3-pane chat UI (svelte-check 0/0; adapter-static wrote build/).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:42:09.556Z",
+            "finishedAt": "2026-06-02T05:42:17.718Z",
+            "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+            "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+            "stdoutHash": "sha256:1d6a3207cb07bbf869b6fbe9e343da7b1bd6f9eb6ba7a791b3f10adf146706e3",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stdout.txt",
+            "stderrPath": ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stdout.txt",
+                ".harness/evidence/chat-ui-redesign/checks/frontend.build-20260602054209/stderr.txt"
+            ]
+        },
+        {
+            "name": "ui",
+            "acceptanceId": "ui",
+            "command": "node .harness/scripts/verify-ui.mjs --url=http://localhost:1420",
+            "status": "pass",
+            "summary": "Real browser validation of the running app: page-load 200, screenshot captured, 0 console errors, 0 network failures.",
+            "artifact": ".harness/ui-validation/2026-06-02T05-48-40-740Z/summary.json",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:48:40.634Z",
+            "finishedAt": "2026-06-02T05:48:42.055Z",
+            "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+            "workingTreeHash": "sha256:1af6fc1d685f9937a840789ab4267b379dedb259a8e48379dc2c6f973b148331",
+            "stdoutHash": "sha256:9c5e77e98b7001d12b1bcf9fad4fffe97f5e84d1f7d764a37b234e94e10db13f",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stdout.txt",
+            "stderrPath": ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stdout.txt",
+                ".harness/evidence/chat-ui-redesign/checks/ui-20260602054840/stderr.txt"
+            ]
+        },
+        {
+            "name": "rust.build",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build still compiles (frontend-only change; Rust core unaffected).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:42:31.221Z",
+            "finishedAt": "2026-06-02T05:42:36.069Z",
+            "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+            "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:f26ffdd3277b9c7e3f8e82e6411a8746688755a0c1119bb23f5694a552e171d4",
+            "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stdout.txt",
+            "stderrPath": ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stdout.txt",
+                ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-02T05:42:27.799Z",
+            "finishedAt": "2026-06-02T05:42:28.111Z",
+            "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+            "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stdout.txt",
+            "stderrPath": ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stdout.txt",
+                ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/chat-ui-redesign/advisor-decision.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/chat-ui-redesign/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "ui-placeholders",
+            "severity": "low",
+            "description": "Secondary rail tabs (contacts/cloud/settings) and chat header action icons (call/video/search/info) are visual placeholders with no behavior yet.",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "advisor",
+            "acceptanceReason": "The chat path (login/listen/send/receive) is fully functional; the placeholders match the reference layout and are wired in later features.",
+            "mitigation": "Wire or hide each placeholder as its feature lands (contacts, cloud, settings).",
+            "acceptedUntil": "2026-08-01T00:00:00.000Z"
+        }
+    ],
+    "updatedAt": "2026-06-02T05:42:36.069Z"
+}

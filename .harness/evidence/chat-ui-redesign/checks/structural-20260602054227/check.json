@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:42:27.799Z",
+  "finishedAt": "2026-06-02T05:42:28.111Z",
+  "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+  "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stdout.txt",
+  "stderrPath": ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stdout.txt",
+    ".harness/evidence/chat-ui-redesign/checks/structural-20260602054227/stderr.txt"
+  ]
+}

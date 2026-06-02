@@ -88,3 +88,14 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Live file smoke: cred_file_summary (8 cookies, vi) + login_from_file (uid_len=19, display name). Sidecar scanned: no secrets.
 - Reviews: advisor + security + architecture pass. Accepted risk dev-cred-file-affordance (medium, until 2026-07-15): replace with file picker + OS keychain in secure-cred-store.
 - Gates: cargo build/clippy -D warnings/test (8 offline + 2 live) OK, svelte-check 0/0, npm build OK, review-coverage --strict OK (18 pass decisions), harness-readiness --strict PASSED.
+
+## Phase 1 — chat-ui-redesign (2026-06-02) [GUI + browser-verified]
+- 2026-06-02 05:48 | chat-ui-redesign | done
+- Zalo-style 3-pane layout with shadcn-svelte: RailNav (brand-blue icon rail), ConversationList (search + rows w/ avatar/snippet/time/unread), ChatPane (header + bubbles + composer), ConnectBar (login/listen/open-thread).
+- Reactive session store (src/lib/session.svelte.ts) wraps the existing IPC commands and derives conversations + per-thread messages from the live zalo://message stream — no mock data. Outgoing sends via send_message render optimistically.
+- Added shadcn-svelte components (avatar/input/scroll-area/separator) + bits-ui; added a Zalo brand color in app.css.
+- Frontend-only: Rust core untouched. ui unit reaches the core only through command/ IPC (ADR-0003 preserved).
+- Real browser validation: installed Playwright+chromium, ran verify-ui golden path against the running app — page-load 200, screenshot, 0 console errors, 0 network failures (browser evidence, usable).
+- Reviews: advisor + architecture pass. Accepted risk ui-placeholders (low, until 2026-08-01): secondary rail tabs + header icons are visual-only.
+- Gates: svelte-check 0/0, npm build OK, cargo build OK, attested ui check, harness-readiness --strict PASSED, review-coverage --strict OK (20 pass decisions).
+- Note: bun.lock stale for bits-ui (bun absent); refresh with bun install on a bun-equipped machine.

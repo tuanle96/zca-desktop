@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build still compiles (frontend-only change; Rust core unaffected).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T05:42:31.221Z",
+  "finishedAt": "2026-06-02T05:42:36.069Z",
+  "gitHead": "c6c26cc24bd5459335d45cebb42e3b26e5a3deff",
+  "workingTreeHash": "sha256:f71da2dfaaae9b8d7ac0bc9a076c82c881f742e14d4c8c85ce1737e91cf4cee5",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:f26ffdd3277b9c7e3f8e82e6411a8746688755a0c1119bb23f5694a552e171d4",
+  "stdoutPath": ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stdout.txt",
+  "stderrPath": ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stdout.txt",
+    ".harness/evidence/chat-ui-redesign/checks/rust.build-20260602054231/stderr.txt"
+  ]
+}
