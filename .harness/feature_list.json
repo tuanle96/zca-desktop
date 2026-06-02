@@ -56,7 +56,7 @@
     {
       "id": "zca-dep-wired",
       "title": "Phase 1: zca-rust added as git dependency and compiles into src-tauri",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/zca-dep-wired.json",
       "evidencePath": ".harness/evidence/zca-dep-wired.json",
@@ -64,17 +64,17 @@
         {
           "id": "dep",
           "title": "Add zca-rust + tokio to src-tauri/Cargo.toml",
-          "done": false
+          "done": true
         },
         {
           "id": "wrap",
           "title": "zalo/ module wraps Zalo::new().login()",
-          "done": false
+          "done": true
         },
         {
           "id": "build",
           "title": "cargo build clean (clippy -D warnings)",
-          "done": false
+          "done": true
         }
       ]
     },

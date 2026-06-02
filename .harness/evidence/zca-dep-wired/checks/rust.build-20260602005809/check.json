@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles zca-desktop with the zca-rust git dep + new zalo layer.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T00:58:09.743Z",
+  "finishedAt": "2026-06-02T00:58:10.741Z",
+  "gitHead": "30620f19928bec8a3afb337c5a481a39e095eba6",
+  "workingTreeHash": "sha256:65f6aa87aa7e1e209cc2ce952b773c7539dc56c31e93f3a7f7651ccfe1c82ef3",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:69ecfd4d7227b6a583364a869e99884500d2bfee5bf937adc43cb6b6e6ed9f2d",
+  "stdoutPath": ".harness/evidence/zca-dep-wired/checks/rust.build-20260602005809/stdout.txt",
+  "stderrPath": ".harness/evidence/zca-dep-wired/checks/rust.build-20260602005809/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/zca-dep-wired/checks/rust.build-20260602005809/stdout.txt",
+    ".harness/evidence/zca-dep-wired/checks/rust.build-20260602005809/stderr.txt"
+  ]
+}

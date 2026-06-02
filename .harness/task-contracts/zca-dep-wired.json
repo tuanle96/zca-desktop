@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 1,
+    "id": "zca-dep-wired",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Add zca-rust as a pinned git dependency and a zalo/ layer that wraps Zalo::new().login(), compiling cleanly into the Tauri core.",
+        "goals": [
+            "zca-rust + tokio added to src-tauri/Cargo.toml (rustls TLS, no native bindings)",
+            "zalo/ layer wraps Zalo::new(None).login(credentials) and re-exports the API facade + Credentials + ZaloError",
+            "cargo build + clippy -D warnings clean, with an offline test proving the wrapper rejects empty credentials"
+        ],
+        "nonGoals": [
+            "Credential import UI/command (credential-import feature)",
+            "Persisting or storing credentials (Phase 3 keychain)",
+            "WebSocket listener bridging (listener-events feature)",
+            "Any real network login or live Zalo call"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "dep",
+            "description": "zca-rust + tokio are wired into src-tauri/Cargo.toml and the crate compiles.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "wrap",
+            "description": "zalo/ wraps Zalo::new().login(); offline test proves empty credentials are rejected without a network call.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "build",
+            "description": "cargo clippy across all targets is clean under -D warnings.",
+            "verification": {
+                "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/zca-dep-wired.json"
+}

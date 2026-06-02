@@ -22,3 +22,11 @@ _Append a one-line entry per completed feature. Format: `YYYY-MM-DD HH:MM | <fea
 - Registered a `harness`-type task: task contract + attested evidence bundle (structural no-op + check-skill-examples, both via evidence-run) + mandatory advisor pass decision; flipped the feature to passes:true so strict current-diff coverage includes the config change.
 - `package.json` (harness:check script) was already covered by tauri-scaffold; `.harness/scripts/harness-check.mjs` is harness tooling.
 - Gates green: `harness-readiness.mjs --strict` PASSED (all 14 gates); task-evidence --verify-hashes --replay-plan OK; trace-quality --strict OK.
+
+## Phase 1 — zca-dep-wired (2026-06-02)
+- 2026-06-02 01:00 | zca-dep-wired | done
+- Added zca-rust as a pinned git dep (rev 08698e1c, rustls TLS — no native bindings) + tokio to src-tauri/Cargo.toml.
+- Created the `zalo/` layer (src-tauri/src/zalo/mod.rs) wrapping `Zalo::new(None).login()`, re-exporting API + Credentials + ZaloError; lib.rs declares the module. Forward-only layering preserved (nothing above zalo yet).
+- Offline test: `zalo::login` rejects empty credentials via zca-rust validation (no network call). Credentials never logged (no Debug derive upstream).
+- Gates green: cargo build OK (~37s cold), clippy --all-targets -D warnings clean, cargo test 1 passed; harness-readiness --strict PASSED; review-coverage --strict OK (advisor pass).
+- Decision d7 recorded (pinned git rev, rustls, no new ADR).

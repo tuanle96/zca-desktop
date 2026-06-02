@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T00:58:36.221Z",
+  "finishedAt": "2026-06-02T00:58:36.571Z",
+  "gitHead": "30620f19928bec8a3afb337c5a481a39e095eba6",
+  "workingTreeHash": "sha256:65f6aa87aa7e1e209cc2ce952b773c7539dc56c31e93f3a7f7651ccfe1c82ef3",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/zca-dep-wired/checks/structural-20260602005836/stdout.txt",
+  "stderrPath": ".harness/evidence/zca-dep-wired/checks/structural-20260602005836/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/zca-dep-wired/checks/structural-20260602005836/stdout.txt",
+    ".harness/evidence/zca-dep-wired/checks/structural-20260602005836/stderr.txt"
+  ]
+}

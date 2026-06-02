@@ -1,0 +1,59 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "zca-dep-wired",
+    "featureId": "zca-dep-wired",
+    "decision": "pass",
+    "createdAt": "2026-06-02T01:05:00.000Z",
+    "checkedFiles": [
+        "src-tauri/Cargo.lock",
+        "src-tauri/Cargo.toml",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "secret-handling",
+        "provider-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/Cargo.lock",
+            "src-tauri/Cargo.toml",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/Cargo.lock",
+            "src-tauri/Cargo.toml",
+            "src-tauri/src/lib.rs",
+            "src-tauri/src/zalo/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "New zalo/ layer is the sole zca-rust boundary; lib.rs only declares the module. Cargo.toml adds the pinned git dep + tokio; Cargo.lock is the resolved lockfile."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "Credentials is re-exported from zca-rust, which intentionally does not derive Debug; the wrapper never logs imei/cookie/user_agent values, matching the secrets rule in AGENTS.md.",
+            "fix": "Keep credential values out of logs/echo when credential-import and store layers are added."
+        },
+        {
+            "severity": "info",
+            "file": "src-tauri/Cargo.toml",
+            "evidence": "zca-rust pinned to rev 08698e1c with rustls TLS (no native bindings), so no new-native-binding ADR is required; git-dep choice already accepted as decision d2.",
+            "fix": "Bump the pinned rev deliberately with a follow-up build when upgrading zca-rust."
+        }
+    ],
+    "summary": "zca-rust wired as a pinned, rustls-only git dependency behind a single zalo/ layer that wraps Zalo::new().login() and re-exports the API facade. Forward-only layering holds (lib.rs only declares the module; nothing higher than zalo is added yet). No credentials are persisted or logged, and no real network login is attempted. Attested cargo build + clippy -D warnings + cargo test all pass. Safe to mark done."
+}

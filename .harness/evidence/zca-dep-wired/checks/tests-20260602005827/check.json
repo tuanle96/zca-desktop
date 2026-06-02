@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test passes; zalo::login rejects empty credentials offline (proves wrapper wired to zca-rust validation).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T00:58:27.033Z",
+  "finishedAt": "2026-06-02T00:58:27.660Z",
+  "gitHead": "30620f19928bec8a3afb337c5a481a39e095eba6",
+  "workingTreeHash": "sha256:65f6aa87aa7e1e209cc2ce952b773c7539dc56c31e93f3a7f7651ccfe1c82ef3",
+  "stdoutHash": "sha256:25ff0bea0d3d40c9c00db3861e1ec6ed5e3617d50ce2d254c5c469503df02758",
+  "stderrHash": "sha256:dc900086e05deaa75e8616493c9231bb26afbad83736d2590d058735d3808a48",
+  "stdoutPath": ".harness/evidence/zca-dep-wired/checks/tests-20260602005827/stdout.txt",
+  "stderrPath": ".harness/evidence/zca-dep-wired/checks/tests-20260602005827/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/zca-dep-wired/checks/tests-20260602005827/stdout.txt",
+    ".harness/evidence/zca-dep-wired/checks/tests-20260602005827/stderr.txt"
+  ]
+}
