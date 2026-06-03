@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::{AccountId, Sticker};
+use crate::types::{AccountId, ReactionEvent, Sticker};
 
 /// Which kind of thread a message belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -39,6 +39,8 @@ pub struct IncomingMessage {
     /// When set, the UI renders the sticker image instead of the text body.
     #[serde(default)]
     pub sticker: Option<Sticker>,
+    /// Reaction on this message, when the event is a reaction (text == None).
+    pub reaction: Option<ReactionEvent>,
     pub msg_id: String,
     /// Server timestamp string as provided by Zalo.
     pub timestamp: String,

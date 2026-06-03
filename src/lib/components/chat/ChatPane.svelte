@@ -131,7 +131,12 @@
                     : 'bg-background rounded-bl-md'}"
                 >
                   <p class="whitespace-pre-wrap break-words">{m.body}</p>
-                  <span class="mt-1 block text-right text-[10px] opacity-60">{clock(m.at)}</span>
+                  <span class="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-60">
+                      {#if (m as any).reactionIcon}
+                        <span class="text-xs leading-none">{(m as any).reactionIcon}</span>
+                      {/if}
+                      {clock(m.at)}
+                    </span>
                 </div>
               {/if}
             </div>

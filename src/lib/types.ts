@@ -60,6 +60,26 @@ export type Sticker = {
     url: string;
 };
 
+
+// Reaction icon the UI can send, mirrored from the core `ReactionIcon`.
+export type ReactionIcon =
+    | "heart" | "like" | "haha" | "wow" | "cry" | "angry" | "kiss"
+    | "tearsOfJoy" | "shit" | "rose" | "brokenHeart" | "dislike"
+    | "love" | "confused" | "wink" | "fade" | "sun" | "birthday"
+    | "bomb" | "ok" | "peace" | "thanks" | "punch";
+
+// A reaction event from the realtime listener — someone added a reaction to a
+// message. `icon` is a pre-resolved emoji character.
+export type ReactionEvent = {
+    threadId: string;
+    msgId: string;
+    uidFrom: string;
+    dName: string | null;
+    icon: string;
+    isSelf: boolean;
+    isGroup: boolean;
+};
+
 export type IncomingMessage = {
     accountId: string;
     threadId: string;
@@ -68,6 +88,7 @@ export type IncomingMessage = {
     fromName: string | null;
     text: string | null;
     sticker: Sticker | null;
+    reaction: ReactionEvent | null;
     msgId: string;
     timestamp: string;
     isSelf: boolean;

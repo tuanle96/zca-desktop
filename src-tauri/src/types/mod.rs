@@ -8,6 +8,7 @@ pub mod contact;
 pub mod credentials;
 pub mod events;
 pub mod qr;
+pub mod reaction;
 pub mod sticker;
 pub mod stored;
 
@@ -16,5 +17,6 @@ pub use contact::{Contact, Group};
 pub use credentials::{Cookie, CredentialError, Credentials};
 pub use events::{IncomingMessage, ThreadKind};
 pub use qr::QrLoginEvent;
+pub use reaction::{ReactionEvent, ReactionIcon, reaction_icon_from_zalo};
 pub use sticker::Sticker;
 pub use stored::{History, StoredMessage, StoredThread, ThreadIdentity};

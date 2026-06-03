@@ -203,6 +203,10 @@ async fn login_and_listen(
 /// Persist an incoming message into the local store (best-effort; a store
 /// failure is logged and never breaks the realtime bridge).
 fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
+    // Reactions are transient UI events — don't persist them as messages.
+    if msg.reaction.is_some() {
+        return;
+    }
     let kind = match msg.thread_kind {
         crate::types::ThreadKind::Group => "group",
         crate::types::ThreadKind::User => "user",
@@ -423,6 +427,35 @@ pub async fn send_message(
         }
     }
     Ok(msg_id)
+}
+
+
+/// Send a reaction to a specific message in a thread.
+///
+/// Requires a prior login for `account_id`. The reaction icon must be one of
+/// the standard Zalo icons (Heart, Like, etc.). The send is not throttled
+/// (reactions are not spam-like).
+#[tauri::command]
+pub async fn send_reaction(
+    state: State<'_, SessionState>,
+    account_id: String,
+    thread_id: String,
+    msg_id: String,
+    cli_msg_id: String,
+    kind: crate::types::ThreadKind,
+    icon: crate::types::ReactionIcon,
+) -> Result<(), String> {
+    if msg_id.trim().is_empty() {
+        return Err("msg_id is required".to_string());
+    }
+    let api = state
+        .0
+        .get(&account_id)
+        .await
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    crate::zalo::send_reaction(&api, icon, &msg_id, &cli_msg_id, &thread_id, kind)
+        .await
+        .map_err(|e| format!("send reaction failed: {e}"))
 }
 
 /// Send a sticker to a thread from an already-authenticated account, returning
