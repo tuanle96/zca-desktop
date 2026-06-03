@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::AccountId;
+use crate::types::{AccountId, Sticker};
 
 /// Which kind of thread a message belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,6 +35,10 @@ pub struct IncomingMessage {
     /// Plain-text body when the message is text; `None` for non-text content.
     #[serde(default)]
     pub text: Option<String>,
+    /// Sticker payload when this is a `chat.sticker` message; `None` otherwise.
+    /// When set, the UI renders the sticker image instead of the text body.
+    #[serde(default)]
+    pub sticker: Option<Sticker>,
     pub msg_id: String,
     /// Server timestamp string as provided by Zalo.
     pub timestamp: String,

@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "npm run --silent harness:check exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:37:19.024Z",
+  "finishedAt": "2026-06-03T03:37:19.436Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stdout.txt",
+    ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stderr.txt"
+  ]
+}

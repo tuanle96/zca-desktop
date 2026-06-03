@@ -1,0 +1,149 @@
+{
+    "schemaVersion": 1,
+    "taskId": "fix-self-listen-outgoing",
+    "featureId": "fix-self-listen-outgoing",
+    "status": "pass",
+    "createdAt": "2026-06-03T03:43:00.000Z",
+    "diffSummary": "Render the account's own messages sent from another Zalo device (the original Zalo app on phone/web). Root cause: the production session-start path command/login_and_listen logged in via zalo::login(credentials), which calls zalo::login_with(.., self_listen=false). With self_listen off, the zca-rust realtime listener drops every event where message.is_self (confirmed in the pinned rev c95c88b, src/listen.rs: `if message.is_self && !self_listen { continue; }` for both user cmd 501 and group cmd 521), so zca-desktop only ever saw other people's incoming messages and never the user's own outbound messages from other devices. Fix (one logical change, command layer): login_and_listen now establishes the session with zalo::login_with(credentials, true) so the listener surfaces self-authored messages. All four production session-start commands (start_listening, start_qr_login, restore_sessions, start_listening_from_file) funnel through login_and_listen, so the single flip covers every listener path. The whole downstream pipeline already carries is_self/isSelf: to_incoming_message copies it, the bridge emits the unchanged non-secret IncomingMessage DTO with no direction filtering, persist_incoming uses bump_unread=!is_self, and the frontend renders outgoing: msg.isSelf. The same-device send echo (which self_listen now also redelivers) is reconciled by the pre-existing dedupe from fix-outgoing-echo-dupe on both seams (store save_message: same account+thread+body, different msg_id, within 15s; frontend appendToBucket: merge the echo into the optimistic just-sent bubble), so enabling self_listen does not double-render this app's own sends. No new layer, no new public API (login_with already existed and is used by live tests), no credential/IPC-surface change.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checks": [
+        {
+            "name": "build",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "acceptanceId": "build",
+            "summary": "cargo build compiles with login_and_listen using zalo::login_with(credentials, true).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:36:41.026Z",
+            "finishedAt": "2026-06-03T03:36:41.804Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:50d7c5226c6686d9fd7d2627bd23839dc13ee8383fe9823565b691ccfacf358d",
+            "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/build-20260603033641/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/build-20260603033641/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-self-listen-outgoing/checks/build-20260603033641/stdout.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/build-20260603033641/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "acceptanceId": "tests",
+            "summary": "cargo test offline suite passes (35 passed; 0 failed; 13 ignored). The store outgoing-echo dedupe and per-account routing tests stay green with the self_listen-enabled production listen path.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:36:51.148Z",
+            "finishedAt": "2026-06-03T03:36:53.554Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+            "stdoutHash": "sha256:27021f71fceb5f3b7b09502aee575296b15bde3c708393c5912c67876d4d79c2",
+            "stderrHash": "sha256:321c4ecefc6eebdf1ea6a9bb998b26c51f66f907c0812f1a0387d1a3e85257ef",
+            "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stdout.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "acceptanceId": "lint",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with the login_and_listen change.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:37:01.199Z",
+            "finishedAt": "2026-06-03T03:37:02.019Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:3bb679965f0a12982e07be2b1c71ba457c15ceb768859fabb10911106022ba16",
+            "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stdout.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:37:19.024Z",
+            "finishedAt": "2026-06-03T03:37:19.436Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stdout.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/structural-20260603033719/stderr.txt"
+            ]
+        },
+        {
+            "name": "smoke",
+            "command": "grep -q self-listen-render-verified .harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt",
+            "status": "pass",
+            "acceptanceId": "smoke",
+            "summary": "Live, owner-verified on the running app (bun run tauri dev): a message sent to the listened account FROM the original Zalo app on another device now renders in zca-desktop in realtime as an outgoing bubble (previously never appeared). A send from this app still renders exactly once (same-device echo deduped), and self messages do not bump the unread badge. Non-secret outcome captured in the live-self-listen.txt sidecar; no thread ids, bodies, or credentials recorded.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:48:19.585Z",
+            "finishedAt": "2026-06-03T03:48:19.597Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:965660b4c8c1ae869edd02eedd0974a757acec7ede58e03ca8f9941921192b87",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stderr.txt",
+            "artifact": ".harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stdout.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stderr.txt",
+                ".harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/fix-self-listen-outgoing/advisor-decision.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/fix-self-listen-outgoing/architecture-reviewer.json"
+        },
+        {
+            "name": "reliability-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/fix-self-listen-outgoing/reliability-reviewer.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "echo-dedupe-identical-rapid-sends",
+            "severity": "low",
+            "description": "Same-device echo dedupe matches on thread + body (text) or sticker id within a 15s window, not a stable server id, because Zalo redelivers the echo under a different msg_id. Two intentional identical-content sends to the same thread within 15s could collapse to one row/bubble.",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "advisor",
+            "acceptanceReason": "Pre-existing design from fix-outgoing-echo-dupe; not introduced or worsened by enabling self_listen. Enabling self_listen is what makes the self-echo observable, but the dedupe that handles it was already in place and unit-tested. A future client-side correlation id would make reconciliation exact.",
+            "mitigation": "If exactness is needed, add a per-send client correlation id and dedupe on it instead of content+window."
+        }
+    ],
+    "updatedAt": "2026-06-03T03:43:00.000Z"
+}

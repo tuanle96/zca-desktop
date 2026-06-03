@@ -18,6 +18,7 @@ import type {
     IncomingMessage,
     QrLoginEvent,
     QrPhase,
+    Sticker,
 } from "./types";
 
 const MESSAGE_EVENT = "zalo://message";
@@ -26,6 +27,12 @@ const QR_EVENT = "zalo://qr";
 function snippet(text: string | null): string {
     if (!text) return "[non-text message]";
     return text.length > 48 ? `${text.slice(0, 48)}…` : text;
+}
+
+/** Conversation-list snippet for a message that may be a sticker. */
+function messageSnippet(text: string | null, sticker: Sticker | null): string {
+    if (sticker) return "[Sticker]";
+    return snippet(text);
 }
 
 /** All per-account data. The active account's slice is mirrored into the
@@ -90,6 +97,9 @@ class SessionStore {
 
     /** which middle/main pane is shown: chats or contacts */
     view = $state<"chats" | "contacts">("chats");
+
+    /** Settings dialog visibility (opened from the rail gear). */
+    settingsOpen = $state(false);
 
     // --- QR login state (zalo://qr stream). Shown full-screen as the login
     // gate when no account is logged in, or as an overlay when adding another
@@ -245,9 +255,49 @@ class SessionStore {
         this.activate(accountId);
     }
 
+    /**
+     * Log out (forget) an account on this device: stop its live session +
+     * delete its persisted credential in the core, then prune the local bucket
+     * and rail entry. If it was the active account, activate another; if it was
+     * the last account, drop back to the QR login gate. Cached history is kept
+     * in the store so a future re-login can restore it. No secret crosses IPC.
+     */
+    async logoutAccount(accountId: string) {
+        await this.run(async () => {
+            await invoke("logout_account", { accountId });
+        });
+        if (this.error) return; // surfaced by the dialog; keep the account listed
+
+        this.buckets.delete(accountId);
+        this.accounts = this.accounts.filter((a) => a.accountId !== accountId);
+
+        if (this.activeAccountId === accountId) {
+            const next = this.accounts[0];
+            if (next) {
+                this.activeAccountId = null; // force activate() to load the next bucket
+                this.activate(next.accountId);
+            } else {
+                // No accounts left — reset the active view and show the QR gate.
+                this.activeAccountId = null;
+                this.profile = null;
+                this.conversations = [];
+                this.threads = {};
+                this.contacts = [];
+                this.contactsLoaded = false;
+                this.groups = [];
+                this.groupsLoaded = false;
+                this.activeThreadId = null;
+                this.listening = false;
+                this.settingsOpen = false;
+            }
+        }
+        log.info(`logout: forgot account ${accountId} (remaining=${this.accounts.length})`);
+    }
+
     private activate(accountId: string) {
         const target = this.buckets.get(accountId);
         if (!target) return;
+        const previous = this.activeAccountId;
         // Save current active view back to its bucket.
         if (this.activeAccountId) {
             const cur = this.buckets.get(this.activeAccountId);
@@ -274,6 +324,13 @@ class SessionStore {
         this.view = "chats";
         // The active account's unread badge clears on switch.
         this.setAccountUnread(accountId, 0);
+        // Non-secret switch diagnostic: proves the active account + its view
+        // (conversation count) swapped. account ids only, no message content.
+        if (previous !== accountId) {
+            log.info(
+                `account-switch: active ${previous ?? "none"} -> ${accountId} (conversations=${target.conversations.length})`,
+            );
+        }
     }
 
     private setAccountUnread(accountId: string, n: number) {
@@ -438,7 +495,8 @@ class SessionStore {
             list.push({
                 id: m.msgId,
                 threadId: m.threadId,
-                body: m.body ?? "[non-text message]",
+                body: m.sticker ? "" : (m.body ?? "[non-text message]"),
+                sticker: m.sticker,
                 outgoing: m.outgoing,
                 authorName: m.fromName,
                 at: m.ts ?? 0,
@@ -459,7 +517,7 @@ class SessionStore {
                 threadId: t.threadId,
                 kind: t.kind,
                 title,
-                lastSnippet: last ? snippet(last.body) : (existing?.lastSnippet ?? ""),
+                lastSnippet: last ? messageSnippet(last.body, last.sticker) : (existing?.lastSnippet ?? ""),
                 lastAt: t.lastAt ?? existing?.lastAt ?? 0,
                 unread: t.unread ?? existing?.unread ?? 0,
                 avatar,
@@ -516,11 +574,102 @@ class SessionStore {
                     id: msgId || `local-${Date.now()}`,
                     threadId,
                     body: text,
+                    sticker: null,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
                 },
                 snippet(text),
+            );
+            ok = true;
+        });
+        return ok;
+    }
+
+    /** Search stickers for the picker (reuses the active account's session). */
+    async searchStickers(keyword: string, limit = 40): Promise<Sticker[]> {
+        const term = keyword.trim();
+        if (!term || !this.profile) return [];
+        try {
+            return await invoke<Sticker[]>("search_stickers", {
+                accountId: this.profile.accountId,
+                keyword: term,
+                limit,
+            });
+        } catch (e) {
+            log.error(`search_stickers failed: ${String(e)}`);
+            return [];
+        }
+    }
+
+    /** The account's recently-used stickers for the picker's "Gần đây" row. */
+    async recentStickers(limit = 24): Promise<Sticker[]> {
+        if (!this.profile) return [];
+        try {
+            return await invoke<Sticker[]>("recent_stickers", {
+                accountId: this.profile.accountId,
+                limit,
+            });
+        } catch (e) {
+            log.error(`recent_stickers failed: ${String(e)}`);
+            return [];
+        }
+    }
+
+    /** The pack ids (categories) the account has used recently, for tab chips. */
+    async stickerCategories(limit = 12): Promise<number[]> {
+        if (!this.profile) return [];
+        try {
+            return await invoke<number[]>("sticker_categories", {
+                accountId: this.profile.accountId,
+                limit,
+            });
+        } catch (e) {
+            log.error(`sticker_categories failed: ${String(e)}`);
+            return [];
+        }
+    }
+
+    /** Load all stickers in a pack (category) for the picker's per-pack tab. */
+    async stickerCategory(catId: number): Promise<Sticker[]> {
+        if (!this.profile) return [];
+        try {
+            return await invoke<Sticker[]>("sticker_category", {
+                accountId: this.profile.accountId,
+                catId,
+            });
+        } catch (e) {
+            log.error(`sticker_category failed: ${String(e)}`);
+            return [];
+        }
+    }
+
+    /** Send a sticker to the active thread, rendering it optimistically. */
+    async sendSticker(sticker: Sticker): Promise<boolean> {
+        const threadId = this.activeThreadId;
+        if (!threadId || !this.profile) return false;
+        const convo = this.conversations.find((c) => c.threadId === threadId);
+        const kind = convo?.kind ?? "user";
+
+        let ok = false;
+        await this.run(async () => {
+            const msgId = await invoke<string>("send_sticker", {
+                accountId: this.profile!.accountId,
+                threadId,
+                kind,
+                sticker,
+            });
+            this.appendToActive(
+                {
+                    id: msgId || `local-${Date.now()}`,
+                    threadId,
+                    body: "",
+                    sticker,
+                    outgoing: true,
+                    authorName: this.profile?.displayName ?? "Me",
+                    at: Date.now(),
+                },
+                "[Sticker]",
             );
             ok = true;
         });
@@ -561,17 +710,26 @@ class SessionStore {
         const isActive = msg.accountId === this.activeAccountId;
         const bumpUnread = !msg.isSelf && !(isActive && msg.threadId === this.activeThreadId);
 
+        // Non-secret routing diagnostic: which account a message was routed to,
+        // and whether that is the active view or a background bucket. account +
+        // thread ids only, never message content. This is the observable signal
+        // that an event for account B does NOT enter account A's active view.
+        log.info(
+            `route: msg account=${msg.accountId} thread=${msg.threadId} -> ${isActive ? "active-view" : "background-bucket"} (active=${this.activeAccountId ?? "none"})`,
+        );
+
         this.appendToBucket(
             b,
             {
                 id: msg.msgId,
                 threadId: msg.threadId,
-                body: msg.text ?? "[non-text message]",
+                body: msg.sticker ? "" : (msg.text ?? "[non-text message]"),
+                sticker: msg.sticker,
                 outgoing: msg.isSelf,
                 authorName: name,
                 at: Date.now(),
             },
-            snippet(msg.text),
+            messageSnippet(msg.text, msg.sticker),
             { kind: msg.threadKind, title, bumpUnread },
         );
 
@@ -593,6 +751,34 @@ class SessionStore {
     ) {
         const existing = b.threads[message.threadId] ?? [];
         if (existing.some((m) => m.id === message.id)) return; // dedupe by msg id
+
+        // Echo reconciliation: Zalo delivers our own sent message back through
+        // the listener with a DIFFERENT msg_id than the send-response id, so a
+        // pure msg-id dedupe would store it twice. If this is an incoming echo
+        // (outgoing) that matches a just-sent optimistic message in the same
+        // thread (same body for text, same sticker id for stickers) within a
+        // short window, treat it as the same message: adopt the authoritative
+        // id rather than appending a duplicate.
+        if (message.outgoing) {
+            const ECHO_WINDOW_MS = 15000;
+            const sameContent = (m: ChatMessage) =>
+                message.sticker
+                    ? m.sticker?.id === message.sticker.id
+                    : !m.sticker && m.body === message.body;
+            const dupIdx = existing.findIndex(
+                (m) =>
+                    m.outgoing &&
+                    sameContent(m) &&
+                    Math.abs(m.at - message.at) <= ECHO_WINDOW_MS,
+            );
+            if (dupIdx >= 0) {
+                const merged = [...existing];
+                merged[dupIdx] = { ...merged[dupIdx], id: message.id };
+                b.threads = { ...b.threads, [message.threadId]: merged };
+                return; // reconciled in place; no new row, no conversation bump
+            }
+        }
+
         b.threads = { ...b.threads, [message.threadId]: [...existing, message] };
 
         const idx = b.conversations.findIndex((c) => c.threadId === message.threadId);

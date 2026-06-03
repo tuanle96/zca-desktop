@@ -1,0 +1,84 @@
+{
+    "schemaVersion": 1,
+    "id": "rich-messages-stickers",
+    "type": "feature",
+    "riskTier": "normal",
+    "featureId": "rich-messages",
+    "scope": {
+        "summary": "Sticker slice of rich-messages: render received/sent stickers as images, send & receive stickers end-to-end, and a sticker picker UI. zalo/ maps incoming chat.sticker messages and wraps send_sticker/search_sticker; session/ adds a throttled send_sticker; command/ adds send_sticker + search_stickers and persists sticker messages; the composer gets a sticker picker and the chat pane renders sticker bubbles.",
+        "goals": [
+            "types/ StickerRef (carried on IncomingMessage) + StickerItem (picker) DTOs, no zca-rust dep",
+            "zalo/ maps incoming msgType=chat.sticker into a StickerRef; send_sticker + search_stickers + sticker_category wrap the zca-rust facade (zca-rust confined to zalo)",
+            "session/ send_sticker reuses the per-account send throttle (ban-risk r1)",
+            "command/ send_sticker + search_stickers + recent_stickers + sticker_categories + sticker_category reuse the stored session/store; sticker messages persisted (kind=sticker) so history shows them; sent stickers recorded in a per-account recent-sticker history",
+            "store/ recent_stickers table (schema v3) + repositories; pack tabs derived from recently-used categories (Zalo has no owned-packs endpoint)",
+            "Composer sticker picker (Gần đây row + per-pack tabs + search grid) sends a sticker; chat pane renders sticker bubbles as images from the allowlisted CDN; incoming stickers render in realtime"
+        ],
+        "nonGoals": [
+            "send_link / add_reaction / undo (later rich-messages slices)",
+            "Image/file attachments (attachments feature)",
+            "A full owned-sticker-store catalog (Zalo exposes no list-owned-packs endpoint; packs are derived from recent usage + search)",
+            "Animated sprite playback tuning (static webp render)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "cmd",
+            "description": "command/ send_sticker + search_stickers compile and reuse the stored session; build passes.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "tests",
+            "description": "Offline unit tests for the incoming sticker mapping + sticker persistence pass.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend builds with the sticker picker + sticker bubble rendering.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: search_sticker returns stickers and a real sticker is delivered (Zalo returns a message id).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "Write",
+            "Edit",
+            "Bash(cargo:*)",
+            "Bash(node:*)",
+            "Bash(npm:*)",
+            "Bash(npx:*)",
+            "Bash(git:*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "ui",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/rich-messages-stickers.json"
+}

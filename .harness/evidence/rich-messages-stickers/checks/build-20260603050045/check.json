@@ -1,0 +1,20 @@
+{
+  "name": "build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the full sticker slice (types/zalo/session/store/command + lib registration).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T05:00:45.023Z",
+  "finishedAt": "2026-06-03T05:00:46.923Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:0a31d7ec5c752af108fce0ad4c52d15dbda0be9cfaf022d2046a09878f6271f3",
+  "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stdout.txt",
+    ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stderr.txt"
+  ]
+}

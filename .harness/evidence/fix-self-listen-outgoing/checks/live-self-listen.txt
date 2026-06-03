@@ -1,0 +1,20 @@
+self-listen-render-verified 2026-06-03
+Live smoke verified by the project owner on the running app (bun run tauri dev) after enabling self_listen on the production listen path.
+
+scenario:
+- zca-desktop logged in + listening on account A.
+- A message was sent TO account A's thread FROM the original Zalo app on another
+  device (self-authored / multi-device), not from zca-desktop.
+
+observed:
+- the message rendered in zca-desktop in realtime as an OUTGOING bubble in the
+  correct conversation (previously it never appeared, because self_listen=false
+  made zca-rust drop every message.is_self event before delivery).
+- a message sent FROM zca-desktop itself still rendered exactly once (the
+  same-device send echo is reconciled by the existing store + frontend dedupe
+  from fix-outgoing-echo-dupe — no duplicate bubble/row).
+- self messages did not bump the unread badge (bump_unread = !is_self preserved).
+
+result: PASS
+note: only non-secret outcome is recorded here; no thread ids, message bodies,
+or credential values are captured in this artifact.

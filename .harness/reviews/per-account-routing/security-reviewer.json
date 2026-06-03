@@ -11,6 +11,7 @@
     ],
     "checkedInvariants": [
         "cross-account-isolation",
+        "auth-session-boundary",
         "no-data-leak"
     ],
     "diffCoverage": {

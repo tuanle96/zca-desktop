@@ -1,0 +1,20 @@
+{
+  "name": "live-gui",
+  "command": "grep -q live-gui-verified .harness/evidence/fix-thread-avatar-persistence/checks/live-verify-2026-06-03.txt",
+  "status": "pass",
+  "summary": "Owner-verified live on the running desktop app: after a restart the conversation list shows the correct title + avatar (from the persisted/backfilled thread rows) instead of a blank avatar / last-sender name. Asserts the non-secret owner-verification sidecar marker.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T04:51:00.288Z",
+  "finishedAt": "2026-06-03T04:51:00.301Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:7527e5503a763781f505a00df79a5f8c37d0f417ed1300f5bd6ae8ddb0829d78",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/live-gui-20260603045100/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/live-gui-20260603045100/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-thread-avatar-persistence/checks/live-gui-20260603045100/stdout.txt",
+    ".harness/evidence/fix-thread-avatar-persistence/checks/live-gui-20260603045100/stderr.txt"
+  ]
+}

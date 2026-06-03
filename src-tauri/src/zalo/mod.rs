@@ -18,6 +18,7 @@ use tokio::sync::mpsc;
 use reqwest::cookie::{CookieStore, Jar};
 use zca_rust::apis::login_qr::{login_qr, LoginQREvent, LoginQROptions, LoginQRResult};
 use zca_rust::apis::send_message::MessageContent as SendContent;
+use zca_rust::apis::send_sticker::SendStickerPayload;
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::ListenerEvent;
 use zca_rust::models::{Message, MessageContent as ZcaMessageContent, ThreadType};
@@ -26,7 +27,8 @@ use zca_rust::context::Options;
 use zca_rust::Zalo;
 
 use crate::types::{
-    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, ThreadKind,
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, Sticker,
+    ThreadKind,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -282,6 +284,40 @@ fn message_text(content: &ZcaMessageContent) -> Option<String> {
     }
 }
 
+/// Zalo emoticon CDN base for rendering a sticker by its id. The `size`
+/// produces a chat-bubble-sized render; this host is allowlisted in the app
+/// CSP (`img-src ... https://zalo-api.zadn.vn`). Centralized so the URL shape
+/// lives in one place (also used by the picker via [`to_sticker`]).
+fn sticker_image_url(sticker_id: i64) -> String {
+    format!("https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid={sticker_id}&size=130")
+}
+
+/// Extract a [`Sticker`] from an incoming message whose `msgType` is
+/// `chat.sticker`. Returns `None` for any other message type.
+///
+/// Sticker messages arrive with a JSON object body (not plain text), so the
+/// untagged [`ZcaMessageContent`] is `Attachment`/`Other`. We re-serialize the
+/// content to a JSON value and read `id`/`catId`/`type` (the same fields Zalo
+/// uses to re-send a sticker), then build the renderable CDN URL. Confined to
+/// the `zalo` layer so higher layers never see `zca-rust` types.
+fn sticker_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<Sticker> {
+    if msg_type != "chat.sticker" {
+        return None;
+    }
+    let value = serde_json::to_value(content).ok()?;
+    // The numeric ids can arrive as JSON numbers or strings; accept both.
+    let as_i64 = |v: &serde_json::Value| -> Option<i64> {
+        v.as_i64().or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+    };
+    let id = value.get("id").and_then(as_i64)?;
+    let cat_id = value.get("catId").and_then(as_i64).unwrap_or(0);
+    let sticker_type = value.get("type").and_then(as_i64).unwrap_or(0);
+    if id == 0 {
+        return None;
+    }
+    Some(Sticker { id, cat_id, sticker_type, url: sticker_image_url(id) })
+}
+
 /// Map a `zca-rust` `Message` into the core [`IncomingMessage`] DTO.
 ///
 /// Confined to the `zalo` layer so higher layers never see `zca-rust` types.
@@ -294,6 +330,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_id: m.data.uid_from.clone(),
             from_name: non_empty(&m.data.d_name),
             text: message_text(&m.data.content),
+            sticker: sticker_from_content(&m.data.msg_type, &m.data.content),
             msg_id: m.data.msg_id.clone(),
             timestamp: m.data.ts.clone(),
             is_self: m.is_self,
@@ -305,6 +342,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_id: m.data.base.uid_from.clone(),
             from_name: non_empty(&m.data.base.d_name),
             text: message_text(&m.data.base.content),
+            sticker: sticker_from_content(&m.data.base.msg_type, &m.data.base.content),
             msg_id: m.data.base.msg_id.clone(),
             timestamp: m.data.base.ts.clone(),
             is_self: m.is_self,
@@ -367,6 +405,78 @@ pub async fn send_text(api: &API, thread_id: &str, text: &str) -> ZaloResult<Str
     };
     let resp = api.send_message(&content, thread_id, ThreadType::User).await?;
     Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
+}
+
+/// Send a sticker to a thread and return the new message id.
+///
+/// Thin wrapper over `zca-rust` `send_sticker`; the `command`/`session` layers
+/// map the core thread-kind DTO to `ThreadType` before calling this. The three
+/// ids come from a [`Sticker`] the UI picked (search results) or re-sent.
+pub async fn send_sticker(
+    api: &API,
+    thread_id: &str,
+    sticker: &Sticker,
+    kind: ThreadKind,
+) -> ZaloResult<String> {
+    let payload = SendStickerPayload {
+        id: sticker.id,
+        cate_id: sticker.cat_id,
+        sticker_type: sticker.sticker_type,
+    };
+    let thread_type = match kind {
+        ThreadKind::Group => ThreadType::Group,
+        ThreadKind::User => ThreadType::User,
+    };
+    let resp = api.send_sticker(&payload, thread_id, thread_type).await?;
+    Ok(resp.msg_id)
+}
+
+/// Search stickers by keyword and map them into core [`Sticker`] DTOs (each
+/// with a renderable image URL), for the composer's sticker picker.
+///
+/// Uses `zca-rust`'s `search_sticker` (one request) and confines `zca-rust`'s
+/// `StickerBasic` to this layer. `limit` caps the grid size.
+pub async fn search_stickers(api: &API, keyword: &str, limit: u32) -> ZaloResult<Vec<Sticker>> {
+    let results = api.search_sticker(keyword, limit).await?;
+    Ok(results.into_iter().map(to_sticker).collect())
+}
+
+/// Map a `zca-rust` `StickerBasic` (search result) into a core [`Sticker`].
+fn to_sticker(basic: zca_rust::models::StickerBasic) -> Sticker {
+    Sticker {
+        id: basic.sticker_id,
+        cat_id: basic.cate_id,
+        sticker_type: basic.type_,
+        url: sticker_image_url(basic.sticker_id),
+    }
+}
+
+/// Load all stickers in a category (a "pack") and map them into core
+/// [`Sticker`] DTOs, for the picker's per-pack tab.
+///
+/// Uses `zca-rust`'s `get_sticker_category_detail` (confines `StickerDetail` to
+/// this layer). Zalo exposes no "owned packs" listing, so the picker derives
+/// the set of pack ids from recently-used stickers and loads each here.
+pub async fn sticker_category(api: &API, cat_id: i64) -> ZaloResult<Vec<Sticker>> {
+    let details = api.get_sticker_category_detail(cat_id).await?;
+    Ok(details.into_iter().map(to_sticker_detail).collect())
+}
+
+/// Map a `zca-rust` `StickerDetail` (pack/detail result) into a core
+/// [`Sticker`]. Prefers the server-provided webp render URL when present,
+/// otherwise falls back to the emoticon CDN URL built from the id.
+fn to_sticker_detail(detail: zca_rust::models::StickerDetail) -> Sticker {
+    let url = detail
+        .sticker_webp_url
+        .filter(|u| !u.is_empty())
+        .or_else(|| Some(detail.sticker_url.clone()).filter(|u| !u.is_empty()))
+        .unwrap_or_else(|| sticker_image_url(detail.id));
+    Sticker {
+        id: detail.id,
+        cat_id: detail.cate_id,
+        sticker_type: detail.type_,
+        url,
+    }
 }
 
 /// Fetch the account's friends and map them into core [`Contact`] DTOs.
@@ -554,6 +664,81 @@ mod tests {
         }
     }
 
+    /// An incoming `chat.sticker` message yields a Sticker with the right ids
+    /// and a renderable CDN URL; a plain `webchat` message yields no sticker.
+    /// Numeric ids are accepted whether they arrive as JSON numbers or strings.
+    #[test]
+    fn sticker_from_content_maps_chat_sticker_only() {
+        // Non-sticker content is never treated as a sticker.
+        let text = ZcaMessageContent::Text("hello".to_string());
+        assert_eq!(sticker_from_content("webchat", &text), None);
+        // A chat.sticker msgType but text content (no ids) -> None, not a panic.
+        assert_eq!(sticker_from_content("chat.sticker", &text), None);
+
+        // A realistic sticker content object (numbers).
+        let content: ZcaMessageContent =
+            serde_json::from_value(serde_json::json!({ "id": 6699, "catId": 16, "type": 7 }))
+                .expect("sticker content parses");
+        let sticker = sticker_from_content("chat.sticker", &content).expect("maps to sticker");
+        assert_eq!(sticker.id, 6699);
+        assert_eq!(sticker.cat_id, 16);
+        assert_eq!(sticker.sticker_type, 7);
+        assert!(sticker.url.contains("eid=6699"), "url renders the sticker id: {}", sticker.url);
+        assert!(sticker.url.starts_with("https://zalo-api.zadn.vn/"), "url uses the allowlisted CDN");
+
+        // Real Zalo sticker payloads carry numeric id/catId/type, so the
+        // untagged zca-rust `MessageContent` routes them to `Other(Value)` and
+        // the ids are preserved (the case asserted above). The `as_i64` helper
+        // additionally tolerates stringized ids defensively.
+    }
+
+    /// The sticker CDN URL is well-formed and points at the allowlisted host.
+    #[test]
+    fn sticker_image_url_shape() {
+        let url = sticker_image_url(123);
+        assert_eq!(url, "https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=123&size=130");
+    }
+
+    /// Search results map into core Sticker DTOs with a render URL per id.
+    #[test]
+    fn to_sticker_maps_basic() {
+        let basic = zca_rust::models::StickerBasic { type_: 7, cate_id: 16, sticker_id: 555 };
+        let s = to_sticker(basic);
+        assert_eq!((s.id, s.cat_id, s.sticker_type), (555, 16, 7));
+        assert!(s.url.contains("eid=555"));
+    }
+
+    /// Pack/detail results prefer the server webp url, then stickerUrl, else the
+    /// CDN fallback built from the id.
+    #[test]
+    fn to_sticker_detail_prefers_webp_then_falls_back() {
+        use zca_rust::models::StickerDetail;
+        // webp present -> used as-is.
+        let d = StickerDetail {
+            id: 42,
+            cate_id: 7,
+            type_: 7,
+            sticker_webp_url: Some("https://cdn/webp/42.webp".to_string()),
+            sticker_url: "https://cdn/png/42.png".to_string(),
+            ..Default::default()
+        };
+        let s = to_sticker_detail(d);
+        assert_eq!(s.url, "https://cdn/webp/42.webp");
+        assert_eq!((s.id, s.cat_id, s.sticker_type), (42, 7, 7));
+
+        // No webp, has stickerUrl -> stickerUrl.
+        let d2 = StickerDetail {
+            id: 9,
+            sticker_url: "https://cdn/png/9.png".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(to_sticker_detail(d2).url, "https://cdn/png/9.png");
+
+        // Neither -> CDN fallback by id.
+        let d3 = StickerDetail { id: 123, ..Default::default() };
+        assert!(to_sticker_detail(d3).url.contains("eid=123"));
+    }
+
     /// Cookies set on a Zalo host are read back into core DTOs with a non-empty
     /// name/value and a Zalo domain, de-duplicated by name across hosts.
     #[test]
@@ -739,6 +924,50 @@ mod tests {
 
         assert!(!msg_id.is_empty(), "send_text must return a message id");
         println!("send_text_live OK: delivered, msg_id_len={}", msg_id.len());
+    }
+
+    /// Live send-sticker smoke. Ignored by default. Logs in, searches for a
+    /// sticker, and sends ONE real sticker to the authorized recipient (Lê Anh
+    /// Tuấn, resolved by phone), asserting search returns results and Zalo
+    /// returns a non-empty message id. Run explicitly:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; sends ONE real sticker to the authorized recipient"]
+    async fn send_sticker_live() {
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials.validate().expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+
+        // Pull a real sticker from search (one request, maps to core DTOs).
+        let stickers = search_stickers(&api, "hi", 24).await.expect("search_stickers failed");
+        assert!(!stickers.is_empty(), "search returned no stickers");
+        assert!(
+            stickers.iter().all(|s| s.id != 0 && s.url.contains("eid=")),
+            "every sticker must have an id and a render url"
+        );
+        let picked = &stickers[0];
+
+        let recipient_phone =
+            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let thread_id = find_user_uid(&api, &recipient_phone)
+            .await
+            .expect("could not resolve recipient by phone");
+
+        let msg_id = send_sticker(&api, &thread_id, picked, ThreadKind::User)
+            .await
+            .expect("send_sticker failed");
+        assert!(!msg_id.is_empty(), "send_sticker must return a message id");
+        // Non-secret diagnostics only: counts + lengths, never recipient/token.
+        println!(
+            "send_sticker_live OK: {} stickers found, delivered sticker (sticker_id_present={}, msg_id_len={})",
+            stickers.len(),
+            picked.id != 0,
+            msg_id.len()
+        );
     }
 
     /// Live: list_contacts loads the real friend list. Ignored by default.

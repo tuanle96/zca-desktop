@@ -1,0 +1,75 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "rich-messages-stickers",
+    "featureId": "rich-messages-stickers",
+    "decision": "pass",
+    "createdAt": "2026-06-03T05:08:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/types/sticker.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "provider-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/sticker.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/sticker.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "All eight changed source files reviewed across the impacted layers: types (sticker DTO + events/stored carriers), zalo (mapping + facade wrap), store (schema migration + repositories), command (commands + persistence routing), and the lib.rs command registration."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "Forward-only layering (types → config → store → zalo → session → command, ADR-0003) is preserved. zca-rust types stay confined to the zalo layer: sticker_from_content maps the upstream ZcaMessageContent into the pure types::Sticker DTO, and send_sticker/search_stickers/sticker_category wrap the zca-rust facade and return only core DTOs. The types layer (sticker.rs, events.rs, stored.rs) has no zca-rust dependency. No new layer was added.",
+            "fix": "None required."
+        },
+        {
+            "severity": "info",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "The schema migration is stepped (v1→v2 sticker columns on messages, v2→v3 recent_stickers table) using user_version, consistent with the existing migrate() pattern. New repositories (save_sticker_message, record_recent_sticker, load_recent_stickers, load_recent_sticker_categories) use parameterized SQL and keep rusqlite confined to the store layer. The command layer calls these typed methods; no SQL leaks upward.",
+            "fix": "None required."
+        },
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "command depends only backward on session (throttled send_sticker) and store (persistence). The new Tauri commands take non-secret args (account/thread ids, ThreadKind, the Sticker display DTO) and are registered in lib.rs. Sticker packs are derived from recent usage because Zalo exposes no owned-packs endpoint — a documented constraint, not a layering break.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review: the sticker slice keeps the ADR-0003 forward-only layering intact and confines zca-rust to the zalo layer. Types carry pure DTOs, the store migration is stepped and parameterized, and command depends only backward on session + store. No new layer, no provider bypass. Approve."
+}

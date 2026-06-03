@@ -1,0 +1,89 @@
+{
+    "schemaVersion": 1,
+    "id": "settings-panel",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Make the bottom-rail gear (Cài đặt) open a Settings dialog instead of doing nothing. The dialog has four tabs: Tài khoản (active AccountProfile + a Đăng xuất/forget-account action), Giao diện (light/dark/system theme persisted to localStorage and applied via the .dark class), Dữ liệu (read-only store_stats counts), and Giới thiệu (app name/description + repo link via the opener plugin). A new command/ logout_account(account_id) stops the account's live session/listener (session::SessionManager::remove) and removes its persisted account row + encrypted credential (store::Db::delete_account, CASCADE drops the credential). The shared keychain master key is left intact for the remaining accounts. Logout is local (forget on this device); it does not revoke the session server-side. Credentials never enter the webview.",
+        "goals": [
+            "command/: logout_account(account_id) — remove the in-memory session (listener shutdown) + delete the persisted account/credential rows; non-secret diagnostic log only",
+            "frontend: theme store (light/dark/system) persisted to localStorage, applied by toggling the .dark class on <html>, reacting to the system preference when in system mode",
+            "frontend: SettingsDialog overlay (Tài khoản / Giao diện / Dữ liệu / Giới thiệu) opened by the rail gear button",
+            "frontend: session store gains settingsOpen state + logoutAccount() that calls the command then prunes the local bucket/rail and falls back to the QR gate when the last account is removed",
+            "wire the RailNav Settings button onclick to open the dialog"
+        ],
+        "nonGoals": [
+            "Server-side Zalo logout / session revocation (zca-rust has no verified endpoint; logout here forgets the account on this device only)",
+            "Deleting cached threads/messages for the forgotten account (history is preserved so a future re-login restores it)",
+            "i18n / a real language switch (no i18n system exists yet)",
+            "Notification, autostart, privacy, call settings (out of current phase)",
+            "A full Zalo-style popup menu (gear opens the Settings dialog directly)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "lint",
+            "description": "cargo clippy -D warnings passes with the new logout_account command and its registration.",
+            "verification": {
+                "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings"
+            }
+        },
+        {
+            "id": "typecheck",
+            "description": "svelte-check is clean with the settings dialog, theme store, and session changes.",
+            "verification": {
+                "command": "npm run check"
+            }
+        },
+        {
+            "id": "build",
+            "description": "Frontend production build succeeds with the settings UI.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "tests",
+            "description": "Command-layer cargo tests pass (logout_account boundary validation + existing command tests).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml command::"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(bun *)",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/settings-panel.json"
+}

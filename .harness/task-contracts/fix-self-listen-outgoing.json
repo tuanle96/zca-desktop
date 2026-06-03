@@ -1,0 +1,90 @@
+{
+    "schemaVersion": 1,
+    "id": "fix-self-listen-outgoing",
+    "type": "bugfix",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Render the account's own messages sent from another Zalo device (the original Zalo app on phone/web). Root cause: the production session-start path (command/login_and_listen) logs in via zalo::login(credentials), which calls zalo::login_with(.., self_listen=false). With self_listen=false the zca-rust realtime listener drops every event where message.is_self (src/listen.rs: `if message.is_self && !self_listen { continue; }` at the pinned rev c95c88b), so zca-desktop only ever sees other people's incoming messages and never the user's own outbound messages from other devices. The whole downstream pipeline already carries and handles is_self/isSelf correctly (to_incoming_message copies is_self, the bridge emits without direction filtering, persist_incoming uses bump_unread=!is_self, the frontend renders outgoing: msg.isSelf, and both the SQLite store and the frontend session store already dedupe same-device send echoes from fix-outgoing-echo-dupe). Fix: enable self_listen on the production listen path so self-authored messages are delivered, by making command/login_and_listen log in with zalo::login_with(credentials, true) instead of zalo::login(credentials). No new layer, no new public API, no IPC shape change.",
+        "allowedLayers": [
+            "command"
+        ],
+        "goals": [
+            "command/: login_and_listen establishes the session with self_listen enabled so the realtime listener surfaces the account's own messages (sent from any device)",
+            "Messages the user sends from the original Zalo app now render in the active conversation as outgoing bubbles in realtime",
+            "Same-device send echoes are still reconciled (no duplicate row/bubble) via the existing store + frontend dedupe",
+            "Self messages do not bump the unread badge (existing bump_unread=!is_self preserved)"
+        ],
+        "nonGoals": [
+            "Changing the zalo-layer login/login_with API surface (login_with already exists and is used by live tests)",
+            "Widening the listener to non-message events (typing/seen/reactions stay ignored this slice)",
+            "Reworking the echo-dedupe heuristic (covered by fix-outgoing-echo-dupe)",
+            "Any frontend/UI change (the UI already renders isSelf as outgoing)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "tests",
+            "description": "cargo test offline suite stays green with the self_listen-enabled production listen path (no regression in store dedupe / routing tests).",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "lint",
+            "description": "cargo clippy is clean with the login_and_listen change.",
+            "verification": {
+                "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings"
+            }
+        },
+        {
+            "id": "build",
+            "description": "src-tauri compiles with login_and_listen using zalo::login_with(credentials, true).",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: with the app listening on an account, send a message to that account's thread from the original Zalo app on another device; the message renders in zca-desktop as an outgoing bubble in realtime and is persisted exactly once. Verified by the project owner on the running app; the success marker is captured in a non-secret evidence sidecar.",
+            "verification": {
+                "command": "grep -q self-listen-render-verified .harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer",
+        "reliability-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/fix-self-listen-outgoing.json"
+}

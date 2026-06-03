@@ -1,0 +1,60 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "fix-self-listen-outgoing",
+    "featureId": "fix-self-listen-outgoing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T03:42:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor"
+    },
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src/lib/session.svelte.ts",
+        "src-tauri/src/types/events.rs",
+        ".harness/task-contracts/fix-self-listen-outgoing.json",
+        ".harness/evidence/fix-self-listen-outgoing.json",
+        ".harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt",
+        ".harness/reviews/fix-self-listen-outgoing/architecture-reviewer.json",
+        ".harness/reviews/fix-self-listen-outgoing/reliability-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "no-new-public-api",
+        "secret-handling",
+        "no-duplicate-render",
+        "unread-counter-correctness"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Root cause confirmed directly in the pinned zca-rust rev c95c88b (src/listen.rs: `if message.is_self && !self_listen { continue; }` drops self messages before delivery). The bug-relevant change is the single login_and_listen call-site flip to zalo::login_with(.., true); the rest of the command/mod.rs diff is separate in-flight feature work outside this task's scope."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/fix-self-listen-outgoing.json",
+            "evidence": "Evidence bundle status=pass with attested build/tests/lint/structural checks (cargo test 35 passed, 0 failed; clippy -D warnings clean) and a non-secret live smoke artifact (self-listen-render-verified) recording that a message sent from the original Zalo app on another device renders in zca-desktop as an outgoing bubble, while a send from this app still renders exactly once. Architecture + reliability reviewers pass. The same-device echo double-render risk is covered by the pre-existing store + frontend dedupe; self messages do not bump unread (bump_unread=!is_self).",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "fix-self-listen-outgoing is honestly done. Root cause (production login path used self_listen=false, so zca-rust dropped every is_self event) was confirmed against the pinned upstream source and fixed with a single forward-only call-site change in the command layer (zalo::login_with(.., true)). No new layer, no new public API, no secret/IPC change. Build/test/lint are green and the owner-verified live smoke proves self-authored messages from another device now render once without inflating unread. Pass."
+}

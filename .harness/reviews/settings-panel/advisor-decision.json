@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "settings-panel",
+    "featureId": "settings-panel",
+    "decision": "pass",
+    "createdAt": "2026-06-03T05:08:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Consulted before flipping settings-panel passes=true; triggers: claim-done, security-touching (credential delete), new-public-api (logout_account command). Inspected task contract, draft evidence bundle, attested check sidecars, and the architecture + security reviewer artifacts."
+    },
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/theme.svelte.ts",
+        ".harness/task-contracts/settings-panel.json",
+        ".harness/evidence/settings-panel.json",
+        ".harness/reviews/settings-panel/architecture-reviewer.json",
+        ".harness/reviews/settings-panel/security-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "auth-session-boundary",
+        "secret-handling"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Evidence changed source/config files are the four reviewed here; the remaining changed files (SettingsDialog.svelte, RailNav.svelte, +page.svelte, +layout.svelte) are ui wiring with no layer/boundary impact."
+    },
+    "confidence": 0.87,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/settings-panel.json",
+            "evidence": "Four attested checks are present and pass with hashed stdout/stderr sidecars: lint (cargo clippy -D warnings), typecheck (svelte-check 0/0), frontend.build (vite build), tests (cargo test command:: 6 passed). Each binds to a contract acceptance id (lint/typecheck/build/tests). The contract's doneRequires (lint, tests, review, evidence-bundle) are each satisfied by a passing check or reviewer set.",
+            "fix": "None required to mark done."
+        },
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "Both required role reviewers pass with diff coverage = 1 over the changed source/config files. security-reviewer carries auth-session-boundary + secret-handling and confirms logout_account never moves a credential across IPC; architecture-reviewer carries layering and confirms the command depends only backward on session + store. The one residual (local forget, no server-side revocation) is a documented low-severity design choice, not a blocker.",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "settings-panel is honestly done. The bottom-rail gear now opens a real Settings dialog (was a no-op). The only new core surface, logout_account, is correctly layered and keeps the credential trust boundary intact (non-secret accountId in, encrypted credential deleted via CASCADE, keychain master key preserved, nothing logged). Evidence is fully attested (lint/typecheck/build/tests green) with acceptance bindings, and the required architecture + security reviewers pass with full diff coverage. The live GUI smoke (theme persistence across relaunch + logout-to-QR-gate) was confirmed by the user in-session. Pass."
+}

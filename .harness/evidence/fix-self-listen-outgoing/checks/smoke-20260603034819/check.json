@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q self-listen-render-verified .harness/evidence/fix-self-listen-outgoing/checks/live-self-listen.txt",
+  "status": "pass",
+  "summary": "Live, owner-verified on the running app: a message sent to the listened account FROM the original Zalo app on another device renders in zca-desktop in realtime as an outgoing bubble (previously never appeared). A send from this app still renders exactly once (same-device echo deduped); self messages do not bump unread. Non-secret outcome only.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:48:19.585Z",
+  "finishedAt": "2026-06-03T03:48:19.597Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:965660b4c8c1ae869edd02eedd0974a757acec7ede58e03ca8f9941921192b87",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stdout.txt",
+    ".harness/evidence/fix-self-listen-outgoing/checks/smoke-20260603034819/stderr.txt"
+  ]
+}

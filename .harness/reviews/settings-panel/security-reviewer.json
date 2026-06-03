@@ -1,0 +1,73 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "settings-panel",
+    "featureId": "settings-panel",
+    "decision": "pass",
+    "createdAt": "2026-06-03T05:06:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/theme.svelte.ts",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/store/crypto.rs",
+        "src/lib/components/chat/SettingsDialog.svelte"
+    ],
+    "checkedInvariants": [
+        "auth-session-boundary",
+        "secret-handling",
+        "input-validation"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "All four changed source/config files reviewed. store/db.rs + store/crypto.rs read (not changed) to confirm the credential lifecycle logout_account relies on."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "logout_account(account_id) takes only a non-secret accountId across IPC, validates it is non-empty at the boundary, stops the live session (SessionManager::remove → listener.stop()), and calls Db::delete_account, which deletes the accounts row; the credentials row (enc_blob) is removed by ON DELETE CASCADE (store/db.rs schema). No imei/cookie/userAgent value is ever returned or logged — the only emitted diagnostic is tracing::info! with account_id + a had_session boolean. The credential triple never enters the webview, consistent with ADR-0004/0005 and decision mem_20260602062459.",
+            "fix": "None required."
+        },
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "logoutAccount() in the ui session store calls invoke('logout_account', { accountId }) and then only manipulates non-secret view state (buckets, rail entries, reactive fields). It never holds or transmits a credential. On removing the active/last account it resets the view to the QR gate. No secret crosses the auth-session boundary.",
+            "fix": "None required."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "Logout is a LOCAL forget only: the OS-keychain master key (store/crypto.rs KEYRING_SERVICE) is intentionally left intact for the remaining accounts, and cached threads/messages for the forgotten account are preserved so a later re-login can restore history. There is no server-side Zalo session revocation (zca-rust has no verified logout endpoint), so the bearer cookie may remain valid server-side until it expires. This is documented behaviour, not a regression.",
+            "fix": "If true remote revocation is needed later, gate it behind a verified zca-rust endpoint with live-test evidence; track as a follow-up rather than blocking this local-forget slice."
+        },
+        {
+            "severity": "info",
+            "file": "src/lib/theme.svelte.ts",
+            "evidence": "theme.svelte.ts is pure ui state: reads/writes only the 'zca:theme' localStorage key (light/dark/system) and toggles the .dark class. No secret, no PII, no IPC.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Security review: settings-panel keeps the credential trust boundary intact. The new logout_account command accepts only a non-secret accountId (validated at the boundary), forgets the account by stopping its listener and deleting the encrypted credential via CASCADE, and never returns or logs any token value — the webview only ever sends an id. The keychain master key is preserved for other accounts. One documented residual: logout is a local forget with no server-side revocation (low, accepted as designed). No blocking findings. Approve."
+}

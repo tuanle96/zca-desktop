@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test --manifest-path src-tauri/Cargo.toml exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:36:51.148Z",
+  "finishedAt": "2026-06-03T03:36:53.554Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+  "stdoutHash": "sha256:27021f71fceb5f3b7b09502aee575296b15bde3c708393c5912c67876d4d79c2",
+  "stderrHash": "sha256:321c4ecefc6eebdf1ea6a9bb998b26c51f66f907c0812f1a0387d1a3e85257ef",
+  "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stdout.txt",
+    ".harness/evidence/fix-self-listen-outgoing/checks/tests-20260603033651/stderr.txt"
+  ]
+}

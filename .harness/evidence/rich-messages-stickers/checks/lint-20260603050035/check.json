@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --all-targets -- -D warnings clean with the sticker DTO, zalo mapping/send/search, store migration + repositories, and command wiring.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T05:00:35.977Z",
+  "finishedAt": "2026-06-03T05:00:37.133Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:3f07732dfb533c0a043eea69d62ac097d650a47a7d3370f4cd691414ae1d3081",
+  "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stdout.txt",
+    ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stderr.txt"
+  ]
+}

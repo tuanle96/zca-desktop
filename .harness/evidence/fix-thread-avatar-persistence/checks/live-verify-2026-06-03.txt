@@ -1,0 +1,12 @@
+live-gui-verified
+
+fix-thread-avatar-persistence — live GUI verification
+Date: 2026-06-03
+Verified by: project owner (Tuan)
+
+Method: ran the desktop app, logged in to a real Zalo account, and confirmed that
+after a restart the conversation list shows the correct conversation title and
+avatar (resolved from the persisted thread rows, backfilled from the
+contacts/groups directory), instead of a blank avatar / last-sender name.
+
+Outcome: PASS — avatars and titles persist across restart as expected.

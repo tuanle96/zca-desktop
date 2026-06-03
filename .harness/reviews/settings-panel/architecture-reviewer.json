@@ -1,0 +1,61 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "settings-panel",
+    "featureId": "settings-panel",
+    "decision": "pass",
+    "createdAt": "2026-06-03T05:05:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src/lib/session.svelte.ts",
+        "src/lib/theme.svelte.ts",
+        "src/lib/components/chat/SettingsDialog.svelte",
+        "src/lib/components/chat/RailNav.svelte",
+        "src/routes/+page.svelte",
+        "src/routes/+layout.svelte"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "ui-core-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs",
+            "src/lib/session.svelte.ts",
+            "src/lib/theme.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Only one impacted core layer: default:command (logout_account in command/mod.rs). lib.rs is the Tauri entry (registration only, no layer). The frontend files are ui and reach the core only via invoke('logout_account'). theme.svelte.ts is ui-only (localStorage + .dark class), no IPC."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "logout_account is added at the command layer (top of types→config→store→zalo→session→command). It depends backward only: session::SessionManager::remove (session layer) to stop the live listener, and store::Db::delete_account (store layer) via the managed StoreState. No new forward/skip dependency, no new layer, and no rusqlite/keyring type crosses up. lib.rs only registers the command in the invoke_handler. architecture-fitness --strict passes (5 rules, 209 files).",
+            "fix": "None required."
+        },
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "logoutAccount() calls invoke('logout_account', { accountId }) then prunes the local per-account bucket + rail entry and, when the last account is removed, resets the reactive view to drop back to the QR gate. The ui→core boundary is preserved: the webview only sends an accountId and receives no credential. theme.svelte.ts is pure ui state.",
+            "fix": "None required. If active-account selection should persist across logout-of-active, consider storing it later; not needed for this slice."
+        }
+    ],
+    "summary": "Architecture review: settings-panel respects ADR-0003. The single new core surface (logout_account) sits correctly at the command layer and depends only backward on session (listener shutdown) and store (account/credential delete). lib.rs is registration only. The frontend (SettingsDialog, theme store, session changes) stays in ui and reaches the core solely through the Tauri invoke boundary; no credential or db/keyring type leaks across. architecture-fitness --strict is green. Approve."
+}

@@ -1,0 +1,43 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "fix-self-listen-outgoing",
+    "featureId": "fix-self-listen-outgoing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T03:40:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers",
+        "no-new-public-api"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "The bug-relevant change is a single call-site flip in command/login_and_listen from zalo::login to zalo::login_with(.., true). Other diff in command/mod.rs (SessionManager + identity backfill) belongs to separate in-flight features and is out of this task's scope."
+    },
+    "confidence": 0.92,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "The change lives entirely in the command layer and calls the pre-existing zalo-layer API login_with(credentials, true). That is a forward dependency (zalo precedes command in types->config->store->zalo->session->command), so no layer boundary moved. login_with already existed and is used by live tests (zalo/mod.rs, session/mod.rs), so no new public API surface was introduced. All four production session-start commands funnel through login_and_listen, so the single flip covers every listener path with no bypass.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review: enabling self_listen is a one-line call-site change in the command layer against the existing zalo::login_with API. No layer-boundary change, no new public API, no ADR trigger. login_and_listen is the single shared production listen path, so the fix is complete and non-duplicated. Approve."
+}

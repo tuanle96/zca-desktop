@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture",
+  "status": "pass",
+  "summary": "Live: search_sticker returned 24 stickers and a real sticker was delivered to the authorized recipient (Zalo returned a 13-char message id). Non-secret diagnostics only (counts + lengths, never recipient/token).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T05:01:37.340Z",
+  "finishedAt": "2026-06-03T05:01:38.998Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+  "stdoutHash": "sha256:964082253cc024b4257684e875e739ace0fb95f9c264bbc1467feab88841adf0",
+  "stderrHash": "sha256:7c322c1966197ca7cd2995e47465c3af6e771778d0aa577bdeca848397b41136",
+  "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stdout.txt",
+    ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stderr.txt"
+  ]
+}

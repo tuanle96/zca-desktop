@@ -1,0 +1,20 @@
+{
+  "name": "ui",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "svelte-check 0/0 then npm run build succeeds with the StickerPicker (Gần đây + pack tabs + search) and sticker bubble rendering wired into the chat pane composer.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T05:01:04.113Z",
+  "finishedAt": "2026-06-03T05:01:12.215Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+  "stdoutHash": "sha256:3e4fd2c8204bc07bdda0227df24c759dbea8d284c99e4d6cfef074e540700a77",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stdout.txt",
+    ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stderr.txt"
+  ]
+}

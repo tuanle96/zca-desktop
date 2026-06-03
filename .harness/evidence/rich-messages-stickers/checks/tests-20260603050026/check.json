@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test offline suite passes including the sticker mapping + persistence tests (sticker_from_content, sticker_image_url, to_sticker, store sticker_message_persists_and_reloads, recent_stickers_track_usage_and_categories).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T05:00:26.820Z",
+  "finishedAt": "2026-06-03T05:00:28.633Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+  "stdoutHash": "sha256:d3749fb9fce2bd4e9378a7898c03d00161b8b32b31296574c73ac26c5b330628",
+  "stderrHash": "sha256:325544c58597522c8b9b622d2d6a7d05606958599204d46b0cdfef1ed7c60d06",
+  "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stdout.txt",
+    ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stderr.txt"
+  ]
+}

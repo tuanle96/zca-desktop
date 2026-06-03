@@ -1,6 +1,6 @@
-[harness] git: branch=main, uncommitted=96 file(s)
-[harness] feature: per-account-routing — Phase 2: Incoming events tagged with accountId and routed to the correct view
-[harness] project: phase=mvp, open_features=6, open_risks=6
+[harness] git: branch=main, uncommitted=39 file(s)
+[harness] feature: rich-messages — Phase 4: Stickers, links, reactions, quote/reply
+[harness] project: phase=mvp, open_features=5, open_risks=6
 [harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message
 [harness] scope-out: Persistence/cache (Phase 3), Rich media/attachments (Phase 4), Cross-install sync relay (Phase 5 stretch), Signed packaging (Phase 6)
 [harness] latest decision: Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.

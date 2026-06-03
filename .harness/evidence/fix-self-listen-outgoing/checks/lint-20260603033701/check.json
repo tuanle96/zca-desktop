@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:37:01.199Z",
+  "finishedAt": "2026-06-03T03:37:02.019Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:63f9bb5150e0f6f018d9ed2d9275ad3b4b0417e78f3dd8c72b9385a91907b323",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:3bb679965f0a12982e07be2b1c71ba457c15ceb768859fabb10911106022ba16",
+  "stdoutPath": ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stdout.txt",
+    ".harness/evidence/fix-self-listen-outgoing/checks/lint-20260603033701/stderr.txt"
+  ]
+}

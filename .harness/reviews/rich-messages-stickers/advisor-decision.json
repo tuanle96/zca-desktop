@@ -1,0 +1,81 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "rich-messages-stickers",
+    "featureId": "rich-messages-stickers",
+    "decision": "pass",
+    "createdAt": "2026-06-03T05:10:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Sticker slice of rich-messages reviewed. Evidence bundle is complete (build/test/lint/structural/ui/smoke all pass), architecture-reviewer confirms layering preserved, and security-reviewer confirms no secret leakage. The two known risks (pack derivation from recent usage, sticker body plaintext at rest) are low-severity and explicitly accepted with documented mitigations. Accept."
+    },
+    "checkedFiles": [
+        "src-tauri/src/types/sticker.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        ".harness/task-contracts/rich-messages-stickers.json",
+        ".harness/evidence/rich-messages-stickers.json",
+        ".harness/reviews/rich-messages-stickers/architecture-reviewer.json",
+        ".harness/reviews/rich-messages-stickers/security-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "forward-only-layering",
+        "secret-never-ipc",
+        "contract-scope-alignment",
+        "evidence-bundle-completeness"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/sticker.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/sticker.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/types/events.rs",
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "All eight changed source files covered. Architecture-reviewer and security-reviewer pass independently. Evidence bundle has all required checks (build/test/lint/structural/ui/smoke) plus the ui artifact."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/rich-messages-stickers.json",
+            "evidence": "Evidence bundle passes all required gates: build, test, lint, structural, ui (npm build), and smoke (live send_sticker_live). Two low-severity known risks accepted with documented owner + mitigation.",
+            "fix": "None required."
+        },
+        {
+            "severity": "info",
+            "file": ".harness/task-contracts/rich-messages-stickers.json",
+            "evidence": "Task contract scope (sticker slice only) matches the evidence bundle. Non-goals (links, reactions, attachments) are explicitly documented. Acceptance criteria all met.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Advisor review: the sticker slice evidence is complete and runnable. Build/test/lint/structural/ui gates are green with attested hashes. The live smoke (send_sticker_live) passed. Architecture and security reviewers independently approve. Known risks are low-severity and accepted. Approve."
+}

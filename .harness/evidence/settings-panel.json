@@ -1,0 +1,137 @@
+{
+    "schemaVersion": 1,
+    "taskId": "settings-panel",
+    "featureId": "settings-panel",
+    "status": "pass",
+    "createdAt": "2026-06-03T05:00:00.000Z",
+    "diffSummary": "The bottom-rail gear now opens a Settings dialog (previously a no-op button with no onclick). New command-layer logout_account(account_id) stops the live session (session::SessionManager::remove, graceful listener shutdown) and deletes the persisted account + AES-GCM credential from SQLite (store::Db::delete_account, ON DELETE CASCADE); the shared keychain master key is left intact for the remaining accounts. Logout is a local forget — no server-side revocation, cached history is preserved — and no credential value ever crosses IPC (only a non-secret diagnostic is logged). Frontend adds: a theme store (light/dark/system, persisted to localStorage, applied via the .dark class and reacting to the system preference), SettingsDialog.svelte (Tài khoản / Giao diện / Dữ liệu / Giới thiệu tabs), session.settingsOpen + session.logoutAccount() (prunes the local bucket/rail and falls back to the QR gate when the last account is removed), the gear button wired to open the dialog, and theme.init() in the root layout.",
+    "changedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src/lib/components/chat/RailNav.svelte",
+        "src/lib/components/chat/SettingsDialog.svelte",
+        "src/lib/session.svelte.ts",
+        "src/lib/theme.svelte.ts",
+        "src/routes/+layout.svelte",
+        "src/routes/+page.svelte"
+    ],
+    "checks": [
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+            "status": "pass",
+            "acceptanceId": "lint",
+            "summary": "cargo clippy -D warnings clean with logout_account + registration",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:51:19.587Z",
+            "finishedAt": "2026-06-03T03:51:20.487Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:d45006197a58d3591511e8220a2f4a8bd039e9a092cd6a66dbadf79d6dc77af2",
+            "stdoutPath": ".harness/evidence/settings-panel/checks/lint-20260603035119/stdout.txt",
+            "stderrPath": ".harness/evidence/settings-panel/checks/lint-20260603035119/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/settings-panel/checks/lint-20260603035119/stdout.txt",
+                ".harness/evidence/settings-panel/checks/lint-20260603035119/stderr.txt"
+            ]
+        },
+        {
+            "name": "typecheck",
+            "command": "npm run check",
+            "status": "pass",
+            "acceptanceId": "typecheck",
+            "summary": "svelte-check 0 errors / 0 warnings with SettingsDialog + theme store + session.logoutAccount",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:51:33.433Z",
+            "finishedAt": "2026-06-03T03:51:36.428Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+            "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/settings-panel/checks/typecheck-20260603035133/stdout.txt",
+            "stderrPath": ".harness/evidence/settings-panel/checks/typecheck-20260603035133/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/settings-panel/checks/typecheck-20260603035133/stdout.txt",
+                ".harness/evidence/settings-panel/checks/typecheck-20260603035133/stderr.txt"
+            ]
+        },
+        {
+            "name": "frontend.build",
+            "command": "npm run build",
+            "status": "pass",
+            "acceptanceId": "build",
+            "summary": "vite production build succeeds with the settings UI (warning-free)",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:51:45.369Z",
+            "finishedAt": "2026-06-03T03:51:53.027Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+            "stdoutHash": "sha256:c44808c78cdd19cc52e30526c962335375a3ca50345a4ff9611bf27a3a192947",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stdout.txt",
+            "stderrPath": ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stdout.txt",
+                ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stderr.txt"
+            ]
+        },
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml command::",
+            "status": "pass",
+            "acceptanceId": "tests",
+            "summary": "command-layer cargo tests pass (6 passed; logout_account boundary + import validation)",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T03:52:00.854Z",
+            "finishedAt": "2026-06-03T03:52:01.698Z",
+            "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+            "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+            "stdoutHash": "sha256:b4e75b89340a26281c98b22f5b1a88a70980cc384a0a3f93d95383887bc12af1",
+            "stderrHash": "sha256:03afb033f64114157bbd3bfae7265782ca33dc018acf9ba2fa95aa32293669dd",
+            "stdoutPath": ".harness/evidence/settings-panel/checks/tests-20260603035200/stdout.txt",
+            "stderrPath": ".harness/evidence/settings-panel/checks/tests-20260603035200/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/settings-panel/checks/tests-20260603035200/stdout.txt",
+                ".harness/evidence/settings-panel/checks/tests-20260603035200/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/settings-panel/advisor-decision.json",
+            "summary": "Advisor pass: settings-panel honestly done; logout_account keeps the credential boundary intact, evidence fully attested, required reviewers green."
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/settings-panel/security-reviewer.json",
+            "summary": "Security pass: non-secret accountId in, encrypted credential deleted via CASCADE, keychain master key preserved, no token logged/returned; local-forget residual accepted."
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/settings-panel/architecture-reviewer.json",
+            "summary": "Architecture pass: logout_account sits at the command layer, depends only backward on session + store; ui reaches core solely via invoke."
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "logout-local-forget-only",
+            "severity": "low",
+            "description": "logout_account forgets the account on this device (stops the listener, deletes the encrypted credential) but does not revoke the session server-side, so the Zalo bearer cookie may stay valid remotely until it expires; zca-rust exposes no verified logout endpoint.",
+            "disposition": "accepted",
+            "owner": "tuanle96",
+            "mitigation": "Credential is deleted locally so it cannot be reused from this install; gate true remote revocation behind a verified zca-rust endpoint with live-test evidence when one exists.",
+            "acceptedBy": "tuanle96",
+            "acceptanceReason": "Personal-use client; local forget is the intended scope for this slice and matches the unofficial-API posture (no verified server-side logout)."
+        }
+    ],
+    "updatedAt": "2026-06-03T05:10:00.000Z"
+}

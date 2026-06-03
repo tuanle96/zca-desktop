@@ -50,6 +50,16 @@ export type Group = {
 
 export type ThreadKind = "user" | "group";
 
+// A sticker reference, mirrored from the core `Sticker` DTO. `url` is a
+// renderable image URL on the allowlisted Zalo emoticon CDN; the three ids are
+// what Zalo needs to (re)send the sticker.
+export type Sticker = {
+    id: number;
+    catId: number;
+    stickerType: number;
+    url: string;
+};
+
 export type IncomingMessage = {
     accountId: string;
     threadId: string;
@@ -57,6 +67,7 @@ export type IncomingMessage = {
     fromId: string;
     fromName: string | null;
     text: string | null;
+    sticker: Sticker | null;
     msgId: string;
     timestamp: string;
     isSelf: boolean;
@@ -64,10 +75,12 @@ export type IncomingMessage = {
 
 // A chat bubble rendered in the conversation pane. Outgoing messages are
 // created optimistically; incoming ones come from the zalo://message stream.
+// A sticker bubble carries `sticker` (rendered as an image) instead of text.
 export type ChatMessage = {
     id: string;
     threadId: string;
     body: string;
+    sticker: Sticker | null;
     outgoing: boolean;
     authorName: string | null;
     at: number;
@@ -103,6 +116,7 @@ export type StoredMessage = {
     fromId: string | null;
     fromName: string | null;
     body: string | null;
+    sticker: Sticker | null;
     outgoing: boolean;
     ts: number | null;
 };

@@ -6,6 +6,7 @@
   import ContactList from "$lib/components/chat/ContactList.svelte";
   import ChatPane from "$lib/components/chat/ChatPane.svelte";
   import QrLoginScreen from "$lib/components/chat/QrLoginScreen.svelte";
+  import SettingsDialog from "$lib/components/chat/SettingsDialog.svelte";
   import { session } from "$lib/session.svelte";
 
   // Try to restore a saved session before showing the QR gate.
@@ -29,6 +30,9 @@
     <div class="fixed inset-0 z-50">
       <QrLoginScreen adding />
     </div>
+  {/if}
+  {#if session.settingsOpen}
+    <SettingsDialog />
   {/if}
 {:else if session.restoring}
   <div class="bg-background flex h-screen w-screen flex-col items-center justify-center gap-3">

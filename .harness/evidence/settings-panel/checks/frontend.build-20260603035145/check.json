@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "vite production build succeeds with the settings UI (warning-free)",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:51:45.369Z",
+  "finishedAt": "2026-06-03T03:51:53.027Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+  "stdoutHash": "sha256:c44808c78cdd19cc52e30526c962335375a3ca50345a4ff9611bf27a3a192947",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stdout.txt",
+  "stderrPath": ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stdout.txt",
+    ".harness/evidence/settings-panel/checks/frontend.build-20260603035145/stderr.txt"
+  ]
+}

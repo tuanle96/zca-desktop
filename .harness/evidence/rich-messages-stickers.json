@@ -1,0 +1,181 @@
+{
+  "schemaVersion": 1,
+  "taskId": "rich-messages-stickers",
+  "featureId": "rich-messages-stickers",
+  "status": "pass",
+  "createdAt": "2026-06-03T05:05:00.000Z",
+  "diffSummary": "Sticker slice of rich messaging: zca-desktop can now render, send, and receive Zalo stickers, with a composer sticker picker (G\u1ea7n \u0111\u00e2y + per-pack tabs + search) and restart-persistent sticker history. types/sticker.rs adds a non-secret Sticker DTO (id, catId, type, render url) re-exported from types/mod.rs and carried on IncomingMessage (types/events.rs) and StoredMessage (types/stored.rs). zalo/mod.rs maps an incoming msgType=chat.sticker into a Sticker (sticker_from_content; numeric ids survive zca-rust's untagged MessageContent::Other), builds the Zalo emoticon CDN render URL (sticker_image_url, host already in the CSP img-src allowlist), and wraps the zca-rust facade for send_sticker, search_stickers, and sticker_category (get_sticker_category_detail) with zca-rust types confined to the zalo layer. session/ reuses the per-account send throttle (ban-risk r1) for stickers. store/db.rs migrates the schema (v2 sticker columns on messages + v3 recent_stickers table) and adds save_sticker_message (echo-dedupe), load_recent_messages sticker reconstruction, and record_recent_sticker/load_recent_stickers/load_recent_sticker_categories (recent + derived pack tabs, since Zalo exposes no owned-packs endpoint). command/mod.rs adds send_sticker + search_stickers + recent_stickers + sticker_categories + sticker_category, routes incoming stickers through save_sticker_message, and records recents on send; lib.rs registers the new commands. Frontend (covered by the npm build/check checks) adds the StickerPicker and sticker bubble rendering. No credential or token value crosses IPC; sticker payloads are non-secret display data.",
+  "changedFiles": [
+    "src-tauri/src/types/sticker.rs",
+    "src-tauri/src/types/mod.rs",
+    "src-tauri/src/types/events.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/lib.rs"
+  ],
+  "checks": [
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test offline suite passes including the sticker mapping + persistence tests (sticker_from_content, sticker_image_url, to_sticker, store sticker_message_persists_and_reloads, recent_stickers_track_usage_and_categories).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:00:26.820Z",
+      "finishedAt": "2026-06-03T05:00:28.633Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:d3749fb9fce2bd4e9378a7898c03d00161b8b32b31296574c73ac26c5b330628",
+      "stderrHash": "sha256:325544c58597522c8b9b622d2d6a7d05606958599204d46b0cdfef1ed7c60d06",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/tests-20260603050026/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean with the sticker DTO, zalo mapping/send/search, store migration + repositories, and command wiring.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:00:35.977Z",
+      "finishedAt": "2026-06-03T05:00:37.133Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:3f07732dfb533c0a043eea69d62ac097d650a47a7d3370f4cd691414ae1d3081",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/lint-20260603050035/stderr.txt"
+      ]
+    },
+    {
+      "name": "build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles the full sticker slice (types/zalo/session/store/command + lib registration).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:00:45.023Z",
+      "finishedAt": "2026-06-03T05:00:46.923Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:0a31d7ec5c752af108fce0ad4c52d15dbda0be9cfaf022d2046a09878f6271f3",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/build-20260603050045/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "npm run --silent harness:check",
+      "status": "pass",
+      "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:00:53.959Z",
+      "finishedAt": "2026-06-03T05:00:54.279Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/structural-20260603050053/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/structural-20260603050053/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/structural-20260603050053/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/structural-20260603050053/stderr.txt"
+      ]
+    },
+    {
+      "name": "ui",
+      "command": "npm run build",
+      "status": "pass",
+      "summary": "svelte-check 0/0 then npm run build succeeds with the StickerPicker (G\u1ea7n \u0111\u00e2y + pack tabs + search) and sticker bubble rendering wired into the chat pane composer.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:01:04.113Z",
+      "finishedAt": "2026-06-03T05:01:12.215Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:3e4fd2c8204bc07bdda0227df24c759dbea8d284c99e4d6cfef074e540700a77",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stderr.txt"
+      ],
+      "artifact": ".harness/evidence/rich-messages-stickers/checks/ui-20260603050104/stdout.txt"
+    },
+    {
+      "name": "smoke",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture",
+      "status": "pass",
+      "summary": "Live: search_sticker returned 24 stickers and a real sticker was delivered to the authorized recipient (Zalo returned a 13-char message id). Non-secret diagnostics only (counts + lengths, never recipient/token).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T05:01:37.340Z",
+      "finishedAt": "2026-06-03T05:01:38.998Z",
+      "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+      "workingTreeHash": "sha256:32826037b4f0de099bf13d74d7daf6ec16498b99a00821823961aa5d027c8cf6",
+      "stdoutHash": "sha256:964082253cc024b4257684e875e739ace0fb95f9c264bbc1467feab88841adf0",
+      "stderrHash": "sha256:7c322c1966197ca7cd2995e47465c3af6e771778d0aa577bdeca848397b41136",
+      "stdoutPath": ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stdout.txt",
+        ".harness/evidence/rich-messages-stickers/checks/smoke-20260603050137/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages-stickers/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages-stickers/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages-stickers/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "sticker-packs-derived-from-recent",
+      "severity": "low",
+      "description": "Zalo/zca-rust expose no list-owned-sticker-packs endpoint, so the picker's pack tabs are derived from the cat_ids of recently-used stickers (local SQLite history) plus search, rather than the user's full owned-pack catalog.",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "An explicit non-goal of the sticker slice (the contract notes Zalo has no owned-packs endpoint). Recent + search covers the common case; a full catalog is a later slice if an endpoint is found.",
+      "mitigation": "If an owned-packs endpoint is later verified in zca-rust, add a sticker_packs command and replace the derived tabs."
+    },
+    {
+      "id": "sticker-body-plaintext-at-rest",
+      "severity": "low",
+      "description": "Sticker rows persist non-secret metadata (sticker id/cat/type/url, body '[Sticker]') in plaintext in the local SQLite store, consistent with message-cache's plaintext message bodies (ADR-0005 whole-DB encryption deferred).",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "security-reviewer",
+      "acceptanceReason": "Sticker metadata is public display data, not a bearer token. Matches the already-accepted message-cache plaintext-at-rest posture; the credential triple remains AES-256-GCM encrypted.",
+      "mitigation": "Whole-DB encryption (deferred to a future ADR per ADR-0005) would cover this."
+    }
+  ],
+  "updatedAt": "2026-06-03T05:05:00.000Z"
+}

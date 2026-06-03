@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy -D warnings clean with logout_account + registration",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T03:51:19.587Z",
+  "finishedAt": "2026-06-03T03:51:20.487Z",
+  "gitHead": "10e7d0b40157a24b4954a4f96c449a35051c2326",
+  "workingTreeHash": "sha256:7485b4b588297c13c602df2823809c532497a775f06190bc95bb66a1de540dfa",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:d45006197a58d3591511e8220a2f4a8bd039e9a092cd6a66dbadf79d6dc77af2",
+  "stdoutPath": ".harness/evidence/settings-panel/checks/lint-20260603035119/stdout.txt",
+  "stderrPath": ".harness/evidence/settings-panel/checks/lint-20260603035119/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/settings-panel/checks/lint-20260603035119/stdout.txt",
+    ".harness/evidence/settings-panel/checks/lint-20260603035119/stderr.txt"
+  ]
+}

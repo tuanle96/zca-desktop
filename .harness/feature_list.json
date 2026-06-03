@@ -55,7 +55,7 @@
     },
     {
       "id": "app-csp-hardening",
-      "title": "Harness: pre-credential hardening — baseline CSP, product title, clean type-check",
+      "title": "Harness: pre-credential hardening \u2014 baseline CSP, product title, clean type-check",
       "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/app-csp-hardening.json",
@@ -327,7 +327,7 @@
           "id": "cmd",
           "title": "command/: list_accounts + set_active_account",
           "done": true,
-          "notes": "Implemented frontend-side instead of as Rust commands: the session store lists accounts (rail from login/restore profiles) and sets the active one (switchAccount/activate). No backend command needed — accounts come from existing login/restore. See account-switcher contract."
+          "notes": "Implemented frontend-side instead of as Rust commands: the session store lists accounts (rail from login/restore profiles) and sets the active one (switchAccount/activate). No backend command needed \u2014 accounts come from existing login/restore. See account-switcher contract."
         },
         {
           "id": "ui",
@@ -344,7 +344,7 @@
     {
       "id": "per-account-routing",
       "title": "Phase 2: Incoming events tagged with accountId and routed to the correct view",
-      "passes": false,
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/per-account-routing.json",
       "evidencePath": ".harness/evidence/per-account-routing.json",
@@ -352,17 +352,18 @@
         {
           "id": "types",
           "title": "types/: AppEvent { account_id, payload }",
-          "done": false
+          "done": true,
+          "notes": "Realized as types::IncomingMessage.account_id (the zalo listener stamps each event with api.get_own_id()) rather than a separate AppEvent wrapper \u2014 see contract scope + architecture-reviewer decision."
         },
         {
           "id": "route",
           "title": "Frontend store keyed by account_id",
-          "done": false
+          "done": true
         },
         {
           "id": "smoke",
           "title": "Message on account B does not leak into account A view",
-          "done": false
+          "done": true
         }
       ]
     },
@@ -458,7 +459,7 @@
     },
     {
       "id": "thread-list",
-      "title": "Phase 4: List friends/contacts (get_all_friends) in a scrollable Danh bạ pane",
+      "title": "Phase 4: List friends/contacts (get_all_friends) in a scrollable Danh b\u1ea1 pane",
       "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/thread-list.json",
@@ -477,17 +478,109 @@
       ]
     },
     {
+      "id": "fix-thread-avatar-persistence",
+      "title": "Bugfix: persist conversation identity (title + avatar) so chat history shows the right name/avatar after restart (realtime messages carry no avatar; backfill from the contacts/groups directory)",
+      "passes": true,
+      "domain": "default",
+      "classification": "normal",
+      "taskContractPath": ".harness/task-contracts/fix-thread-avatar-persistence.json",
+      "evidencePath": ".harness/evidence/fix-thread-avatar-persistence.json",
+      "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer"
+      ],
+      "steps": [
+        {
+          "id": "types-store",
+          "title": "types/: ThreadIdentity DTO; store/: backfill_thread_identities UPDATEs existing threads' title+avatar (COALESCE, no insert)",
+          "done": true
+        },
+        {
+          "id": "cmd",
+          "title": "command/: list_contacts/list_groups backfill thread identities from the fetched directory after loading",
+          "done": true
+        },
+        {
+          "id": "smoke",
+          "title": "Restart restores the persisted thread title + avatar with no realtime event or directory fetch",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "settings-panel",
+      "title": "Settings dialog from the bottom-rail gear: account info + logout (forget account), theme (light/dark/system), local data stats, about",
+      "passes": true,
+      "domain": "default",
+      "classification": "normal",
+      "taskContractPath": ".harness/task-contracts/settings-panel.json",
+      "evidencePath": ".harness/evidence/settings-panel.json",
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "steps": [
+        {
+          "id": "command",
+          "title": "command/: logout_account(account_id) stops the live session (SessionManager::remove) + deletes the persisted account/credential (Db::delete_account, CASCADE); keychain master key kept for other accounts; no secret crosses IPC",
+          "done": true
+        },
+        {
+          "id": "ui",
+          "title": "frontend: theme store (light/dark/system, localStorage + .dark class), SettingsDialog (T\u00e0i kho\u1ea3n/Giao di\u1ec7n/D\u1eef li\u1ec7u/Gi\u1edbi thi\u1ec7u), session.settingsOpen + logoutAccount(); rail gear opens the dialog",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "svelte-check 0/0 + npm run build + cargo clippy -D warnings + cargo test (command layer) pass; architecture fitness OK",
+          "done": true
+        },
+        {
+          "id": "smoke",
+          "title": "Live GUI: gear opens Settings, theme toggle persists across relaunch, logout forgets the active account (core log 'logout_account: forgot account ...') and drops to the QR gate when it was the last account",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "fix-self-listen-outgoing",
+      "title": "Bugfix: render the account's own messages sent from another Zalo device (enable self_listen on the production listen path so the realtime listener surfaces is_self messages, not just incoming ones)",
+      "passes": true,
+      "domain": "default",
+      "classification": "normal",
+      "taskContractPath": ".harness/task-contracts/fix-self-listen-outgoing.json",
+      "evidencePath": ".harness/evidence/fix-self-listen-outgoing.json",
+      "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer",
+        "reliability-reviewer"
+      ],
+      "steps": [
+        {
+          "id": "command",
+          "title": "command/: login_and_listen logs in with zalo::login_with(credentials, true) so the listener delivers self-authored messages from any device",
+          "done": true
+        },
+        {
+          "id": "smoke",
+          "title": "Live: a message sent from the original Zalo app on another device renders in zca-desktop as an outgoing bubble, exactly once, without bumping unread",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "rich-messages",
-      "title": "Phase 4: Stickers, links, reactions, quote/reply",
+      "title": "Phase 4: Stickers (sticker slice complete), links, reactions, quote/reply",
       "passes": false,
       "domain": "default",
-      "taskContractPath": ".harness/task-contracts/rich-messages.json",
-      "evidencePath": ".harness/evidence/rich-messages.json",
+      "taskContractPath": ".harness/task-contracts/rich-messages-stickers.json",
+      "evidencePath": ".harness/evidence/rich-messages-stickers.json",
       "steps": [
         {
           "id": "cmd",
-          "title": "command/: send_sticker/send_link/add_reaction/undo",
-          "done": false
+          "title": "Sticker slice: send_sticker, search_stickers, sticker_category, StickerPicker (links/reactions/quote pending)",
+          "done": true
         },
         {
           "id": "smoke",

@@ -5,14 +5,13 @@
 //! return only non-secret DTOs to the frontend. Credential token values
 //! (imei/cookie/userAgent) are never serialized back across the IPC bridge.
 
-use std::collections::HashMap;
 use std::sync::Arc;
 
 use tauri::{AppHandle, Emitter, State};
-use tokio::sync::Mutex;
 
-use crate::types::{AccountId, AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent};
-use crate::zalo::{self, Listener, API};
+use crate::session::SessionManager;
+use crate::types::{AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent, Sticker};
+use crate::zalo::{self, API};
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";
@@ -20,18 +19,13 @@ pub const MESSAGE_EVENT: &str = "zalo://message";
 /// Tauri event name the frontend subscribes to for QR-login progress.
 pub const QR_EVENT: &str = "zalo://qr";
 
-/// Holds authenticated sessions and their realtime listeners so both stay alive
-/// for the app lifetime. Registered as Tauri managed state in `run()`.
-///
-/// This is the minimal single-process session store; the multi-account
-/// `SessionManager` (session-manager feature) will generalize it.
+/// Managed multi-account session store. Wraps the `session` layer's
+/// [`SessionManager`], which owns one authenticated [`API`] + realtime listener
+/// per account, their add/remove/restart lifecycle (with graceful listener
+/// shutdown), and the per-account send throttle. Registered as Tauri managed
+/// state in `run()`.
 #[derive(Default)]
-pub struct ListenerState {
-    /// Authenticated API handles keyed by account id.
-    sessions: Mutex<HashMap<AccountId, Arc<API>>>,
-    /// Live listener handles (kept so their sockets are not dropped).
-    listeners: Mutex<Vec<Listener>>,
-}
+pub struct SessionState(pub SessionManager<Arc<API>>);
 
 /// Managed handle to the local SQLite store (ADR-0005). `None` when the store
 /// failed to open (logging still works; persistence becomes a no-op).
@@ -85,14 +79,14 @@ pub async fn login(payload: String) -> Result<AccountProfile, String> {
 #[tauri::command]
 pub async fn start_listening(
     app: AppHandle,
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
     store: State<'_, StoreState>,
     payload: String,
 ) -> Result<AccountProfile, String> {
     let credentials: Credentials = serde_json::from_str(&payload)
         .map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
-    login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await
+    login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await
 }
 
 /// Run the interactive QR-code login flow and, on success, start the realtime
@@ -106,7 +100,7 @@ pub async fn start_listening(
 #[tauri::command]
 pub async fn start_qr_login(
     app: AppHandle,
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
     store: State<'_, StoreState>,
 ) -> Result<AccountProfile, String> {
     tracing::info!("start_qr_login: beginning interactive QR login");
@@ -132,7 +126,7 @@ pub async fn start_qr_login(
     let _ = pump.await;
 
     tracing::info!("start_qr_login: QR confirmed, establishing session");
-    let result = login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await;
+    let result = login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await;
     match &result {
         Ok(profile) => tracing::info!(account_id = %profile.account_id, "start_qr_login: session established"),
         Err(e) => tracing::error!(error = %e, "start_qr_login: session login failed after QR"),
@@ -149,7 +143,7 @@ pub async fn start_qr_login(
 /// crosses IPC.
 async fn login_and_listen(
     app: &AppHandle,
-    state: &ListenerState,
+    sessions: &SessionManager<Arc<API>>,
     credentials: Credentials,
     store: Option<&Arc<crate::store::Db>>,
     save_cred: bool,
@@ -157,17 +151,18 @@ async fn login_and_listen(
     // Keep a copy for encrypted credential persistence before login consumes it.
     let to_persist = if save_cred { Some(credentials.clone()) } else { None };
 
+    // `self_listen = true`: the realtime listener must surface this account's
+    // OWN messages too, so a message the user sends from the original Zalo app
+    // (phone/web) renders here as an outgoing bubble. zca-rust drops every
+    // `message.is_self` event when self_listen is off. Same-device send echoes
+    // are deduped downstream (store + frontend, see fix-outgoing-echo-dupe), so
+    // enabling this does not double-render our own sends from this app.
     let api = Arc::new(
-        zalo::login(credentials)
+        zalo::login_with(credentials, true)
             .await
             .map_err(|e| format!("login failed: {e}"))?,
     );
     let profile = zalo::profile_of(&api).await;
-    state
-        .sessions
-        .lock()
-        .await
-        .insert(profile.account_id.clone(), api.clone());
 
     // Persist the account + encrypted credential (best-effort; a store failure
     // must not break an otherwise-successful login).
@@ -179,10 +174,13 @@ async fn login_and_listen(
     }
 
     let (tx, mut rx) = tokio::sync::mpsc::channel::<IncomingMessage>(256);
-    let listener = zalo::start_message_listener(api, tx)
+    let listener = zalo::start_message_listener(api.clone(), tx)
         .await
         .map_err(|e| format!("listener failed to start: {e}"))?;
-    state.listeners.lock().await.push(listener);
+
+    // Register the session in the manager. A prior session for this account is
+    // treated as a restart: its listener is gracefully stopped before replace.
+    sessions.insert(profile.account_id.clone(), api, listener).await;
 
     // The bridge persists each observed message to the local store (ADR-0005)
     // before forwarding it to the UI, so history survives restarts.
@@ -212,6 +210,37 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
     // Realtime events carry no reliable epoch; stamp with receive time (millis).
     let ts = now_millis();
     let bump_unread = !msg.is_self;
+
+    // Sticker messages go through the sticker repository so the image survives a
+    // restart; everything else is stored as text.
+    if let Some(sticker) = msg.sticker.as_ref() {
+        match db.save_sticker_message(
+            &msg.account_id,
+            &msg.thread_id,
+            kind,
+            &msg.msg_id,
+            Some(&msg.from_id),
+            msg.from_name.as_deref(),
+            sticker,
+            msg.is_self,
+            Some(ts),
+            msg.from_name.as_deref(),
+            None,
+            bump_unread,
+        ) {
+            Ok(()) => tracing::debug!(
+                account_id = %msg.account_id,
+                thread_id = %msg.thread_id,
+                msg_id = %msg.msg_id,
+                is_self = msg.is_self,
+                sticker_id = sticker.id,
+                "persisted incoming sticker message"
+            ),
+            Err(e) => tracing::warn!(error = %e, "failed to persist incoming sticker message"),
+        }
+        return;
+    }
+
     match db.save_message(
         &msg.account_id,
         &msg.thread_id,
@@ -253,7 +282,7 @@ fn now_millis() -> i64 {
 #[tauri::command]
 pub async fn restore_sessions(
     app: AppHandle,
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
     store: State<'_, StoreState>,
 ) -> Result<Vec<AccountProfile>, String> {
     let Some(db) = store.0.clone() else {
@@ -267,7 +296,7 @@ pub async fn restore_sessions(
         let account_id = account.profile.account_id.clone();
         // Credential is unchanged: persist messages (Some(db)) but not the
         // credential again (save_cred = false).
-        match login_and_listen(&app, &state, account.credentials, Some(&db), false).await {
+        match login_and_listen(&app, &state.0, account.credentials, Some(&db), false).await {
             Ok(profile) => restored.push(profile),
             Err(e) => {
                 tracing::warn!(account_id = %account_id, error = %e, "restore failed; marking reauth-needed");
@@ -331,11 +360,11 @@ pub async fn login_from_file() -> Result<AccountProfile, String> {
 #[tauri::command]
 pub async fn start_listening_from_file(
     app: AppHandle,
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
     store: State<'_, StoreState>,
 ) -> Result<AccountProfile, String> {
     let credentials = read_dev_credentials()?;
-    login_and_listen(&app, &state, credentials, store.0.as_ref(), true).await
+    login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await
 }
 
 /// Send a plain-text message to a user thread from an already-authenticated
@@ -346,7 +375,7 @@ pub async fn start_listening_from_file(
 /// `thread_id` and `text` are validated at this boundary.
 #[tauri::command]
 pub async fn send_message(
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
     store: State<'_, StoreState>,
     account_id: String,
     thread_id: String,
@@ -358,14 +387,11 @@ pub async fn send_message(
     if text.trim().is_empty() {
         return Err("message text is required".to_string());
     }
-    let api = {
-        let sessions = state.sessions.lock().await;
-        sessions
-            .get(&account_id)
-            .cloned()
-            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
-    };
-    let msg_id = zalo::send_text(&api, &thread_id, &text)
+    // Delegate to the session layer: it resolves the authenticated session,
+    // applies the per-account send throttle (ban-risk r1), and sends.
+    let msg_id = state
+        .0
+        .send_text(&account_id, &thread_id, &text)
         .await
         .map_err(|e| format!("send failed: {e}"))?;
 
@@ -397,6 +423,158 @@ pub async fn send_message(
         }
     }
     Ok(msg_id)
+}
+
+/// Send a sticker to a thread from an already-authenticated account, returning
+/// the new message id.
+///
+/// Requires a prior login for `account_id` (the session is reused from managed
+/// state). The sticker triple (`id`/`catId`/`type`) + render url come from the
+/// picker (`search_stickers`). The send is paced by the per-account throttle in
+/// the session layer (ban-risk r1) and persisted so it survives a restart.
+#[tauri::command]
+pub async fn send_sticker(
+    state: State<'_, SessionState>,
+    store: State<'_, StoreState>,
+    account_id: String,
+    thread_id: String,
+    kind: crate::types::ThreadKind,
+    sticker: Sticker,
+) -> Result<String, String> {
+    if thread_id.trim().is_empty() {
+        return Err("thread_id is required".to_string());
+    }
+    if sticker.id == 0 {
+        return Err("a sticker id is required".to_string());
+    }
+
+    let msg_id = state
+        .0
+        .send_sticker(&account_id, &thread_id, &sticker, kind)
+        .await
+        .map_err(|e| format!("send sticker failed: {e}"))?;
+
+    // Persist the outgoing sticker (best-effort) so it survives restart. Use a
+    // local id when the API returned an empty one so the row is still stored.
+    if let Some(db) = store.0.as_ref() {
+        let stored_id = if msg_id.is_empty() {
+            format!("local-{}", now_millis())
+        } else {
+            msg_id.clone()
+        };
+        let kind_str = match kind {
+            crate::types::ThreadKind::Group => "group",
+            crate::types::ThreadKind::User => "user",
+        };
+        if let Err(e) = db.save_sticker_message(
+            &account_id,
+            &thread_id,
+            kind_str,
+            &stored_id,
+            Some(&account_id),
+            None,
+            &sticker,
+            true,
+            Some(now_millis()),
+            None,
+            None,
+            false,
+        ) {
+            tracing::warn!(error = %e, "failed to persist outgoing sticker");
+        } else {
+            tracing::debug!(account_id = %account_id, thread_id = %thread_id, msg_id = %stored_id, sticker_id = sticker.id, "persisted outgoing sticker");
+        }
+        // Record it in the per-account recent-sticker history for the picker.
+        if let Err(e) = db.record_recent_sticker(&account_id, &sticker, now_millis()) {
+            tracing::warn!(error = %e, "failed to record recent sticker");
+        }
+    }
+    Ok(msg_id)
+}
+
+/// Search stickers by keyword for the composer's sticker picker.
+///
+/// Reuses the stored session for `account_id`. Returns non-secret [`Sticker`]
+/// DTOs (ids + a render url) the UI shows in a grid and can re-send.
+#[tauri::command]
+pub async fn search_stickers(
+    state: State<'_, SessionState>,
+    account_id: String,
+    keyword: String,
+    limit: Option<u32>,
+) -> Result<Vec<Sticker>, String> {
+    let term = keyword.trim();
+    if term.is_empty() {
+        return Err("a search keyword is required".to_string());
+    }
+    let api = state
+        .0
+        .get(&account_id)
+        .await
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    // Cap the grid; default to a reasonable page.
+    let limit = limit.unwrap_or(40).clamp(1, 200);
+    zalo::search_stickers(&api, term, limit)
+        .await
+        .map_err(|e| format!("sticker search failed: {e}"))
+}
+
+/// The account's recently-used stickers for the picker's "Gần đây" row, newest
+/// first. Read straight from the local store (no network); returns an empty
+/// list when no store is open.
+#[tauri::command]
+pub fn recent_stickers(
+    store: State<'_, StoreState>,
+    account_id: String,
+    limit: Option<i64>,
+) -> Result<Vec<Sticker>, String> {
+    let Some(db) = store.0.as_ref() else {
+        return Ok(Vec::new());
+    };
+    let limit = limit.unwrap_or(24).clamp(1, 100);
+    db.load_recent_stickers(&account_id, limit)
+        .map_err(|e| format!("load recent stickers failed: {e}"))
+}
+
+/// The distinct sticker categories (pack ids) the account has used recently, so
+/// the picker can show selectable pack tabs (Zalo exposes no "owned packs"
+/// endpoint). Newest-used first; read from the local store.
+#[tauri::command]
+pub fn sticker_categories(
+    store: State<'_, StoreState>,
+    account_id: String,
+    limit: Option<i64>,
+) -> Result<Vec<i64>, String> {
+    let Some(db) = store.0.as_ref() else {
+        return Ok(Vec::new());
+    };
+    let limit = limit.unwrap_or(12).clamp(1, 50);
+    db.load_recent_sticker_categories(&account_id, limit)
+        .map_err(|e| format!("load sticker categories failed: {e}"))
+}
+
+/// Load all stickers in a category ("pack") for the picker's per-pack tab.
+///
+/// Reuses the stored session for `account_id`. Returns non-secret [`Sticker`]
+/// DTOs (ids + a render url). Used when the user taps a pack tab derived from
+/// their recent categories.
+#[tauri::command]
+pub async fn sticker_category(
+    state: State<'_, SessionState>,
+    account_id: String,
+    cat_id: i64,
+) -> Result<Vec<Sticker>, String> {
+    if cat_id == 0 {
+        return Err("a category id is required".to_string());
+    }
+    let api = state
+        .0
+        .get(&account_id)
+        .await
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    zalo::sticker_category(&api, cat_id)
+        .await
+        .map_err(|e| format!("load sticker pack failed: {e}"))
 }
 
 /// Load persisted conversation history (threads + recent messages) for an
@@ -459,42 +637,130 @@ pub fn store_stats(
 /// List the friends/contacts of an authenticated account.
 ///
 /// Reuses the stored session for `account_id` (log in first). Returns non-secret
-/// [`Contact`] DTOs sorted by display name.
+/// [`Contact`] DTOs sorted by display name. As a side effect, the resolved
+/// contact identities (name + avatar) are backfilled onto any already-persisted
+/// thread rows so a DM's title/avatar survives a restart — the realtime message
+/// stream carries no avatar, so the directory is the only source.
 #[tauri::command]
 pub async fn list_contacts(
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
+    store: State<'_, StoreState>,
     account_id: String,
 ) -> Result<Vec<Contact>, String> {
-    let api = {
-        let sessions = state.sessions.lock().await;
-        sessions
-            .get(&account_id)
-            .cloned()
-            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
-    };
-    zalo::list_contacts(&api)
+    let api = state
+        .0
+        .get(&account_id)
         .await
-        .map_err(|e| format!("failed to load contacts: {e}"))
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    let contacts = zalo::list_contacts(&api)
+        .await
+        .map_err(|e| format!("failed to load contacts: {e}"))?;
+
+    if let Some(db) = store.0.as_ref() {
+        let identities: Vec<crate::types::ThreadIdentity> = contacts
+            .iter()
+            .map(|c| crate::types::ThreadIdentity {
+                thread_id: c.user_id.clone(),
+                title: Some(c.display_name.clone()),
+                avatar: c.avatar.clone(),
+            })
+            .collect();
+        backfill_identities(db, &account_id, &identities);
+    }
+    Ok(contacts)
 }
 
 /// List the groups of an authenticated account (id + name + avatar), so the UI
 /// can resolve a group thread's display name/avatar instead of showing the last
-/// sender. Reuses the stored session for `account_id`.
+/// sender. Reuses the stored session for `account_id`. As a side effect, the
+/// resolved group identities are backfilled onto any already-persisted thread
+/// rows so a group conversation's title/avatar survives a restart.
 #[tauri::command]
 pub async fn list_groups(
-    state: State<'_, ListenerState>,
+    state: State<'_, SessionState>,
+    store: State<'_, StoreState>,
     account_id: String,
 ) -> Result<Vec<crate::types::Group>, String> {
-    let api = {
-        let sessions = state.sessions.lock().await;
-        sessions
-            .get(&account_id)
-            .cloned()
-            .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?
-    };
-    zalo::list_groups(&api)
+    let api = state
+        .0
+        .get(&account_id)
         .await
-        .map_err(|e| format!("failed to load groups: {e}"))
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    let groups = zalo::list_groups(&api)
+        .await
+        .map_err(|e| format!("failed to load groups: {e}"))?;
+
+    if let Some(db) = store.0.as_ref() {
+        let identities: Vec<crate::types::ThreadIdentity> = groups
+            .iter()
+            .map(|g| crate::types::ThreadIdentity {
+                thread_id: g.group_id.clone(),
+                title: Some(g.name.clone()),
+                avatar: g.avatar.clone(),
+            })
+            .collect();
+        backfill_identities(db, &account_id, &identities);
+    }
+    Ok(groups)
+}
+
+/// Persist resolved conversation identities onto existing thread rows
+/// (best-effort; a store failure is logged and never fails the directory load).
+/// Only threads that already exist are enriched — a directory entry with no
+/// conversation does not create a row. Logs the non-secret updated-row count.
+fn backfill_identities(
+    db: &Arc<crate::store::Db>,
+    account_id: &str,
+    identities: &[crate::types::ThreadIdentity],
+) {
+    match db.backfill_thread_identities(account_id, identities) {
+        Ok(updated) => tracing::debug!(
+            account_id = %account_id,
+            candidates = identities.len(),
+            updated,
+            "backfilled thread identities from directory"
+        ),
+        Err(e) => tracing::warn!(error = %e, "failed to backfill thread identities"),
+    }
+}
+
+/// Log out (forget) an account on this device.
+///
+/// Stops the account's live session — the realtime listener socket is closed
+/// gracefully via [`SessionManager::remove`] — and removes its persisted row +
+/// encrypted credential from the local store (`delete_account`; the credential
+/// row is dropped by `ON DELETE CASCADE`). The shared keychain master key is
+/// left intact for any remaining accounts.
+///
+/// This is a LOCAL forget: it does not revoke the session server-side (zca-rust
+/// exposes no verified logout endpoint). Cached threads/messages are preserved
+/// so a later re-login can restore the history. No credential value ever
+/// crosses IPC; only a non-secret diagnostic is logged.
+#[tauri::command]
+pub async fn logout_account(
+    state: State<'_, SessionState>,
+    store: State<'_, StoreState>,
+    account_id: String,
+) -> Result<(), String> {
+    if account_id.trim().is_empty() {
+        return Err("account_id is required".to_string());
+    }
+
+    // Stop the in-memory session (graceful listener shutdown) if one is live.
+    let had_session = state.0.remove(&account_id).await;
+
+    // Remove the persisted account + its encrypted credential (CASCADE).
+    if let Some(db) = store.0.as_ref() {
+        db.delete_account(&account_id)
+            .map_err(|e| format!("failed to forget account: {e}"))?;
+    }
+
+    tracing::info!(
+        account_id = %account_id,
+        had_session,
+        "logout_account: forgot account on this device (session stopped + credential removed)"
+    );
+    Ok(())
 }
 
 /// Forward a log line from the webview/UI into the unified tracing sink so

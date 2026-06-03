@@ -1,0 +1,46 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "reliability-reviewer",
+    "taskId": "fix-self-listen-outgoing",
+    "featureId": "fix-self-listen-outgoing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T03:41:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src/lib/session.svelte.ts",
+        "src-tauri/src/types/events.rs"
+    ],
+    "checkedInvariants": [
+        "no-duplicate-render",
+        "dedupe-correctness",
+        "unread-counter-correctness"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reviewed the double-render risk that enabling self_listen introduces (same-device send echo) against the existing store + frontend dedupe."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "low",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "With self_listen on, the listener also redelivers messages sent FROM this app (same-device echo). Both dedupe seams handle it: store save_message skips an outgoing row with same account+thread+body, different msg_id, within ECHO_WINDOW_MS=15000 (plus the (account_id,msg_id) PK ON CONFLICT DO NOTHING), and the frontend appendToBucket reconciles an outgoing echo into the optimistic just-sent bubble (adopting the authoritative id). A message from ANOTHER device has no optimistic bubble, so it correctly appends as a new outgoing bubble. Self messages do not bump unread (persist_incoming bump_unread=!is_self; frontend bumpUnread=!isSelf). Live smoke confirmed: self-from-another-device renders once; self-from-this-app renders once.",
+            "fix": "Accepted pre-existing limitation (from fix-outgoing-echo-dupe): two intentional identical-text sends to one thread within 15s collapse to one. Not introduced or worsened by this change."
+        }
+    ],
+    "summary": "Reliability review: enabling self_listen adds same-device echo traffic, which the existing bounded, deterministic store + frontend dedupe already collapse; other-device self messages append correctly as outgoing bubbles and never inflate unread counts. The only trade-off (identical rapid sends collapsing within 15s) is a pre-existing accepted design, not a regression. No blocking findings; pass."
+}
