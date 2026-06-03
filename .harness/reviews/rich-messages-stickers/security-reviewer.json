@@ -1,83 +1,89 @@
 {
-    "schemaVersion": 1,
-    "reviewer": "security-reviewer",
-    "taskId": "rich-messages-stickers",
-    "featureId": "rich-messages-stickers",
-    "decision": "pass",
-    "createdAt": "2026-06-03T05:10:00.000Z",
-    "checkedFiles": [
-        "src-tauri/src/types/sticker.rs",
-        "src-tauri/src/types/events.rs",
-        "src-tauri/src/types/stored.rs",
-        "src-tauri/src/zalo/mod.rs",
-        "src-tauri/src/store/db.rs",
-        "src-tauri/src/command/mod.rs"
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "rich-messages-stickers",
+  "featureId": "rich-messages-stickers",
+  "decision": "pass",
+  "createdAt": "2026-06-03T05:10:00.000Z",
+  "checkedFiles": [
+    "src-tauri/src/types/sticker.rs",
+    "src-tauri/src/types/mod.rs",
+    "src-tauri/src/types/events.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/lib.rs"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "input-validation",
+    "sql-injection",
+    "ipc-boundary",
+    "csp-integrity"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src-tauri/src/types/sticker.rs",
+      "src-tauri/src/types/mod.rs",
+      "src-tauri/src/types/events.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/lib.rs"
     ],
-    "checkedInvariants": [
-        "secret-handling",
-        "input-validation",
-        "sql-injection",
-        "ipc-boundary",
-        "csp-integrity"
+    "reviewedFiles": [
+      "src-tauri/src/types/sticker.rs",
+      "src-tauri/src/types/mod.rs",
+      "src-tauri/src/types/events.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/lib.rs"
     ],
-    "diffCoverage": {
-        "changedFiles": [
-            "src-tauri/src/types/sticker.rs",
-            "src-tauri/src/types/events.rs",
-            "src-tauri/src/types/stored.rs",
-            "src-tauri/src/zalo/mod.rs",
-            "src-tauri/src/store/db.rs",
-            "src-tauri/src/command/mod.rs"
-        ],
-        "reviewedFiles": [
-            "src-tauri/src/types/sticker.rs",
-            "src-tauri/src/types/events.rs",
-            "src-tauri/src/types/stored.rs",
-            "src-tauri/src/zalo/mod.rs",
-            "src-tauri/src/store/db.rs",
-            "src-tauri/src/command/mod.rs"
-        ],
-        "uncoveredFiles": [],
-        "coverage": 1,
-        "notes": "Six source files reviewed for security boundaries. Sticker DTOs carry only non-secret display data (ids + render URL). zalo/sticker_image_url points to the already-allowlisted CSP host (zalo-api.zadn.vn). command/search_stickers validates keyword is non-empty before network call. SQL in store/db.rs is parameterized (save_sticker_message, record_recent_sticker, load_recent_stickers). No credential or token crosses IPC."
+    "uncoveredFiles": [],
+    "coverage": 1.0,
+    "notes": "All eight changed source files reviewed. Sticker DTOs carry only non-secret display data (ids + render URL). zalo/sticker_image_url points to the already-allowlisted CSP host. SQL is parameterized throughout. No credential or token crosses IPC."
+  },
+  "confidence": 0.9,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "smoke"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "file": "src-tauri/src/types/sticker.rs",
+      "evidence": "Sticker DTO is pure display data: sticker id/catId/type (integers Zalo uses as opaque ids) plus a render URL on the allowlisted CSP host. No credential, cookie, or token field. serde rename_all=camelCase matches frontend conventions.",
+      "fix": "None required."
     },
-    "confidence": 0.9,
-    "unreviewedRiskAreas": [],
-    "resolvedFindings": [],
-    "requiredGates": [
-        "smoke"
-    ],
-    "findings": [
-        {
-            "severity": "info",
-            "file": "src-tauri/src/types/sticker.rs",
-            "evidence": "Sticker DTO is pure display data: sticker id/catId/type (integers Zalo uses as opaque ids) plus a render URL on the allowlisted CSP host. No credential, cookie, or token field. serde rename_all=camelCase matches frontend conventions.",
-            "fix": "None required."
-        },
-        {
-            "severity": "info",
-            "file": "src-tauri/src/zalo/mod.rs",
-            "evidence": "sticker_image_url builds the CDN URL from a numeric id only, pointing to zalo-api.zadn.vn (already in the CSP img-src allowlist). No user-controlled path component. sticker_from_content reads numeric ids from a JSON value (defensive: as_i64 also tolerates stringized ids); id=0 is rejected.",
-            "fix": "None required."
-        },
-        {
-            "severity": "info",
-            "file": "src-tauri/src/store/db.rs",
-            "evidence": "All sticker SQL is parameterized: save_sticker_message binds sticker.id/cat_id/sticker_type/url as typed parameters, record_recent_sticker binds account_id + sticker fields, load_recent_stickers binds account_id + limit. No string interpolation or dynamic SQL construction.",
-            "fix": "None required."
-        },
-        {
-            "severity": "info",
-            "file": "src-tauri/src/command/mod.rs",
-            "evidence": "send_sticker validates thread_id is non-empty and sticker.id != 0 before delegating. search_stickers validates keyword is non-empty and clamps limit to 1-200. recent_stickers/sticker_categories read from the local store only (no network). All commands return non-secret DTOs.",
-            "fix": "None required."
-        },
-        {
-            "severity": "info",
-            "file": "CSP",
-            "evidence": "Sticker render URL host (zalo-api.zadn.vn) is already in the CSP img-src directive (https://zalo-api.zadn.vn). No CSP change needed.",
-            "fix": "None required."
-        }
-    ],
-    "summary": "Security review: sticker payloads carry only non-secret display data (numeric ids + render URL). No credential or token crosses IPC. Sticker render URL host matches the existing CSP allowlist. SQL is parameterized throughout. Input validation at the command boundary (non-empty keyword, non-empty thread_id, sticker.id != 0). The sticker body '[Sticker]' stored in plaintext SQLite matches the already-accepted message-cache posture (public display data, not a bearer token). Approve."
+    {
+      "severity": "info",
+      "file": "src-tauri/src/zalo/mod.rs",
+      "evidence": "sticker_image_url builds the CDN URL from a numeric id only, pointing to zalo-api.zadn.vn (already in the CSP img-src allowlist). No user-controlled path component. sticker_from_content reads numeric ids from a JSON value (defensive: as_i64 also tolerates stringized ids); id=0 is rejected.",
+      "fix": "None required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/store/db.rs",
+      "evidence": "All sticker SQL is parameterized: save_sticker_message binds sticker.id/cat_id/sticker_type/url as typed parameters, record_recent_sticker binds account_id + sticker fields, load_recent_stickers binds account_id + limit. No string interpolation or dynamic SQL construction.",
+      "fix": "None required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/command/mod.rs",
+      "evidence": "send_sticker validates thread_id is non-empty and sticker.id != 0 before delegating. search_stickers validates keyword is non-empty and clamps limit to 1-200. recent_stickers/sticker_categories read from the local store only (no network). All commands return non-secret DTOs.",
+      "fix": "None required."
+    },
+    {
+      "severity": "info",
+      "file": "CSP",
+      "evidence": "Sticker render URL host (zalo-api.zadn.vn) is already in the CSP img-src directive (https://zalo-api.zadn.vn). No CSP change needed.",
+      "fix": "None required."
+    }
+  ],
+  "summary": "Security review: sticker payloads carry only non-secret display data (numeric ids + render URL). No credential or token crosses IPC. Sticker render URL host matches the existing CSP allowlist. SQL is parameterized throughout. Input validation at the command boundary (non-empty keyword, non-empty thread_id, sticker.id != 0). The sticker body '[Sticker]' stored in plaintext SQLite matches the already-accepted message-cache posture (public display data, not a bearer token). Approve."
 }
