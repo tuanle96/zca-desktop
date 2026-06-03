@@ -8,14 +8,19 @@
 use std::path::Path;
 use std::sync::Mutex;
 
+use serde::de::DeserializeOwned;
 use rusqlite::Connection;
+use rusqlite::types::Type;
 
-use crate::types::{AccountProfile, Credentials, Sticker, StoredMessage, StoredThread, ThreadIdentity, ThreadKind};
+use crate::types::{
+    AccountProfile, Credentials, LinkPreview, QuoteRef, Sticker, StoredMessage, StoredThread,
+    ThreadIdentity, ThreadKind,
+};
 
 use super::crypto::{self, CryptoError};
 
 /// Current schema version; bump when adding migrations.
-const SCHEMA_VERSION: i64 = 3;
+const SCHEMA_VERSION: i64 = 4;
 
 /// Errors surfaced by the store. Messages never include secret values.
 #[derive(Debug, thiserror::Error)]
@@ -24,6 +29,8 @@ pub enum StoreError {
     Db(#[from] rusqlite::Error),
     #[error("credential crypto error: {0}")]
     Crypto(#[from] CryptoError),
+    #[error("json error: {0}")]
+    Json(#[from] serde_json::Error),
 }
 
 /// A saved account row plus its decrypted credential, for session restore.
@@ -150,6 +157,22 @@ impl Db {
             current = 3;
         }
 
+        // v3 -> v4: rich-message state. Quote/link metadata is stored as JSON
+        // DTOs so restart hydration can reconstruct the same UI state; reactions
+        // and undo events mutate existing message rows instead of appending fake
+        // messages.
+        if current < 4 {
+            conn.execute_batch(
+                "
+            ALTER TABLE messages ADD COLUMN quote_json TEXT;
+            ALTER TABLE messages ADD COLUMN link_json TEXT;
+            ALTER TABLE messages ADD COLUMN reaction_icon TEXT;
+            ALTER TABLE messages ADD COLUMN deleted INTEGER NOT NULL DEFAULT 0;
+            ",
+            )?;
+            current = 4;
+        }
+
         debug_assert_eq!(current, SCHEMA_VERSION, "migrations must reach SCHEMA_VERSION");
         conn.pragma_update(None, "user_version", current)?;
         Ok(())
@@ -261,6 +284,45 @@ impl Db {
         thread_avatar: Option<&str>,
         bump_unread: bool,
     ) -> Result<(), StoreError> {
+        self.save_message_with_rich(
+            account_id,
+            thread_id,
+            kind,
+            msg_id,
+            from_id,
+            from_name,
+            body,
+            outgoing,
+            ts,
+            thread_title,
+            thread_avatar,
+            bump_unread,
+            None,
+            None,
+        )
+    }
+
+    /// Persist one observed text/link message with optional quote/link metadata.
+    #[allow(clippy::too_many_arguments)]
+    pub fn save_message_with_rich(
+        &self,
+        account_id: &str,
+        thread_id: &str,
+        kind: &str,
+        msg_id: &str,
+        from_id: Option<&str>,
+        from_name: Option<&str>,
+        body: Option<&str>,
+        outgoing: bool,
+        ts: Option<i64>,
+        thread_title: Option<&str>,
+        thread_avatar: Option<&str>,
+        bump_unread: bool,
+        quote: Option<&QuoteRef>,
+        link: Option<&LinkPreview>,
+    ) -> Result<(), StoreError> {
+        let quote_json = quote.map(serde_json::to_string).transpose()?;
+        let link_json = link.map(serde_json::to_string).transpose()?;
         let conn = self.conn.lock().expect("db mutex poisoned");
 
         // Echo reconciliation: Zalo redelivers our own sent message through the
@@ -288,8 +350,10 @@ impl Db {
 
         // Insert the message; ignore if we have already stored this msg_id.
         let inserted = conn.execute(
-            "INSERT INTO messages (account_id, thread_id, msg_id, from_id, from_name, body, outgoing, kind, ts)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'text', ?8)
+            "INSERT INTO messages
+                (account_id, thread_id, msg_id, from_id, from_name, body, outgoing, kind, ts,
+                 quote_json, link_json)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'text', ?8, ?9, ?10)
              ON CONFLICT(account_id, msg_id) DO NOTHING",
             rusqlite::params![
                 account_id,
@@ -299,7 +363,9 @@ impl Db {
                 from_name,
                 body,
                 outgoing as i64,
-                ts
+                ts,
+                quote_json,
+                link_json,
             ],
         )?;
 
@@ -347,6 +413,42 @@ impl Db {
         thread_avatar: Option<&str>,
         bump_unread: bool,
     ) -> Result<(), StoreError> {
+        self.save_sticker_message_with_rich(
+            account_id,
+            thread_id,
+            kind,
+            msg_id,
+            from_id,
+            from_name,
+            sticker,
+            outgoing,
+            ts,
+            thread_title,
+            thread_avatar,
+            bump_unread,
+            None,
+        )
+    }
+
+    /// Persist one observed sticker message with optional quote metadata.
+    #[allow(clippy::too_many_arguments)]
+    pub fn save_sticker_message_with_rich(
+        &self,
+        account_id: &str,
+        thread_id: &str,
+        kind: &str,
+        msg_id: &str,
+        from_id: Option<&str>,
+        from_name: Option<&str>,
+        sticker: &Sticker,
+        outgoing: bool,
+        ts: Option<i64>,
+        thread_title: Option<&str>,
+        thread_avatar: Option<&str>,
+        bump_unread: bool,
+        quote: Option<&QuoteRef>,
+    ) -> Result<(), StoreError> {
+        let quote_json = quote.map(serde_json::to_string).transpose()?;
         let conn = self.conn.lock().expect("db mutex poisoned");
 
         // Echo reconciliation for outgoing stickers: the listener redelivers our
@@ -373,8 +475,8 @@ impl Db {
         let inserted = conn.execute(
             "INSERT INTO messages
                 (account_id, thread_id, msg_id, from_id, from_name, body, outgoing, kind, ts,
-                 sticker_id, sticker_cat_id, sticker_type, sticker_url)
-             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'sticker', ?8, ?9, ?10, ?11, ?12)
+                 sticker_id, sticker_cat_id, sticker_type, sticker_url, quote_json)
+             VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, 'sticker', ?8, ?9, ?10, ?11, ?12, ?13)
              ON CONFLICT(account_id, msg_id) DO NOTHING",
             rusqlite::params![
                 account_id,
@@ -389,6 +491,7 @@ impl Db {
                 sticker.cat_id,
                 sticker.sticker_type,
                 sticker.url,
+                quote_json,
             ],
         )?;
 
@@ -571,6 +674,42 @@ impl Db {
         Ok(())
     }
 
+    /// Apply a realtime reaction event to an existing message row. Returns true
+    /// when a cached message was updated; false means the message predates local
+    /// cache hydration or is outside the current retention window.
+    pub fn apply_reaction(
+        &self,
+        account_id: &str,
+        msg_id: &str,
+        icon: &str,
+    ) -> Result<bool, StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let changed = conn.execute(
+            "UPDATE messages SET reaction_icon = ?3 WHERE account_id = ?1 AND msg_id = ?2",
+            rusqlite::params![account_id, msg_id, icon],
+        )?;
+        Ok(changed > 0)
+    }
+
+    /// Mark a cached message as recalled/deleted after a realtime undo event.
+    /// The row remains so history preserves chronology and can render the
+    /// standard "message recalled" placeholder after restart.
+    pub fn mark_message_deleted(
+        &self,
+        account_id: &str,
+        msg_id: &str,
+    ) -> Result<bool, StoreError> {
+        let conn = self.conn.lock().expect("db mutex poisoned");
+        let changed = conn.execute(
+            "UPDATE messages
+             SET deleted = 1, body = NULL, sticker_id = NULL, sticker_cat_id = NULL,
+                 sticker_type = NULL, sticker_url = NULL, link_json = NULL
+             WHERE account_id = ?1 AND msg_id = ?2",
+            rusqlite::params![account_id, msg_id],
+        )?;
+        Ok(changed > 0)
+    }
+
     /// Load all persisted threads for an account, most-recent first.
     pub fn load_threads(&self, account_id: &str) -> Result<Vec<StoredThread>, StoreError> {
         let conn = self.conn.lock().expect("db mutex poisoned");
@@ -604,7 +743,8 @@ impl Db {
         let conn = self.conn.lock().expect("db mutex poisoned");
         let mut stmt = conn.prepare(
             "SELECT thread_id, msg_id, from_id, from_name, body, outgoing, ts,
-                    sticker_id, sticker_cat_id, sticker_type, sticker_url
+                    sticker_id, sticker_cat_id, sticker_type, sticker_url,
+                    quote_json, link_json, reaction_icon, deleted
              FROM messages WHERE account_id = ?1
              ORDER BY COALESCE(ts, 0) ASC
              LIMIT ?2",
@@ -630,6 +770,10 @@ impl Db {
                 from_name: row.get(3)?,
                 body: row.get(4)?,
                 sticker,
+                quote: json_col(row.get(11)?)?,
+                link: json_col(row.get(12)?)?,
+                reaction_icon: row.get(13)?,
+                deleted: row.get::<_, i64>(14)? != 0,
                 outgoing: row.get::<_, i64>(5)? != 0,
                 ts: row.get(6)?,
             })
@@ -676,6 +820,15 @@ impl Db {
             .optional()?;
         Ok(blob)
     }
+}
+
+fn json_col<T: DeserializeOwned>(raw: Option<String>) -> rusqlite::Result<Option<T>> {
+    let Some(raw) = raw else {
+        return Ok(None);
+    };
+    serde_json::from_str(&raw)
+        .map(Some)
+        .map_err(|e| rusqlite::Error::FromSqlConversionFailure(0, Type::Text, Box::new(e)))
 }
 
 fn now_secs() -> i64 {
@@ -840,6 +993,63 @@ mod tests {
         let threads = db.load_threads(acc).expect("threads");
         assert_eq!(threads.len(), 1);
         assert_eq!(threads[0].unread, 1, "only the inbound sticker bumps unread");
+    }
+
+    /// Rich-message metadata persists and reloads: quote/link render after
+    /// restart, reaction mutates the target message, and undo recalls it without
+    /// appending a fake event row.
+    #[test]
+    fn rich_message_state_persists_and_reloads() {
+        let db = temp_db();
+        let acc = "100000";
+        let quote = QuoteRef {
+            owner_id: "u2".to_string(),
+            from_d: "Bob".to_string(),
+            global_msg_id: 42,
+            cli_msg_id: 24,
+            msg: "quoted text".to_string(),
+            cli_msg_type: 1,
+            ts: 900,
+        };
+        let link = LinkPreview {
+            href: "https://example.com".to_string(),
+            title: Some("Example".to_string()),
+            description: Some("A link preview".to_string()),
+            thumb: None,
+        };
+
+        db.save_message_with_rich(
+            acc,
+            "thread-rich",
+            "user",
+            "m-rich",
+            Some("u2"),
+            Some("Bob"),
+            Some("reply with link"),
+            false,
+            Some(1000),
+            Some("Bob"),
+            None,
+            true,
+            Some(&quote),
+            Some(&link),
+        )
+        .expect("save rich message");
+        assert!(db.apply_reaction(acc, "m-rich", "❤️").expect("reaction updated"));
+
+        let loaded = db.load_recent_messages(acc, 10).expect("load rich");
+        assert_eq!(loaded.len(), 1);
+        assert_eq!(loaded[0].quote.as_ref().expect("quote").msg, "quoted text");
+        assert_eq!(loaded[0].link.as_ref().expect("link").href, "https://example.com");
+        assert_eq!(loaded[0].reaction_icon.as_deref(), Some("❤️"));
+        assert!(!loaded[0].deleted);
+
+        assert!(db.mark_message_deleted(acc, "m-rich").expect("deleted updated"));
+        let loaded = db.load_recent_messages(acc, 10).expect("reload after undo");
+        assert_eq!(loaded.len(), 1, "undo mutates existing row, not a new row");
+        assert!(loaded[0].deleted);
+        assert!(loaded[0].body.is_none());
+        assert!(loaded[0].link.is_none());
     }
 
     /// Recent stickers: usage upserts (no duplicate, bumps used_at), loads

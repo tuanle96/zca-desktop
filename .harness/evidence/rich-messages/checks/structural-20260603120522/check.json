@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "node .harness/scripts/harness-check.mjs",
+  "status": "pass",
+  "summary": "node .harness/scripts/harness-check.mjs exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T12:05:22.736Z",
+  "finishedAt": "2026-06-03T12:05:22.842Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:73541ade1cd84b121c5bb8c82600c6430e65937435142bab89d14ff3577b730a",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/structural-20260603120522/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/structural-20260603120522/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/structural-20260603120522/stdout.txt",
+    ".harness/evidence/rich-messages/checks/structural-20260603120522/stderr.txt"
+  ]
+}

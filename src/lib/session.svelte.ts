@@ -35,10 +35,46 @@ function snippet(text: string | null): string {
     return text.length > 48 ? `${text.slice(0, 48)}…` : text;
 }
 
-/** Conversation-list snippet for a message that may be a sticker. */
-function messageSnippet(text: string | null, sticker: Sticker | null): string {
+/** Conversation-list snippet for a message that may carry rich state. */
+function messageSnippet(
+    text: string | null,
+    sticker: Sticker | null,
+    link: LinkPreview | null = null,
+    deleted = false,
+): string {
+    if (deleted) return "Tin nhắn đã được thu hồi";
     if (sticker) return "[Sticker]";
+    if (link) return link.title || link.href;
     return snippet(text);
+}
+
+function reactionEmoji(icon: ReactionIcon): string {
+    const map: Record<ReactionIcon, string> = {
+        heart: "❤️",
+        like: "👍",
+        haha: "😆",
+        wow: "😮",
+        cry: "😢",
+        angry: "😠",
+        kiss: "😘",
+        tearsOfJoy: "😂",
+        shit: "💩",
+        rose: "🌹",
+        brokenHeart: "💔",
+        dislike: "👎",
+        love: "😍",
+        confused: "😕",
+        wink: "😉",
+        fade: "😶",
+        sun: "☀️",
+        birthday: "🎂",
+        bomb: "💣",
+        ok: "👌",
+        peace: "✌️",
+        thanks: "🙏",
+        punch: "👊",
+    };
+    return map[icon];
 }
 
 /** All per-account data. The active account's slice is mirrored into the
@@ -501,10 +537,12 @@ class SessionStore {
             list.push({
                 id: m.msgId,
                 threadId: m.threadId,
-                body: m.sticker ? "" : (m.body ?? "[non-text message]"),
+                body: m.deleted ? "Tin nhắn đã được thu hồi" : m.sticker ? "" : (m.body ?? "[non-text message]"),
                 sticker: m.sticker,
-                quote: null,
-                link: null,
+                quote: m.quote,
+                link: m.link,
+                reactionIcon: m.reactionIcon,
+                deleted: m.deleted,
                 outgoing: m.outgoing,
                 authorName: m.fromName,
                 at: m.ts ?? 0,
@@ -525,7 +563,7 @@ class SessionStore {
                 threadId: t.threadId,
                 kind: t.kind,
                 title,
-                lastSnippet: last ? messageSnippet(last.body, last.sticker) : (existing?.lastSnippet ?? ""),
+                lastSnippet: last ? messageSnippet(last.body, last.sticker, last.link, last.deleted) : (existing?.lastSnippet ?? ""),
                 lastAt: t.lastAt ?? existing?.lastAt ?? 0,
                 unread: t.unread ?? existing?.unread ?? 0,
                 avatar,
@@ -569,6 +607,8 @@ class SessionStore {
         const text = body.trim();
         const threadId = this.activeThreadId;
         if (!text || !threadId || !this.profile) return false;
+        const convo = this.conversations.find((c) => c.threadId === threadId);
+        const kind = convo?.kind ?? "user";
 
         let ok = false;
         await this.run(async () => {
@@ -576,6 +616,7 @@ class SessionStore {
                 accountId: this.profile!.accountId,
                 threadId,
                 text,
+                kind,
                 quote: quote ?? null,
             });
             this.appendToActive(
@@ -594,6 +635,8 @@ class SessionStore {
                         cliMsgType: 1,
                         ts: quote.ts,
                     } : null,
+                    reactionIcon: null,
+                    deleted: false,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
@@ -686,12 +729,47 @@ class SessionStore {
                     sticker,
                     quote: null,
                     link: null,
+                    reactionIcon: null,
+                    deleted: false,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
                 },
                 "[Sticker]",
             );
+            ok = true;
+        });
+        return ok;
+    }
+
+    async sendReaction(message: ChatMessage, icon: ReactionIcon = "heart"): Promise<boolean> {
+        if (!this.profile) return false;
+        const convo = this.conversations.find((c) => c.threadId === message.threadId);
+        const kind = convo?.kind ?? "user";
+        let ok = false;
+        await this.run(async () => {
+            await invoke("send_reaction", {
+                accountId: this.profile!.accountId,
+                threadId: message.threadId,
+                msgId: message.id,
+                cliMsgId: `${message.id}_cli`,
+                kind,
+                icon,
+            });
+            const b = this.activeBucket();
+            if (b) {
+                this.applyReactionToBucket(b, {
+                    threadId: message.threadId,
+                    msgId: message.id,
+                    uidFrom: this.profile!.accountId,
+                    dName: this.profile!.displayName,
+                    icon: reactionEmoji(icon),
+                    isSelf: true,
+                    isGroup: kind === "group",
+                });
+                this.threads = b.threads;
+                this.conversations = b.conversations;
+            }
             ok = true;
         });
         return ok;
@@ -739,6 +817,24 @@ class SessionStore {
             `route: msg account=${msg.accountId} thread=${msg.threadId} -> ${isActive ? "active-view" : "background-bucket"} (active=${this.activeAccountId ?? "none"})`,
         );
 
+        if (msg.reaction) {
+            this.applyReactionToBucket(b, msg.reaction);
+            if (isActive) {
+                this.threads = b.threads;
+                this.conversations = b.conversations;
+            }
+            return;
+        }
+
+        if (msg.undo) {
+            this.applyUndoToBucket(b, msg.undo);
+            if (isActive) {
+                this.threads = b.threads;
+                this.conversations = b.conversations;
+            }
+            return;
+        }
+
         this.appendToBucket(
             b,
             {
@@ -748,11 +844,13 @@ class SessionStore {
                 sticker: msg.sticker,
                 quote: msg.quote,
                 link: msg.link,
+                reactionIcon: null,
+                deleted: false,
                 outgoing: msg.isSelf,
                 authorName: name,
                 at: Date.now(),
             },
-            messageSnippet(msg.text, msg.sticker),
+            messageSnippet(msg.text, msg.sticker, msg.link),
             { kind: msg.threadKind, title, bumpUnread },
         );
 
@@ -763,6 +861,51 @@ class SessionStore {
         } else if (bumpUnread) {
             this.bumpAccountUnread(msg.accountId);
         }
+    }
+
+    private applyReactionToBucket(b: AccountData, reaction: ReactionEvent) {
+        const list = b.threads[reaction.threadId];
+        if (!list) return;
+        let changed = false;
+        b.threads = {
+            ...b.threads,
+            [reaction.threadId]: list.map((m) => {
+                if (m.id !== reaction.msgId) return m;
+                changed = true;
+                return { ...m, reactionIcon: reaction.icon };
+            }),
+        };
+        if (!changed) return;
+        b.conversations = b.conversations.map((c) =>
+            c.threadId === reaction.threadId ? { ...c } : c,
+        );
+    }
+
+    private applyUndoToBucket(b: AccountData, undo: UndoEvent) {
+        const list = b.threads[undo.threadId];
+        if (!list) return;
+        let changed = false;
+        const recalled = "Tin nhắn đã được thu hồi";
+        const next = list.map((m) => {
+            if (m.id !== undo.msgId) return m;
+            changed = true;
+            return {
+                ...m,
+                body: recalled,
+                sticker: null,
+                link: null,
+                deleted: true,
+            };
+        });
+        if (!changed) return;
+        b.threads = { ...b.threads, [undo.threadId]: next };
+
+        const last = next[next.length - 1];
+        b.conversations = b.conversations.map((c) =>
+            c.threadId === undo.threadId && last?.id === undo.msgId
+                ? { ...c, lastSnippet: recalled }
+                : c,
+        );
     }
 
     /** Append into a specific bucket (no reactive mirror). Returns nothing. */

@@ -520,16 +520,7 @@ pub async fn start_message_listener(
 /// Thin wrapper over `zca-rust` `send_message`; the `command` layer maps the
 /// core thread-kind DTO to `ThreadType` before calling this.
 pub async fn send_text(api: &API, thread_id: &str, text: &str) -> ZaloResult<String> {
-    let content = SendContent {
-        msg: text.to_string(),
-        styles: None,
-        urgency: None,
-        quote: None,
-        mentions: None,
-        ttl: None,
-    };
-    let resp = api.send_message(&content, thread_id, ThreadType::User).await?;
-    Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
+    send_text_with_quote(api, thread_id, text, None, ThreadKind::User).await
 }
 
 
@@ -543,6 +534,7 @@ pub async fn send_text_with_quote(
     thread_id: &str,
     text: &str,
     quote: Option<&QuoteInput>,
+    kind: ThreadKind,
 ) -> ZaloResult<String> {
     let zca_quote = quote.map(|q| zca_rust::apis::send_message::SendMessageQuote {
         content: serde_json::Value::String(q.content.clone()),
@@ -562,7 +554,11 @@ pub async fn send_text_with_quote(
         mentions: None,
         ttl: None,
     };
-    let resp = api.send_message(&content, thread_id, ThreadType::User).await?;
+    let thread_type = match kind {
+        ThreadKind::Group => ThreadType::Group,
+        ThreadKind::User => ThreadType::User,
+    };
+    let resp = api.send_message(&content, thread_id, thread_type).await?;
     Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
 }
 
@@ -1237,5 +1233,41 @@ mod tests {
             "every contact must have a uid and a display name"
         );
         println!("list_contacts_live OK: {} contact(s) loaded", contacts.len());
+    }
+
+    /// Live send-reaction smoke. Ignored by default. Logs in, sends a message,
+    /// and then reacts to that message with a Heart. Run explicitly:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; sends ONE real message and reacts to it"]
+    async fn reaction_live() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials.validate().expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+
+        let recipient_phone =
+            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let thread_id = find_user_uid(&api, &recipient_phone)
+            .await
+            .expect("could not resolve recipient by phone");
+
+        let marker = format!(
+            "zca-desktop reaction test {}",
+            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+        );
+        let msg_id = send_text(&api, &thread_id, &marker).await.expect("send_text failed");
+        assert!(!msg_id.is_empty(), "send_text must return a message id");
+
+        let cli_msg_id = format!("{}_cli", msg_id);
+        send_reaction(&api, ReactionIcon::Heart, &msg_id, &cli_msg_id, &thread_id, ThreadKind::User)
+            .await
+            .expect("send_reaction failed");
+        println!("reaction_live OK: reacted Heart to msg_id={}", msg_id);
     }
 }

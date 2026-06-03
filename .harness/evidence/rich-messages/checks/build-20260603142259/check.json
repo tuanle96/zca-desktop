@@ -1,0 +1,20 @@
+{
+  "name": "build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build passed after rich-message persistence and throttled send repairs",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T14:22:59.744Z",
+  "finishedAt": "2026-06-03T14:23:00.337Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:95a096093ae7a359252830bd1e2595bf01dffbeaabb2b5d0f3cd96b301d1923f",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:0b9c85a57402765a9638848a90eec54abbd9a68f42a071a97aaa9d8acc5ba131",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/build-20260603142259/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/build-20260603142259/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/build-20260603142259/stdout.txt",
+    ".harness/evidence/rich-messages/checks/build-20260603142259/stderr.txt"
+  ]
+}

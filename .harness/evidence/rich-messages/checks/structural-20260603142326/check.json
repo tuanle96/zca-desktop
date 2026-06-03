@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "node .harness/scripts/harness-check.mjs",
+  "status": "pass",
+  "summary": "harness structural check passed for ADR-0003 layering",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T14:23:26.930Z",
+  "finishedAt": "2026-06-03T14:23:26.978Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:5d7877ec27dd94c70dfdf6d3f657e57a49aba848f3ba0dfc65b5da576273dfe7",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/structural-20260603142326/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/structural-20260603142326/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/structural-20260603142326/stdout.txt",
+    ".harness/evidence/rich-messages/checks/structural-20260603142326/stderr.txt"
+  ]
+}

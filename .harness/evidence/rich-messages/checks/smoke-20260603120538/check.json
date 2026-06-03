@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture",
+  "status": "pass",
+  "summary": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T12:05:38.724Z",
+  "finishedAt": "2026-06-03T12:05:41.026Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:73541ade1cd84b121c5bb8c82600c6430e65937435142bab89d14ff3577b730a",
+  "stdoutHash": "sha256:7fc2c5abd555aa9e615c116d056bba2718cedc68a3bc6bab064df710e8d75258",
+  "stderrHash": "sha256:b5c8d1597ad9363e35e950fe5e24deb224f7264b00757ea8e2c2056d5ade8020",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/smoke-20260603120538/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/smoke-20260603120538/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/smoke-20260603120538/stdout.txt",
+    ".harness/evidence/rich-messages/checks/smoke-20260603120538/stderr.txt"
+  ]
+}

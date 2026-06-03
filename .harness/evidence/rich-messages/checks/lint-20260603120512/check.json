@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T12:05:12.213Z",
+  "finishedAt": "2026-06-03T12:05:12.847Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:73541ade1cd84b121c5bb8c82600c6430e65937435142bab89d14ff3577b730a",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:a8dd5b4f852b782842253d071162bc7c3c44c3a9a07131cd1159e45bbb802a10",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/lint-20260603120512/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/lint-20260603120512/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/lint-20260603120512/stdout.txt",
+    ".harness/evidence/rich-messages/checks/lint-20260603120512/stderr.txt"
+  ]
+}

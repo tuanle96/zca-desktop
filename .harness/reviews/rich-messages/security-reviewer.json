@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "rich-messages",
+  "featureId": "rich-messages",
+  "decision": "pass",
+  "createdAt": "2026-06-03T14:21:56.000Z",
+  "checkedFiles": [
+    "README.md",
+    ".harness/project/state.json",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/session/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "ipc-boundary",
+    "input-validation",
+    "auth-session-boundary",
+    "local-persistence-safety"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "reviewedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1,
+    "notes": "Reviewed all evidence changed files for secret leakage, IPC trust boundary, and local persistence behavior."
+  },
+  "confidence": 0.9,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "lint",
+    "tests",
+    "smoke"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "file": "src-tauri/src/store/db.rs",
+      "evidence": "New persisted rich-message fields store display metadata only: quote/link JSON, reaction emoji, and deleted state. No credential, cookie, imei, or userAgent values are stored in these columns.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/command/mod.rs",
+      "evidence": "send_message continues to receive only account/thread/message display data over IPC. Credentials remain in core/keychain paths and are not reintroduced to the webview.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src/lib/components/chat/ChatPane.svelte",
+      "evidence": "Link previews render as normal anchor hrefs from message data. The task does not add privileged opener permissions or secret-bearing URL handling.",
+      "fix": "No further action required."
+    }
+  ],
+  "summary": "Security review pass: rich-message state stores display-only data, credential boundaries remain intact, text sends regain per-account pacing, and no new secret-bearing IPC surface was added."
+}

@@ -149,6 +149,11 @@
   ],
   "decisions": [
     {
+      "id": "d11",
+      "title": "Rich message events mutate cached message rows: reactions update reaction_icon, undo marks deleted, quote/link JSON is persisted for restart hydration; text/quote sends route through SessionManager throttle with explicit ThreadKind.",
+      "status": "accepted"
+    },
+    {
       "id": "mem_20260602062549_decision_xqches",
       "ts": "2026-06-02T06:25:49.707Z",
       "summary": "Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.",
@@ -223,6 +228,6 @@
       "status": "accepted"
     }
   ],
-  "updatedAt": "2026-06-03T01:30:00.000Z",
+  "updatedAt": "2026-06-03T14:21:56.000Z",
   "lastMemoryEventAt": "2026-06-03T01:30:00.000Z"
 }

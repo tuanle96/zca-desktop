@@ -55,7 +55,7 @@
     },
     {
       "id": "app-csp-hardening",
-      "title": "Harness: pre-credential hardening \u2014 baseline CSP, product title, clean type-check",
+      "title": "Harness: pre-credential hardening — baseline CSP, product title, clean type-check",
       "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/app-csp-hardening.json",
@@ -327,7 +327,7 @@
           "id": "cmd",
           "title": "command/: list_accounts + set_active_account",
           "done": true,
-          "notes": "Implemented frontend-side instead of as Rust commands: the session store lists accounts (rail from login/restore profiles) and sets the active one (switchAccount/activate). No backend command needed \u2014 accounts come from existing login/restore. See account-switcher contract."
+          "notes": "Implemented frontend-side instead of as Rust commands: the session store lists accounts (rail from login/restore profiles) and sets the active one (switchAccount/activate). No backend command needed — accounts come from existing login/restore. See account-switcher contract."
         },
         {
           "id": "ui",
@@ -353,7 +353,7 @@
           "id": "types",
           "title": "types/: AppEvent { account_id, payload }",
           "done": true,
-          "notes": "Realized as types::IncomingMessage.account_id (the zalo listener stamps each event with api.get_own_id()) rather than a separate AppEvent wrapper \u2014 see contract scope + architecture-reviewer decision."
+          "notes": "Realized as types::IncomingMessage.account_id (the zalo listener stamps each event with api.get_own_id()) rather than a separate AppEvent wrapper — see contract scope + architecture-reviewer decision."
         },
         {
           "id": "route",
@@ -459,7 +459,7 @@
     },
     {
       "id": "thread-list",
-      "title": "Phase 4: List friends/contacts (get_all_friends) in a scrollable Danh b\u1ea1 pane",
+      "title": "Phase 4: List friends/contacts (get_all_friends) in a scrollable Danh bạ pane",
       "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/thread-list.json",
@@ -528,7 +528,7 @@
         },
         {
           "id": "ui",
-          "title": "frontend: theme store (light/dark/system, localStorage + .dark class), SettingsDialog (T\u00e0i kho\u1ea3n/Giao di\u1ec7n/D\u1eef li\u1ec7u/Gi\u1edbi thi\u1ec7u), session.settingsOpen + logoutAccount(); rail gear opens the dialog",
+          "title": "frontend: theme store (light/dark/system, localStorage + .dark class), SettingsDialog (Tài khoản/Giao diện/Dữ liệu/Giới thiệu), session.settingsOpen + logoutAccount(); rail gear opens the dialog",
           "done": true
         },
         {
@@ -572,10 +572,10 @@
     {
       "id": "rich-messages",
       "title": "Phase 4: Stickers, reactions, quote/reply, links, undo (complete); attachments pending",
-      "passes": false,
+      "passes": true,
       "domain": "default",
-      "taskContractPath": ".harness/task-contracts/rich-messages-reactions.json",
-      "evidencePath": ".harness/evidence/rich-messages-reactions.json",
+      "taskContractPath": ".harness/task-contracts/rich-messages.json",
+      "evidencePath": ".harness/evidence/rich-messages.json",
       "steps": [
         {
           "id": "cmd",
@@ -585,7 +585,7 @@
         {
           "id": "smoke",
           "title": "Rich types render + round-trip against live (needs live session)",
-          "done": false
+          "done": true
         }
       ]
     },

@@ -1,9 +1,8 @@
-[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=1 file(s)
-[harness] feature: rich-messages — Phase 4: Stickers, reactions, quote/reply, links, undo (complete); attachments pending
-[harness] project: phase=mvp, open_features=5, open_risks=6
+[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=55 file(s)
+[harness] feature: attachments — Phase 4: Image/file upload and rendering
+[harness] project: phase=mvp, open_features=4, open_risks=6
 [harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message
 [harness] scope-out: Persistence/cache (Phase 3), Rich media/attachments (Phase 4), Cross-install sync relay (Phase 5 stretch), Signed packaging (Phase 6)
-[harness] latest decision: Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.
 [harness] recent project memory:
   - handoff: Phase 1 vertical slice is done end-to-end and live-verified: scaffold, zca-rust wiring, credential import, single login, realtime listener (zalo://message), send text, file-backed dev session, Zalo-style chat UI, and contacts (get_all_friends, 85 loaded). Next: secure-cred-store (keychain, offline-provable) then session-manager (multi-account + send throttle).
   - risk: Dev affordances pending replacement: .zalo-cred.json file loader (-> secure-cred-store OS keychain), no per-account send throttle (ban risk r1), in-command session store (-> session/ layer), UI placeholder tabs/icons, and a stale bun.lock for bits-ui/@types/node since bun is not installed.

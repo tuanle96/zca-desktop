@@ -1,0 +1,162 @@
+{
+  "schemaVersion": 1,
+  "taskId": "rich-messages",
+  "featureId": "rich-messages",
+  "status": "pass",
+  "createdAt": "2026-06-03T12:05:00.000Z",
+  "diffSummary": "Rich message repair completed: realtime reaction and undo events mutate cached messages instead of adding blank pseudo messages; quote, link, reaction, and deleted state persist in SQLite and rehydrate after restart; text and quote sends route through SessionManager pacing with explicit user or group ThreadKind; the chat UI renders quote previews, link previews, recalled message placeholders, sticker and text reactions, plus a heart reaction action.",
+  "changedFiles": [
+    "README.md",
+    ".harness/project/state.json",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/session/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checks": [
+    {
+      "name": "build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build passed after rich-message persistence and throttled send repairs",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:22:59.744Z",
+      "finishedAt": "2026-06-03T14:23:00.337Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:95a096093ae7a359252830bd1e2595bf01dffbeaabb2b5d0f3cd96b301d1923f",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:0b9c85a57402765a9638848a90eec54abbd9a68f42a071a97aaa9d8acc5ba131",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/build-20260603142259/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/build-20260603142259/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/build-20260603142259/stdout.txt",
+        ".harness/evidence/rich-messages/checks/build-20260603142259/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets passed with warnings denied",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:23:11.584Z",
+      "finishedAt": "2026-06-03T14:23:15.459Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:3ebc8dc882f0e3cdbb38c681ef6d40540690f17e7e4f6d37637aa1168a48ef73",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:c4a1dae2b73cf5f15b46072b169d1d65f1986b0b88599e609894c330912226ce",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/lint-20260603142311/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/lint-20260603142311/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/lint-20260603142311/stdout.txt",
+        ".harness/evidence/rich-messages/checks/lint-20260603142311/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture",
+      "status": "pass",
+      "summary": "live reaction smoke passed: sent one real message and applied a heart reaction",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:23:50.825Z",
+      "finishedAt": "2026-06-03T14:23:53.068Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:1c5cad53584587f2727d313f6d440db0c227b11e062697b10c4d2d847aed1cc1",
+      "stdoutHash": "sha256:85acd781d8efc5920ba8fb9585e4affa42a138e6d2ca19bccfd681369a40ec60",
+      "stderrHash": "sha256:b5c8d1597ad9363e35e950fe5e24deb224f7264b00757ea8e2c2056d5ade8020",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/smoke-20260603142350/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/smoke-20260603142350/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/smoke-20260603142350/stdout.txt",
+        ".harness/evidence/rich-messages/checks/smoke-20260603142350/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "node .harness/scripts/harness-check.mjs",
+      "status": "pass",
+      "summary": "harness structural check passed for ADR-0003 layering",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:23:26.930Z",
+      "finishedAt": "2026-06-03T14:23:26.978Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:5d7877ec27dd94c70dfdf6d3f657e57a49aba848f3ba0dfc65b5da576273dfe7",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/structural-20260603142326/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/structural-20260603142326/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/structural-20260603142326/stdout.txt",
+        ".harness/evidence/rich-messages/checks/structural-20260603142326/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test passed including rich_message_state_persists_and_reloads",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:23:20.537Z",
+      "finishedAt": "2026-06-03T14:23:21.843Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:5e4ab2223eac7cc616634beb13390431d21da43f260a597ce65b5bf103da58a4",
+      "stdoutHash": "sha256:7c44fb9379e25bab27d695a482284b70084f2f215d122f192b83bfe724913596",
+      "stderrHash": "sha256:27fb61f9f9ab687fd79ed2ef9d0c17d27b913345ca17f425599230f217c934c9",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/tests-20260603142320/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/tests-20260603142320/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/tests-20260603142320/stdout.txt",
+        ".harness/evidence/rich-messages/checks/tests-20260603142320/stderr.txt"
+      ]
+    },
+    {
+      "name": "ui",
+      "command": "npm run build",
+      "status": "pass",
+      "summary": "npm run build passed with rich-message rendering changes",
+      "artifact": ".harness/evidence/rich-messages/checks/ui-20260603142335/stdout.txt",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T14:23:35.329Z",
+      "finishedAt": "2026-06-03T14:23:43.095Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:cda8db3e8d4a7e2b64e2944ff0fc39f999447dd2a86bb374caef5de3d422d422",
+      "stdoutHash": "sha256:f51fab40b58bed15d1b6d885a7818df877d8e5cc059858cfc25cf1e31792c3e1",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/rich-messages/checks/ui-20260603142335/stdout.txt",
+      "stderrPath": ".harness/evidence/rich-messages/checks/ui-20260603142335/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/rich-messages/checks/ui-20260603142335/stdout.txt",
+        ".harness/evidence/rich-messages/checks/ui-20260603142335/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/rich-messages/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [],
+  "updatedAt": "2026-06-03T14:23:53.118Z"
+}

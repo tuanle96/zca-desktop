@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture",
+  "status": "pass",
+  "summary": "live reaction smoke passed: sent one real message and applied a heart reaction",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T14:23:50.825Z",
+  "finishedAt": "2026-06-03T14:23:53.068Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:1c5cad53584587f2727d313f6d440db0c227b11e062697b10c4d2d847aed1cc1",
+  "stdoutHash": "sha256:85acd781d8efc5920ba8fb9585e4affa42a138e6d2ca19bccfd681369a40ec60",
+  "stderrHash": "sha256:b5c8d1597ad9363e35e950fe5e24deb224f7264b00757ea8e2c2056d5ade8020",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/smoke-20260603142350/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/smoke-20260603142350/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/smoke-20260603142350/stdout.txt",
+    ".harness/evidence/rich-messages/checks/smoke-20260603142350/stderr.txt"
+  ]
+}

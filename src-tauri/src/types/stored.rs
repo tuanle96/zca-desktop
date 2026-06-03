@@ -40,6 +40,18 @@ pub struct StoredMessage {
     /// Sticker payload when this stored message is a sticker; `None` for text.
     #[serde(default)]
     pub sticker: Option<crate::types::Sticker>,
+    /// Quoted message reference when this message is a reply.
+    #[serde(default)]
+    pub quote: Option<crate::types::QuoteRef>,
+    /// Link preview when this message is a link payload.
+    #[serde(default)]
+    pub link: Option<crate::types::LinkPreview>,
+    /// Last reaction emoji applied to this message, when known.
+    #[serde(default)]
+    pub reaction_icon: Option<String>,
+    /// True when an undo/delete event has recalled this message.
+    #[serde(default)]
+    pub deleted: bool,
     pub outgoing: bool,
     /// Message timestamp (epoch millis), when known.
     #[serde(default)]

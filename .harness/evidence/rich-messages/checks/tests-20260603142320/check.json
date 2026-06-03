@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test passed including rich_message_state_persists_and_reloads",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T14:23:20.537Z",
+  "finishedAt": "2026-06-03T14:23:21.843Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:5e4ab2223eac7cc616634beb13390431d21da43f260a597ce65b5bf103da58a4",
+  "stdoutHash": "sha256:7c44fb9379e25bab27d695a482284b70084f2f215d122f192b83bfe724913596",
+  "stderrHash": "sha256:27fb61f9f9ab687fd79ed2ef9d0c17d27b913345ca17f425599230f217c934c9",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/tests-20260603142320/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/tests-20260603142320/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/tests-20260603142320/stdout.txt",
+    ".harness/evidence/rich-messages/checks/tests-20260603142320/stderr.txt"
+  ]
+}

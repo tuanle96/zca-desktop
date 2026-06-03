@@ -1,0 +1,93 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "rich-messages",
+  "featureId": "rich-messages",
+  "decision": "pass",
+  "createdAt": "2026-06-03T14:21:56.000Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "claim-done",
+    "createdBy": "codex",
+    "notes": "Applied the repo-local advisor protocol against the contract, evidence, changed files, and required reviewer artifacts."
+  },
+  "checkedFiles": [
+    "README.md",
+    ".harness/project/state.json",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/session/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "evidence-bundle-completeness",
+    "contract-scope-alignment",
+    "rich-message-state-roundtrip",
+    "session-throttle-preserved",
+    "ui-core-ipc-boundary"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "reviewedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1,
+    "notes": "Reviewed every changed source/doc/state file listed by the rich-messages evidence bundle."
+  },
+  "confidence": 0.9,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "structural",
+    "lint",
+    "tests",
+    "smoke",
+    "ui"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "file": "src/lib/session.svelte.ts",
+      "evidence": "Incoming reaction and undo events now return early after mutating the target cached message, preventing blank pseudo-messages from entering the thread.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/store/db.rs",
+      "evidence": "Schema v4 persists quote_json, link_json, reaction_icon, and deleted state; rich_message_state_persists_and_reloads proves reload behavior.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/command/mod.rs",
+      "evidence": "send_message now delegates through SessionManager::send_text_with_quote with explicit ThreadKind, restoring per-account pacing and group routing.",
+      "fix": "No further action required."
+    }
+  ],
+  "summary": "Advisor review pass: the rich-messages repair is aligned with the updated contract, covers persistence/UI/session routing, and has passing build, lint, tests, structural, UI build, and live reaction smoke evidence."
+}

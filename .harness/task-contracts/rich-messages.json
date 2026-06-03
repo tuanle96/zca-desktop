@@ -1,0 +1,96 @@
+{
+  "schemaVersion": 1,
+  "id": "rich-messages",
+  "type": "feature",
+  "riskTier": "normal",
+  "featureId": "rich-messages",
+  "scope": {
+    "summary": "Complete rich-message behavior already staged under rich-messages: stickers, reactions, quote/reply, link previews, and undo/delete events must render, persist, and route correctly. Also repair the text/quote send path so it uses the SessionManager throttle and preserves user/group thread kind.",
+    "goals": [
+      "types/: StoredMessage and ChatMessage carry quote/link/reaction/deleted state in addition to sticker/text",
+      "store/: SQLite migration persists quote/link JSON, reaction emoji, and undo/deleted state; history reload reconstructs them",
+      "session/: text/quote send path reserves the same per-account throttle used by stickers and accepts ThreadKind",
+      "command/: send_message validates thread kind, delegates through SessionManager, and persists quote/link metadata",
+      "frontend: incoming reaction/undo events update an existing message instead of appending a blank pseudo-message; quote/link/reaction/deleted state renders in ChatPane"
+    ],
+    "nonGoals": [
+      "Attachment upload/rendering (separate attachments feature)",
+      "Reaction counts/aggregation (future slice)",
+      "Custom reactions (standard Zalo emoji set only)"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "build",
+      "description": "cargo build compiles with rich-message persistence and throttled thread-kind-aware text/quote send.",
+      "verification": {
+        "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+      }
+    },
+    {
+      "id": "lint",
+      "description": "clippy stays clean with warnings denied.",
+      "verification": {
+        "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings"
+      }
+    },
+    {
+      "id": "tests",
+      "description": "Offline Rust tests cover store reload for quote/link/reaction/undo and SessionManager throttling for text/quote.",
+      "verification": {
+        "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+      }
+    },
+    {
+      "id": "structural",
+      "description": "Harness structural/layering check remains green.",
+      "verification": {
+        "command": "node .harness/scripts/harness-check.mjs"
+      }
+    },
+    {
+      "id": "ui",
+      "description": "Frontend type-checks and builds with rich-message state rendering.",
+      "verification": {
+        "command": "npm run build"
+      }
+    },
+    {
+      "id": "smoke",
+      "description": "Live reaction smoke remains valid after the routing/persistence repairs.",
+      "verification": {
+        "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture"
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Write",
+      "Edit",
+      "Bash(cargo:*)",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(npx:*)",
+      "Bash(git:*)"
+    ]
+  },
+  "doneRequires": [
+    "structural",
+    "lint",
+    "tests",
+    "ui",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/rich-messages.json"
+}

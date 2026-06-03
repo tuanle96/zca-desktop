@@ -1,0 +1,20 @@
+{
+  "name": "ui",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "npm run build passed with rich-message rendering changes",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T14:23:35.329Z",
+  "finishedAt": "2026-06-03T14:23:43.095Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:cda8db3e8d4a7e2b64e2944ff0fc39f999447dd2a86bb374caef5de3d422d422",
+  "stdoutHash": "sha256:f51fab40b58bed15d1b6d885a7818df877d8e5cc059858cfc25cf1e31792c3e1",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/rich-messages/checks/ui-20260603142335/stdout.txt",
+  "stderrPath": ".harness/evidence/rich-messages/checks/ui-20260603142335/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/rich-messages/checks/ui-20260603142335/stdout.txt",
+    ".harness/evidence/rich-messages/checks/ui-20260603142335/stderr.txt"
+  ]
+}

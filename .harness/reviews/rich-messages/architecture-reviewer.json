@@ -1,0 +1,86 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "rich-messages",
+  "featureId": "rich-messages",
+  "decision": "pass",
+  "createdAt": "2026-06-03T14:21:56.000Z",
+  "checkedFiles": [
+    "README.md",
+    ".harness/project/state.json",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/session/mod.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/types/stored.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "forward-only-layering",
+    "ui-core-boundary",
+    "store-confines-sqlite",
+    "zalo-confines-zca-rust",
+    "session-owns-throttle"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "reviewedFiles": [
+      "README.md",
+      ".harness/project/state.json",
+      "src-tauri/src/command/mod.rs",
+      "src-tauri/src/session/mod.rs",
+      "src-tauri/src/store/db.rs",
+      "src-tauri/src/types/stored.rs",
+      "src-tauri/src/zalo/mod.rs",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1,
+    "notes": "All changed source files reviewed across types, store, zalo, session, command, and UI."
+  },
+  "confidence": 0.9,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "structural",
+    "tests",
+    "ui"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "file": "src-tauri/src/store/db.rs",
+      "evidence": "SQLite migration and repositories remain confined to the store layer; types/stored.rs carries pure DTO fields upward.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/session/mod.rs",
+      "evidence": "Text/quote send pacing is owned by SessionManager, matching the existing sticker path and preserving the session layer responsibility.",
+      "fix": "No further action required."
+    },
+    {
+      "severity": "info",
+      "file": "src-tauri/src/zalo/mod.rs",
+      "evidence": "ThreadKind is mapped to zca-rust ThreadType inside the zalo layer, keeping upstream zca-rust types out of command and UI.",
+      "fix": "No further action required."
+    }
+  ],
+  "summary": "Architecture review pass: ADR-0003 layering is preserved, zca-rust remains confined to zalo, SQLite remains confined to store, and UI still talks to core only via invoke/listen."
+}
