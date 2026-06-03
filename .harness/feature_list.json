@@ -571,20 +571,20 @@
     },
     {
       "id": "rich-messages",
-      "title": "Phase 4: Stickers (sticker slice complete), links, reactions, quote/reply",
+      "title": "Phase 4: Stickers, reactions, quote/reply, links, undo (complete); attachments pending",
       "passes": false,
       "domain": "default",
-      "taskContractPath": ".harness/task-contracts/rich-messages-stickers.json",
-      "evidencePath": ".harness/evidence/rich-messages-stickers.json",
+      "taskContractPath": ".harness/task-contracts/rich-messages-reactions.json",
+      "evidencePath": ".harness/evidence/rich-messages-reactions.json",
       "steps": [
         {
           "id": "cmd",
-          "title": "Sticker slice: send_sticker, search_stickers, sticker_category, StickerPicker (links/reactions/quote pending)",
+          "title": "Sticker + reaction + quote/link/undo: send/receive all rich types (attachments only remaining)",
           "done": true
         },
         {
           "id": "smoke",
-          "title": "Each rich type renders + round-trips against live",
+          "title": "Rich types render + round-trip against live (needs live session)",
           "done": false
         }
       ]
