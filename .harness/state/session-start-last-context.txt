@@ -1,5 +1,5 @@
-[harness] git: branch=main, uncommitted=39 file(s)
-[harness] feature: rich-messages — Phase 4: Stickers, links, reactions, quote/reply
+[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=1 file(s)
+[harness] feature: rich-messages — Phase 4: Stickers (sticker slice complete), links, reactions, quote/reply
 [harness] project: phase=mvp, open_features=5, open_risks=6
 [harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message
 [harness] scope-out: Persistence/cache (Phase 3), Rich media/attachments (Phase 4), Cross-install sync relay (Phase 5 stretch), Signed packaging (Phase 6)

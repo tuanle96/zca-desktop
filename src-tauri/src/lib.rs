@@ -43,6 +43,7 @@ pub fn run() {
             command::start_qr_login,
             command::restore_sessions,
             command::send_message,
+            command::send_reaction,
             command::send_sticker,
             command::search_stickers,
             command::recent_stickers,

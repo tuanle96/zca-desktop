@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "id": "rich-messages-reactions",
+  "type": "feature",
+  "riskTier": "normal",
+  "featureId": "rich-messages",
+  "scope": {
+    "summary": "Reactions slice of rich-messages: render incoming reactions on chat bubbles, send reactions to messages. zca-rust already emits ListenerEvent::Reaction and exposes add_reaction API. Bridge the listener event to the UI, add send_reaction command, render reaction emoji on message bubbles.",
+    "goals": [
+      "types/ ReactionEvent DTO (thread_id, msg_id, uid_from, d_name, r_icon emoji char, is_self) + ReactionIcon enum for send",
+      "zalo/: bridge ListenerEvent::Reaction in listener + wrap add_reaction API (zca-rust confined to zalo)",
+      "command/: send_reaction command (reuses session), Tauri event zalo://reaction for incoming",
+      "store/: persist reaction state on messages (reactions column or separate table)",
+      "Frontend: reaction emoji rendered below chat bubbles, reaction picker (long-press/tap), optimistic add"
+    ],
+    "nonGoals": [
+      "Reaction counts/aggregation (future slice)",
+      "Custom reactions (standard Zalo emoji set only)",
+      "Quote/reply, links, undo (separate slices)"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "build",
+      "description": "cargo build compiles with the reaction DTOs, zalo bridge, and send_reaction command.",
+      "verification": { "command": "cargo build --manifest-path src-tauri/Cargo.toml" }
+    },
+    {
+      "id": "tests",
+      "description": "Offline unit tests for reaction icon mapping and listener bridge pass.",
+      "verification": { "command": "cargo test --manifest-path src-tauri/Cargo.toml" }
+    },
+    {
+      "id": "ui",
+      "description": "Frontend builds with reaction rendering on chat bubbles.",
+      "verification": { "command": "npm run build" }
+    },
+    {
+      "id": "smoke",
+      "description": "Live: incoming reaction renders + send_reaction delivers (Zalo returns msg_ids).",
+      "verification": { "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture" }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": ["advisor", "security-reviewer", "architecture-reviewer"],
+  "permissions": {
+    "allow": ["Read", "Grep", "Glob", "Write", "Edit", "Bash(cargo:*)", "Bash(node:*)", "Bash(npm:*)", "Bash(npx:*)", "Bash(git:*)"]
+  },
+  "doneRequires": ["structural", "lint", "tests", "ui", "smoke", "review", "evidence-bundle"],
+  "evidencePath": ".harness/evidence/rich-messages-reactions.json"
+}

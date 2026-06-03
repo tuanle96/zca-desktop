@@ -21,14 +21,14 @@ use zca_rust::apis::send_message::MessageContent as SendContent;
 use zca_rust::apis::send_sticker::SendStickerPayload;
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::ListenerEvent;
-use zca_rust::models::{Message, MessageContent as ZcaMessageContent, ThreadType};
+use zca_rust::models::{Message, MessageContent as ZcaMessageContent, Reactions, ThreadType};
 use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
 use zca_rust::context::Options;
 use zca_rust::Zalo;
 
 use crate::types::{
-    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, Sticker,
-    ThreadKind,
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent,
+    ReactionEvent, ReactionIcon, Sticker, ThreadKind,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -331,6 +331,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_name: non_empty(&m.data.d_name),
             text: message_text(&m.data.content),
             sticker: sticker_from_content(&m.data.msg_type, &m.data.content),
+            reaction: None,
             msg_id: m.data.msg_id.clone(),
             timestamp: m.data.ts.clone(),
             is_self: m.is_self,
@@ -343,6 +344,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_name: non_empty(&m.data.base.d_name),
             text: message_text(&m.data.base.content),
             sticker: sticker_from_content(&m.data.base.msg_type, &m.data.base.content),
+            reaction: None,
             msg_id: m.data.base.msg_id.clone(),
             timestamp: m.data.base.ts.clone(),
             is_self: m.is_self,
@@ -378,11 +380,50 @@ pub async fn start_message_listener(
 
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
-            if let ListenerEvent::Message(boxed) = event {
-                let incoming = to_incoming_message(&account_id, &boxed);
-                if out.send(incoming).await.is_err() {
-                    break; // receiver dropped — stop bridging
+            match event {
+                ListenerEvent::Message(boxed) => {
+                    let incoming = to_incoming_message(&account_id, &boxed);
+                    if out.send(incoming).await.is_err() {
+                        break; // receiver dropped — stop bridging
+                    }
                 }
+                ListenerEvent::Reaction(reaction) => {
+                    if let Some(icon) = icon_from_zalo(&reaction.data.content.r_icon) {
+                        let thread_id = reaction.thread_id.clone();
+                        let msg_id = reaction.data.msg_id.clone();
+                        let uid_from = reaction.data.uid_from.clone();
+                        let d_name = reaction.data.d_name.clone();
+                        let ts = reaction.data.ts.clone();
+                        let is_group = reaction.is_group;
+                        let is_self = reaction.is_self;
+
+                        let incoming = IncomingMessage {
+                            account_id: account_id.clone(),
+                            thread_id: thread_id.clone(),
+                            thread_kind: if is_group { ThreadKind::Group } else { ThreadKind::User },
+                            from_id: uid_from.clone(),
+                            from_name: d_name.clone(),
+                            text: None,
+                            sticker: None,
+                            reaction: Some(ReactionEvent {
+                                thread_id,
+                                msg_id,
+                                uid_from,
+                                d_name,
+                                icon: icon.emoji().to_string(),
+                                is_self,
+                                is_group,
+                            }),
+                            msg_id: reaction.data.msg_id.clone(),
+                            timestamp: ts,
+                            is_self,
+                        };
+                        if out.send(incoming).await.is_err() {
+                            break;
+                        }
+                    }
+                }
+                _ => {} // Other events (typing, seen, etc.) ignored for now
             }
         }
     });
@@ -477,6 +518,94 @@ fn to_sticker_detail(detail: zca_rust::models::StickerDetail) -> Sticker {
         sticker_type: detail.type_,
         url,
     }
+}
+
+
+
+/// Map a `zca-rust` `Reactions` enum directly to a core [`ReactionIcon`].
+///
+/// Confined to the `zalo` layer so `types` stays free of `zca-rust`. The
+/// listener already deserializes `r_icon` into the typed enum, so no string
+/// parsing is needed.
+fn icon_from_zalo(r: &Reactions) -> Option<ReactionIcon> {
+    match r {
+        Reactions::Heart => Some(ReactionIcon::Heart),
+        Reactions::Like => Some(ReactionIcon::Like),
+        Reactions::Haha => Some(ReactionIcon::Haha),
+        Reactions::Wow => Some(ReactionIcon::Wow),
+        Reactions::Cry => Some(ReactionIcon::Cry),
+        Reactions::Angry => Some(ReactionIcon::Angry),
+        Reactions::Kiss => Some(ReactionIcon::Kiss),
+        Reactions::TearsOfJoy => Some(ReactionIcon::TearsOfJoy),
+        Reactions::Shit => Some(ReactionIcon::Shit),
+        Reactions::Rose => Some(ReactionIcon::Rose),
+        Reactions::BrokenHeart => Some(ReactionIcon::BrokenHeart),
+        Reactions::Dislike => Some(ReactionIcon::Dislike),
+        Reactions::Love => Some(ReactionIcon::Love),
+        Reactions::Confused => Some(ReactionIcon::Confused),
+        Reactions::Wink => Some(ReactionIcon::Wink),
+        Reactions::Fade => Some(ReactionIcon::Fade),
+        Reactions::Sun => Some(ReactionIcon::Sun),
+        Reactions::Birthday => Some(ReactionIcon::Birthday),
+        Reactions::Bomb => Some(ReactionIcon::Bomb),
+        Reactions::Ok => Some(ReactionIcon::Ok),
+        Reactions::Peace => Some(ReactionIcon::Peace),
+        Reactions::Thanks => Some(ReactionIcon::Thanks),
+        Reactions::Punch => Some(ReactionIcon::Punch),
+        _ => None,
+    }
+}
+
+/// Send a reaction to a message. Mirrors zca-rust's `add_reaction`.
+///
+/// The core `ReactionIcon` is mapped to `zca-rust`'s `ReactionIcon`/`Reactions`
+/// enum; `thread_kind` maps to `ThreadType`. Confined to the `zalo` layer.
+pub async fn send_reaction(
+    api: &API,
+    icon: ReactionIcon,
+    msg_id: &str,
+    cli_msg_id: &str,
+    thread_id: &str,
+    kind: ThreadKind,
+) -> ZaloResult<()> {
+    use zca_rust::apis::add_reaction::{AddReactionDestination, ReactionIcon as ZcaReactionIcon};
+    let zca_icon = match icon {
+        ReactionIcon::Heart => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Heart),
+        ReactionIcon::Like => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Like),
+        ReactionIcon::Haha => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Haha),
+        ReactionIcon::Wow => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Wow),
+        ReactionIcon::Cry => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Cry),
+        ReactionIcon::Angry => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Angry),
+        ReactionIcon::Kiss => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Kiss),
+        ReactionIcon::TearsOfJoy => ZcaReactionIcon::Standard(zca_rust::models::Reactions::TearsOfJoy),
+        ReactionIcon::Shit => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Shit),
+        ReactionIcon::Rose => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Rose),
+        ReactionIcon::BrokenHeart => ZcaReactionIcon::Standard(zca_rust::models::Reactions::BrokenHeart),
+        ReactionIcon::Dislike => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Dislike),
+        ReactionIcon::Love => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Love),
+        ReactionIcon::Confused => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Confused),
+        ReactionIcon::Wink => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Wink),
+        ReactionIcon::Fade => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Fade),
+        ReactionIcon::Sun => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Sun),
+        ReactionIcon::Birthday => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Birthday),
+        ReactionIcon::Bomb => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Bomb),
+        ReactionIcon::Ok => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Ok),
+        ReactionIcon::Peace => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Peace),
+        ReactionIcon::Thanks => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Thanks),
+        ReactionIcon::Punch => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Punch),
+    };
+    let thread_type = match kind {
+        ThreadKind::Group => zca_rust::models::ThreadType::Group,
+        ThreadKind::User => zca_rust::models::ThreadType::User,
+    };
+    let dest = AddReactionDestination {
+        msg_id: msg_id.to_string(),
+        cli_msg_id: cli_msg_id.to_string(),
+        thread_id: thread_id.to_string(),
+        thread_type,
+    };
+    api.add_reaction(zca_icon, &dest).await?;
+    Ok(())
 }
 
 /// Fetch the account's friends and map them into core [`Contact`] DTOs.
