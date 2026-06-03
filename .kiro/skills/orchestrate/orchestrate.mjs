@@ -3,6 +3,7 @@ import { mkdir, writeFile, appendFile, readFile, access } from "node:fs/promises
 import { existsSync } from "node:fs";
 import { resolve, join, isAbsolute, relative } from "node:path";
 import { spawn } from "node:child_process";
+import { createHash } from "node:crypto";
 
 const PATTERNS = {
   pipeline: ["Explore current state", "Plan implementation", "Implement scoped change", "Review result"],
@@ -157,6 +158,18 @@ function stepsFor(pattern) {
 
 function repoRelative(path) {
   return relative(process.cwd(), path).split("\\").join("/") || ".";
+}
+
+function sha256(value) {
+  return `sha256:${createHash("sha256").update(value).digest("hex")}`;
+}
+
+async function hashFileIfExists(path) {
+  try {
+    return sha256(await readFile(path));
+  } catch {
+    return "";
+  }
 }
 
 function resolveProjectPath(value) {
@@ -320,12 +333,34 @@ ${manifest.agents.map((agent) => `- [ ] ${agent.step}`).join("\n")}
   return { pattern, agents: manifest.agents.length, path, task, contractId: contract?.id || null };
 }
 
-function sleep(ms) {
-  return new Promise((resolveSleep) => setTimeout(resolveSleep, ms));
+function sleep(ms, signal) {
+  if (signal?.aborted) return Promise.resolve(false);
+  return new Promise((resolveSleep) => {
+    const onAbort = () => {
+      clearTimeout(timer);
+      resolveSleep(false);
+    };
+    const timer = setTimeout(() => {
+      signal?.removeEventListener?.("abort", onAbort);
+      resolveSleep(true);
+    }, ms);
+    signal?.addEventListener?.("abort", onAbort, { once: true });
+  });
 }
 
-async function runMockAgent(agent, transcriptPath, opts, attempt) {
-  if (opts.mockDelayMs > 0) await sleep(opts.mockDelayMs);
+async function runMockAgent(agent, transcriptPath, opts, attempt, signal) {
+  if (opts.mockDelayMs > 0) {
+    const completed = await sleep(opts.mockDelayMs, signal);
+    if (!completed || signal?.aborted) {
+      return {
+        exitCode: 124,
+        events: [],
+        stderr: `timeout after ${opts.timeoutMs}ms`,
+        output: "",
+        timedOut: true,
+      };
+    }
+  }
   const shouldFail = opts.mockFail.has(agent.id) || (attempt === 1 && opts.mockFailOnce.has(agent.id));
   const event = {
     type: "result",
@@ -670,14 +705,15 @@ function summarizeRun(run) {
 async function runAttempt(agent, opts, transcriptDir, attempt) {
   const transcriptPath = join(transcriptDir, attempt === 1 ? `${agent.id}.jsonl` : `${agent.id}.attempt-${attempt}.jsonl`);
   const startedAt = Date.now();
+  const controller = typeof AbortController === "function" ? new AbortController() : null;
   const work = opts.transport === "mock"
-    ? runMockAgent(agent, transcriptPath, opts, attempt)
+    ? runMockAgent(agent, transcriptPath, opts, attempt, controller?.signal)
     : ["codex", "codex-cli"].includes(opts.transport)
       ? runCodexAgent(agent, transcriptPath, opts)
       : ["kiro", "kiro-cli"].includes(opts.transport)
         ? runKiroAgent(agent, transcriptPath, opts)
         : runClaudeAgent(agent, transcriptPath, opts);
-  const run = await withTimeout(work, opts.timeoutMs, transcriptPath);
+  const run = await withTimeout(work, opts.timeoutMs, transcriptPath, controller);
   run.timeoutMs = opts.timeoutMs;
   const metrics = summarizeRun(run);
   return {
@@ -699,10 +735,11 @@ async function runAttempt(agent, opts, transcriptDir, attempt) {
   };
 }
 
-async function withTimeout(promise, timeoutMs, transcriptPath) {
+async function withTimeout(promise, timeoutMs, transcriptPath, controller = null) {
   let timeout;
   const timeoutPromise = new Promise((resolveTimeout) => {
     timeout = setTimeout(async () => {
+      controller?.abort?.();
       const event = {
         type: "result",
         subtype: "timeout",
@@ -845,6 +882,24 @@ function validateSummary(summary, manifest) {
     if (!result.agentId) errors.push(`summary.results[${index}].agentId is required`);
     if (!["passed", "failed", "skipped"].includes(result.status)) errors.push(`summary.results[${index}].status is invalid`);
     if (!result.transcriptPath) errors.push(`summary.results[${index}].transcriptPath is required`);
+    if (result.runtimeProof !== undefined) {
+      if (!result.runtimeProof || typeof result.runtimeProof !== "object" || Array.isArray(result.runtimeProof)) {
+        errors.push(`summary.results[${index}].runtimeProof must be an object`);
+      } else {
+        if (result.runtimeProof.type !== "orchestration-run") {
+          errors.push(`summary.results[${index}].runtimeProof.type must be orchestration-run`);
+        }
+        if (result.runtimeProof.eventId !== `${summary.runId}:${result.agentId}`) {
+          errors.push(`summary.results[${index}].runtimeProof.eventId must be ${summary.runId}:${result.agentId}`);
+        }
+        if (!/^sha256:[a-f0-9]{64}$/.test(String(result.runtimeProof.inputHash || ""))) {
+          errors.push(`summary.results[${index}].runtimeProof.inputHash must be sha256:<64 lowercase hex chars>`);
+        }
+        if (typeof result.runtimeProof.path !== "string" || result.runtimeProof.path.trim().length === 0 || isAbsolute(result.runtimeProof.path) || result.runtimeProof.path.split("/").includes("..")) {
+          errors.push(`summary.results[${index}].runtimeProof.path must be a repo-local summary path`);
+        }
+      }
+    }
   }
   return errors;
 }
@@ -887,6 +942,12 @@ async function validateRunDir(value) {
     const transcript = await validateTranscript(result.transcriptPath);
     errors.push(...transcript.errors);
     warnings.push(...transcript.warnings);
+    if (result.runtimeProof?.inputHash) {
+      const actualHash = await hashFileIfExists(result.transcriptPath);
+      if (actualHash && actualHash !== result.runtimeProof.inputHash) {
+        errors.push(`${result.transcriptPath}: hash does not match summary runtimeProof.inputHash`);
+      }
+    }
   }
   return {
     status: errors.length === 0 ? "passed" : "failed",
@@ -1103,9 +1164,25 @@ async function runOrchestration(task, opts) {
     );
 
   const freshByAgent = new Map(freshResults.map((result) => [result.agentId, result]));
-  const results = manifest.agents
+  let results = manifest.agents
     .map((agent) => freshByAgent.get(agent.id) || previousByAgent.get(agent.id))
     .filter(Boolean);
+  const summaryPath = join(outDir, "summary.json");
+  const summaryRelPath = repoRelative(summaryPath);
+  results = await Promise.all(results.map(async (result) => {
+    if (result.runtimeProof) return result;
+    const inputHash = result.transcriptPath ? await hashFileIfExists(result.transcriptPath) : "";
+    if (!inputHash) return result;
+    return {
+      ...result,
+      runtimeProof: {
+        type: "orchestration-run",
+        eventId: `${runId}:${result.agentId}`,
+        inputHash,
+        path: summaryRelPath,
+      },
+    };
+  }));
 
   const passed = results.filter((result) => result.status === "passed" || result.status === "skipped").length;
   const cancelled = cancelledBeforeRun || await isCancelled(outDir);

@@ -45,7 +45,7 @@ run to explicit lanes, tool policies, required reviewers, task ids, and output
 artifacts. Use it for high-risk work or any multi-agent run that should be
 auditable after the fact.
 
-Runtime mode writes `.harness/orchestration/<run-id>/manifest.json`, per-agent transcripts, `summary.json`, and `summary.md`. It also appends orchestrate telemetry to `.harness/telemetry.jsonl` so cost/replay/export tools can trace `task -> skill -> provider call -> cache bucket -> cost`. Use `--no-fail-fast` when you need every lane to finish even after a failure.
+Runtime mode writes `.harness/orchestration/<run-id>/manifest.json`, per-agent transcripts, `summary.json`, and `summary.md`. Each `summary.results[*]` row includes `runtimeProof` with `type=orchestration-run`, `eventId`, `inputHash`, and `path`; copy that object into `provenance.runtimeProof` when a review decision claims `source=review-agent`. It also appends orchestrate telemetry to `.harness/telemetry.jsonl` so cost/replay/export tools can trace `task -> skill -> provider call -> cache bucket -> cost`. Use `--no-fail-fast` when you need every lane to finish even after a failure.
 
 Hardening flags:
 
