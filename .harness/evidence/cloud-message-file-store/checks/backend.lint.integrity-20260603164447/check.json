@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint.integrity",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after file integrity enforcement.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:44:47.488Z",
+  "finishedAt": "2026-06-03T16:44:48.291Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:fc43c06551039ac51cb4e8d61b75c52d8b8f5c8539323fcd004903cb0dbf3877",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stderr.txt"
+  ]
+}

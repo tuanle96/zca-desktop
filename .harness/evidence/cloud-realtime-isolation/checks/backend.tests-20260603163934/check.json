@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed, including realtime_payload_is_user_scoped dropping other-user events.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:39:34.945Z",
+  "finishedAt": "2026-06-03T16:39:36.734Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+  "stdoutHash": "sha256:f70a1f13bb9a604d2f275ffb12a3a37f260ba4234c167a0b21c383c007187f66",
+  "stderrHash": "sha256:933b26d018642129ec36d028a3e6f7e200ccda89b42f10d596263389ab7b670a",
+  "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stdout.txt",
+    ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stderr.txt"
+  ]
+}

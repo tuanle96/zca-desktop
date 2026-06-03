@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-zalo-session-host",
+  "featureId": "cloud-zalo-session-host",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:20:00Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "hosted-live-smoke-tooling-review",
+    "createdBy": "codex",
+    "notes": "Reviewed only the live hosted smoke tooling. This does not claim hosted-live-smoke acceptance."
+  },
+  "checkedFiles": [
+    ".harness/evidence/cloud-zalo-session-host.json",
+    ".harness/task-contracts/cloud-zalo-session-host.json",
+    "server/scripts/live-hosted-send-validate.mjs",
+    "server/scripts/live-hosted-zalo-smoke.mjs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs"
+  ],
+  "checkedInvariants": [
+    "auth-session-boundary",
+    "account-ownership",
+    "phone-resolve-input-validation",
+    "hosted-send-realtime",
+    "credential-redaction",
+    "evidence-honesty"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "reviewedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.9,
+  "findings": [],
+  "summary": "Advisor review pass: the feature is now supported by QR/restore evidence plus restored-account phone resolve, send, and SSE realtime proof. No completion overclaim remains.",
+  "updatedAt": "2026-06-03T17:16:05.910Z"
+}

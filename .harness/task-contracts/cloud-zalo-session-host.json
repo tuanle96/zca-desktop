@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-zalo-session-host",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Wire the backend hosted-session manager to real zca-rust QR/login/listen/send flows, with one throttled worker per cloud account and non-secret live evidence.",
+    "goals": [
+      "Run QR login on the backend and store encrypted credentials",
+      "Restore hosted sessions after backend restart",
+      "Forward realtime events to the cloud message store and subscribed devices",
+      "Send text/sticker/reaction through the hosted per-account throttle"
+    ],
+    "nonGoals": [
+      "Desktop local mode removal",
+      "Production deployment"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "hosted-live-smoke",
+      "description": "A real Zalo account logs in through the hosted backend, receives a realtime event, sends a text message, and restores after backend restart.",
+      "verification": {
+        "manual": "Attach .harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/check.json and the latest smoke.hosted-send-realtime check artifact; transcript must be redacted and prove QR login, restart restore, live send, and SSE."
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-zalo-session-host.json"
+}

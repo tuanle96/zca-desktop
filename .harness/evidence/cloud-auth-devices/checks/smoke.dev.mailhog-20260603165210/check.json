@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev.mailhog",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO/MailHog smoke passed with providerLiveProved=true, sentViaMailHog=true, devMagicTokenReturned=false, and tokenSingleUseRejected=true.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:52:10.264Z",
+  "finishedAt": "2026-06-03T16:52:21.837Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+  "stdoutHash": "sha256:bb59607ca55d8cd1c3ab4574af2c90f2e1070dc1a1981fed9734c12c6640f019",
+  "stderrHash": "sha256:9752ae80100bdfd70a2bf72f0842a6d3b04498fa8c2902bd6452bede7c1bd8a4",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stderr.txt"
+  ]
+}

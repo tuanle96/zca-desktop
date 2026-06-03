@@ -1,0 +1,19 @@
+ Container server-postgres-1  Running
+ Container server-mailhog-1  Running
+ Container server-minio-1  Running
+ Container server-minio-1  Waiting
+ Container server-minio-1  Healthy
+ Container server-create-bucket-1  Starting
+ Container server-create-bucket-1  Started
+NOTICE:  drop cascades to 11 other objects
+DETAIL:  drop cascades to table _sqlx_migrations
+drop cascades to extension pgcrypto
+drop cascades to table users
+drop cascades to table magic_links
+drop cascades to table devices
+drop cascades to table cloud_accounts
+drop cascades to table conversations
+drop cascades to table messages
+drop cascades to table files
+drop cascades to table hosted_sessions
+drop cascades to table audit_events

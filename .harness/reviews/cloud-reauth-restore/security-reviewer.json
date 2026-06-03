@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-reauth-restore",
+  "featureId": "cloud-reauth-restore",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:02:00Z",
+  "checkedFiles": [
+    ".gitignore",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/db.rs",
+    "server/src/main.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "auth-session-boundary",
+    "confidential-at-rest",
+    "input-validation"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      ".gitignore",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/smoke-dev.mjs",
+      "server/src/db.rs",
+      "server/src/main.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      ".gitignore",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/smoke-dev.mjs",
+      "server/src/db.rs",
+      "server/src/main.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.82,
+  "findings": [
+    {
+      "severity": "info",
+      "file": "server/src/sessions.rs",
+      "evidence": "Restore errors are converted to account state and hosted session last_error; credentials remain encrypted and are not returned or logged.",
+      "fix": "No action."
+    }
+  ],
+  "summary": "Security review pass: failed restore marks state and records an error without exposing credential plaintext, while existing revoked-device and fake-account checks continue passing."
+}

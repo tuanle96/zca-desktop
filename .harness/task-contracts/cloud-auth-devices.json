@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-auth-devices",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Implement SaaS email magic-link auth and recovery-key-backed device registration. This contract tracks the provider-backed auth/device hardening slice after the backend foundation compiles.",
+    "goals": [
+      "Replace dev magic-link token return with an SMTP/provider delivery path proven through local MailHog",
+      "Add rate limiting and audit events for auth/device operations",
+      "Add device revoke behavior that immediately rejects revoked bearer tokens"
+    ],
+    "nonGoals": [
+      "Zalo hosted-session worker proof",
+      "File object storage upload/download proof"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "auth-integration",
+      "description": "Magic-link request/verify through MailHog SMTP delivery, token single-use, and device revoke are proven against a running Postgres-backed server.",
+      "verification": {
+        "manual": "Attach non-secret curl/API transcript showing MailHog delivery with dev token disabled, token single-use, device registration, list, revoke, and revoked-token rejection."
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-auth-devices.json"
+}

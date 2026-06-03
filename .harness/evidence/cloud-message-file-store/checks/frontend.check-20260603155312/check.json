@@ -1,0 +1,20 @@
+{
+  "name": "frontend.check",
+  "command": "bun run check",
+  "status": "pass",
+  "summary": "svelte-check completed with 0 errors and 0 warnings after cloud file upload/download UI wiring.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T15:53:12.926Z",
+  "finishedAt": "2026-06-03T15:53:16.753Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+  "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+  "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stderr.txt"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "architecture",
+  "command": "node .harness/scripts/check-architecture-fitness.mjs --strict",
+  "status": "pass",
+  "summary": "architecture fitness strict check passed after keychain-backed cloud session changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:30:35.188Z",
+  "finishedAt": "2026-06-03T16:30:36.083Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:2ff176625a397cd7d95de7552e1da872012ded3606f397d3c9976710b9c864f4",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stderr.txt"
+  ]
+}

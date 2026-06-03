@@ -11,6 +11,7 @@
     "src-tauri/src/command/mod.rs",
     "src-tauri/src/session/mod.rs",
     "src-tauri/src/store/db.rs",
+    "src-tauri/src/types/reaction.rs",
     "src-tauri/src/types/stored.rs",
     "src-tauri/src/zalo/mod.rs",
     "src/lib/components/chat/ChatPane.svelte",

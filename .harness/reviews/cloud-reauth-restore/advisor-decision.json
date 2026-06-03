@@ -1,0 +1,53 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-reauth-restore",
+  "featureId": "cloud-reauth-restore",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:02:00Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "restore-failure-completion-review",
+    "createdBy": "codex",
+    "notes": "Reviewed only local-verifiable reauth-needed handling on backend restore failure. This does not claim live hosted Zalo restart restore."
+  },
+  "checkedFiles": [
+    ".harness/evidence/cloud-reauth-restore.json",
+    ".harness/task-contracts/cloud-reauth-restore.json",
+    ".gitignore",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/db.rs",
+    "server/src/main.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "contract-scope-alignment",
+    "evidence-honesty",
+    "restore-failure-is-account-scoped",
+    "live-zalo-proof-not-overclaimed"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      ".gitignore",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/smoke-dev.mjs",
+      "server/src/db.rs",
+      "server/src/main.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      ".gitignore",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/smoke-dev.mjs",
+      "server/src/db.rs",
+      "server/src/main.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Advisor review pass: the new smoke proves a broken active hosted account becomes reauth-needed at startup while the rest of the SaaS smoke still passes, and the evidence does not overclaim live hosted Zalo restore."
+}

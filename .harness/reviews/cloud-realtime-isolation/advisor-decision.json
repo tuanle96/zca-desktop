@@ -1,0 +1,44 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-realtime-isolation",
+  "featureId": "cloud-realtime-isolation",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:38:00Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-realtime-trust-boundary-review",
+    "createdBy": "codex",
+    "notes": "Reviewed realtime event ownership, SSE filtering, unit proof, and evidence scope. Live hosted Zalo proof remains separate under cloud-zalo-session-host."
+  },
+  "checkedFiles": [
+    ".harness/task-contracts/cloud-realtime-isolation.json",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "contract-scope-alignment",
+    "evidence-honesty",
+    "trust-boundary-naming",
+    "realtime-user-isolation",
+    "live-worker-proof-not-overclaimed"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.86,
+  "findings": [],
+  "summary": "Advisor pass: hosted realtime events now carry owner user_id internally and /api/v1/realtime filters to the authenticated device's user before emitting SSE data."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after auth/device hardening.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:07:11.090Z",
+  "finishedAt": "2026-06-03T16:07:11.790Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:2e9d5124613bf9972ce969a13135407823383ad08d1a11ba590f21e70d853fdf",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stderr.txt"
+  ]
+}

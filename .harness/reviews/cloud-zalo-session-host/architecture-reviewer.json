@@ -1,0 +1,54 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-zalo-session-host",
+  "featureId": "cloud-zalo-session-host",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:20:00Z",
+  "checkedFiles": [
+    ".harness/evidence/cloud-zalo-session-host.json",
+    ".harness/task-contracts/cloud-zalo-session-host.json",
+    "server/scripts/live-hosted-send-validate.mjs",
+    "server/scripts/live-hosted-zalo-smoke.mjs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs"
+  ],
+  "checkedInvariants": [
+    "auth-session-boundary",
+    "account-ownership",
+    "phone-resolve-input-validation",
+    "hosted-send-realtime",
+    "credential-redaction",
+    "evidence-honesty"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "reviewedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.9,
+  "findings": [],
+  "summary": "Architecture review pass: the added API surface is a narrow authenticated account-owned resolve endpoint and smoke tooling stays outside production runtime.",
+  "updatedAt": "2026-06-03T17:16:05.910Z"
+}

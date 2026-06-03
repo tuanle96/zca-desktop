@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-message-file-store",
+  "featureId": "cloud-message-file-store",
+  "decision": "pass",
+  "createdAt": "2026-06-03T15:50:31Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-message-file-store-completion-review",
+    "createdBy": "codex",
+    "notes": "Reviewed only the encrypted cloud message/file storage slice. This pass does not cover production email provider proof or live hosted Zalo QR/listen/send proof."
+  },
+  "checkedFiles": [
+    ".harness/evidence/cloud-message-file-store.json",
+    ".harness/task-contracts/cloud-message-file-store.json",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/crypto.rs",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/storage.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/cloud.ts",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "contract-scope-alignment",
+    "evidence-honesty",
+    "two-device-file-proof",
+    "file-integrity-proof",
+    "desktop-chat-ui-integration",
+    "live-zalo-proof-not-overclaimed"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "reviewedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Advisor review pass for cloud-message-file-store: evidence proves the Postgres/MinIO two-device encrypted file path, rejects malformed file uploads by size/hash metadata, and the desktop chat UI exposes cloud upload/download while keeping broader live Zalo proof open."
+}

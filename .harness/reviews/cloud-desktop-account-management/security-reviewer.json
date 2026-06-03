@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-desktop-account-management",
+  "featureId": "cloud-desktop-account-management",
+  "createdAt": "2026-06-03T16:15:21Z",
+  "decision": "pass",
+  "checkedFiles": [
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/cloud.ts",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "auth-session-boundary",
+    "bearer-token-scope",
+    "keychain-token-storage",
+    "account-delete-authorization"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "reviewedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.82,
+  "findings": [],
+  "controlsConfirmed": [
+    {
+      "id": "no-zalo-secret-webview",
+      "evidence": "The desktop hosted-QR UI receives qrImage/status/displayName/account metadata only. It does not request or render imei/cookie/userAgent credential values."
+    },
+    {
+      "id": "no-persisted-saas-token-webview",
+      "evidence": "cloud_verify_magic_link and cloud_register_device save the returned SaaS device token into the OS keychain and return the non-secret __keychain__ sentinel to the webview."
+    },
+    {
+      "id": "backend-authz-delete",
+      "evidence": "Cloud account deletion is a device-token authorized DELETE request to /api/v1/accounts/:account_id; local logout_account remains isolated to local mode."
+    },
+    {
+      "id": "poller-cleanup",
+      "evidence": "The cloud QR poll interval is cleared on terminal states and component destroy to avoid stale polling with a bearer token."
+    }
+  ],
+  "findings": [],
+  "summary": "Security review pass for the completed desktop wiring. Zalo credential plaintext does not enter the webview, and persisted SaaS device tokens now live in OS keychain instead of localStorage."
+}

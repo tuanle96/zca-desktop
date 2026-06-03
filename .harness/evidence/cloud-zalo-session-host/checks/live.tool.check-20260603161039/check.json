@@ -1,0 +1,20 @@
+{
+  "name": "live.tool.check",
+  "command": "node --check server/scripts/live-hosted-zalo-smoke.mjs",
+  "status": "pass",
+  "summary": "live-hosted-zalo-smoke.mjs syntax check passed for QR/send/realtime/restart proof tooling.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:10:39.394Z",
+  "finishedAt": "2026-06-03T16:10:39.659Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:1d050e57ec6656c99a8e275c60e92c087be7dda7e003299f91bda714d05a4c87",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stdout.txt",
+    ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stderr.txt"
+  ]
+}

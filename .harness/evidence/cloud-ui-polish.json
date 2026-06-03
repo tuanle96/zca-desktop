@@ -1,0 +1,61 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-ui-polish",
+  "featureId": "cloud-ui-polish",
+  "status": "pass",
+  "createdAt": "2026-06-03T17:26:00.489Z",
+  "updatedAt": "2026-06-03T17:26:22.096Z",
+  "diffSummary": "Cloud mode UI polish adds a clearer SaaS panel on the QR login gate, copyable recovery key display, connected cloud status, cloud account rows with state, QR retry affordance, rail cloud status, settings cloud data diagnostics, and chat header/composer cloud indicators with cloud-only copy.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-ui-polish.json",
+    ".harness/evidence/cloud-ui-polish.json",
+    ".harness/reviews/cloud-ui-polish/advisor-decision.json",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/components/chat/RailNav.svelte",
+    "src/lib/components/chat/SettingsDialog.svelte"
+  ],
+  "checks": [
+    {
+      "name": "ui.cloud-polish",
+      "acceptanceId": "cloud-ui-daily-use",
+      "artifact": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/check.json",
+      "command": "bun run check && bun run build",
+      "status": "pass",
+      "summary": "Svelte check and production build passed after cloud-mode UI polish for login/device/account status and chat affordances.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T17:25:16.575Z",
+      "finishedAt": "2026-06-03T17:25:31.825Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:877d7bb949dd3a7aaadcc6d02b8ae487fb1d71ba028b09993b0b2cdb9eeefcf4",
+      "stdoutHash": "sha256:a90efd1ef371a7d7535d5a74bb6a69111dfc895aff5816e6691cd9208d01c642",
+      "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+      "stdoutPath": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stdout.txt",
+        ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-ui-polish/advisor-decision.json",
+      "summary": "Advisor pass: scope stays UI-only and check/build evidence is attached."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "runtime-screenshot-not-captured",
+      "severity": "low",
+      "description": "Browser automation was not available in this turn, so verification uses Svelte check/build plus static component review instead of a runtime screenshot.",
+      "disposition": "mitigated",
+      "mitigation": "The touched UI is compile-verified by svelte-check and Vite production build; no backend or IPC contract changed.",
+      "owner": "codex"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed after restore failure state handling.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:00:32.706Z",
+  "finishedAt": "2026-06-03T16:00:34.603Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+  "stdoutHash": "sha256:e17f815b0af60c70102b7723c22a890e815e126a881510feff5c714503f28c4a",
+  "stderrHash": "sha256:ae46e5c628e14cc50644f163e9e63009d0a9209d2289ccbc09ff511ce2642526",
+  "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stdout.txt",
+    ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stderr.txt"
+  ]
+}

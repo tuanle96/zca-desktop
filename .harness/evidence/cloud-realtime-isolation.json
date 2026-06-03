@@ -1,0 +1,111 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-realtime-isolation",
+  "featureId": "cloud-realtime-isolation",
+  "status": "pass",
+  "createdAt": "2026-06-03T16:38:00Z",
+  "updatedAt": "2026-06-03T16:39:51.896Z",
+  "diffSummary": "Cloud realtime SSE is now user-scoped: hosted message events are broadcast with an internal owner user_id and /api/v1/realtime emits only events belonging to the authenticated device's SaaS user. The public SSE payload shape for allowed events remains unchanged.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/reviews/cloud-realtime-isolation/advisor-decision.json",
+    ".harness/reviews/cloud-realtime-isolation/architecture-reviewer.json",
+    ".harness/reviews/cloud-realtime-isolation/security-reviewer.json",
+    ".harness/task-contracts/cloud-realtime-isolation.json",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checks": [
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed, including realtime_payload_is_user_scoped dropping other-user events.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:39:34.945Z",
+      "finishedAt": "2026-06-03T16:39:36.734Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+      "stdoutHash": "sha256:f70a1f13bb9a604d2f275ffb12a3a37f260ba4234c167a0b21c383c007187f66",
+      "stderrHash": "sha256:933b26d018642129ec36d028a3e6f7e200ccda89b42f10d596263389ab7b670a",
+      "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stdout.txt",
+        ".harness/evidence/cloud-realtime-isolation/checks/backend.tests-20260603163934/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after realtime user filtering.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:39:34.945Z",
+      "finishedAt": "2026-06-03T16:39:37.567Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:fd19fc6295d12629b5c2c66b0791eb72d43f92f69f1993ae31b2f11426752148",
+      "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stdout.txt",
+        ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO dev smoke remained green after realtime event envelope filtering.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:39:43.179Z",
+      "finishedAt": "2026-06-03T16:39:51.839Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+      "stdoutHash": "sha256:fc356d6b6bbeae6f7a530a085e236a6ffd872c8b397a53ecfecf01e072737499",
+      "stderrHash": "sha256:cab4cb0d7e4e34c068b75e2f14153e3cab12f6ac2a90026497fc43c6ef8ddc65",
+      "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stdout.txt",
+        ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-realtime-isolation/advisor-decision.json",
+      "summary": "Advisor pass for scoped realtime event ownership and evidence honesty."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-realtime-isolation/security-reviewer.json",
+      "summary": "Security pass: authenticated SSE streams only emit events for the same SaaS user."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-realtime-isolation/architecture-reviewer.json",
+      "summary": "Architecture pass: internal event envelope preserves public SSE payload shape."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "live-hosted-realtime-not-proven",
+      "severity": "medium",
+      "description": "This feature proves server-side user filtering with unit and dev-smoke gates, not a live hosted Zalo realtime event.",
+      "disposition": "mitigated",
+      "owner": "tuanle96",
+      "mitigation": "Live hosted QR/listen/send/restart proof remains tracked by cloud-zalo-session-host, which stays passes=false."
+    }
+  ]
+}

@@ -1,0 +1,284 @@
+{
+  "schemaVersion": 1,
+  "taskId": "saas-backend-foundation",
+  "featureId": "saas-backend-foundation",
+  "status": "pass",
+  "createdAt": "2026-06-03T15:01:52Z",
+  "updatedAt": "2026-06-03T16:35:02.998Z",
+  "diffSummary": "Added ADR-0006 and the SaaS foundation slice: a new server/ Rust crate with axum, reversible sqlx/Postgres migrations, confidential-at-rest crypto helpers, magic-link/device auth, recovery-key plus server-master wrapping, configurable magic-link webhook delivery, hosted zca-rust QR/login/listen/send scaffold, restore-active-sessions boot path, S3-compatible encrypted blob upload/download, Docker Postgres/MinIO dev smoke with migration up/down/up proof, and desktop cloud commands/UI panel. Local mode remains default. Live hosted Zalo account proof remains a separate open cloud feature and is not claimed by this foundation evidence.",
+  "changedFiles": [
+    ".harness/docs/adr/0006-saas-session-host-and-confidential-at-rest.md",
+    ".harness/feature_list.json",
+    ".harness/project/state.json",
+    ".harness/task-contracts/saas-backend-foundation.json",
+    ".harness/task-contracts/cloud-auth-devices.json",
+    ".harness/task-contracts/cloud-zalo-session-host.json",
+    ".harness/task-contracts/cloud-message-file-store.json",
+    "server/Cargo.lock",
+    "server/Cargo.toml",
+    "server/docker-compose.dev.yml",
+    "server/migrations/202606030001_saas_foundation.up.sql",
+    "server/migrations/202606030001_saas_foundation.down.sql",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/auth.rs",
+    "server/src/config.rs",
+    "server/src/crypto.rs",
+    "server/src/db.rs",
+    "server/src/error.rs",
+    "server/src/lib.rs",
+    "server/src/main.rs",
+    "server/src/mailer.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/storage.rs",
+    "server/src/zalo_host.rs",
+    "src-tauri/Cargo.toml",
+    "src-tauri/Cargo.lock",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/command/mod.rs",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/cloud.ts"
+  ],
+  "checks": [
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend unit tests passed after adding reversible sqlx migration support.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:34:33.150Z",
+      "finishedAt": "2026-06-03T16:34:37.178Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+      "stdoutHash": "sha256:d4204c487a5f96345a5cb37123c5d9f6de1201820d4d5b79e778ca11271ae348",
+      "stderrHash": "sha256:690389d4bff35f25b343a4f099e47edd185ddbe994506b4e9ae4b09b3aee1313",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after reversible migration support.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:34:33.150Z",
+      "finishedAt": "2026-06-03T16:34:35.857Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:ec97b6988caa53dcbba1b7954d7f814e379d90dcaf3fde26e73a036689e5ce78",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stderr.txt"
+      ]
+    },
+    {
+      "name": "desktop.tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "Tauri core tests still pass after SaaS foundation migration/keychain changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:34:44.330Z",
+      "finishedAt": "2026-06-03T16:34:45.873Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+      "stdoutHash": "sha256:8a227363dc49efc9848521ccc92734e1a4c5efd6a60bc9b7bd1ecdc5176fe600",
+      "stderrHash": "sha256:1f5978b90b929a7e743fda800d8404a1372e5f6aa5aa12f5dbc290e35531efa5",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.check",
+      "command": "bun run check",
+      "status": "pass",
+      "summary": "Svelte type-check remains clean after SaaS foundation desktop helper changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:34:44.421Z",
+      "finishedAt": "2026-06-03T16:34:47.792Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+      "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+      "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/frontend.check-20260603163444/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/frontend.check-20260603163444/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/frontend.check-20260603163444/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/frontend.check-20260603163444/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "bun run build",
+      "status": "pass",
+      "summary": "Vite/SvelteKit production build completed successfully.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:46Z",
+      "finishedAt": "2026-06-03T15:27:58Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:9fa6349cf3c47dd84ef490062498bb330ff413c536b6a09b3a34d27583df1c97",
+      "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152746/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152746/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152746/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152746/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152746/check.json"
+      ]
+    },
+    {
+      "name": "desktop.lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Tauri clippy completed with warnings denied after moving cloud commands into the command layer.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:42Z",
+      "finishedAt": "2026-06-03T15:27:44Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:a2e39143dea7c9886ffcf82ed112be7669af210c513dce8ae814d11821b4b4ec",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/check.json"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "node .harness/scripts/harness-check.mjs",
+      "status": "pass",
+      "summary": "Harness structural check passed for the local Tauri layering rules.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:58Z",
+      "finishedAt": "2026-06-03T15:27:58Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/check.json"
+      ]
+    },
+    {
+      "name": "architecture",
+      "command": "node .harness/scripts/check-architecture-fitness.mjs --strict",
+      "status": "pass",
+      "summary": "Architecture fitness passed in strict mode.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:58Z",
+      "finishedAt": "2026-06-03T15:27:59Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:7a2a274eacaf9342762d2bc239aa43ccdc7fb7ced67c312373dbc9200e5f98e0",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/architecture-20260603152758/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/architecture-20260603152758/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/architecture-20260603152758/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/architecture-20260603152758/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/architecture-20260603152758/check.json"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO dev smoke passed and includes migrationRoundtripProved=true plus auth/device/file/revoke proofs.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:34:54.472Z",
+      "finishedAt": "2026-06-03T16:35:02.915Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+      "stdoutHash": "sha256:8614b3da879f582e14eff40a65713ad7a1d9fd889c2e1189141f9d1111f716a7",
+      "stderrHash": "sha256:beca6fee98b34fce61e9c1e22905a42133097c3a6418586eee1876ac904f7a7c",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/saas-backend-foundation/advisor-decision.json",
+      "summary": "Advisor pass for saas-backend-foundation scope; live hosted QR proof remains tracked separately under cloud-zalo-session-host."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/saas-backend-foundation/security-reviewer.json",
+      "summary": "Security pass: confidential-at-rest boundary, token hashing, recovery-key handling, encrypted object storage, and revoke smoke checked."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/saas-backend-foundation/architecture-reviewer.json",
+      "summary": "Architecture pass: server crate boundary, cloud IPC commands, local-mode preservation, and hosted session manager checked."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "hosted-worker-live-proof-deferred",
+      "severity": "high",
+      "description": "The backend hosted worker code compiles and is wired into the server, but live phone QR/listen/send/restart proof is tracked by cloud-zalo-session-host and is not claimed by this foundation pass.",
+      "disposition": "accepted",
+      "owner": "tuanle96",
+      "acceptedBy": "codex",
+      "acceptanceReason": "Live QR/listen/send proof is explicitly out of scope for the foundation and tracked by cloud-zalo-session-host.",
+      "mitigation": "Hosted worker code compiles and session-host live proof remains blocked from passes=true until a real account QR smoke is captured.",
+      "acceptedUntil": "2026-07-03"
+    },
+    {
+      "id": "production-email-deferred",
+      "severity": "low",
+      "description": "Production email now has a configurable magic-link webhook delivery hook; choosing and operating the actual provider credentials is tracked by cloud-auth-devices.",
+      "disposition": "accepted",
+      "owner": "tuanle96",
+      "acceptedBy": "codex",
+      "acceptanceReason": "Production email delivery is explicitly out of scope for the foundation and tracked by cloud-auth-devices.",
+      "mitigation": "When dev token return is disabled, /auth/magic-link/request requires ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL and fails with service_unavailable if delivery is not configured."
+    },
+    {
+      "id": "confidential-at-rest-not-e2e",
+      "severity": "high",
+      "description": "Session-host architecture means the backend worker sees plaintext at runtime; ADR-0006 documents this as confidential-at-rest rather than true E2E.",
+      "disposition": "accepted",
+      "owner": "tuanle96",
+      "acceptedBy": "codex",
+      "acceptanceReason": "ADR-0006 records the session-host trust boundary; true server-blind E2E requires a different architecture and is not claimed here.",
+      "mitigation": "Sensitive rows/blobs are encrypted at rest and logs/API responses avoid plaintext Zalo credentials; wording consistently says confidential-at-rest, not true E2E.",
+      "acceptedUntil": "2026-07-03"
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "desktop.tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "Tauri core tests passed with cloud keychain session resolver and sentinel support.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:29:53.953Z",
+  "finishedAt": "2026-06-03T16:29:55.439Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:2b7f629508d2d88c86d41f74040e31132f0da8c6fe7089c69f30d8c841564e09",
+  "stderrHash": "sha256:1b5a4428cba8068a19df514deb99c35c5bb583a660b765492bdab0ee02bc473d",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stderr.txt"
+  ]
+}

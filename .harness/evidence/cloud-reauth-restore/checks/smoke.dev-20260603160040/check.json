@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO smoke passed and includes reauthRestoreMarked=true for a broken active hosted account seeded before startup.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:00:40.814Z",
+  "finishedAt": "2026-06-03T16:00:49.228Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+  "stdoutHash": "sha256:b309dafa6f64302cea365ed2d229bcac5afb1255addf6561fd7127b61f0b0bbf",
+  "stderrHash": "sha256:32e8345f371e059dbe620fc3850b5d64928841cf4ec4f164db723052d667030f",
+  "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stdout.txt",
+    ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stderr.txt"
+  ]
+}

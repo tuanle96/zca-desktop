@@ -8,9 +8,9 @@
 use std::path::Path;
 use std::sync::Mutex;
 
-use serde::de::DeserializeOwned;
-use rusqlite::Connection;
 use rusqlite::types::Type;
+use rusqlite::Connection;
+use serde::de::DeserializeOwned;
 
 use crate::types::{
     AccountProfile, Credentials, LinkPreview, QuoteRef, Sticker, StoredMessage, StoredThread,
@@ -55,7 +55,9 @@ impl Db {
         let conn = Connection::open(path)?;
         conn.pragma_update(None, "journal_mode", "WAL")?;
         conn.pragma_update(None, "foreign_keys", "ON")?;
-        let db = Db { conn: Mutex::new(conn) };
+        let db = Db {
+            conn: Mutex::new(conn),
+        };
         db.migrate()?;
         Ok(db)
     }
@@ -173,7 +175,10 @@ impl Db {
             current = 4;
         }
 
-        debug_assert_eq!(current, SCHEMA_VERSION, "migrations must reach SCHEMA_VERSION");
+        debug_assert_eq!(
+            current, SCHEMA_VERSION,
+            "migrations must reach SCHEMA_VERSION"
+        );
         conn.pragma_update(None, "user_version", current)?;
         Ok(())
     }
@@ -232,7 +237,11 @@ impl Db {
             let (account_id, display_name, avatar, state, blob) = row?;
             match crypto::decrypt_credentials(&blob) {
                 Ok(credentials) => out.push(SavedAccount {
-                    profile: AccountProfile { account_id, display_name, avatar },
+                    profile: AccountProfile {
+                        account_id,
+                        display_name,
+                        avatar,
+                    },
                     credentials,
                     state,
                 }),
@@ -259,7 +268,10 @@ impl Db {
     /// Remove an account and its credential from the store.
     pub fn delete_account(&self, account_id: &str) -> Result<(), StoreError> {
         let conn = self.conn.lock().expect("db mutex poisoned");
-        conn.execute("DELETE FROM accounts WHERE account_id = ?1", rusqlite::params![account_id])?;
+        conn.execute(
+            "DELETE FROM accounts WHERE account_id = ?1",
+            rusqlite::params![account_id],
+        )?;
         Ok(())
     }
 
@@ -384,7 +396,15 @@ impl Db {
                 avatar = COALESCE(excluded.avatar, threads.avatar),
                 last_at = MAX(COALESCE(excluded.last_at, 0), COALESCE(threads.last_at, 0)),
                 unread = threads.unread + ?7",
-            rusqlite::params![account_id, thread_id, kind, thread_title, thread_avatar, ts, unread_delta],
+            rusqlite::params![
+                account_id,
+                thread_id,
+                kind,
+                thread_title,
+                thread_avatar,
+                ts,
+                unread_delta
+            ],
         )?;
         Ok(())
     }
@@ -462,7 +482,14 @@ impl Db {
                      WHERE account_id = ?1 AND thread_id = ?2 AND outgoing = 1
                        AND kind = 'sticker' AND sticker_id = ?3 AND msg_id <> ?4
                        AND ABS(COALESCE(ts, 0) - ?5) <= ?6",
-                    rusqlite::params![account_id, thread_id, sticker.id, msg_id, stamp, ECHO_WINDOW_MS],
+                    rusqlite::params![
+                        account_id,
+                        thread_id,
+                        sticker.id,
+                        msg_id,
+                        stamp,
+                        ECHO_WINDOW_MS
+                    ],
                     |row| row.get(0),
                 )?;
                 if existing > 0 {
@@ -509,7 +536,15 @@ impl Db {
                 avatar = COALESCE(excluded.avatar, threads.avatar),
                 last_at = MAX(COALESCE(excluded.last_at, 0), COALESCE(threads.last_at, 0)),
                 unread = threads.unread + ?7",
-            rusqlite::params![account_id, thread_id, kind, thread_title, thread_avatar, ts, unread_delta],
+            rusqlite::params![
+                account_id,
+                thread_id,
+                kind,
+                thread_title,
+                thread_avatar,
+                ts,
+                unread_delta
+            ],
         )?;
         Ok(())
     }
@@ -587,8 +622,9 @@ impl Db {
              ORDER BY MAX(used_at) DESC
              LIMIT ?2",
         )?;
-        let rows = stmt
-            .query_map(rusqlite::params![account_id, limit], |row| row.get::<_, i64>(0))?;
+        let rows = stmt.query_map(rusqlite::params![account_id, limit], |row| {
+            row.get::<_, i64>(0)
+        })?;
         Ok(rows.collect::<Result<Vec<_>, _>>()?)
     }
 
@@ -694,11 +730,7 @@ impl Db {
     /// Mark a cached message as recalled/deleted after a realtime undo event.
     /// The row remains so history preserves chronology and can render the
     /// standard "message recalled" placeholder after restart.
-    pub fn mark_message_deleted(
-        &self,
-        account_id: &str,
-        msg_id: &str,
-    ) -> Result<bool, StoreError> {
+    pub fn mark_message_deleted(&self, account_id: &str, msg_id: &str) -> Result<bool, StoreError> {
         let conn = self.conn.lock().expect("db mutex poisoned");
         let changed = conn.execute(
             "UPDATE messages
@@ -891,18 +923,60 @@ mod tests {
     fn message_persistence_roundtrips_and_dedupes() {
         let db = temp_db();
         let acc = "100000";
-        db.save_message(acc, "thread-1", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
-            .expect("save m1");
-        db.save_message(acc, "thread-1", "user", "m2", Some("u2"), Some("Bob"), Some("there"), false, Some(2000), Some("Bob"), None, true)
-            .expect("save m2");
+        db.save_message(
+            acc,
+            "thread-1",
+            "user",
+            "m1",
+            Some("u2"),
+            Some("Bob"),
+            Some("hi"),
+            false,
+            Some(1000),
+            Some("Bob"),
+            None,
+            true,
+        )
+        .expect("save m1");
+        db.save_message(
+            acc,
+            "thread-1",
+            "user",
+            "m2",
+            Some("u2"),
+            Some("Bob"),
+            Some("there"),
+            false,
+            Some(2000),
+            Some("Bob"),
+            None,
+            true,
+        )
+        .expect("save m2");
         // Duplicate m1 — must not insert again or double the unread count.
-        db.save_message(acc, "thread-1", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
-            .expect("dup m1");
+        db.save_message(
+            acc,
+            "thread-1",
+            "user",
+            "m1",
+            Some("u2"),
+            Some("Bob"),
+            Some("hi"),
+            false,
+            Some(1000),
+            Some("Bob"),
+            None,
+            true,
+        )
+        .expect("dup m1");
 
         let threads = db.load_threads(acc).expect("threads");
         assert_eq!(threads.len(), 1);
         assert_eq!(threads[0].thread_id, "thread-1");
-        assert_eq!(threads[0].unread, 2, "two distinct inbound msgs => unread 2");
+        assert_eq!(
+            threads[0].unread, 2,
+            "two distinct inbound msgs => unread 2"
+        );
         assert_eq!(threads[0].last_at, Some(2000));
 
         let msgs = db.load_recent_messages(acc, 100).expect("messages");
@@ -925,21 +999,75 @@ mod tests {
         let body = "rồi chị dô tồn kho chị xem 4 bao";
 
         // Optimistic/send-side persist with the send-response id.
-        db.save_message(acc, thread, "user", "send-id-867250", Some(acc), None, Some(body), true, Some(1_780_450_965_032), None, None, false)
-            .expect("send persist");
+        db.save_message(
+            acc,
+            thread,
+            "user",
+            "send-id-867250",
+            Some(acc),
+            None,
+            Some(body),
+            true,
+            Some(1_780_450_965_032),
+            None,
+            None,
+            false,
+        )
+        .expect("send persist");
         // Listener echo of the same message ~0.75s later with the server id.
-        db.save_message(acc, thread, "user", "echo-id-928111", Some(acc), None, Some(body), true, Some(1_780_450_965_784), None, None, false)
-            .expect("echo persist");
+        db.save_message(
+            acc,
+            thread,
+            "user",
+            "echo-id-928111",
+            Some(acc),
+            None,
+            Some(body),
+            true,
+            Some(1_780_450_965_784),
+            None,
+            None,
+            false,
+        )
+        .expect("echo persist");
 
         let msgs = db.load_recent_messages(acc, 100).expect("messages");
-        let outgoing: Vec<_> = msgs.iter().filter(|m| m.outgoing && m.body.as_deref() == Some(body)).collect();
-        assert_eq!(outgoing.len(), 1, "outgoing echo must not be stored twice across differing msg_ids");
+        let outgoing: Vec<_> = msgs
+            .iter()
+            .filter(|m| m.outgoing && m.body.as_deref() == Some(body))
+            .collect();
+        assert_eq!(
+            outgoing.len(),
+            1,
+            "outgoing echo must not be stored twice across differing msg_ids"
+        );
 
         // A genuinely different outgoing message in the same thread still stores.
-        db.save_message(acc, thread, "user", "send-id-999", Some(acc), None, Some("a different line"), true, Some(1_780_450_999_000), None, None, false)
-            .expect("other send");
-        let total_outgoing = db.load_recent_messages(acc, 100).expect("m2").iter().filter(|m| m.outgoing).count();
-        assert_eq!(total_outgoing, 2, "distinct outgoing messages must both persist");
+        db.save_message(
+            acc,
+            thread,
+            "user",
+            "send-id-999",
+            Some(acc),
+            None,
+            Some("a different line"),
+            true,
+            Some(1_780_450_999_000),
+            None,
+            None,
+            false,
+        )
+        .expect("other send");
+        let total_outgoing = db
+            .load_recent_messages(acc, 100)
+            .expect("m2")
+            .iter()
+            .filter(|m| m.outgoing)
+            .count();
+        assert_eq!(
+            total_outgoing, 2,
+            "distinct outgoing messages must both persist"
+        );
     }
 
     /// Attachment metadata persists alongside a message.
@@ -947,10 +1075,31 @@ mod tests {
     fn attachment_metadata_persists() {
         let db = temp_db();
         let acc = "100000";
-        db.save_message(acc, "t1", "user", "m1", None, None, Some("file"), false, Some(1), None, None, false)
-            .expect("msg");
-        db.save_attachment(acc, "m1", Some("image"), Some("https://cdn/x.jpg"), Some("x.jpg"), Some(2048), None)
-            .expect("attachment");
+        db.save_message(
+            acc,
+            "t1",
+            "user",
+            "m1",
+            None,
+            None,
+            Some("file"),
+            false,
+            Some(1),
+            None,
+            None,
+            false,
+        )
+        .expect("msg");
+        db.save_attachment(
+            acc,
+            "m1",
+            Some("image"),
+            Some("https://cdn/x.jpg"),
+            Some("x.jpg"),
+            Some(2048),
+            None,
+        )
+        .expect("attachment");
         // No dedicated loader yet; absence of error + the message row is enough
         // for this slice (loader lands when the UI renders attachments).
         assert_eq!(db.load_recent_messages(acc, 10).expect("m").len(), 1);
@@ -968,17 +1117,57 @@ mod tests {
             id: 6699,
             cat_id: 16,
             sticker_type: 7,
-            url: "https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=6699&size=130".to_string(),
+            url: "https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=6699&size=130"
+                .to_string(),
         };
 
         // Incoming sticker from a peer.
-        db.save_sticker_message(acc, "u2", "user", "s1", Some("u2"), Some("Bob"), &sticker, false, Some(1000), Some("Bob"), None, true)
-            .expect("save incoming sticker");
+        db.save_sticker_message(
+            acc,
+            "u2",
+            "user",
+            "s1",
+            Some("u2"),
+            Some("Bob"),
+            &sticker,
+            false,
+            Some(1000),
+            Some("Bob"),
+            None,
+            true,
+        )
+        .expect("save incoming sticker");
         // Outgoing sticker (our send) + its listener echo under another msg_id.
-        db.save_sticker_message(acc, "u2", "user", "send-s2", Some(acc), None, &sticker, true, Some(2000), None, None, false)
-            .expect("save outgoing sticker");
-        db.save_sticker_message(acc, "u2", "user", "echo-s2", Some(acc), None, &sticker, true, Some(2300), None, None, false)
-            .expect("save echo sticker");
+        db.save_sticker_message(
+            acc,
+            "u2",
+            "user",
+            "send-s2",
+            Some(acc),
+            None,
+            &sticker,
+            true,
+            Some(2000),
+            None,
+            None,
+            false,
+        )
+        .expect("save outgoing sticker");
+        db.save_sticker_message(
+            acc,
+            "u2",
+            "user",
+            "echo-s2",
+            Some(acc),
+            None,
+            &sticker,
+            true,
+            Some(2300),
+            None,
+            None,
+            false,
+        )
+        .expect("save echo sticker");
 
         let msgs = db.load_recent_messages(acc, 100).expect("messages");
         let stickers: Vec<_> = msgs.iter().filter(|m| m.sticker.is_some()).collect();
@@ -992,7 +1181,10 @@ mod tests {
         // The thread tracks the incoming sticker as one unread.
         let threads = db.load_threads(acc).expect("threads");
         assert_eq!(threads.len(), 1);
-        assert_eq!(threads[0].unread, 1, "only the inbound sticker bumps unread");
+        assert_eq!(
+            threads[0].unread, 1,
+            "only the inbound sticker bumps unread"
+        );
     }
 
     /// Rich-message metadata persists and reloads: quote/link render after
@@ -1035,16 +1227,23 @@ mod tests {
             Some(&link),
         )
         .expect("save rich message");
-        assert!(db.apply_reaction(acc, "m-rich", "❤️").expect("reaction updated"));
+        assert!(db
+            .apply_reaction(acc, "m-rich", "❤️")
+            .expect("reaction updated"));
 
         let loaded = db.load_recent_messages(acc, 10).expect("load rich");
         assert_eq!(loaded.len(), 1);
         assert_eq!(loaded[0].quote.as_ref().expect("quote").msg, "quoted text");
-        assert_eq!(loaded[0].link.as_ref().expect("link").href, "https://example.com");
+        assert_eq!(
+            loaded[0].link.as_ref().expect("link").href,
+            "https://example.com"
+        );
         assert_eq!(loaded[0].reaction_icon.as_deref(), Some("❤️"));
         assert!(!loaded[0].deleted);
 
-        assert!(db.mark_message_deleted(acc, "m-rich").expect("deleted updated"));
+        assert!(db
+            .mark_message_deleted(acc, "m-rich")
+            .expect("deleted updated"));
         let loaded = db.load_recent_messages(acc, 10).expect("reload after undo");
         assert_eq!(loaded.len(), 1, "undo mutates existing row, not a new row");
         assert!(loaded[0].deleted);
@@ -1069,7 +1268,8 @@ mod tests {
         db.record_recent_sticker(acc, &mk(1, 10), 1000).expect("r1");
         db.record_recent_sticker(acc, &mk(2, 20), 2000).expect("r2");
         // Re-use sticker 1 later: must bump it to the front, not duplicate.
-        db.record_recent_sticker(acc, &mk(1, 10), 3000).expect("r1 again");
+        db.record_recent_sticker(acc, &mk(1, 10), 3000)
+            .expect("r1 again");
 
         let recent = db.load_recent_stickers(acc, 10).expect("recent");
         assert_eq!(recent.len(), 2, "re-use must not duplicate a sticker");
@@ -1079,7 +1279,11 @@ mod tests {
         // A sticker with unknown category (0) is excluded from pack tabs.
         db.record_recent_sticker(acc, &mk(3, 0), 4000).expect("r3");
         let cats = db.load_recent_sticker_categories(acc, 10).expect("cats");
-        assert_eq!(cats, vec![10, 20], "categories ordered by most-recent use, cat 0 excluded");
+        assert_eq!(
+            cats,
+            vec![10, 20],
+            "categories ordered by most-recent use, cat 0 excluded"
+        );
     }
 
     /// Thread-identity backfill: directory data (contacts/groups) updates the
@@ -1095,42 +1299,120 @@ mod tests {
         // A DM thread and a group thread exist from observed messages; the
         // realtime stream gave us no avatar, and the group title is the last
         // sender's name (the bug this backfill fixes).
-        db.save_message(acc, "u2", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
-            .expect("save dm");
-        db.save_message(acc, "g9", "group", "g1", Some("u3"), Some("Carol"), Some("yo"), false, Some(1500), Some("Carol"), None, true)
-            .expect("save group");
+        db.save_message(
+            acc,
+            "u2",
+            "user",
+            "m1",
+            Some("u2"),
+            Some("Bob"),
+            Some("hi"),
+            false,
+            Some(1000),
+            Some("Bob"),
+            None,
+            true,
+        )
+        .expect("save dm");
+        db.save_message(
+            acc,
+            "g9",
+            "group",
+            "g1",
+            Some("u3"),
+            Some("Carol"),
+            Some("yo"),
+            false,
+            Some(1500),
+            Some("Carol"),
+            None,
+            true,
+        )
+        .expect("save group");
 
         let identities = vec![
             // Matches the DM thread: set its avatar (title already "Bob").
-            ThreadIdentity { thread_id: "u2".into(), title: Some("Bob".into()), avatar: Some("https://cdn/bob.jpg".into()) },
+            ThreadIdentity {
+                thread_id: "u2".into(),
+                title: Some("Bob".into()),
+                avatar: Some("https://cdn/bob.jpg".into()),
+            },
             // Matches the group thread: correct the title + set the avatar.
-            ThreadIdentity { thread_id: "g9".into(), title: Some("Team Zalo".into()), avatar: Some("https://cdn/team.jpg".into()) },
+            ThreadIdentity {
+                thread_id: "g9".into(),
+                title: Some("Team Zalo".into()),
+                avatar: Some("https://cdn/team.jpg".into()),
+            },
             // A contact with NO conversation — must not create a thread row.
-            ThreadIdentity { thread_id: "u404".into(), title: Some("Stranger".into()), avatar: Some("https://cdn/x.jpg".into()) },
+            ThreadIdentity {
+                thread_id: "u404".into(),
+                title: Some("Stranger".into()),
+                avatar: Some("https://cdn/x.jpg".into()),
+            },
             // An empty payload — skipped (no UPDATE).
-            ThreadIdentity { thread_id: "u2".into(), title: None, avatar: None },
+            ThreadIdentity {
+                thread_id: "u2".into(),
+                title: None,
+                avatar: None,
+            },
         ];
-        let updated = db.backfill_thread_identities(acc, &identities).expect("backfill");
+        let updated = db
+            .backfill_thread_identities(acc, &identities)
+            .expect("backfill");
         assert_eq!(updated, 2, "only the two existing threads are updated");
 
         let threads = db.load_threads(acc).expect("threads");
-        assert_eq!(threads.len(), 2, "backfill must not create a thread for u404");
+        assert_eq!(
+            threads.len(),
+            2,
+            "backfill must not create a thread for u404"
+        );
 
-        let dm = threads.iter().find(|t| t.thread_id == "u2").expect("dm present");
+        let dm = threads
+            .iter()
+            .find(|t| t.thread_id == "u2")
+            .expect("dm present");
         assert_eq!(dm.title.as_deref(), Some("Bob"));
         assert_eq!(dm.avatar.as_deref(), Some("https://cdn/bob.jpg"));
 
-        let grp = threads.iter().find(|t| t.thread_id == "g9").expect("group present");
-        assert_eq!(grp.title.as_deref(), Some("Team Zalo"), "group title corrected from last sender");
+        let grp = threads
+            .iter()
+            .find(|t| t.thread_id == "g9")
+            .expect("group present");
+        assert_eq!(
+            grp.title.as_deref(),
+            Some("Team Zalo"),
+            "group title corrected from last sender"
+        );
         assert_eq!(grp.avatar.as_deref(), Some("https://cdn/team.jpg"));
 
         // Empty/whitespace directory values must not blank an existing value.
-        let blanking = vec![ThreadIdentity { thread_id: "u2".into(), title: Some(String::new()), avatar: Some(String::new()) }];
-        assert_eq!(db.backfill_thread_identities(acc, &blanking).expect("blank"), 0, "empty values are skipped");
+        let blanking = vec![ThreadIdentity {
+            thread_id: "u2".into(),
+            title: Some(String::new()),
+            avatar: Some(String::new()),
+        }];
+        assert_eq!(
+            db.backfill_thread_identities(acc, &blanking)
+                .expect("blank"),
+            0,
+            "empty values are skipped"
+        );
         let dm_after = db.load_threads(acc).expect("threads2");
-        let dm_after = dm_after.iter().find(|t| t.thread_id == "u2").expect("dm still present");
-        assert_eq!(dm_after.title.as_deref(), Some("Bob"), "empty title did not blank existing");
-        assert_eq!(dm_after.avatar.as_deref(), Some("https://cdn/bob.jpg"), "empty avatar did not blank existing");
+        let dm_after = dm_after
+            .iter()
+            .find(|t| t.thread_id == "u2")
+            .expect("dm still present");
+        assert_eq!(
+            dm_after.title.as_deref(),
+            Some("Bob"),
+            "empty title did not blank existing"
+        );
+        assert_eq!(
+            dm_after.avatar.as_deref(),
+            Some("https://cdn/bob.jpg"),
+            "empty avatar did not blank existing"
+        );
     }
 
     /// Restart persistence for thread identity: a thread's directory-resolved
@@ -1159,8 +1441,21 @@ mod tests {
         // then backfill identity from the directory the app fetched live.
         {
             let db = Db::open(&path).expect("open #1");
-            db.save_message(acc, "g9", "group", "g1", Some("u3"), Some("Carol"), Some("yo"), false, Some(1500), Some("Carol"), None, true)
-                .expect("save group");
+            db.save_message(
+                acc,
+                "g9",
+                "group",
+                "g1",
+                Some("u3"),
+                Some("Carol"),
+                Some("yo"),
+                false,
+                Some(1500),
+                Some("Carol"),
+                None,
+                true,
+            )
+            .expect("save group");
             let updated = db
                 .backfill_thread_identities(
                     acc,
@@ -1178,9 +1473,20 @@ mod tests {
         // and NO directory fetch, the title + avatar must already be present.
         let db = Db::open(&path).expect("reopen after restart");
         let threads = db.load_threads(acc).expect("threads after restart");
-        let grp = threads.iter().find(|t| t.thread_id == "g9").expect("group present after restart");
-        assert_eq!(grp.title.as_deref(), Some("Team Zalo"), "title survived restart");
-        assert_eq!(grp.avatar.as_deref(), Some("https://cdn/team.jpg"), "avatar survived restart");
+        let grp = threads
+            .iter()
+            .find(|t| t.thread_id == "g9")
+            .expect("group present after restart");
+        assert_eq!(
+            grp.title.as_deref(),
+            Some("Team Zalo"),
+            "title survived restart"
+        );
+        assert_eq!(
+            grp.avatar.as_deref(),
+            Some("https://cdn/team.jpg"),
+            "avatar survived restart"
+        );
 
         let _ = std::fs::remove_file(&path);
         println!(
@@ -1226,9 +1532,14 @@ mod tests {
         db.save_account(&profile, &creds).expect("save");
 
         // On-disk blob must be ciphertext, not plaintext.
-        let blob = db.raw_credential_blob("100000").expect("blob").expect("present");
+        let blob = db
+            .raw_credential_blob("100000")
+            .expect("blob")
+            .expect("present");
         assert!(
-            !blob.windows(b"topsecretvalue".len()).any(|w| w == b"topsecretvalue"),
+            !blob
+                .windows(b"topsecretvalue".len())
+                .any(|w| w == b"topsecretvalue"),
             "credential stored in plaintext!"
         );
 
@@ -1262,12 +1573,51 @@ mod tests {
         // First "run": persist an inbound + an outbound message across two threads.
         {
             let db = Db::open(&path).expect("open #1");
-            db.save_message(acc, "thread-1", "user", "m1", Some("u2"), Some("Bob"), Some("hi"), false, Some(1000), Some("Bob"), None, true)
-                .expect("save inbound");
-            db.save_message(acc, "thread-1", "user", "m2", Some(acc), None, Some("hello back"), true, Some(2000), None, None, false)
-                .expect("save outbound");
-            db.save_message(acc, "thread-2", "group", "g1", Some("u9"), Some("Carol"), Some("group msg"), false, Some(1500), Some("Team"), None, true)
-                .expect("save group");
+            db.save_message(
+                acc,
+                "thread-1",
+                "user",
+                "m1",
+                Some("u2"),
+                Some("Bob"),
+                Some("hi"),
+                false,
+                Some(1000),
+                Some("Bob"),
+                None,
+                true,
+            )
+            .expect("save inbound");
+            db.save_message(
+                acc,
+                "thread-1",
+                "user",
+                "m2",
+                Some(acc),
+                None,
+                Some("hello back"),
+                true,
+                Some(2000),
+                None,
+                None,
+                false,
+            )
+            .expect("save outbound");
+            db.save_message(
+                acc,
+                "thread-2",
+                "group",
+                "g1",
+                Some("u9"),
+                Some("Carol"),
+                Some("group msg"),
+                false,
+                Some(1500),
+                Some("Team"),
+                None,
+                true,
+            )
+            .expect("save group");
         } // Db dropped here — simulates app shutdown (connection closed).
 
         // Second "run": reopen the SAME file (relaunch) and read history back
@@ -1276,10 +1626,16 @@ mod tests {
         let threads = db.load_threads(acc).expect("threads after restart");
         assert_eq!(threads.len(), 2, "both threads must survive restart");
 
-        let messages = db.load_recent_messages(acc, 100).expect("messages after restart");
+        let messages = db
+            .load_recent_messages(acc, 100)
+            .expect("messages after restart");
         assert_eq!(messages.len(), 3, "all three messages must survive restart");
         let bodies: Vec<&str> = messages.iter().filter_map(|m| m.body.as_deref()).collect();
-        assert!(bodies.contains(&"hi") && bodies.contains(&"hello back") && bodies.contains(&"group msg"));
+        assert!(
+            bodies.contains(&"hi")
+                && bodies.contains(&"hello back")
+                && bodies.contains(&"group msg")
+        );
 
         let _ = std::fs::remove_file(&path);
         println!(

@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-auth-devices",
+  "featureId": "cloud-auth-devices",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:08:00Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "auth-device-local-hardening-review",
+    "createdBy": "codex",
+    "notes": "Reviewed local-verifiable auth/device hardening plus MailHog SMTP provider proof with dev magic-token return disabled."
+  },
+  "checkedFiles": [
+    ".harness/evidence/cloud-auth-devices.json",
+    ".harness/task-contracts/cloud-auth-devices.json",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/live-provider-smoke.mjs",
+    "server/scripts/smoke-mailhog.mjs",
+    "server/scripts/smoke-dev.mjs",
+    "server/docker-compose.dev.yml",
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/error.rs",
+    "server/src/mailer.rs",
+    "server/src/routes.rs"
+  ],
+  "checkedInvariants": [
+    "contract-scope-alignment",
+    "evidence-honesty",
+    "rate-limit-proof",
+    "audit-event-proof",
+    "mailhog-provider-proof"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/docker-compose.dev.yml",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/live-provider-smoke.mjs",
+      "server/scripts/smoke-dev.mjs",
+      "server/scripts/smoke-mailhog.mjs",
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/error.rs",
+      "server/src/mailer.rs",
+      "server/src/routes.rs"
+    ],
+    "reviewedFiles": [
+      "server/docker-compose.dev.yml",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/live-provider-smoke.mjs",
+      "server/scripts/smoke-dev.mjs",
+      "server/scripts/smoke-mailhog.mjs",
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/error.rs",
+      "server/src/mailer.rs",
+      "server/src/routes.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Advisor review pass for cloud-auth-devices: smoke proves MailHog SMTP provider delivery with dev token return disabled, token single-use rejection, rate-limit 429, audit event rows, recovery-key device B unlock, and revoked token rejection."
+}

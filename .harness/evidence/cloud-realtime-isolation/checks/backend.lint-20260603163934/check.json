@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after realtime user filtering.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:39:34.945Z",
+  "finishedAt": "2026-06-03T16:39:37.567Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:fd19fc6295d12629b5c2c66b0791eb72d43f92f69f1993ae31b2f11426752148",
+  "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stdout.txt",
+    ".harness/evidence/cloud-realtime-isolation/checks/backend.lint-20260603163934/stderr.txt"
+  ]
+}

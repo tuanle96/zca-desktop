@@ -1,0 +1,6 @@
+ Container server-minio-1  Running
+ Container server-postgres-1  Running
+ Container server-minio-1  Waiting
+ Container server-minio-1  Healthy
+ Container server-create-bucket-1  Starting
+ Container server-create-bucket-1  Started

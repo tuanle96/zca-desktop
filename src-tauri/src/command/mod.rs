@@ -10,8 +10,13 @@ use std::sync::Arc;
 use tauri::{AppHandle, Emitter, State};
 
 use crate::session::SessionManager;
-use crate::types::{AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent, Sticker};
+use crate::types::{
+    AccountProfile, Contact, CredentialSummary, Credentials, IncomingMessage, QrLoginEvent, Sticker,
+};
 use crate::zalo::{self, API};
+
+mod cloud;
+pub use cloud::*;
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";
@@ -41,8 +46,8 @@ pub struct StoreState(pub Option<Arc<crate::store::Db>>);
 /// the Phase 3 keychain feature.
 #[tauri::command]
 pub fn import_credentials(payload: String) -> Result<CredentialSummary, String> {
-    let credentials: Credentials = serde_json::from_str(&payload)
-        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    let credentials: Credentials =
+        serde_json::from_str(&payload).map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
     Ok(CredentialSummary {
         imei_len: credentials.imei.len(),
@@ -61,8 +66,8 @@ pub fn import_credentials(payload: String) -> Result<CredentialSummary, String> 
 /// persisted yet (Phase 3 keychain).
 #[tauri::command]
 pub async fn login(payload: String) -> Result<AccountProfile, String> {
-    let credentials: Credentials = serde_json::from_str(&payload)
-        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    let credentials: Credentials =
+        serde_json::from_str(&payload).map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
     crate::zalo::login_profile(credentials)
         .await
@@ -83,8 +88,8 @@ pub async fn start_listening(
     store: State<'_, StoreState>,
     payload: String,
 ) -> Result<AccountProfile, String> {
-    let credentials: Credentials = serde_json::from_str(&payload)
-        .map_err(|e| format!("invalid credential JSON: {e}"))?;
+    let credentials: Credentials =
+        serde_json::from_str(&payload).map_err(|e| format!("invalid credential JSON: {e}"))?;
     credentials.validate().map_err(|e| e.to_string())?;
     login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await
 }
@@ -128,7 +133,9 @@ pub async fn start_qr_login(
     tracing::info!("start_qr_login: QR confirmed, establishing session");
     let result = login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await;
     match &result {
-        Ok(profile) => tracing::info!(account_id = %profile.account_id, "start_qr_login: session established"),
+        Ok(profile) => {
+            tracing::info!(account_id = %profile.account_id, "start_qr_login: session established")
+        }
         Err(e) => tracing::error!(error = %e, "start_qr_login: session login failed after QR"),
     }
     result
@@ -149,7 +156,11 @@ async fn login_and_listen(
     save_cred: bool,
 ) -> Result<AccountProfile, String> {
     // Keep a copy for encrypted credential persistence before login consumes it.
-    let to_persist = if save_cred { Some(credentials.clone()) } else { None };
+    let to_persist = if save_cred {
+        Some(credentials.clone())
+    } else {
+        None
+    };
 
     // `self_listen = true`: the realtime listener must surface this account's
     // OWN messages too, so a message the user sends from the original Zalo app
@@ -168,8 +179,12 @@ async fn login_and_listen(
     // must not break an otherwise-successful login).
     if let (Some(db), Some(creds)) = (store, to_persist) {
         match db.save_account(&profile, &creds) {
-            Ok(()) => tracing::info!(account_id = %profile.account_id, "persisted account credential"),
-            Err(e) => tracing::warn!(account_id = %profile.account_id, error = %e, "failed to persist credential"),
+            Ok(()) => {
+                tracing::info!(account_id = %profile.account_id, "persisted account credential")
+            }
+            Err(e) => {
+                tracing::warn!(account_id = %profile.account_id, error = %e, "failed to persist credential")
+            }
         }
     }
 
@@ -180,7 +195,9 @@ async fn login_and_listen(
 
     // Register the session in the manager. A prior session for this account is
     // treated as a restart: its listener is gracefully stopped before replace.
-    sessions.insert(profile.account_id.clone(), api, listener).await;
+    sessions
+        .insert(profile.account_id.clone(), api, listener)
+        .await;
 
     // The bridge persists each observed message to the local store (ADR-0005)
     // before forwarding it to the UI, so history survives restarts.
@@ -329,8 +346,13 @@ pub async fn restore_sessions(
     let Some(db) = store.0.clone() else {
         return Ok(Vec::new());
     };
-    let saved = db.load_accounts().map_err(|e| format!("failed to load saved accounts: {e}"))?;
-    tracing::info!(count = saved.len(), "restore_sessions: restoring saved accounts");
+    let saved = db
+        .load_accounts()
+        .map_err(|e| format!("failed to load saved accounts: {e}"))?;
+    tracing::info!(
+        count = saved.len(),
+        "restore_sessions: restoring saved accounts"
+    );
 
     let mut restored = Vec::new();
     for account in saved {
@@ -345,7 +367,10 @@ pub async fn restore_sessions(
             }
         }
     }
-    tracing::info!(restored = restored.len(), "restore_sessions: restore complete");
+    tracing::info!(
+        restored = restored.len(),
+        "restore_sessions: restore complete"
+    );
     Ok(restored)
 }
 
@@ -474,7 +499,6 @@ pub async fn send_message(
     }
     Ok(msg_id)
 }
-
 
 /// Send a reaction to a specific message in a thread.
 ///
@@ -665,9 +689,14 @@ pub fn load_history(
     account_id: String,
 ) -> Result<crate::types::History, String> {
     let Some(db) = store.0.as_ref() else {
-        return Ok(crate::types::History { threads: Vec::new(), messages: Vec::new() });
+        return Ok(crate::types::History {
+            threads: Vec::new(),
+            messages: Vec::new(),
+        });
     };
-    let threads = db.load_threads(&account_id).map_err(|e| format!("load threads failed: {e}"))?;
+    let threads = db
+        .load_threads(&account_id)
+        .map_err(|e| format!("load threads failed: {e}"))?;
     // Cap restore cost; the UI lazy-loads more per thread later if needed.
     let messages = db
         .load_recent_messages(&account_id, 2000)
@@ -706,9 +735,12 @@ pub fn store_stats(
     let Some(db) = store.0.as_ref() else {
         return Ok((0, 0, 0));
     };
-    let accounts = db.count_accounts().map_err(|e| format!("count accounts failed: {e}"))?;
-    let (threads, messages) =
-        db.counts_for(&account_id).map_err(|e| format!("counts failed: {e}"))?;
+    let accounts = db
+        .count_accounts()
+        .map_err(|e| format!("count accounts failed: {e}"))?;
+    let (threads, messages) = db
+        .counts_for(&account_id)
+        .map_err(|e| format!("counts failed: {e}"))?;
     tracing::info!(accounts, threads, messages, account_id = %account_id, "store_stats");
     Ok((accounts, threads, messages))
 }
@@ -881,7 +913,8 @@ mod tests {
 
     #[test]
     fn import_rejects_malformed_json() {
-        let err = import_credentials("{ not json ".to_string()).expect_err("malformed JSON must fail");
+        let err =
+            import_credentials("{ not json ".to_string()).expect_err("malformed JSON must fail");
         assert!(err.contains("invalid credential JSON"), "got: {err}");
     }
 
@@ -972,7 +1005,10 @@ mod tests {
     #[ignore = "requires real .zalo-cred.json; performs a live login"]
     async fn login_from_file_live() {
         let profile = login_from_file().await.expect("file-backed login failed");
-        assert!(!profile.account_id.is_empty(), "account_id must be non-empty");
+        assert!(
+            !profile.account_id.is_empty(),
+            "account_id must be non-empty"
+        );
         println!(
             "login_from_file_live OK: uid_len={} has_display_name={}",
             profile.account_id.len(),

@@ -1,0 +1,1 @@
+{"name":"backend-tests","command":"cargo test --manifest-path server/Cargo.toml","status":"0","startedAt":"2026-06-03T15:30:14Z","finishedAt":"2026-06-03T15:30:23Z","stdoutPath":".harness/evidence/saas-backend-foundation/checks/backend-tests-20260603153014/stdout.txt","stderrPath":".harness/evidence/saas-backend-foundation/checks/backend-tests-20260603153014/stderr.txt"}

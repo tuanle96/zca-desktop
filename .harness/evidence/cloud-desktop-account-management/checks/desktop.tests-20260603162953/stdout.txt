@@ -1,0 +1,72 @@
+
+running 57 tests
+test command::tests::cred_file_summary_live ... ignored, requires real .zalo-cred.json
+test command::tests::login_from_file_live ... ignored, requires real .zalo-cred.json; performs a live login
+test command::tests::import_rejects_malformed_json ... ok
+test command::tests::dev_cred_path_is_repo_local_and_missing_file_errors ... ok
+test command::cloud::tests::normalized_base_url_trims_trailing_slash ... ok
+test config::redact::tests::redact_str_handles_json_body ... ok
+test command::cloud::tests::endpoint_requires_http_base_url ... ok
+test config::logging::tests::append_raw_writes_single_grep_line ... ok
+test session::tests::session_manager_roundtrip_live ... ignored, requires real .zalo-cred.json; performs a live login + send + listen round trip
+test config::redact::tests::redacts_cookie_header_string ... ok
+test config::redact::tests::masks_secret_json_keys_and_keeps_structure ... ok
+test command::tests::import_defaults_language ... ok
+test command::tests::import_rejects_empty_cookies ... ok
+test command::tests::import_rejects_missing_imei ... ok
+test command::tests::import_accepts_valid_payload ... ok
+test session::tests::two_accounts_live ... ignored, requires two real accounts (.zalo-cred.json + ZALO_CRED_FILE_2); performs live logins
+test store::crypto::tests::open_rejects_truncated_blob ... ok
+test store::db::tests::cred_store_roundtrip ... ignored, touches the real OS keychain
+test session::tests::throttle_clears_after_interval_elapses ... ok
+test session::tests::throttle_spaces_same_account_only ... ok
+test session::tests::insert_replaces_and_stops_previous_listener ... ok
+test store::db::tests::message_cache_roundtrip ... ignored, writes a SQLite file to the temp dir; restart-persistence smoke
+test session::tests::remove_stops_listener_and_reports_presence ... ok
+test session::tests::remove_clears_throttle_state ... ok
+test session::tests::tracks_multiple_accounts_concurrently ... ok
+test store::crypto::tests::seal_open_roundtrip_and_rejects_wrong_key ... ok
+test store::crypto::tests::credentials_json_roundtrips_through_cipher ... ok
+test store::db::tests::thread_identity_cache_roundtrip ... ignored, writes a SQLite file to the temp dir; restart-persistence smoke
+test types::reaction::tests::every_icon_has_emoji ... ok
+test types::reaction::tests::resolves_known_zalo_icons ... ok
+test types::reaction::tests::unknown_icon_is_none ... ok
+test zalo::tests::cookies_from_jar_reads_zalo_host_cookies ... ok
+test zalo::tests::credentials_from_qr_requires_cookies ... ok
+test zalo::tests::generated_imei_has_expected_shape ... ok
+test zalo::tests::list_contacts_live ... ignored, requires real .zalo-cred.json; reads the live friend list
+test zalo::tests::listener_receives_live ... ignored, requires real .zalo-cred.json; performs a live websocket round trip
+test zalo::tests::login_profile_rejects_empty_credentials ... ok
+test zalo::tests::login_rejects_empty_credentials ... ok
+test zalo::tests::map_qr_event_forwards_only_non_secret_stages ... ok
+test zalo::tests::qr_login_live ... ignored, interactive: requires scanning a real QR on a phone
+test zalo::tests::reaction_live ... ignored, requires real .zalo-cred.json; sends ONE real message and reacts to it
+test zalo::tests::send_sticker_live ... ignored, requires real .zalo-cred.json; sends ONE real sticker to the authorized recipient
+test zalo::tests::send_text_live ... ignored, requires real .zalo-cred.json; sends ONE real message to the authorized recipient
+test zalo::tests::single_login_live ... ignored, requires real .zalo-cred.json; performs a live network login
+test zalo::tests::sticker_from_content_maps_chat_sticker_only ... ok
+test zalo::tests::sticker_image_url_shape ... ok
+test zalo::tests::to_sticker_detail_prefers_webp_then_falls_back ... ok
+test zalo::tests::to_sticker_maps_basic ... ok
+test store::db::tests::recent_stickers_track_usage_and_categories ... ok
+test store::db::tests::thread_identity_backfill_updates_existing_only ... ok
+test store::db::tests::delete_removes_account_row ... ok
+test store::db::tests::migrates_and_starts_empty ... ok
+test store::db::tests::sticker_message_persists_and_reloads ... ok
+test store::db::tests::rich_message_state_persists_and_reloads ... ok
+test store::db::tests::attachment_metadata_persists ... ok
+test store::db::tests::message_persistence_roundtrips_and_dedupes ... ok
+test store::db::tests::save_message_dedupes_outgoing_echo_across_msg_ids ... ok
+
+test result: ok. 43 passed; 0 failed; 14 ignored; 0 measured; 0 filtered out; finished in 0.05s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

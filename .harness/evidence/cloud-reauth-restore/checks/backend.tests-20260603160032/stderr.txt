@@ -1,0 +1,5 @@
+    Blocking waiting for file lock on package cache
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.42s
+     Running unittests src/lib.rs (server/target/debug/deps/zca_cloud_server-6b5a073844b17fdc)
+     Running unittests src/main.rs (server/target/debug/deps/zca_cloud_server-f7ed6390fa269207)
+   Doc-tests zca_cloud_server

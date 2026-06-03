@@ -1,0 +1,213 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-desktop-account-management",
+  "featureId": "cloud-desktop-account-management",
+  "status": "pass",
+  "createdAt": "2026-06-03T16:15:21Z",
+  "updatedAt": "2026-06-03T16:30:36.144Z",
+  "diffSummary": "Desktop cloud mode can start and poll hosted Zalo QR login, hydrate backend cloud accounts after success, remove accounts through the SaaS backend, and persist SaaS device tokens in the OS keychain while the webview uses a non-secret sentinel.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/project/state.json",
+    ".harness/reviews/cloud-desktop-account-management/advisor-decision.json",
+    ".harness/reviews/cloud-desktop-account-management/architecture-reviewer.json",
+    ".harness/reviews/cloud-desktop-account-management/security-reviewer.json",
+    ".harness/task-contracts/cloud-desktop-account-management.json",
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/cloud.ts",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/session.svelte.ts"
+  ],
+  "checks": [
+    {
+      "name": "frontend.check",
+      "command": "bun run check",
+      "status": "pass",
+      "summary": "svelte-check completed with 0 errors and 0 warnings after moving cloud device session storage to OS keychain.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:29:30.805Z",
+      "finishedAt": "2026-06-03T16:29:33.550Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+      "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162930/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162930/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162930/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162930/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "bun run build",
+      "status": "pass",
+      "summary": "Vite/SvelteKit production build completed after keychain-backed cloud device session changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:29:41.215Z",
+      "finishedAt": "2026-06-03T16:29:48.818Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:19b09b8db63ac1b549e6e67e8198acecca3bef78fc885a9a03d621eca6e394cd",
+      "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stderr.txt"
+      ]
+    },
+    {
+      "name": "desktop.tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "Tauri core tests passed with cloud keychain session resolver and sentinel support.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:29:53.953Z",
+      "finishedAt": "2026-06-03T16:29:55.439Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:2b7f629508d2d88c86d41f74040e31132f0da8c6fe7089c69f30d8c841564e09",
+      "stderrHash": "sha256:1b5a4428cba8068a19df514deb99c35c5bb583a660b765492bdab0ee02bc473d",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162953/stderr.txt"
+      ]
+    },
+    {
+      "name": "desktop.lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Tauri clippy completed with warnings denied after cloud keychain session changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:30:01.642Z",
+      "finishedAt": "2026-06-03T16:30:04.596Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:5def3ce72ccd570c706d39202a22531f28ec5f7fe920649ddf3cb7eb6f4954b4",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy remained clean with warnings denied.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:30:16.863Z",
+      "finishedAt": "2026-06-03T16:30:17.462Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e570d1db7a77c7b454bce87fd118c1f551ab093a7d21fa60df62d627f5921862",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603163016/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603163016/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603163016/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603163016/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend unit tests remained green after desktop keychain session changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:30:16.863Z",
+      "finishedAt": "2026-06-03T16:30:18.572Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:316a95706068b5fc2753433aab30ef2927a67f82563dd63ad230ce8a017e1855",
+      "stderrHash": "sha256:655d4b047e476fbea06060a038a6cdbd23748eb32ba8f3ebede22e2124b9b835",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO dev smoke remained green with revoke, fake-account rejection, reauth-needed, rate-limit, and audit proof.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:30:24.198Z",
+      "finishedAt": "2026-06-03T16:30:28.586Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:30945ad2d59a6d55481c4ae2c740596c3cd8da594589bf326be73d052ede4685",
+      "stderrHash": "sha256:ed061c08328ac520a7c918113ca5429a12c8dae73aa47b37866a4ec7666d99bb",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stderr.txt"
+      ]
+    },
+    {
+      "name": "architecture",
+      "command": "node .harness/scripts/check-architecture-fitness.mjs --strict",
+      "status": "pass",
+      "summary": "architecture fitness strict check passed after keychain-backed cloud session changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:30:35.188Z",
+      "finishedAt": "2026-06-03T16:30:36.083Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+      "stdoutHash": "sha256:2ff176625a397cd7d95de7552e1da872012ded3606f397d3c9976710b9c864f4",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stdout.txt",
+        ".harness/evidence/cloud-desktop-account-management/checks/architecture-20260603163035/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-desktop-account-management/advisor-decision.json",
+      "summary": "Approved desktop account-management wiring while keeping live hosted worker proof out of scope."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-desktop-account-management/security-reviewer.json",
+      "summary": "Confirmed no Zalo credential plaintext enters the webview and persisted SaaS device tokens are keychain-backed."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-desktop-account-management/architecture-reviewer.json",
+      "summary": "Confirmed command-layer boundary, local/cloud mode separation, and ADR-0006 session-host alignment."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "live-hosted-worker-proof",
+      "severity": "high",
+      "description": "This feature proves desktop/backend wiring only. cloud-zalo-session-host remains passes=false until real hosted QR/listen/send/restart proof exists.",
+      "disposition": "mitigated",
+      "owner": "tuanle96",
+      "mitigation": "The live hosted worker proof is not claimed by this feature; cloud-zalo-session-host stays passes=false with the live smoke requirement open."
+    }
+  ]
+}

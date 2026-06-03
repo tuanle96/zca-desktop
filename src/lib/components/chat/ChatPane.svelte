@@ -1,5 +1,21 @@
 <script lang="ts">
-  import { Phone, Video, Search, PanelRight, Send, Smile, Paperclip, MessageCircle, Quote, X, Heart } from "@lucide/svelte";
+  import {
+    Phone,
+    Video,
+    Search,
+    PanelRight,
+    Send,
+    Smile,
+    Paperclip,
+    MessageCircle,
+    Quote,
+    X,
+    Heart,
+    FileDown,
+    Cloud,
+    Wifi,
+    WifiOff,
+  } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { session } from "$lib/session.svelte";
@@ -10,9 +26,14 @@
   let scroller = $state<HTMLElement | null>(null);
   let showStickers = $state(false);
   let replyTo = $state<ChatMessage | null>(null);
+  let fileInput = $state<HTMLInputElement | null>(null);
 
   const convo = $derived(session.activeConversation);
   const messages = $derived(session.activeMessages);
+  const realtimeLabel = $derived(session.listening ? "Realtime đang bật" : "Realtime chưa kết nối");
+  const fileButtonTitle = $derived(
+    session.canUseCloudFiles ? "Đính kèm tệp cloud" : "Đính kèm bật sau khi cloud kết nối",
+  );
 
   // Autoscroll to the newest message when the active thread's list grows.
   $effect(() => {
@@ -65,6 +86,29 @@
     showStickers = false;
     await session.sendSticker(sticker);
   }
+
+  async function pickFile(event: Event) {
+    const input = event.currentTarget as HTMLInputElement;
+    const file = input.files?.[0];
+    input.value = "";
+    if (!file) return;
+    await session.uploadCloudFile(file);
+  }
+
+  function fileSize(bytes: number): string {
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function bubbleAvatar(m: ChatMessage): string | null {
+    if (m.outgoing) return null;
+    return m.authorAvatar ?? convo?.avatar ?? null;
+  }
+
+  function bubbleName(m: ChatMessage): string {
+    return m.authorName ?? convo?.title ?? "Zalo";
+  }
 </script>
 
 {#if !convo}
@@ -79,9 +123,15 @@
       </p>
     </div>
     {#if session.profile}
-      <div class="text-muted-foreground mt-2 flex items-center gap-1.5 text-xs">
-        <span class="size-2 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
-        {session.listening ? "Đang lắng nghe tin nhắn realtime" : "Chưa lắng nghe"}
+      <div class="text-muted-foreground mt-2 flex items-center gap-2 text-xs">
+        <span class="flex items-center gap-1.5 rounded-full border bg-background px-2 py-1">
+          <Cloud class="size-3.5" />
+          Cloud mode
+        </span>
+        <span class="flex items-center gap-1.5 rounded-full border bg-background px-2 py-1">
+          <span class="size-2 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
+          {realtimeLabel}
+        </span>
       </div>
     {/if}
   </section>
@@ -99,9 +149,23 @@
       </Avatar.Root>
       <div class="min-w-0 flex-1">
         <div class="truncate text-sm font-semibold">{convo.title}</div>
-        <div class="text-muted-foreground flex items-center gap-1.5 text-xs">
-          <span class="size-1.5 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
-          {convo.kind === "group" ? "Nhóm" : "Liên hệ"}
+      <div class="text-muted-foreground flex items-center gap-2 text-xs">
+          <span class="flex items-center gap-1">
+            <span class="size-1.5 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
+            {convo.kind === "group" ? "Nhóm" : "Liên hệ"}
+          </span>
+          <span class="flex items-center gap-1">
+            <Cloud class="size-3" />
+            Cloud
+          </span>
+          <span class="flex items-center gap-1">
+            {#if session.listening}
+              <Wifi class="size-3" />
+            {:else}
+              <WifiOff class="size-3" />
+            {/if}
+            {session.listening ? "Live" : "Offline"}
+          </span>
         </div>
       </div>
       <div class="text-muted-foreground flex items-center gap-0.5">
@@ -129,6 +193,16 @@
             <div class="group/message flex {m.outgoing ? 'justify-end' : 'justify-start'}">
               {#if m.sticker}
                 <div class="flex items-end gap-1.5 {m.outgoing ? 'flex-row-reverse' : 'flex-row'}">
+                  {#if !m.outgoing}
+                    <Avatar.Root class="mb-5 size-8 shrink-0">
+                      {#if bubbleAvatar(m)}
+                        <Avatar.Image src={bubbleAvatar(m)!} alt={bubbleName(m)} />
+                      {/if}
+                      <Avatar.Fallback class="bg-brand/10 text-brand text-xs font-medium">
+                        {initials(bubbleName(m))}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+                  {/if}
                   <div class="flex flex-col {m.outgoing ? 'items-end' : 'items-start'}">
                     <img
                       src={m.sticker.url}
@@ -164,6 +238,16 @@
                 </div>
               {:else}
                 <div class="flex items-end gap-1.5 {m.outgoing ? 'flex-row-reverse' : 'flex-row'}">
+                  {#if !m.outgoing}
+                    <Avatar.Root class="mb-1 size-8 shrink-0">
+                      {#if bubbleAvatar(m)}
+                        <Avatar.Image src={bubbleAvatar(m)!} alt={bubbleName(m)} />
+                      {/if}
+                      <Avatar.Fallback class="bg-brand/10 text-brand text-xs font-medium">
+                        {initials(bubbleName(m))}
+                      </Avatar.Fallback>
+                    </Avatar.Root>
+                  {/if}
                   <div
                     class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
                       ? 'bg-brand text-brand-foreground rounded-br-md'
@@ -175,7 +259,19 @@
                         <div class="line-clamp-2 break-words">{m.quote.msg}</div>
                       </div>
                     {/if}
-                    {#if m.deleted}
+                    {#if m.file}
+                      <button
+                        type="button"
+                        onclick={() => session.downloadCloudFile(m)}
+                        class="flex max-w-full items-center gap-2 rounded-md border border-current/15 bg-black/5 p-2 text-left text-xs hover:bg-black/10"
+                      >
+                        <FileDown class="size-4 shrink-0" />
+                        <span class="min-w-0 flex-1">
+                          <span class="block truncate font-medium">{m.file.filename || "Tệp đính kèm"}</span>
+                          <span class="opacity-70">{fileSize(m.file.sizeBytes)}</span>
+                        </span>
+                      </button>
+                    {:else if m.deleted}
                       <p class="text-muted-foreground italic">{m.body}</p>
                     {:else}
                       <p class="whitespace-pre-wrap break-words">{m.body}</p>
@@ -266,10 +362,20 @@
           >
             <Smile class="size-5" />
           </button>
-          <button type="button" class="text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 items-center justify-center rounded-md transition-colors" title="Đính kèm" aria-label="Đính kèm"><Paperclip class="size-5" /></button>
+          <input bind:this={fileInput} class="hidden" type="file" onchange={pickFile} />
+          <button
+            type="button"
+            class="text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 flex size-9 items-center justify-center rounded-md transition-colors"
+            title={fileButtonTitle}
+            aria-label={fileButtonTitle}
+            disabled={!session.canUseCloudFiles || session.busy}
+            onclick={() => fileInput?.click()}
+          >
+            <Paperclip class="size-5" />
+          </button>
           <input
             bind:value={draft}
-            placeholder={`Nhập tin nhắn tới ${convo.title}`}
+            placeholder={`Cloud: nhập tin nhắn tới ${convo.title}`}
             class="border-input bg-background focus-visible:ring-brand/40 flex-1 rounded-full border px-4 py-2 text-sm outline-none focus-visible:ring-2"
           />
           <Button type="submit" size="icon" class="bg-brand hover:bg-brand/90 text-brand-foreground rounded-full" disabled={session.busy || draft.trim().length === 0}>

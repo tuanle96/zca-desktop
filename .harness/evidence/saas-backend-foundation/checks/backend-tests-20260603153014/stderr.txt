@@ -1,0 +1,9 @@
+    Updating crates.io index
+     Locking 1 package to latest compatible version
+      Adding urlencoding v2.1.3
+   Compiling urlencoding v2.1.3
+   Compiling zca-cloud-server v0.1.0 (/Users/tuan/Dev/VibeLab/zca-desktop/server)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 6.70s
+     Running unittests src/lib.rs (server/target/debug/deps/zca_cloud_server-6b5a073844b17fdc)
+     Running unittests src/main.rs (server/target/debug/deps/zca_cloud_server-f7ed6390fa269207)
+   Doc-tests zca_cloud_server

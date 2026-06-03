@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-realtime-isolation",
+  "featureId": "cloud-realtime-isolation",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:38:00Z",
+  "checkedFiles": [
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "allowed-layers",
+    "backend-boundary",
+    "session-host-worker-isolated",
+    "sse-protocol-stability"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.86,
+  "findings": [],
+  "controlsConfirmed": [
+    {
+      "id": "internal-envelope",
+      "evidence": "RealtimeEvent is an internal server model; the public SSE frame remains the original message JSON for events owned by the authenticated user."
+    },
+    {
+      "id": "restore-and-qr-paths",
+      "evidence": "Both restored hosted sessions and QR-created hosted sessions construct RealtimeEvent with the account owner's user_id before broadcasting."
+    }
+  ],
+  "summary": "Architecture review pass: realtime user ownership is enforced at the server route boundary without changing desktop client protocol expectations."
+}

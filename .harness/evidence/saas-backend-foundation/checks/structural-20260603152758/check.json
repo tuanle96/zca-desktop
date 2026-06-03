@@ -1,0 +1,1 @@
+{"name":"structural","command":"node .harness/scripts/harness-check.mjs","status":"0","startedAt":"2026-06-03T15:27:58Z","finishedAt":"2026-06-03T15:27:58Z","stdoutPath":".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stdout.txt","stderrPath":".harness/evidence/saas-backend-foundation/checks/structural-20260603152758/stderr.txt"}

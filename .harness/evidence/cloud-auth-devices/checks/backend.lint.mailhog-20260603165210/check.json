@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint.mailhog",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after SMTP/MailHog magic-link delivery support.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:52:10.262Z",
+  "finishedAt": "2026-06-03T16:52:13.624Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:28d69b3ff62912eb01a4c15d51e2d390f8d99e87b47a05dfc0c0770e1eab220c",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stderr.txt"
+  ]
+}

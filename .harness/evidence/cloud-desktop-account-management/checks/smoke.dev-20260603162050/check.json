@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO dev smoke passed with revokedRejected, fakeAccountSendRejected, reauthRestoreMarked, magicLinkRateLimited, and auditEventsProved all true.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:50.063Z",
+  "finishedAt": "2026-06-03T16:20:55.134Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:5911cd73468de57613919be6012c8b1a3a373eeccd9dfebe5f89523933eb8b27",
+  "stderrHash": "sha256:ed061c08328ac520a7c918113ca5429a12c8dae73aa47b37866a4ec7666d99bb",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603162050/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603162050/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603162050/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603162050/stderr.txt"
+  ]
+}

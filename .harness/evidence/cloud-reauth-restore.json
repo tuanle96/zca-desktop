@@ -1,0 +1,115 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-reauth-restore",
+  "featureId": "cloud-reauth-restore",
+  "status": "pass",
+  "createdAt": "2026-06-03T16:00:00Z",
+  "updatedAt": "2026-06-03T16:00:49.478Z",
+  "diffSummary": "Backend restore hardening: startup no longer only warns when an active hosted account cannot restore. It marks that account reauth-needed in cloud_accounts and hosted_sessions while keeping the server available. The dev smoke now migrates, seeds one deliberately broken active credential row, starts the server, asserts that row becomes reauth-needed, then runs the existing auth/device/file/revoke/fake-account-send smoke.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-reauth-restore.json",
+    ".gitignore",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/db.rs",
+    "server/src/main.rs",
+    "server/src/sessions.rs"
+  ],
+  "checks": [
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after restore failure state handling.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:00:32.706Z",
+      "finishedAt": "2026-06-03T16:00:33.365Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:ac9d3da08c63185ac44df7623d8d379024b9d7fd64ded2077d974723ed86214e",
+      "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stdout.txt",
+        ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed after restore failure state handling.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:00:32.706Z",
+      "finishedAt": "2026-06-03T16:00:34.603Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+      "stdoutHash": "sha256:e17f815b0af60c70102b7723c22a890e815e126a881510feff5c714503f28c4a",
+      "stderrHash": "sha256:ae46e5c628e14cc50644f163e9e63009d0a9209d2289ccbc09ff511ce2642526",
+      "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stdout.txt",
+        ".harness/evidence/cloud-reauth-restore/checks/backend.tests-20260603160032/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "acceptanceId": "reauth-restore-smoke",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO smoke passed and includes reauthRestoreMarked=true for a broken active hosted account seeded before startup.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:00:40.814Z",
+      "finishedAt": "2026-06-03T16:00:49.228Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+      "stdoutHash": "sha256:b309dafa6f64302cea365ed2d229bcac5afb1255addf6561fd7127b61f0b0bbf",
+      "stderrHash": "sha256:32e8345f371e059dbe620fc3850b5d64928841cf4ec4f164db723052d667030f",
+      "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stdout.txt",
+        ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stderr.txt"
+      ],
+      "artifact": ".harness/evidence/cloud-reauth-restore/checks/smoke.dev-20260603160040/stdout.txt"
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-reauth-restore/advisor-decision.json",
+      "summary": "Advisor pass for the local-verifiable restore failure slice; live hosted Zalo proof remains open."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-reauth-restore/security-reviewer.json",
+      "summary": "Security pass: restore failure stores only a redacted error/state and does not expose credentials."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-reauth-restore/architecture-reviewer.json",
+      "summary": "Architecture pass: startup restore remains in server/session boundary and account status is persisted in db."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "live-cookie-expiry-not-proven",
+      "severity": "medium",
+      "description": "This smoke proves the backend restore-failure state transition with invalid encrypted credential material, not a live Zalo cookie-expiry event.",
+      "disposition": "accepted",
+      "owner": "tuanle96",
+      "acceptedBy": "codex",
+      "acceptanceReason": "The feature is scoped to local-verifiable restore failure handling. Live hosted Zalo account proof remains tracked by cloud-zalo-session-host.",
+      "mitigation": "Keep cloud-zalo-session-host passes=false until real hosted QR/login/listen/send/restart restore evidence exists."
+    }
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after reversible migration support.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:34:33.150Z",
+  "finishedAt": "2026-06-03T16:34:35.857Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:ec97b6988caa53dcbba1b7954d7f814e379d90dcaf3fde26e73a036689e5ce78",
+  "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stdout.txt",
+  "stderrPath": ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stdout.txt",
+    ".harness/evidence/saas-backend-foundation/checks/backend.lint-20260603163433/stderr.txt"
+  ]
+}

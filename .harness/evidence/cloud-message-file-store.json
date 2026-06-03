@@ -1,0 +1,260 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-message-file-store",
+  "featureId": "cloud-message-file-store",
+  "status": "pass",
+  "createdAt": "2026-06-03T15:50:31Z",
+  "updatedAt": "2026-06-03T16:44:54.039Z",
+  "diffSummary": "Cloud message/file storage is wired through backend APIs, Tauri cloud commands, and the normal chat UI. The Postgres/MinIO dev smoke proves two registered devices can share an encrypted file, malformed file uploads whose plaintext size/hash do not match initialized metadata are rejected, revoked devices are rejected, fake-account sends are rejected, and the Svelte chat composer can upload/download cloud files without exposing Zalo credentials to the webview.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-message-file-store.json",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/crypto.rs",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/storage.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/cloud.ts",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checks": [
+    {
+      "name": "frontend.check",
+      "command": "bun run check",
+      "status": "pass",
+      "summary": "svelte-check completed with 0 errors and 0 warnings after cloud file upload/download UI wiring.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:12.926Z",
+      "finishedAt": "2026-06-03T15:53:16.753Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+      "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/frontend.check-20260603155312/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "bun run build",
+      "status": "pass",
+      "summary": "SvelteKit production build completed after cloud file and realtime store changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:33.220Z",
+      "finishedAt": "2026-06-03T15:53:50.503Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:68c9554c183ec09d77a80f833fddfc5274c67f72420784b5d5f37233542169b2",
+      "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stderr.txt"
+      ]
+    },
+    {
+      "name": "desktop.tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "Tauri core tests passed with cloud file and realtime commands registered.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:12.926Z",
+      "finishedAt": "2026-06-03T15:53:15.379Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:22b69c10ec1e10af2bab1cd0d8403e46c9c729607f1411739035d2275cb9628c",
+      "stderrHash": "sha256:6b001abf47c481e39b522d97989a36aef5e7aba3ce7b1c0bc9dc9a00043eec52",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stderr.txt"
+      ]
+    },
+    {
+      "name": "desktop.lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Tauri clippy completed with warnings denied.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:33.343Z",
+      "finishedAt": "2026-06-03T15:53:35.656Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:ff017cd4f2c68c020c719ae2353481b461ffeb756f3df7cfa5cb9495751d1fa4",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/desktop.lint-20260603155333/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/desktop.lint-20260603155333/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/desktop.lint-20260603155333/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/desktop.lint-20260603155333/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed for crypto, auth, recovery-key wrapping, and per-account throttle.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:13.017Z",
+      "finishedAt": "2026-06-03T15:53:15.327Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:2f090f4726fbb43bf8853664f687d2636665d2eefc4e8bd2e2d874b4492fd4f6",
+      "stderrHash": "sha256:b562697c613ef816738952139f509acd3a0cc2a8b56d2c2afa6149f427e11c59",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:33.350Z",
+      "finishedAt": "2026-06-03T15:53:35.132Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:65531c9d993fc6bbfca2e534003ff6d4f51d2915f78c9f3e12830701ecebafd5",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint-20260603155333/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint-20260603155333/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/backend.lint-20260603155333/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/backend.lint-20260603155333/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "acceptanceId": "two-device-file-smoke",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO smoke passed: magic-link auth, recovery-key device B unlock, malformed file upload rejection by size/hash metadata, encrypted file upload by device A, download by device B, revoked token rejection, and fake-account send rejection.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:53:56.729Z",
+      "finishedAt": "2026-06-03T15:54:04.055Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+      "stdoutHash": "sha256:71d2cfec8eacffe8949a63ea86b92a0aec662d2d8a6c7dcf2b43b8ba03a61d05",
+      "stderrHash": "sha256:f41c6e0d570e3cdd1e20822a4f1bfc6baf28dae6062cb1d5b1d862d19ed266d6",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stderr.txt"
+      ],
+      "artifact": ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stdout.txt"
+    },
+    {
+      "name": "backend.lint.integrity",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after file integrity enforcement.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:44:47.488Z",
+      "finishedAt": "2026-06-03T16:44:48.291Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:fc43c06551039ac51cb4e8d61b75c52d8b8f5c8539323fcd004903cb0dbf3877",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/backend.lint.integrity-20260603164447/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests.integrity",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed, including lower-hex SHA-256 validation and realtime/user-scope tests after file integrity enforcement.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:44:47.343Z",
+      "finishedAt": "2026-06-03T16:44:49.557Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+      "stdoutHash": "sha256:024dea302f6d9dd8a8cc1998291bef1588a97ee978f19e4eac6d0ef8ff9d413f",
+      "stderrHash": "sha256:0281cc5fd712d07c3f1a8b98b0988d5361bfd9c6a060d1eef5ddc019c38dc4a8",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev.integrity",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO smoke passed with fileIntegrityRejected=true before valid encrypted upload/download, plus two-device and revoked-token proof.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:44:47.479Z",
+      "finishedAt": "2026-06-03T16:44:53.965Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+      "stdoutHash": "sha256:bd8544db25ed6fd2ca7f20daeaf531054d71c73881c48e4677546c35896d5da0",
+      "stderrHash": "sha256:beca6fee98b34fce61e9c1e22905a42133097c3a6418586eee1876ac904f7a7c",
+      "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stdout.txt",
+        ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-message-file-store/advisor-decision.json",
+      "summary": "Advisor pass for cloud-message-file-store only; live hosted Zalo QR/listen/send remains tracked separately."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-message-file-store/security-reviewer.json",
+      "summary": "Security pass for ciphertext-at-rest file/message storage, file size/hash integrity rejection, revoked device rejection, and no Zalo credential return to the UI."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-message-file-store/architecture-reviewer.json",
+      "summary": "Architecture pass for server storage boundary, file metadata validation boundary, Tauri cloud command boundary, and normal chat UI integration."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "no-live-zalo-file-message-proof",
+      "severity": "medium",
+      "description": "The file store smoke uses backend API/file storage with synthetic account ownership; live Zalo-hosted account QR/listen/send proof is intentionally tracked by cloud-zalo-session-host.",
+      "disposition": "accepted",
+      "owner": "tuanle96",
+      "acceptedBy": "codex",
+      "acceptanceReason": "This evidence bundle is scoped to cloud encrypted message/file storage and desktop file UI wiring; live hosted Zalo QR/listen/send proof belongs to the separate cloud-zalo-session-host feature.",
+      "mitigation": "Keep cloud-zalo-session-host passes=false until a real hosted Zalo account proves QR login, receive/send, and backend restart restore with redacted evidence."
+    }
+  ]
+}

@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-realtime-isolation",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Prevent SaaS realtime stream event leaks across users by tagging hosted events with owner user_id and filtering SSE frames to the authenticated user.",
+    "goals": [
+      "Hosted realtime message events carry the owning SaaS user id internally",
+      "GET /api/v1/realtime emits only events whose user_id matches the authenticated device's user_id",
+      "Realtime filtering is proven with an offline unit test",
+      "Existing Postgres/MinIO cloud smoke remains green"
+    ],
+    "nonGoals": [
+      "Live hosted Zalo QR/listen/send/restart proof",
+      "Changing the SSE client protocol shape for allowed events"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "backend-tests",
+      "description": "Backend tests pass, including a unit test that drops realtime events for another user.",
+      "verification": {
+        "command": "cargo test --manifest-path server/Cargo.toml"
+      }
+    },
+    {
+      "id": "backend-lint",
+      "description": "Backend clippy is clean with warnings denied.",
+      "verification": {
+        "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings"
+      }
+    },
+    {
+      "id": "smoke-dev",
+      "description": "Postgres/MinIO dev smoke remains green after realtime event envelope changes.",
+      "verification": {
+        "command": "server/scripts/run-dev-smoke.sh"
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(server/scripts/run-dev-smoke.sh*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "lint",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-realtime-isolation.json"
+}

@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-message-file-store",
+  "featureId": "cloud-message-file-store",
+  "decision": "pass",
+  "createdAt": "2026-06-03T15:50:31Z",
+  "checkedFiles": [
+    "server/scripts/smoke-dev.mjs",
+    "server/src/crypto.rs",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/storage.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/lib.rs",
+    "src/lib/cloud.ts",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "server-storage-boundary",
+    "file-metadata-validation-boundary",
+    "tauri-command-boundary",
+    "local-mode-preserved",
+    "normal-chat-ui-flow",
+    "realtime-refresh-through-tauri",
+    "layering"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "reviewedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/types.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Architecture review pass for cloud-message-file-store: file APIs and size/hash validation stay in server/, desktop reaches them through Tauri commands, realtime stream is bridged through Tauri, and the normal chat composer/render path is used for cloud files."
+}

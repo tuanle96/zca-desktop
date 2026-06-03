@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-ui-polish",
+  "featureId": "cloud-ui-polish",
+  "decision": "pass",
+  "createdAt": "2026-06-03T17:26:00.489Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-ui-polish-review",
+    "createdBy": "codex",
+    "notes": "Static review of UI-only polish after Svelte check/build pass."
+  },
+  "checkedFiles": [
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/components/chat/RailNav.svelte",
+    "src/lib/components/chat/SettingsDialog.svelte"
+  ],
+  "checkedInvariants": [
+    "ui-only-scope",
+    "local-mode-preserved",
+    "cloud-state-visible",
+    "no-secret-display-except-user-copyable-recovery-key"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/components/chat/RailNav.svelte",
+      "src/lib/components/chat/SettingsDialog.svelte"
+    ],
+    "reviewedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/components/chat/RailNav.svelte",
+      "src/lib/components/chat/SettingsDialog.svelte"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Advisor review pass: cloud UI states are clearer, local mode remains visible and preserved, and recovery key display is intentionally user-facing for first setup only."
+}

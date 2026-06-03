@@ -101,11 +101,17 @@
 
   <button
     type="button"
-    title="Cloud"
-    aria-label="Cloud"
-    class="flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
+    onclick={() => (session.settingsOpen = true)}
+    title={session.cloudMode ? "Cloud đang bật" : "Cloud mode"}
+    aria-label={session.cloudMode ? "Cloud đang bật" : "Cloud mode"}
+    class="relative flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
   >
     <Cloud class="size-6" />
+    <span
+      class="absolute right-2 top-2 size-2 rounded-full {session.cloudMode && session.listening
+        ? 'bg-green-300'
+        : 'bg-white/35'}"
+    ></span>
   </button>
 
   <button

@@ -1,0 +1,22 @@
+{
+  "name": "ui.cloud-polish",
+  "acceptanceId": "cloud-ui-daily-use",
+  "artifact": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/check.json",
+  "command": "bun run check && bun run build",
+  "status": "pass",
+  "summary": "Svelte check and production build passed after cloud-mode UI polish for login/device/account status and chat affordances.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T17:25:16.575Z",
+  "finishedAt": "2026-06-03T17:25:31.825Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:877d7bb949dd3a7aaadcc6d02b8ae487fb1d71ba028b09993b0b2cdb9eeefcf4",
+  "stdoutHash": "sha256:a90efd1ef371a7d7535d5a74bb6a69111dfc895aff5816e6691cd9208d01c642",
+  "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+  "stdoutPath": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stdout.txt",
+    ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stderr.txt"
+  ]
+}

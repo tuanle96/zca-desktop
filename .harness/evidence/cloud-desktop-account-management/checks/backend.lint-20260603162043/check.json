@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:43.779Z",
+  "finishedAt": "2026-06-03T16:20:44.269Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:bcb74884a78099501f6bfc31de29d15aae4eb48dcd18d5c99bdde44d75b90089",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603162043/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603162043/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603162043/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.lint-20260603162043/stderr.txt"
+  ]
+}

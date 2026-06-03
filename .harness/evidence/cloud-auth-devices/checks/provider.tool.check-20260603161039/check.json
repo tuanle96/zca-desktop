@@ -1,0 +1,20 @@
+{
+  "name": "provider.tool.check",
+  "command": "node --check server/scripts/live-provider-smoke.mjs",
+  "status": "pass",
+  "summary": "live-provider-smoke.mjs syntax check passed; script fails if dev magic-token mode is enabled.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:10:39.281Z",
+  "finishedAt": "2026-06-03T16:10:39.389Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:b1250315fa61647004cc3e1c464b1fbee2f5dc12a6be533e02ca33b48edb0e90",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stderr.txt"
+  ]
+}

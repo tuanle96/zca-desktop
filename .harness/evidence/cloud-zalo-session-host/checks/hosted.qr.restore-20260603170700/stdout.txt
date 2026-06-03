@@ -1,0 +1,4 @@
+liveSmokeOk=true
+accountId=7fadc637-fe6b-441b-abf1-2ca7e316d602
+active
+{"timestamp":"2026-06-03T17:05:39.299097Z","level":"INFO","fields":{"message":"hosted session restore complete","restored":1},"target":"zca_cloud_server"}

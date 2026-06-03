@@ -1,0 +1,47 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-realtime-isolation",
+  "featureId": "cloud-realtime-isolation",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:38:00Z",
+  "checkedFiles": [
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "auth-session-boundary",
+    "input-validation",
+    "realtime-user-isolation",
+    "no-cross-user-event-leak"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.87,
+  "findings": [],
+  "controlsConfirmed": [
+    {
+      "id": "owner-tagged-events",
+      "evidence": "RealtimeEvent carries user_id separately from the serialized SSE data, so filtering does not expose user ids in the client protocol."
+    },
+    {
+      "id": "auth-filtered-sse",
+      "evidence": "realtime() authenticates the bearer token to an AuthDevice and only emits events where event.user_id == auth.user_id."
+    }
+  ],
+  "summary": "Security review pass: authenticated realtime streams no longer receive broadcast events for other SaaS users, and SSE payload shape remains non-secret."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend unit tests passed after adding reversible sqlx migration support.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:34:33.150Z",
+  "finishedAt": "2026-06-03T16:34:37.178Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+  "stdoutHash": "sha256:d4204c487a5f96345a5cb37123c5d9f6de1201820d4d5b79e778ca11271ae348",
+  "stderrHash": "sha256:690389d4bff35f25b343a4f099e47edd185ddbe994506b4e9ae4b09b3aee1313",
+  "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stdout.txt",
+  "stderrPath": ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stdout.txt",
+    ".harness/evidence/saas-backend-foundation/checks/backend.tests-20260603163433/stderr.txt"
+  ]
+}

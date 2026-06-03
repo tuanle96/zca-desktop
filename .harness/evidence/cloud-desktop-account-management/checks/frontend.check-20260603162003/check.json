@@ -1,0 +1,20 @@
+{
+  "name": "frontend.check",
+  "command": "bun run check",
+  "status": "pass",
+  "summary": "svelte-check completed with 0 errors and 0 warnings after adding cloud hosted-QR UI.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:03.888Z",
+  "finishedAt": "2026-06-03T16:20:06.864Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+  "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162003/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162003/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162003/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.check-20260603162003/stderr.txt"
+  ]
+}

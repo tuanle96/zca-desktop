@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests.mailhog",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed after SMTP/MailHog magic-link delivery support.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:52:10.263Z",
+  "finishedAt": "2026-06-03T16:52:15.858Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+  "stdoutHash": "sha256:9b761c195409f60bed39524dc84bad887326958b87bf810cf88fd5e3c6370a9d",
+  "stderrHash": "sha256:134b13f289649664becf06cc67f412f6be68d7ae8d2cda20470cf6f115a5c80e",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stderr.txt"
+  ]
+}

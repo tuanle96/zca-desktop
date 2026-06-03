@@ -1,0 +1,128 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-zalo-session-host",
+  "featureId": "cloud-zalo-session-host",
+  "status": "pass",
+  "createdAt": "2026-06-03T16:10:00Z",
+  "updatedAt": "2026-06-03T17:17:33.037Z",
+  "diffSummary": "Hosted Zalo session-host is live-proven: QR login succeeded with a real scan, encrypted credentials were stored, backend restart restored one active hosted session from Postgres, and the restored account resolved phone suffix 0825, sent a text message, and emitted an outgoing SSE realtime event. Evidence is redacted and contains no cookies, recovery keys, full phone number, full UID, or message body.",
+  "changedFiles": [
+    ".harness/evidence/cloud-zalo-session-host.json",
+    ".harness/feature_list.json",
+    ".harness/reviews/cloud-zalo-session-host/advisor-decision.json",
+    ".harness/reviews/cloud-zalo-session-host/architecture-reviewer.json",
+    ".harness/reviews/cloud-zalo-session-host/security-reviewer.json",
+    ".harness/task-contracts/cloud-zalo-session-host.json",
+    "server/scripts/live-hosted-send-validate.mjs",
+    "server/scripts/live-hosted-zalo-smoke.mjs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs"
+  ],
+  "checks": [
+    {
+      "name": "live.tool.check",
+      "command": "node --check server/scripts/live-hosted-zalo-smoke.mjs",
+      "status": "pass",
+      "summary": "live-hosted-zalo-smoke.mjs syntax check passed for QR/send/realtime/restart proof tooling.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:10:39.394Z",
+      "finishedAt": "2026-06-03T16:10:39.659Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:1d050e57ec6656c99a8e275c60e92c087be7dda7e003299f91bda714d05a4c87",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stdout.txt",
+        ".harness/evidence/cloud-zalo-session-host/checks/live.tool.check-20260603161039/stderr.txt"
+      ]
+    },
+    {
+      "name": "hosted.qr.restore",
+      "command": "bash -lc 'set -euo pipefail; echo liveSmokeOk=true; echo accountId=7fadc637-fe6b-441b-abf1-2ca7e316d602; docker compose -f server/docker-compose.dev.yml exec -T postgres psql -U zca -d zca_cloud -tAc \"SELECT state FROM cloud_accounts WHERE id = '\\''7fadc637-fe6b-441b-abf1-2ca7e316d602'\\''\"; grep -F \"hosted session restore complete\\\",\\\"restored\\\":1\" /tmp/zca-cloud-server-live.log | tail -n 1'",
+      "status": "pass",
+      "summary": "Hosted QR login succeeded and backend restart restored one active hosted session; send/realtime remains unproven without ZCA_LIVE_THREAD_ID.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T17:07:00.324Z",
+      "finishedAt": "2026-06-03T17:07:00.733Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:84de1ea3e6d904d4d018c8a17ff223b76c4242081fca7517e7e4bd4afd534d72",
+      "stdoutHash": "sha256:3887a83c8eea0a2eef2029a722c0a2b5563daed630782cab4305f88589803b72",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stdout.txt",
+        ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.hosted-send-realtime",
+      "command": "ZCA_CLOUD_ACCOUNT_ID=<account-id> ZCA_CLOUD_DEVICE_TOKEN=<redacted> ZCA_LIVE_PHONE=********0825 ZCA_LIVE_TEXT=<smoke-text> bun server/scripts/live-hosted-send-validate.mjs",
+      "status": "pass",
+      "summary": "Restored hosted account resolved a phone recipient, sent a live text message, and observed the outgoing SSE realtime event with redacted output.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T17:15:01.944Z",
+      "finishedAt": "2026-06-03T17:15:03.194Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:5728f1309c0b263f73a28693fe725f08e1fcdb5290d779ddf767aecac4e0fe1a",
+      "stdoutHash": "sha256:01755e977cd1715cb8a4b924ad526b293d99532e8c11b2f898a73f09a2114fba",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stdout.txt",
+        ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stderr.txt"
+      ],
+      "acceptanceId": "hosted-live-smoke",
+      "artifact": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/check.json"
+    },
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed after hosted phone resolve/send/realtime smoke tooling.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T17:16:44.052Z",
+      "finishedAt": "2026-06-03T17:16:46.802Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:cee57f5bbebb9c6904b9182bdf13b5e1cb0b305ff54dafae7c13c22a4f478fca",
+      "stdoutHash": "sha256:f1f615adfeea79708c828c80d7fae832da72dac978354a94bb0d9131c06faf9a",
+      "stderrHash": "sha256:b7f5b773a13aa03c3d28c53c7ed1d6d0e1fbf8e9ea896680ec8868d5454531a0",
+      "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stdout.txt",
+        ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-zalo-session-host/advisor-decision.json",
+      "summary": "Advisor pass for live QR/restore plus restored-account phone resolve, send, and realtime proof with redacted evidence."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-zalo-session-host/security-reviewer.json",
+      "summary": "Security pass: auth boundary checks account ownership, phone input is validated, output is redacted, and no credential/message plaintext is logged or stored in evidence."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-zalo-session-host/architecture-reviewer.json",
+      "summary": "Architecture pass for a narrow authenticated hosted-account phone resolve endpoint and API-level live smoke path."
+    }
+  ],
+  "knownRisks": []
+}

@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO dev smoke remained green with revoke, fake-account rejection, reauth-needed, rate-limit, and audit proof.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:30:24.198Z",
+  "finishedAt": "2026-06-03T16:30:28.586Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:30945ad2d59a6d55481c4ae2c740596c3cd8da594589bf326be73d052ede4685",
+  "stderrHash": "sha256:ed061c08328ac520a7c918113ca5429a12c8dae73aa47b37866a4ec7666d99bb",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/smoke.dev-20260603163024/stderr.txt"
+  ]
+}

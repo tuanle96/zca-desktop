@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO smoke passed: magic-link auth, recovery-key device B unlock, encrypted file upload by device A, download by device B, revoked token rejection, and fake-account send rejection.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T15:53:56.729Z",
+  "finishedAt": "2026-06-03T15:54:04.055Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+  "stdoutHash": "sha256:71d2cfec8eacffe8949a63ea86b92a0aec662d2d8a6c7dcf2b43b8ba03a61d05",
+  "stderrHash": "sha256:f41c6e0d570e3cdd1e20822a4f1bfc6baf28dae6062cb1d5b1d862d19ed266d6",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/smoke.dev-20260603155356/stderr.txt"
+  ]
+}

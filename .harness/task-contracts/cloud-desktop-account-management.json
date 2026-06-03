@@ -1,0 +1,95 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-desktop-account-management",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Wire the desktop cloud-mode account management path to the hosted SaaS backend: start/poll hosted Zalo QR login, hydrate cloud accounts, remove accounts through the backend instead of the local store, and keep SaaS device tokens in the OS keychain.",
+    "goals": [
+      "Allow a linked cloud device to start a hosted Zalo QR flow from the desktop login screen",
+      "Poll hosted QR status and hydrate the session store from backend accounts after success",
+      "Delete cloud accounts through the backend API when the session store is in cloud mode",
+      "Store cloud device tokens in the OS keychain and pass only a non-secret sentinel from the webview after verification",
+      "Preserve the local QR login and local logout path when cloud mode is not active"
+    ],
+    "nonGoals": [
+      "Claiming live phone QR scan/send/restart proof for cloud-zalo-session-host",
+      "Changing the backend hosted worker trust boundary recorded in ADR-0006",
+      "Moving Zalo credential plaintext or persisted SaaS bearer tokens into the webview"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "frontend-check",
+      "description": "Svelte/TypeScript check passes with the cloud QR account-management UI.",
+      "verification": {
+        "command": "bun run check"
+      }
+    },
+    {
+      "id": "frontend-build",
+      "description": "Frontend production build passes with the cloud QR account-management UI.",
+      "verification": {
+        "command": "bun run build"
+      }
+    },
+    {
+      "id": "desktop-tests",
+      "description": "Tauri core tests pass with cloud account deletion command registered.",
+      "verification": {
+        "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+      }
+    },
+    {
+      "id": "desktop-lint",
+      "description": "Tauri clippy is clean with warnings denied.",
+      "verification": {
+        "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings"
+      }
+    },
+    {
+      "id": "architecture",
+      "description": "Harness architecture fitness remains strict-pass.",
+      "verification": {
+        "command": "node .harness/scripts/check-architecture-fitness.mjs --strict"
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo fmt*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "review",
+    "lint",
+    "tests",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-desktop-account-management.json"
+}

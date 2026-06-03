@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-message-file-store",
+  "featureId": "cloud-message-file-store",
+  "decision": "pass",
+  "createdAt": "2026-06-03T15:50:31Z",
+  "checkedFiles": [
+    "server/scripts/smoke-dev.mjs",
+    "server/src/crypto.rs",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/storage.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/cloud.ts",
+    "src/lib/session.svelte.ts",
+    "src/lib/types.ts"
+  ],
+  "checkedInvariants": [
+    "confidential-at-rest",
+    "device-token-revocation",
+    "account-ownership-checks",
+    "object-storage-ciphertext",
+    "file-integrity-metadata-match",
+    "no-zalo-credential-return",
+    "input-validation",
+    "auth-session-boundary"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/types.ts",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "reviewedFiles": [
+      "server/scripts/smoke-dev.mjs",
+      "server/src/crypto.rs",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/storage.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/types.ts",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.83,
+  "findings": [
+    {
+      "severity": "info",
+      "file": "server/scripts/smoke-dev.mjs",
+      "evidence": "Smoke output shows fileIntegrityRejected=true, revokedRejected=true, and fakeAccountSendRejected=true.",
+      "fix": "No action."
+    },
+    {
+      "severity": "info",
+      "file": "server/src/storage.rs",
+      "evidence": "File blob API writes encrypted bytes to object storage and decrypts only for authorized device download.",
+      "fix": "No action."
+    }
+  ],
+  "summary": "Security review pass for cloud-message-file-store: stored file blobs and sensitive message/file fields remain confidential at rest, file uploads must match initialized size/hash metadata, revoked devices are rejected, and desktop cloud APIs do not return Zalo credentials."
+}

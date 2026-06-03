@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed for crypto, auth, recovery-key wrapping, and per-account throttle.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T15:53:13.017Z",
+  "finishedAt": "2026-06-03T15:53:15.327Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+  "stdoutHash": "sha256:2f090f4726fbb43bf8853664f687d2636665d2eefc4e8bd2e2d874b4492fd4f6",
+  "stderrHash": "sha256:b562697c613ef816738952139f509acd3a0cc2a8b56d2c2afa6149f427e11c59",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/backend.tests-20260603155313/stderr.txt"
+  ]
+}

@@ -119,15 +119,20 @@ pub fn reaction_icon_from_zalo(s: &str) -> Option<ReactionIcon> {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use super::*;
 
     #[test]
     fn resolves_known_zalo_icons() {
-        assert_eq!(reaction_icon_from_zalo("/-heart"), Some(ReactionIcon::Heart));
-        assert_eq!(reaction_icon_from_zalo("/-strong"), Some(ReactionIcon::Like));
+        assert_eq!(
+            reaction_icon_from_zalo("/-heart"),
+            Some(ReactionIcon::Heart)
+        );
+        assert_eq!(
+            reaction_icon_from_zalo("/-strong"),
+            Some(ReactionIcon::Like)
+        );
         assert_eq!(reaction_icon_from_zalo(":>"), Some(ReactionIcon::Haha));
     }
 
@@ -140,17 +145,35 @@ mod tests {
     fn every_icon_has_emoji() {
         // Every variant must map to a non-empty emoji string.
         let icons = [
-            ReactionIcon::Heart, ReactionIcon::Like, ReactionIcon::Haha,
-            ReactionIcon::Wow, ReactionIcon::Cry, ReactionIcon::Angry,
-            ReactionIcon::Kiss, ReactionIcon::TearsOfJoy, ReactionIcon::Shit,
-            ReactionIcon::Rose, ReactionIcon::BrokenHeart, ReactionIcon::Dislike,
-            ReactionIcon::Love, ReactionIcon::Confused, ReactionIcon::Wink,
-            ReactionIcon::Fade, ReactionIcon::Sun, ReactionIcon::Birthday,
-            ReactionIcon::Bomb, ReactionIcon::Ok, ReactionIcon::Peace,
-            ReactionIcon::Thanks, ReactionIcon::Punch,
+            ReactionIcon::Heart,
+            ReactionIcon::Like,
+            ReactionIcon::Haha,
+            ReactionIcon::Wow,
+            ReactionIcon::Cry,
+            ReactionIcon::Angry,
+            ReactionIcon::Kiss,
+            ReactionIcon::TearsOfJoy,
+            ReactionIcon::Shit,
+            ReactionIcon::Rose,
+            ReactionIcon::BrokenHeart,
+            ReactionIcon::Dislike,
+            ReactionIcon::Love,
+            ReactionIcon::Confused,
+            ReactionIcon::Wink,
+            ReactionIcon::Fade,
+            ReactionIcon::Sun,
+            ReactionIcon::Birthday,
+            ReactionIcon::Bomb,
+            ReactionIcon::Ok,
+            ReactionIcon::Peace,
+            ReactionIcon::Thanks,
+            ReactionIcon::Punch,
         ];
         for icon in icons {
-            assert!(!icon.emoji().is_empty(), "{icon:?} must have a non-empty emoji");
+            assert!(
+                !icon.emoji().is_empty(),
+                "{icon:?} must have a non-empty emoji"
+            );
         }
     }
 }

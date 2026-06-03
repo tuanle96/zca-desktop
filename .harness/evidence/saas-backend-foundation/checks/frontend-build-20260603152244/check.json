@@ -1,0 +1,1 @@
+{"name":"frontend-build","command":"bun run build","status":"0","startedAt":"2026-06-03T15:22:44Z","finishedAt":"2026-06-03T15:22:56Z","stdoutPath":".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152244/stdout.txt","stderrPath":".harness/evidence/saas-backend-foundation/checks/frontend-build-20260603152244/stderr.txt"}

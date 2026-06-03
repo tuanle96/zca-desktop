@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed after magic-link rate limit and audit event wiring.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:07:11.090Z",
+  "finishedAt": "2026-06-03T16:07:13.026Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+  "stdoutHash": "sha256:e3a04a690a18dfba451696c9bc70e8f89bb3bf8512e49b96a93c85c77d24cced",
+  "stderrHash": "sha256:5a9721889e3a6de7bf9f35bd3eb165e1d0bc415b2e91ac5e2b770e1380e951e3",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stderr.txt"
+  ]
+}

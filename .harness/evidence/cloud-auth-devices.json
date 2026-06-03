@@ -1,0 +1,188 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-auth-devices",
+  "featureId": "cloud-auth-devices",
+  "status": "pass",
+  "createdAt": "2026-06-03T16:07:00Z",
+  "updatedAt": "2026-06-03T16:52:21.911Z",
+  "diffSummary": "Cloud auth/device hardening is implemented and locally provider-proven: magic-link requests can be delivered through MailHog SMTP with dev token return disabled, tokens are single-use, requests are rate-limited per email window, auth/device flows write non-secret audit events, and the Postgres-backed dev smoke proves recovery-key device unlock, revoke rejection, rate-limit 429, and audit event rows.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-auth-devices.json",
+    "server/docker-compose.dev.yml",
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/live-provider-smoke.mjs",
+    "server/scripts/smoke-mailhog.mjs",
+    "server/scripts/smoke-dev.mjs",
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/error.rs",
+    "server/src/mailer.rs",
+    "server/src/routes.rs"
+  ],
+  "checks": [
+    {
+      "name": "backend.lint",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after auth/device hardening.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:07:11.090Z",
+      "finishedAt": "2026-06-03T16:07:11.790Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:2e9d5124613bf9972ce969a13135407823383ad08d1a11ba590f21e70d853fdf",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/backend.lint-20260603160711/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed after magic-link rate limit and audit event wiring.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:07:11.090Z",
+      "finishedAt": "2026-06-03T16:07:13.026Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+      "stdoutHash": "sha256:e3a04a690a18dfba451696c9bc70e8f89bb3bf8512e49b96a93c85c77d24cced",
+      "stderrHash": "sha256:5a9721889e3a6de7bf9f35bd3eb165e1d0bc415b2e91ac5e2b770e1380e951e3",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/backend.tests-20260603160711/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO/MailHog smoke passed with token/recovery device flow, revoked-token rejection, magicLinkRateLimited=true, auditEventsProved=true, providerLiveProved=true, sentViaMailHog=true, devMagicTokenReturned=false, and tokenSingleUseRejected=true.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:07:20.586Z",
+      "finishedAt": "2026-06-03T16:07:27.714Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+      "stdoutHash": "sha256:e34469a93068db1a21dd5caefe563041dc25451799e7a1e7794fd24212037140",
+      "stderrHash": "sha256:d8d41fad13e443ec23b1b6c9d083232ad9f8db3031eb33d1abc56b8886497883",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stderr.txt"
+      ]
+    },
+    {
+      "name": "provider.tool.check",
+      "command": "node --check server/scripts/live-provider-smoke.mjs",
+      "status": "pass",
+      "summary": "live-provider-smoke.mjs syntax check passed; script fails if dev magic-token mode is enabled.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:10:39.281Z",
+      "finishedAt": "2026-06-03T16:10:39.389Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:b1250315fa61647004cc3e1c464b1fbee2f5dc12a6be533e02ca33b48edb0e90",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/provider.tool.check-20260603161039/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.lint.mailhog",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend clippy completed with warnings denied after SMTP/MailHog magic-link delivery support.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:52:10.262Z",
+      "finishedAt": "2026-06-03T16:52:13.624Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:28d69b3ff62912eb01a4c15d51e2d390f8d99e87b47a05dfc0c0770e1eab220c",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/backend.lint.mailhog-20260603165210/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.tests.mailhog",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Backend tests passed after SMTP/MailHog magic-link delivery support.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:52:10.263Z",
+      "finishedAt": "2026-06-03T16:52:15.858Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+      "stdoutHash": "sha256:9b761c195409f60bed39524dc84bad887326958b87bf810cf88fd5e3c6370a9d",
+      "stderrHash": "sha256:134b13f289649664becf06cc67f412f6be68d7ae8d2cda20470cf6f115a5c80e",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/backend.tests.mailhog-20260603165210/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke.dev.mailhog",
+      "acceptanceId": "auth-integration",
+      "command": "server/scripts/run-dev-smoke.sh",
+      "status": "pass",
+      "summary": "Postgres/MinIO/MailHog smoke passed with providerLiveProved=true, sentViaMailHog=true, devMagicTokenReturned=false, and tokenSingleUseRejected=true.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T16:52:10.264Z",
+      "finishedAt": "2026-06-03T16:52:21.837Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:30f050bed96f388b4e53615886bc1128adebeb83cc682578f6625d6e3bc1fa0e",
+      "stdoutHash": "sha256:bb59607ca55d8cd1c3ab4574af2c90f2e1070dc1a1981fed9734c12c6640f019",
+      "stderrHash": "sha256:9752ae80100bdfd70a2bf72f0842a6d3b04498fa8c2902bd6452bede7c1bd8a4",
+      "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stdout.txt",
+        ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stderr.txt"
+      ],
+      "artifact": ".harness/evidence/cloud-auth-devices/checks/smoke.dev.mailhog-20260603165210/stdout.txt"
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-auth-devices/advisor-decision.json",
+      "summary": "Advisor pass for local auth/device hardening with MailHog provider proof."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-auth-devices/security-reviewer.json",
+      "summary": "Security pass for SMTP provider delivery with dev token disabled, token single-use, rate limiting, non-secret audit events, and revoke rejection."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-auth-devices/architecture-reviewer.json",
+      "summary": "Architecture pass for keeping auth/device hardening inside backend routes/db/config."
+    }
+  ],
+  "knownRisks": []
+}

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-desktop-account-management",
+  "featureId": "cloud-desktop-account-management",
+  "createdAt": "2026-06-03T16:15:21Z",
+  "decision": "pass",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "desktop-cloud-account-management-review",
+    "createdBy": "codex",
+    "notes": "Reviewed trust-boundary, local/cloud mode split, account deletion API wiring, keychain-backed cloud device session storage, and evidence honesty. Live hosted worker proof remains out of scope."
+  },
+  "checkedFiles": [
+    ".harness/task-contracts/cloud-desktop-account-management.json",
+    ".harness/docs/adr/0006-saas-session-host-and-confidential-at-rest.md",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/cloud.ts",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checkedInvariants": [
+    "contract-scope-alignment",
+    "evidence-honesty",
+    "saas-trust-boundary",
+    "keychain-token-storage",
+    "local-cloud-mode-separation"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "reviewedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "requiredFollowUps": [
+    {
+      "id": "live-hosted-qr-proof",
+      "severity": "P1",
+      "description": "This review does not satisfy cloud-zalo-session-host live QR/listen/send/restart evidence. That feature must remain passes=false until a real hosted QR flow is scanned and proven with redacted evidence."
+    }
+  ],
+  "summary": "Advisor pass for desktop cloud account management. The webview receives hosted QR/account metadata and uses a non-secret keychain sentinel for stored device sessions; live hosted worker proof remains separately open."
+}

@@ -1,0 +1,1 @@
+{"name":"smoke-dev","command":"server/scripts/run-dev-smoke.sh","status":"0","startedAt":"2026-06-03T15:30:25Z","finishedAt":"2026-06-03T15:30:31Z","stdoutPath":".harness/evidence/saas-backend-foundation/checks/smoke-dev-20260603153025/stdout.txt","stderrPath":".harness/evidence/saas-backend-foundation/checks/smoke-dev-20260603153025/stderr.txt"}

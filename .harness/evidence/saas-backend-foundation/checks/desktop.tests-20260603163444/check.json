@@ -1,0 +1,20 @@
+{
+  "name": "desktop.tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "Tauri core tests still pass after SaaS foundation migration/keychain changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:34:44.330Z",
+  "finishedAt": "2026-06-03T16:34:45.873Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+  "stdoutHash": "sha256:8a227363dc49efc9848521ccc92734e1a4c5efd6a60bc9b7bd1ecdc5176fe600",
+  "stderrHash": "sha256:1f5978b90b929a7e743fda800d8404a1372e5f6aa5aa12f5dbc290e35531efa5",
+  "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stdout.txt",
+  "stderrPath": ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stdout.txt",
+    ".harness/evidence/saas-backend-foundation/checks/desktop.tests-20260603163444/stderr.txt"
+  ]
+}

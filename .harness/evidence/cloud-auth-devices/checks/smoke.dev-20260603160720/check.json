@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO smoke passed with token/recovery device flow, revoked-token rejection, magicLinkRateLimited=true, and auditEventsProved=true.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:07:20.586Z",
+  "finishedAt": "2026-06-03T16:07:27.714Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:088c4896aee59650454d508fa285835697652b599a77999ca939bb82c3f4f034",
+  "stdoutHash": "sha256:e34469a93068db1a21dd5caefe563041dc25451799e7a1e7794fd24212037140",
+  "stderrHash": "sha256:d8d41fad13e443ec23b1b6c9d083232ad9f8db3031eb33d1abc56b8886497883",
+  "stdoutPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stdout.txt",
+    ".harness/evidence/cloud-auth-devices/checks/smoke.dev-20260603160720/stderr.txt"
+  ]
+}

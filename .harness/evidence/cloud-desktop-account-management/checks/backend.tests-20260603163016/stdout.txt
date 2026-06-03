@@ -1,0 +1,22 @@
+
+running 7 tests
+test zalo_host::tests::hosted_credentials_do_not_debug_print ... ok
+test auth::tests::normalizes_email ... ok
+test crypto::tests::token_hash_is_stable_and_not_plaintext ... ok
+test mailer::tests::production_mode_requires_delivery_configuration ... ok
+test crypto::tests::seal_open_roundtrip_hides_plaintext ... ok
+test sessions::tests::throttle_is_per_account ... ok
+test crypto::tests::recovery_key_hash_and_wrap_roundtrip ... ok
+
+test result: ok. 7 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.82s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

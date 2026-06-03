@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev.integrity",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO smoke passed with fileIntegrityRejected=true before valid encrypted upload/download, plus two-device and revoked-token proof.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:44:47.479Z",
+  "finishedAt": "2026-06-03T16:44:53.965Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+  "stdoutHash": "sha256:bd8544db25ed6fd2ca7f20daeaf531054d71c73881c48e4677546c35896d5da0",
+  "stderrHash": "sha256:beca6fee98b34fce61e9c1e22905a42133097c3a6418586eee1876ac904f7a7c",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/smoke.dev.integrity-20260603164447/stderr.txt"
+  ]
+}

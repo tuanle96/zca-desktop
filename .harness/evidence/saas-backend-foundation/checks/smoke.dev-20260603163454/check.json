@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO dev smoke passed and includes migrationRoundtripProved=true plus auth/device/file/revoke proofs.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:34:54.472Z",
+  "finishedAt": "2026-06-03T16:35:02.915Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:b1ac7f624d8e4f07cb659941fcd8670d89fa95e6c1c82eae8bef5ddbdaf4ed93",
+  "stdoutHash": "sha256:8614b3da879f582e14eff40a65713ad7a1d9fd889c2e1189141f9d1111f716a7",
+  "stderrHash": "sha256:beca6fee98b34fce61e9c1e22905a42133097c3a6418586eee1876ac904f7a7c",
+  "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stdout.txt",
+  "stderrPath": ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stdout.txt",
+    ".harness/evidence/saas-backend-foundation/checks/smoke.dev-20260603163454/stderr.txt"
+  ]
+}

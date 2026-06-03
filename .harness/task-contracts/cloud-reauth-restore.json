@@ -1,0 +1,67 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-reauth-restore",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Prove backend startup restore failure marks only the affected cloud account as reauth-needed, matching the SaaS test-plan expectation for expired/invalid Zalo credentials.",
+    "goals": [
+      "Expose a migrate-only server mode for deterministic dev smoke setup",
+      "Seed one active account with invalid encrypted credential material before server startup",
+      "On restore failure, update cloud_accounts.state to reauth-needed and hosted_sessions.last_error without failing server startup",
+      "Keep normal magic-link, device, file, revoke, and fake-account send smoke paths passing"
+    ],
+    "nonGoals": [
+      "Live Zalo cookie expiry proof",
+      "Claiming hosted QR/listen/send restart restore without a real account"
+    ],
+    "allowedLayers": [
+      "config",
+      "store",
+      "session",
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "reauth-restore-smoke",
+      "description": "Postgres-backed smoke seeds one broken active account before startup; server restore marks it reauth-needed and the rest of the smoke still passes.",
+      "verification": {
+        "manual": "Attach attested server/scripts/run-dev-smoke.sh output containing reauthRestoreMarked=true."
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(server/scripts/run-dev-smoke.sh*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-reauth-restore.json"
+}

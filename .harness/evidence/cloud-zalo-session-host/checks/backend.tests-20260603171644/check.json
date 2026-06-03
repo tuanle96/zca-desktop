@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed after hosted phone resolve/send/realtime smoke tooling.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T17:16:44.052Z",
+  "finishedAt": "2026-06-03T17:16:46.802Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:cee57f5bbebb9c6904b9182bdf13b5e1cb0b305ff54dafae7c13c22a4f478fca",
+  "stdoutHash": "sha256:f1f615adfeea79708c828c80d7fae832da72dac978354a94bb0d9131c06faf9a",
+  "stderrHash": "sha256:b7f5b773a13aa03c3d28c53c7ed1d6d0e1fbf8e9ea896680ec8868d5454531a0",
+  "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stdout.txt",
+    ".harness/evidence/cloud-zalo-session-host/checks/backend.tests-20260603171644/stderr.txt"
+  ]
+}

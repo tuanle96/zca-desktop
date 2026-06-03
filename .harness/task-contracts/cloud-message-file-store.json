@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-message-file-store",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Finish cloud encrypted message and file storage against Postgres plus S3-compatible object storage, including upload/download proof from two registered devices.",
+    "goals": [
+      "Persist encrypted message bodies and file metadata",
+      "Store encrypted file blobs in S3-compatible object storage",
+      "Reject file blob uploads whose plaintext size/hash does not match initialized metadata",
+      "Hydrate the same conversations/messages/files on a second device",
+      "Prove revoked devices cannot fetch message/file APIs"
+    ],
+    "nonGoals": [
+      "True server-blind E2E",
+      "Production bucket lifecycle/backup policy"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "two-device-file-smoke",
+      "description": "Device A uploads a file and sends metadata; an upload whose plaintext size/hash does not match metadata is rejected; device B downloads/decrypts the valid file after recovery-key unlock; revoked device access is rejected.",
+      "verification": {
+        "manual": "Attach non-secret API/browser evidence with file ids, object keys, hashes, integrity rejection, and ciphertext plaintext-leak scan."
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-message-file-store.json"
+}

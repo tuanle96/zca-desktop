@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "bun run build",
+  "status": "pass",
+  "summary": "SvelteKit production build completed after cloud file and realtime store changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T15:53:33.220Z",
+  "finishedAt": "2026-06-03T15:53:50.503Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+  "stdoutHash": "sha256:68c9554c183ec09d77a80f833fddfc5274c67f72420784b5d5f37233542169b2",
+  "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/frontend.build-20260603155333/stderr.txt"
+  ]
+}

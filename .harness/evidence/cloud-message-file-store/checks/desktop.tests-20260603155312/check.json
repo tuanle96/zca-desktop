@@ -1,0 +1,20 @@
+{
+  "name": "desktop.tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "Tauri core tests passed with cloud file and realtime commands registered.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T15:53:12.926Z",
+  "finishedAt": "2026-06-03T15:53:15.379Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:f0333312eb0a18be9ba562e8490779ac5451455e0c653637af7309faf2c4a929",
+  "stdoutHash": "sha256:22b69c10ec1e10af2bab1cd0d8403e46c9c729607f1411739035d2275cb9628c",
+  "stderrHash": "sha256:6b001abf47c481e39b522d97989a36aef5e7aba3ce7b1c0bc9dc9a00043eec52",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/desktop.tests-20260603155312/stderr.txt"
+  ]
+}

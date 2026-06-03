@@ -1,0 +1,20 @@
+{
+  "name": "desktop.tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "Tauri core tests passed with cloud account deletion command registered.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:23.015Z",
+  "finishedAt": "2026-06-03T16:20:24.521Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:0a2d2fb9eb50945713f8867a09043dc99bd07f127aa1bca068651d69e661a444",
+  "stderrHash": "sha256:c5e69b146beec2daa21f365502bd8d5a0a42239059945ceb059cf4a9d2c0e3d5",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162023/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162023/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162023/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.tests-20260603162023/stderr.txt"
+  ]
+}

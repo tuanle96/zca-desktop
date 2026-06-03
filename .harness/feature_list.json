@@ -645,6 +645,291 @@
       ]
     },
     {
+      "id": "saas-backend-foundation",
+      "title": "Cloud/SaaS: Rust session-host backend foundation with Postgres, device auth, recovery-key envelope crypto, and S3-compatible file metadata",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/saas-backend-foundation.json",
+      "evidencePath": ".harness/evidence/saas-backend-foundation.json",
+      "steps": [
+        {
+          "id": "adr",
+          "title": "ADR-0006 records session-host + confidential-at-rest trust boundary (not true E2E against the server)",
+          "done": true
+        },
+        {
+          "id": "server",
+          "title": "server/: axum + sqlx/Postgres + object_store crate, reversible migrations, auth/device/account/message/file API surface, crypto tests, hosted-session throttle scaffold",
+          "done": true
+        },
+        {
+          "id": "desktop",
+          "title": "src-tauri cloud commands + src/lib/cloud.ts helper expose magic-link/device/account calls without moving Zalo credentials into the webview",
+          "done": true
+        },
+        {
+          "id": "hosted-scaffold",
+          "title": "Hosted-session manager scaffold compiles with per-account throttle, QR flow state, encrypted credential persistence, and restore-active-sessions boot path",
+          "done": true
+        },
+        {
+          "id": "dev-proof",
+          "title": "Postgres/MinIO-backed dev smoke proves migration up/down/up, magic-link verify, device registration/revoke, and encrypted file upload/download",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-auth-devices",
+      "title": "Cloud/SaaS: production email magic-link auth and recovery-key device registration hardening",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-auth-devices.json",
+      "evidencePath": ".harness/evidence/cloud-auth-devices.json",
+      "steps": [
+        {
+          "id": "email-hook",
+          "title": "Magic-link delivery has a production-safe webhook hook and fails closed when no delivery is configured outside dev mode",
+          "done": true
+        },
+        {
+          "id": "rate-audit",
+          "title": "Magic-link requests are rate-limited and auth/device operations write non-secret audit events",
+          "done": true
+        },
+        {
+          "id": "provider-live",
+          "title": "Configure and prove SMTP provider delivery through local MailHog with dev magic-token return disabled",
+          "done": true
+        },
+        {
+          "id": "provider-smoke-tool",
+          "title": "Provider-live smoke script exists and fails if dev magic-token mode is enabled",
+          "done": true
+        },
+        {
+          "id": "revoke",
+          "title": "Revoked device tokens are rejected against a running Postgres-backed backend",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-desktop-registration",
+      "title": "Cloud/SaaS: register desktop Tauri cloud command handlers while preserving local mode",
+      "passes": true,
+      "domain": "default",
+      "classification": "normal",
+      "taskContractPath": ".harness/task-contracts/cloud-desktop-registration.json",
+      "evidencePath": ".harness/evidence/cloud-desktop-registration.json",
+      "steps": [
+        {
+          "id": "handler-registration",
+          "title": "src-tauri/src/lib.rs registers the cloud command handlers exposed by the command layer",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-desktop-account-management",
+      "title": "Cloud/SaaS: desktop hosted-QR account add, backend account removal, and keychain-backed cloud device session",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-desktop-account-management.json",
+      "evidencePath": ".harness/evidence/cloud-desktop-account-management.json",
+      "steps": [
+        {
+          "id": "hosted-qr-ui",
+          "title": "Desktop cloud panel can start/poll a hosted Zalo QR flow and hydrate cloud accounts after success",
+          "done": true
+        },
+        {
+          "id": "cloud-remove",
+          "title": "Cloud-mode account removal calls backend DELETE /api/v1/accounts/:account_id while local mode keeps logout_account",
+          "done": true
+        },
+        {
+          "id": "keychain-session",
+          "title": "Desktop stores SaaS device tokens in OS keychain and uses a non-secret sentinel from the webview",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-zalo-session-host",
+      "title": "Cloud/SaaS: hosted zca-rust QR/login/listen/send worker per account",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-zalo-session-host.json",
+      "evidencePath": ".harness/evidence/cloud-zalo-session-host.json",
+      "steps": [
+        {
+          "id": "worker",
+          "title": "Backend QR/login/listen/send worker uses zca-rust, stores encrypted credentials/messages, and exposes text/sticker/reaction send APIs",
+          "done": true
+        },
+        {
+          "id": "live-smoke-tool",
+          "title": "Hosted live smoke script drives QR polling, optional send/realtime, and restart checkpoint with redacted output",
+          "done": true
+        },
+        {
+          "id": "qr-restore",
+          "title": "Live hosted QR login succeeds and backend restart restores the active account from encrypted credentials",
+          "done": true
+        },
+        {
+          "id": "smoke",
+          "title": "Live hosted account receives/sends/restores after backend restart with redacted evidence",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-realtime-isolation",
+      "title": "Cloud/SaaS: realtime SSE stream is isolated per authenticated SaaS user",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-realtime-isolation.json",
+      "evidencePath": ".harness/evidence/cloud-realtime-isolation.json",
+      "steps": [
+        {
+          "id": "event-owner",
+          "title": "Hosted realtime events carry internal SaaS user ownership",
+          "done": true
+        },
+        {
+          "id": "sse-filter",
+          "title": "Realtime SSE emits only events owned by the authenticated device user",
+          "done": true
+        },
+        {
+          "id": "proof",
+          "title": "Backend unit test proves other-user realtime payloads are dropped",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-message-file-store",
+      "title": "Cloud/SaaS: encrypted message and file storage across two registered devices",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-message-file-store.json",
+      "evidencePath": ".harness/evidence/cloud-message-file-store.json",
+      "steps": [
+        {
+          "id": "s3",
+          "title": "Store encrypted file blobs in S3-compatible object storage",
+          "done": true
+        },
+        {
+          "id": "two-device",
+          "title": "Device A upload and Device B hydrate/download proof with revoked-device rejection",
+          "done": true
+        },
+        {
+          "id": "integrity",
+          "title": "Reject file blob uploads whose plaintext size or SHA-256 does not match the initialized metadata",
+          "done": true
+        },
+        {
+          "id": "desktop-flow",
+          "title": "Desktop cloud-mode file workflow is wired into the normal chat UI, not just backend/Tauri helper APIs",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-reauth-restore",
+      "title": "Cloud/SaaS: backend restore failure marks only the affected account reauth-needed",
+      "passes": true,
+      "domain": "default",
+      "classification": "high-risk",
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+      ],
+      "taskContractPath": ".harness/task-contracts/cloud-reauth-restore.json",
+      "evidencePath": ".harness/evidence/cloud-reauth-restore.json",
+      "steps": [
+        {
+          "id": "restore-failure",
+          "title": "Backend startup restore failure for one encrypted credential row marks that account reauth-needed without breaking other users/devices",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "cloud-ui-polish",
+      "title": "Cloud/SaaS: daily-use UI polish for sign-in, account status, and chat affordances",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/cloud-ui-polish.json",
+      "evidencePath": ".harness/evidence/cloud-ui-polish.json",
+      "steps": [
+        {
+          "id": "login-panel",
+          "title": "Cloud login/device panel shows connection, recovery key, account list, QR state, and retry/error affordances clearly",
+          "done": true
+        },
+        {
+          "id": "chat-status",
+          "title": "Chat shell shows cloud/local mode, realtime status, and cloud file availability without blocking local mode",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Frontend check/build and harness evidence pass for UI polish",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "app-packaging",
       "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,

@@ -104,6 +104,23 @@
         "Coexistence documented + verified",
         "Installers produced per OS"
       ]
+    },
+    {
+      "id": "cloud-saas",
+      "title": "Cloud/SaaS: hosted session backend + multi-device account access",
+      "status": "active",
+      "goals": [
+        "Rust axum backend with Postgres and S3-compatible file storage",
+        "Email magic-link auth and recovery-key device registration",
+        "Hosted zca-rust account sessions with confidential-at-rest storage",
+        "Desktop cloud mode that can hydrate one user's accounts/messages/files across devices"
+      ],
+      "exitCriteria": [
+        "Hosted worker live QR/login/listen/send proof exists with no secret leakage",
+        "Two registered devices can access the same cloud account/messages/files",
+        "Revoked device tokens are rejected",
+        "Postgres/S3 leak scan proves known plaintext is absent from stored credential/message/file records"
+      ]
     }
   ],
   "features": [],
@@ -139,6 +156,18 @@
       "mitigation": "Build on verified endpoints first; gate unverified behind live-test evidence."
     },
     {
+      "id": "r6",
+      "title": "SaaS session-host is confidential-at-rest, not true E2E",
+      "severity": "P1",
+      "mitigation": "ADR-0006 names the trust boundary explicitly; server logs/storage must never contain plaintext secrets/content, and true server-blind E2E requires a separate client-hosted sync architecture."
+    },
+    {
+      "id": "r7",
+      "title": "Hosted zca-rust centralizes unofficial-API ban risk",
+      "severity": "P1",
+      "mitigation": "Keep per-account send throttling, avoid spam-like automation, and require live hosted-worker evidence before production claims."
+    },
+    {
       "id": "mem_20260602062602_risk_v59x5r",
       "ts": "2026-06-02T06:26:02.854Z",
       "title": "Dev affordances pending replacement: .zalo-cred.json file loader (-> secure-cred-store OS keychain) and UI placeholder tabs/icons. RESOLVED by session-manager: the in-command session store is now the session/ SessionManager layer, and per-account send throttling (800ms) is in place (ban risk r1 mitigated).",
@@ -151,6 +180,16 @@
     {
       "id": "d11",
       "title": "Rich message events mutate cached message rows: reactions update reaction_icon, undo marks deleted, quote/link JSON is persisted for restart hydration; text/quote sends route through SessionManager throttle with explicit ThreadKind.",
+      "status": "accepted"
+    },
+    {
+      "id": "d12",
+      "title": "Cloud/SaaS v1 is a session-host architecture: backend runs zca-rust sessions and stores credentials/messages/files confidential-at-rest. This is not true E2E against the server because the worker sees plaintext at runtime.",
+      "status": "accepted"
+    },
+    {
+      "id": "d13",
+      "title": "Desktop cloud mode owns only device-token backed account orchestration: hosted QR start/status and account deletion go through the backend API; local mode keeps local QR/session/logout commands.",
       "status": "accepted"
     },
     {

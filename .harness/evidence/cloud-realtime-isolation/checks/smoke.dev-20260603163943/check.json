@@ -1,0 +1,20 @@
+{
+  "name": "smoke.dev",
+  "command": "server/scripts/run-dev-smoke.sh",
+  "status": "pass",
+  "summary": "Postgres/MinIO dev smoke remained green after realtime event envelope filtering.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:39:43.179Z",
+  "finishedAt": "2026-06-03T16:39:51.839Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:420f544fb0d5a54436413446f6320ff74f18de0b7b9a507006b3ed80560c7e6c",
+  "stdoutHash": "sha256:fc356d6b6bbeae6f7a530a085e236a6ffd872c8b397a53ecfecf01e072737499",
+  "stderrHash": "sha256:cab4cb0d7e4e34c068b75e2f14153e3cab12f6ac2a90026497fc43c6ef8ddc65",
+  "stdoutPath": ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stdout.txt",
+    ".harness/evidence/cloud-realtime-isolation/checks/smoke.dev-20260603163943/stderr.txt"
+  ]
+}

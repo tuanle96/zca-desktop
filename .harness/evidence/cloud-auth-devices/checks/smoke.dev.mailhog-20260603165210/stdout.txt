@@ -1,0 +1,27 @@
+{
+  "ok": true,
+  "emailDomain": "example.com",
+  "userId": "375a9681-5733-4092-918a-2d00fe65b7ae",
+  "deviceA": "b4d014e6-02eb-49e1-895b-5f57f872f101",
+  "deviceB": "cdd689ff-45be-4c03-8d71-3d5a562e711b",
+  "fileId": "0f31092a-59fa-40c3-a7d2-17a872648c29",
+  "fileBytes": 48,
+  "sha256": "28534359a6e156a227a7707c49889e45f48967f6da9cc1378f4e8bd2283aa19d",
+  "fileIntegrityRejected": true,
+  "revokedRejected": true,
+  "fakeAccountSendRejected": true,
+  "reauthRestoreMarked": true,
+  "magicLinkRateLimited": true,
+  "auditEventsProved": true,
+  "migrationRoundtripProved": true,
+  "mailhogProvider": {
+    "ok": true,
+    "emailDomain": "example.com",
+    "sentViaMailHog": true,
+    "devMagicTokenReturned": false,
+    "tokenSingleUseRejected": true,
+    "userId": "e4713bd5-4b89-4bb1-a7e1-1a9fd5a2de4c",
+    "deviceId": "35678b59-ba98-4a78-8997-77a3f4cfc42f"
+  },
+  "providerLiveProved": true
+}

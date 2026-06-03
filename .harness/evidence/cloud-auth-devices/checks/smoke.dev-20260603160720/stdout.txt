@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "emailDomain": "example.com",
+  "userId": "63d468f6-39c8-41d2-a576-979de070951f",
+  "deviceA": "da5df9b3-ca41-4856-98c2-61133b995667",
+  "deviceB": "83c186cc-a84d-4177-9422-1ae84eacd7b1",
+  "fileId": "40412285-a9ae-4efd-bb7c-1145be056e28",
+  "fileBytes": 48,
+  "sha256": "28534359a6e156a227a7707c49889e45f48967f6da9cc1378f4e8bd2283aa19d",
+  "revokedRejected": true,
+  "fakeAccountSendRejected": true,
+  "reauthRestoreMarked": true,
+  "magicLinkRateLimited": true,
+  "auditEventsProved": true
+}

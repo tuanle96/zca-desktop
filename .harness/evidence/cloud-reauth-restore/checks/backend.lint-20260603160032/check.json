@@ -1,0 +1,20 @@
+{
+  "name": "backend.lint",
+  "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend clippy completed with warnings denied after restore failure state handling.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:00:32.706Z",
+  "finishedAt": "2026-06-03T16:00:33.365Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:aa423fbd91264e415f67c9a2a3fc69cb49f96f999f854df37bbfe91c650f2d36",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:ac9d3da08c63185ac44df7623d8d379024b9d7fd64ded2077d974723ed86214e",
+  "stdoutPath": ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stdout.txt",
+    ".harness/evidence/cloud-reauth-restore/checks/backend.lint-20260603160032/stderr.txt"
+  ]
+}

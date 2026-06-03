@@ -1,0 +1,57 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-desktop-registration",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Register the already-reviewed cloud command handlers in the Tauri invoke handler list. This owns only the root src-tauri/src/lib.rs registration diff that is unlayered by ADR-0003's directory model.",
+    "goals": [
+      "Expose command-layer cloud handlers to the Svelte UI through Tauri invoke",
+      "Keep local-mode commands and state registration unchanged"
+    ],
+    "nonGoals": [
+      "Backend auth/session-host implementation",
+      "Changing the local Tauri layer ordering"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "desktop-tests",
+      "description": "Tauri core tests pass with cloud handler registration present.",
+      "verification": {
+        "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+      }
+    },
+    {
+      "id": "desktop-lint",
+      "description": "Tauri clippy is clean with warnings denied.",
+      "verification": {
+        "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings"
+      }
+    }
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "lint",
+    "tests",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-desktop-registration.json"
+}

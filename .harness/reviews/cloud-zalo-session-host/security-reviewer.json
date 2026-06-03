@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-zalo-session-host",
+  "featureId": "cloud-zalo-session-host",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:20:00Z",
+  "checkedFiles": [
+    ".harness/evidence/cloud-zalo-session-host.json",
+    ".harness/task-contracts/cloud-zalo-session-host.json",
+    "server/scripts/live-hosted-send-validate.mjs",
+    "server/scripts/live-hosted-zalo-smoke.mjs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs"
+  ],
+  "checkedInvariants": [
+    "auth-session-boundary",
+    "account-ownership",
+    "phone-resolve-input-validation",
+    "hosted-send-realtime",
+    "credential-redaction",
+    "evidence-honesty",
+    "input-validation"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "reviewedFiles": [
+      ".harness/evidence/cloud-zalo-session-host.json",
+      ".harness/task-contracts/cloud-zalo-session-host.json",
+      "server/scripts/live-hosted-send-validate.mjs",
+      "server/scripts/live-hosted-zalo-smoke.mjs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.9,
+  "findings": [
+    {
+      "severity": "info",
+      "file": "server/scripts/live-hosted-send-validate.mjs",
+      "evidence": "Evidence output includes suffix/length/boolean fields only and omits token, full phone, full UID, cookies, recovery key, and message text.",
+      "fix": "No action."
+    }
+  ],
+  "summary": "Security review pass: route requires device auth and account ownership, validates phone shape, emits redacted evidence only, and does not expose Zalo credentials or message bodies.",
+  "updatedAt": "2026-06-03T17:16:05.910Z"
+}

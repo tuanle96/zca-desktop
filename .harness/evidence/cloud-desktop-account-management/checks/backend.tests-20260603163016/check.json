@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend unit tests remained green after desktop keychain session changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:30:16.863Z",
+  "finishedAt": "2026-06-03T16:30:18.572Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:316a95706068b5fc2753433aab30ef2927a67f82563dd63ad230ce8a017e1855",
+  "stderrHash": "sha256:655d4b047e476fbea06060a038a6cdbd23748eb32ba8f3ebede22e2124b9b835",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603163016/stderr.txt"
+  ]
+}

@@ -1,0 +1,11 @@
+{
+  "ok": true,
+  "emailDomain": "example.com",
+  "userId": "d87d8ca4-86c9-439f-b1cf-5a9332eca480",
+  "deviceA": "394b4fbb-c75b-464c-98d3-13cbf8cd3ef6",
+  "deviceB": "4fbf71c0-7a7c-4836-a4fe-f2674de6ea02",
+  "fileId": "301d70bc-bb46-4903-a1ff-13d89ec9111d",
+  "fileBytes": 48,
+  "sha256": "28534359a6e156a227a7707c49889e45f48967f6da9cc1378f4e8bd2283aa19d",
+  "revokedRejected": true
+}

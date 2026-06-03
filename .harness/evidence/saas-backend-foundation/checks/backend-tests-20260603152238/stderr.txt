@@ -1,0 +1,4 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.27s
+     Running unittests src/lib.rs (server/target/debug/deps/zca_cloud_server-b2c139eed8609e2c)
+     Running unittests src/main.rs (server/target/debug/deps/zca_cloud_server-75c5263340cf8899)
+   Doc-tests zca_cloud_server

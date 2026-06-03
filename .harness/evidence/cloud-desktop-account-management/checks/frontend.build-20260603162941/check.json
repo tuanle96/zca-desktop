@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "bun run build",
+  "status": "pass",
+  "summary": "Vite/SvelteKit production build completed after keychain-backed cloud device session changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:29:41.215Z",
+  "finishedAt": "2026-06-03T16:29:48.818Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:19b09b8db63ac1b549e6e67e8198acecca3bef78fc885a9a03d621eca6e394cd",
+  "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162941/stderr.txt"
+  ]
+}

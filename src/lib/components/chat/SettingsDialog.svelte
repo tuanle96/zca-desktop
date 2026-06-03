@@ -1,6 +1,5 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core";
   import {
     X,
     User,
@@ -13,9 +12,21 @@
     LogOut,
     Check,
     Loader2,
+    Cloud,
+    Wifi,
+    WifiOff,
+    ShieldCheck,
   } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
+  import {
+    CLOUD_DEVICE_TOKEN_KEYCHAIN,
+    listCloudAccounts,
+    listCloudDevices,
+    loadCloudDeviceSession,
+    type CloudAccount,
+    type CloudDevice,
+  } from "$lib/cloud";
   import { session } from "$lib/session.svelte";
   import { theme, type ThemeMode } from "$lib/theme.svelte";
 
@@ -24,12 +35,16 @@
   let tab = $state<Tab>("account");
   let confirmingLogout = $state(false);
 
-  // Store diagnostics (accounts, threads, messages) for the active account.
-  let stats = $state<{ accounts: number; threads: number; messages: number } | null>(null);
-  let statsError = $state("");
+  let cloudBaseUrl = $state("http://127.0.0.1:37880");
+  let cloudDeviceLinked = $state(false);
+  let cloudAccounts = $state<CloudAccount[]>([]);
+  let cloudDevices = $state<CloudDevice[]>([]);
+  let cloudDataError = $state("");
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
   const appVersion = "0.1.0";
+  const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
+  const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
 
   const navItems: { id: Tab; icon: typeof User; label: string }[] = [
     { id: "account", icon: User, label: "Tài khoản" },
@@ -57,17 +72,28 @@
     confirmingLogout = false;
   }
 
-  async function loadStats() {
-    const id = session.activeAccountId;
-    if (!id) return;
+  async function loadCloudOverview() {
+    if (typeof localStorage !== "undefined") {
+      cloudBaseUrl = localStorage.getItem("zca.cloud.baseUrl") || cloudBaseUrl;
+    }
     try {
-      const [accounts, threads, messages] = await invoke<[number, number, number]>("store_stats", {
-        accountId: id,
-      });
-      stats = { accounts, threads, messages };
-      statsError = "";
+      const saved = await loadCloudDeviceSession(cloudBaseUrl);
+      cloudDeviceLinked = Boolean(saved?.hasDeviceToken);
+      if (!cloudDeviceLinked) {
+        cloudAccounts = [];
+        cloudDevices = [];
+        cloudDataError = "";
+        return;
+      }
+      const [accounts, devices] = await Promise.all([
+        listCloudAccounts(cloudBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN),
+        listCloudDevices(cloudBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN),
+      ]);
+      cloudAccounts = accounts;
+      cloudDevices = devices;
+      cloudDataError = "";
     } catch (e) {
-      statsError = String(e);
+      cloudDataError = String(e);
     }
   }
 
@@ -89,7 +115,7 @@
   }
 
   onMount(() => {
-    loadStats();
+    loadCloudOverview();
   });
 </script>
 
@@ -163,11 +189,39 @@
             </div>
 
             <div class="mt-8 border-t pt-5">
+              <p class="text-sm font-medium">Chế độ phiên</p>
+              <div class="mt-3 grid grid-cols-2 gap-2">
+                <div class="bg-muted/40 rounded-lg border p-3">
+                  <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                    <Cloud class="size-4" />
+                    Cloud SaaS
+                  </div>
+                  <p class="mt-1 text-sm font-medium">
+                    Đồng bộ qua backend
+                  </p>
+                </div>
+                <div class="bg-muted/40 rounded-lg border p-3">
+                  <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                    {#if session.listening}
+                      <Wifi class="size-4" />
+                      Realtime
+                    {:else}
+                      <WifiOff class="size-4" />
+                      Offline
+                    {/if}
+                  </div>
+                  <p class="mt-1 text-sm font-medium">
+                    {session.listening ? "Đang nhận sự kiện" : "Chưa kết nối"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div class="mt-8 border-t pt-5">
               <p class="text-sm font-medium">Đăng xuất</p>
               <p class="text-muted-foreground mt-1 text-xs">
-                Quên tài khoản này trên thiết bị hiện tại. Phiên đăng nhập và thông tin xác thực
-                đã lưu sẽ bị xoá khỏi máy. Lịch sử trò chuyện được giữ lại để khôi phục khi đăng
-                nhập lại.
+                Xoá hosted Zalo account này khỏi cloud backend. Các thiết bị khác của cùng SaaS
+                user sẽ không còn thấy account này sau khi đồng bộ lại.
               </p>
 
               {#if session.error}
@@ -182,7 +236,7 @@
                     {:else}
                       <LogOut />
                     {/if}
-                    Xác nhận đăng xuất
+                    Xác nhận xoá account cloud
                   </Button>
                   <Button variant="ghost" disabled={session.busy} onclick={() => (confirmingLogout = false)}>
                     Huỷ
@@ -191,7 +245,7 @@
               {:else}
                 <Button variant="destructive" class="mt-4" onclick={() => (confirmingLogout = true)}>
                   <LogOut />
-                  Đăng xuất tài khoản này
+                  Xoá account cloud này
                 </Button>
               {/if}
             </div>
@@ -220,32 +274,54 @@
             {/each}
           </div>
         {:else if tab === "data"}
-          <h3 class="text-base font-semibold">Quản lý dữ liệu</h3>
+          <h3 class="text-base font-semibold">Dữ liệu cloud</h3>
           <p class="text-muted-foreground mt-1 text-sm">
-            Dữ liệu được lưu cục bộ trên máy (SQLite). Thông tin xác thực được mã hoá.
+            Dữ liệu hội thoại nằm trên backend SaaS. Desktop chỉ giữ device token trong Keychain.
           </p>
-          {#if statsError}
-            <p class="text-destructive mt-4 text-xs" role="alert">{statsError}</p>
-          {:else if stats}
+          {#if cloudDataError}
+            <p class="text-destructive mt-4 text-xs" role="alert">{cloudDataError}</p>
+          {:else if cloudDeviceLinked}
             <dl class="mt-5 grid grid-cols-3 gap-3">
               <div class="bg-muted/40 rounded-xl border p-4">
-                <dt class="text-muted-foreground text-xs">Tài khoản đã lưu</dt>
-                <dd class="mt-1 text-2xl font-semibold tabular-nums">{stats.accounts}</dd>
+                <dt class="text-muted-foreground text-xs">Hosted accounts</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums">{activeCloudAccounts}</dd>
               </div>
               <div class="bg-muted/40 rounded-xl border p-4">
-                <dt class="text-muted-foreground text-xs">Cuộc trò chuyện</dt>
-                <dd class="mt-1 text-2xl font-semibold tabular-nums">{stats.threads}</dd>
+                <dt class="text-muted-foreground text-xs">Thiết bị đang mở</dt>
+                <dd class="mt-1 text-2xl font-semibold tabular-nums">{activeCloudDevices}</dd>
               </div>
               <div class="bg-muted/40 rounded-xl border p-4">
-                <dt class="text-muted-foreground text-xs">Tin nhắn đã lưu</dt>
-                <dd class="mt-1 text-2xl font-semibold tabular-nums">{stats.messages}</dd>
+                <dt class="text-muted-foreground text-xs">Realtime</dt>
+                <dd class="mt-2 flex items-center gap-2 text-sm font-medium">
+                  <span class="size-2 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
+                  {session.listening ? "Đang bật" : "Chưa kết nối"}
+                </dd>
               </div>
             </dl>
-            <p class="text-muted-foreground mt-3 text-xs">Số liệu của tài khoản đang hoạt động.</p>
-          {:else}
-            <div class="text-muted-foreground mt-5 flex items-center gap-2 text-sm">
-              <Loader2 class="size-4 animate-spin" /> Đang tải…
+            <div class="mt-5 rounded-xl border p-4">
+              <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                <Cloud class="size-4" />
+                Backend endpoint
+              </div>
+              <p class="mt-1 truncate text-sm font-medium">{cloudBaseUrl}</p>
+              <p class="text-muted-foreground mt-2 text-xs">
+                Postgres lưu metadata/ciphertext; object storage lưu file blobs đã mã hoá.
+              </p>
             </div>
+            <div class="mt-3 rounded-xl border p-4">
+              <div class="text-muted-foreground flex items-center gap-2 text-xs">
+                <ShieldCheck class="size-4" />
+                Thiết bị này
+              </div>
+              <p class="mt-1 text-sm font-medium">Đã liên kết cloud device session</p>
+              <p class="text-muted-foreground mt-2 text-xs">
+                Token thiết bị nằm trong macOS Keychain; Zalo credential không được trả về UI.
+              </p>
+            </div>
+          {:else}
+            <p class="text-muted-foreground mt-5 text-sm">
+              Thiết bị này chưa có cloud device session. Đăng nhập bằng magic link để liên kết.
+            </p>
           {/if}
         {:else if tab === "about"}
           <h3 class="text-base font-semibold">Giới thiệu</h3>

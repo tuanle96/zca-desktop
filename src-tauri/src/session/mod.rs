@@ -79,7 +79,10 @@ struct SendThrottle {
 
 impl SendThrottle {
     fn new(interval: Duration) -> Self {
-        Self { interval, next_allowed: Mutex::new(HashMap::new()) }
+        Self {
+            interval,
+            next_allowed: Mutex::new(HashMap::new()),
+        }
     }
 
     /// Reserve the next send slot for `account_id` relative to `now`, returning
@@ -141,7 +144,13 @@ impl<H> SessionManager<H> {
         if let Some(mut previous) = map.remove(&account_id) {
             previous.listener.stop();
         }
-        map.insert(account_id, ManagedSession { handle, listener: Box::new(listener) });
+        map.insert(
+            account_id,
+            ManagedSession {
+                handle,
+                listener: Box::new(listener),
+            },
+        );
     }
 
     /// Remove a session, stopping its listener. Returns `true` if one was
@@ -168,7 +177,11 @@ impl<H> SessionManager<H> {
     where
         H: Clone,
     {
-        self.sessions.lock().await.get(account_id).map(|s| s.handle.clone())
+        self.sessions
+            .lock()
+            .await
+            .get(account_id)
+            .map(|s| s.handle.clone())
     }
 
     /// All currently-managed account ids.
@@ -196,8 +209,14 @@ impl SessionManager<Arc<API>> {
         thread_id: &str,
         text: &str,
     ) -> Result<String, SessionError> {
-        self.send_text_with_quote(account_id, thread_id, text, None, crate::types::ThreadKind::User)
-            .await
+        self.send_text_with_quote(
+            account_id,
+            thread_id,
+            text,
+            None,
+            crate::types::ThreadKind::User,
+        )
+        .await
     }
 
     /// Send a plain-text message or quoted reply from `account_id`, honouring
@@ -276,14 +295,28 @@ mod tests {
         let first_stops = counter();
         let second_stops = counter();
 
-        mgr.insert("acc".to_string(), 1, FakeListener(first_stops.clone())).await;
+        mgr.insert("acc".to_string(), 1, FakeListener(first_stops.clone()))
+            .await;
         assert_eq!(mgr.get(&"acc".to_string()).await, Some(1));
         assert_eq!(mgr.count().await, 1);
 
-        mgr.insert("acc".to_string(), 2, FakeListener(second_stops.clone())).await;
-        assert_eq!(first_stops.load(Ordering::SeqCst), 1, "old listener must be stopped on replace");
-        assert_eq!(second_stops.load(Ordering::SeqCst), 0, "new listener must stay running");
-        assert_eq!(mgr.get(&"acc".to_string()).await, Some(2), "handle must be replaced");
+        mgr.insert("acc".to_string(), 2, FakeListener(second_stops.clone()))
+            .await;
+        assert_eq!(
+            first_stops.load(Ordering::SeqCst),
+            1,
+            "old listener must be stopped on replace"
+        );
+        assert_eq!(
+            second_stops.load(Ordering::SeqCst),
+            0,
+            "new listener must stay running"
+        );
+        assert_eq!(
+            mgr.get(&"acc".to_string()).await,
+            Some(2),
+            "handle must be replaced"
+        );
         assert_eq!(mgr.count().await, 1, "replace must not grow the map");
     }
 
@@ -293,20 +326,33 @@ mod tests {
     async fn remove_stops_listener_and_reports_presence() {
         let mgr: SessionManager<u32> = SessionManager::new();
         let stops = counter();
-        mgr.insert("acc".to_string(), 7, FakeListener(stops.clone())).await;
+        mgr.insert("acc".to_string(), 7, FakeListener(stops.clone()))
+            .await;
 
-        assert!(mgr.remove(&"acc".to_string()).await, "present session removed");
-        assert_eq!(stops.load(Ordering::SeqCst), 1, "listener stopped on remove");
+        assert!(
+            mgr.remove(&"acc".to_string()).await,
+            "present session removed"
+        );
+        assert_eq!(
+            stops.load(Ordering::SeqCst),
+            1,
+            "listener stopped on remove"
+        );
         assert_eq!(mgr.get(&"acc".to_string()).await, None);
-        assert!(!mgr.remove(&"acc".to_string()).await, "removing again is a no-op");
+        assert!(
+            !mgr.remove(&"acc".to_string()).await,
+            "removing again is a no-op"
+        );
     }
 
     /// Two accounts are tracked concurrently and listed back.
     #[tokio::test]
     async fn tracks_multiple_accounts_concurrently() {
         let mgr: SessionManager<u32> = SessionManager::new();
-        mgr.insert("a".to_string(), 1, FakeListener(counter())).await;
-        mgr.insert("b".to_string(), 2, FakeListener(counter())).await;
+        mgr.insert("a".to_string(), 1, FakeListener(counter()))
+            .await;
+        mgr.insert("b".to_string(), 2, FakeListener(counter()))
+            .await;
 
         let mut ids = mgr.account_ids().await;
         ids.sort();
@@ -326,15 +372,26 @@ mod tests {
         let a = "a".to_string();
         let b = "b".to_string();
 
-        assert_eq!(throttle.reserve(&a, now).await, Duration::ZERO, "first send is immediate");
+        assert_eq!(
+            throttle.reserve(&a, now).await,
+            Duration::ZERO,
+            "first send is immediate"
+        );
 
         let second = throttle.reserve(&a, now).await;
-        assert_eq!(second, interval, "second same-account send waits one interval");
+        assert_eq!(
+            second, interval,
+            "second same-account send waits one interval"
+        );
 
         let third = throttle.reserve(&a, now).await;
         assert_eq!(third, interval * 2, "third stacks another interval");
 
-        assert_eq!(throttle.reserve(&b, now).await, Duration::ZERO, "other account is independent");
+        assert_eq!(
+            throttle.reserve(&b, now).await,
+            Duration::ZERO,
+            "other account is independent"
+        );
     }
 
     /// Once enough time has passed, a send is immediate again (no stale debt).
@@ -357,14 +414,18 @@ mod tests {
     async fn remove_clears_throttle_state() {
         let mgr: SessionManager<u32> = SessionManager::with_send_interval(Duration::from_secs(10));
         let now = Instant::now();
-        mgr.insert("acc".to_string(), 1, FakeListener(counter())).await;
+        mgr.insert("acc".to_string(), 1, FakeListener(counter()))
+            .await;
         // Burn a slot so the account would otherwise owe a wait.
         let _ = mgr.throttle.reserve(&"acc".to_string(), now).await;
         assert!(mgr.throttle.reserve(&"acc".to_string(), now).await > Duration::ZERO);
 
         mgr.remove(&"acc".to_string()).await;
         // After removal the pacing state is gone: next reserve is immediate.
-        assert_eq!(mgr.throttle.reserve(&"acc".to_string(), now).await, Duration::ZERO);
+        assert_eq!(
+            mgr.throttle.reserve(&"acc".to_string(), now).await,
+            Duration::ZERO
+        );
     }
 
     /// Live multi-account smoke. Ignored by default. Logs in TWO real accounts
@@ -390,11 +451,14 @@ mod tests {
                 .unwrap_or_else(|_| panic!("could not read credential file {path}"));
             let creds: Credentials =
                 serde_json::from_str(&raw).expect("credential file must be valid Credentials JSON");
-            creds.validate().expect("credential file is missing required fields");
+            creds
+                .validate()
+                .expect("credential file is missing required fields");
             creds
         }
 
-        let path_a = std::env::var("ZALO_CRED_FILE").unwrap_or_else(|_| "../.zalo-cred.json".to_string());
+        let path_a =
+            std::env::var("ZALO_CRED_FILE").unwrap_or_else(|_| "../.zalo-cred.json".to_string());
         let path_b = std::env::var("ZALO_CRED_FILE_2")
             .expect("set ZALO_CRED_FILE_2 to a second account's credential file");
 
@@ -403,10 +467,14 @@ mod tests {
         // authorized test recipient (resolved by phone); no unrelated third
         // party is contacted.
         let api_a = Arc::new(
-            crate::zalo::login_with(load(&path_a), true).await.expect("account A login failed"),
+            crate::zalo::login_with(load(&path_a), true)
+                .await
+                .expect("account A login failed"),
         );
         let api_b = Arc::new(
-            crate::zalo::login_with(load(&path_b), true).await.expect("account B login failed"),
+            crate::zalo::login_with(load(&path_b), true)
+                .await
+                .expect("account B login failed"),
         );
         let id_a = api_a.get_own_id().to_string();
         let id_b = api_b.get_own_id().to_string();
@@ -425,7 +493,11 @@ mod tests {
         let mgr: SessionManager<Arc<API>> = SessionManager::new();
         mgr.insert(id_a.clone(), api_a.clone(), listener_a).await;
         mgr.insert(id_b.clone(), api_b.clone(), listener_b).await;
-        assert_eq!(mgr.count().await, 2, "two concurrent sessions must be tracked");
+        assert_eq!(
+            mgr.count().await,
+            2,
+            "two concurrent sessions must be tracked"
+        );
 
         // Let both sockets complete their cipher handshake.
         tokio::time::sleep(StdDuration::from_secs(3)).await;
@@ -446,14 +518,21 @@ mod tests {
             .expect("account B could not resolve recipient by phone")
             .uid;
 
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
         let marker_a = format!("zca-desktop two-accounts A {stamp}");
         let marker_b = format!("zca-desktop two-accounts B {stamp}");
 
         // Each account sends via the throttled manager path; self_listen echoes
         // it back tagged with that account's id.
-        mgr.send_text(&id_a, &recipient_a, &marker_a).await.expect("account A send failed");
-        mgr.send_text(&id_b, &recipient_b, &marker_b).await.expect("account B send failed");
+        mgr.send_text(&id_a, &recipient_a, &marker_a)
+            .await
+            .expect("account A send failed");
+        mgr.send_text(&id_b, &recipient_b, &marker_b)
+            .await
+            .expect("account B send failed");
 
         // Collect until BOTH markers are seen, each tagged with the right account.
         let mut saw_a = false;
@@ -476,7 +555,10 @@ mod tests {
         .await
         .unwrap_or(false);
 
-        assert!(captured, "both accounts must surface their own marker within 25s (saw_a={saw_a}, saw_b={saw_b})");
+        assert!(
+            captured,
+            "both accounts must surface their own marker within 25s (saw_a={saw_a}, saw_b={saw_b})"
+        );
 
         // Graceful shutdown: removing each session stops its listener.
         assert!(mgr.remove(&id_a).await);
@@ -506,15 +588,22 @@ mod tests {
         use std::time::{Duration as StdDuration, SystemTime, UNIX_EPOCH};
         use tokio::sync::mpsc;
 
-        let path = std::env::var("ZALO_CRED_FILE").unwrap_or_else(|_| "../.zalo-cred.json".to_string());
+        let path =
+            std::env::var("ZALO_CRED_FILE").unwrap_or_else(|_| "../.zalo-cred.json".to_string());
         let raw = std::fs::read_to_string(&path)
             .unwrap_or_else(|_| panic!("could not read credential file {path}"));
         let creds: Credentials =
             serde_json::from_str(&raw).expect("credential file must be valid Credentials JSON");
-        creds.validate().expect("credential file is missing required fields");
+        creds
+            .validate()
+            .expect("credential file is missing required fields");
 
         // self_listen so our own outbound send returns as an inbound event.
-        let api = Arc::new(crate::zalo::login_with(creds, true).await.expect("live login failed"));
+        let api = Arc::new(
+            crate::zalo::login_with(creds, true)
+                .await
+                .expect("live login failed"),
+        );
         let id = api.get_own_id().to_string();
 
         let (tx, mut rx) = mpsc::channel::<IncomingMessage>(32);
@@ -525,7 +614,10 @@ mod tests {
         let mgr: SessionManager<Arc<API>> = SessionManager::new();
         mgr.insert(id.clone(), api.clone(), listener).await;
         assert_eq!(mgr.count().await, 1, "session must be registered");
-        assert!(mgr.get(&id).await.is_some(), "handle must resolve via the manager");
+        assert!(
+            mgr.get(&id).await.is_some(),
+            "handle must resolve via the manager"
+        );
 
         tokio::time::sleep(StdDuration::from_secs(3)).await;
 
@@ -540,10 +632,16 @@ mod tests {
             .expect("could not resolve test recipient by phone")
             .uid;
 
-        let stamp = SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis();
+        let stamp = SystemTime::now()
+            .duration_since(UNIX_EPOCH)
+            .unwrap()
+            .as_millis();
         let marker = format!("zca-desktop session-mgr roundtrip {stamp}");
         // Send via the THROTTLED manager path to the authorized recipient.
-        let msg_id = mgr.send_text(&id, &recipient, &marker).await.expect("manager send failed");
+        let msg_id = mgr
+            .send_text(&id, &recipient, &marker)
+            .await
+            .expect("manager send failed");
         assert!(!msg_id.is_empty(), "send must return a message id");
 
         let matched = tokio::time::timeout(StdDuration::from_secs(20), async {
@@ -557,9 +655,15 @@ mod tests {
         })
         .await
         .unwrap_or(false);
-        assert!(matched, "manager-owned listener must surface the sent marker within 20s");
+        assert!(
+            matched,
+            "manager-owned listener must surface the sent marker within 20s"
+        );
 
-        assert!(mgr.remove(&id).await, "remove must stop the listener and report presence");
+        assert!(
+            mgr.remove(&id).await,
+            "remove must stop the listener and report presence"
+        );
         assert_eq!(mgr.count().await, 0, "session removed");
 
         println!(

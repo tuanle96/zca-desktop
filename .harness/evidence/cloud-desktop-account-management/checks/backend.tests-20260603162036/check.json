@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend unit tests passed: crypto, auth, mailer, throttle, and hosted credential debug safety.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:36.718Z",
+  "finishedAt": "2026-06-03T16:20:38.328Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:65aedc2462b0d29a9521c2212a55ba7abad43d6337066f8ec42fb4b6c9e51a18",
+  "stderrHash": "sha256:3edca10b750afc8d4eaeeb599ccff0e1c99e3c79406c4262b9474d04265d470d",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603162036/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603162036/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603162036/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/backend.tests-20260603162036/stderr.txt"
+  ]
+}

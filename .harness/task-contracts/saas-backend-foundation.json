@@ -1,0 +1,102 @@
+{
+  "schemaVersion": 1,
+  "id": "saas-backend-foundation",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Introduce the SaaS session-host backend foundation: ADR-0006, a top-level Rust axum server crate, Postgres migrations, confidential-at-rest crypto helpers, email magic-link auth, recovery-key/device primitives, S3-compatible file metadata, and a hosted-session manager scaffold. Local desktop mode remains unchanged.",
+    "goals": [
+      "Add server/ Rust crate with axum, sqlx/Postgres, tower-http, tracing, object_store, and crypto dependencies",
+      "Add reversible migrations for users, magic links, devices, accounts, conversations, messages, files, hosted sessions, and audit events",
+      "Add confidential-at-rest envelope encryption helpers with tests proving ciphertext does not contain known plaintext",
+      "Add HTTP routes for auth, devices, accounts, messages, files, health, and realtime placeholder stream",
+      "Add Tauri cloud client commands that call the backend without returning Zalo credentials to the webview"
+    ],
+    "nonGoals": [
+      "Production deployment automation",
+      "Production email delivery",
+      "True server-blind E2E",
+      "Claiming live hosted Zalo QR/login/send proof without real account evidence"
+    ],
+    "allowedLayers": [
+      "types",
+      "config",
+      "store",
+      "zalo",
+      "session",
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "backend-tests",
+      "description": "Backend unit tests pass for crypto, auth token hashing, recovery-key verification, and session throttling.",
+      "verification": {
+        "command": "cargo test --manifest-path server/Cargo.toml"
+      }
+    },
+    {
+      "id": "backend-lint",
+      "description": "Backend clippy is clean with warnings denied.",
+      "verification": {
+        "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings"
+      }
+    },
+    {
+      "id": "desktop-tests",
+      "description": "Existing Tauri core tests still pass after adding cloud commands.",
+      "verification": {
+        "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+      }
+    },
+    {
+      "id": "frontend-check",
+      "description": "Svelte type-check remains clean after adding cloud DTOs/client helpers.",
+      "verification": {
+        "command": "bun run check"
+      }
+    },
+    {
+      "id": "migration-roundtrip-smoke",
+      "description": "Postgres-backed dev smoke proves migration up/down/up before API smoke.",
+      "verification": {
+        "command": "server/scripts/run-dev-smoke.sh"
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(cargo build*)",
+      "Bash(bun run*)",
+      "Bash(server/scripts/run-dev-smoke.sh*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "lint",
+    "tests",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/saas-backend-foundation.json"
+}

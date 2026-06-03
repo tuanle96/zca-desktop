@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "bun run build",
+  "status": "pass",
+  "summary": "Vite/SvelteKit production build completed and adapter-static wrote build/.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:20:10.866Z",
+  "finishedAt": "2026-06-03T16:20:18.787Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:e4553adc6f45ecfac54787a7cef419eae733178e7ba9b082767dc1c1310b02ff",
+  "stdoutHash": "sha256:6946eb60d5682b7dc13d7856ea6af35363c3241d4938433faf0efec8d10938e9",
+  "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162010/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162010/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162010/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/frontend.build-20260603162010/stderr.txt"
+  ]
+}

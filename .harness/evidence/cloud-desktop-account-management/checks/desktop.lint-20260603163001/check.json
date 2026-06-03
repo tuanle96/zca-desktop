@@ -1,0 +1,20 @@
+{
+  "name": "desktop.lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Tauri clippy completed with warnings denied after cloud keychain session changes.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:30:01.642Z",
+  "finishedAt": "2026-06-03T16:30:04.596Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:68b2930ccc781ff2ff3783484c0498b4aa91b5f0dbe22ec9bc713444ba36267d",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:5def3ce72ccd570c706d39202a22531f28ec5f7fe920649ddf3cb7eb6f4954b4",
+  "stdoutPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stdout.txt",
+    ".harness/evidence/cloud-desktop-account-management/checks/desktop.lint-20260603163001/stderr.txt"
+  ]
+}

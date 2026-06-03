@@ -36,8 +36,7 @@ static RAW_SINK: OnceLock<RawSink> = OnceLock::new();
 /// still initializes to the console and raw capture becomes a no-op.
 #[must_use = "drop of the returned guard stops file logging"]
 pub fn init(config: &Config) -> Option<WorkerGuard> {
-    let filter = EnvFilter::try_new(&config.log_filter)
-        .unwrap_or_else(|_| EnvFilter::new("info"));
+    let filter = EnvFilter::try_new(&config.log_filter).unwrap_or_else(|_| EnvFilter::new("info"));
 
     // Console layer (stderr) — always on, for `tauri dev`.
     let console_layer = fmt::layer().with_target(true).with_writer(std::io::stderr);
@@ -65,7 +64,10 @@ pub fn init(config: &Config) -> Option<WorkerGuard> {
                 .with(filter)
                 .with(console_layer)
                 .init();
-            eprintln!("zca-desktop: could not create log dir {:?}: {e}", config.log_dir);
+            eprintln!(
+                "zca-desktop: could not create log dir {:?}: {e}",
+                config.log_dir
+            );
             None
         }
     };
@@ -138,7 +140,11 @@ fn current_timestamp() -> String {
         .map(|d| d.as_secs())
         .unwrap_or(0);
     let secs_of_day = now % 86_400;
-    let (h, mi, s) = (secs_of_day / 3600, (secs_of_day % 3600) / 60, secs_of_day % 60);
+    let (h, mi, s) = (
+        secs_of_day / 3600,
+        (secs_of_day % 3600) / 60,
+        secs_of_day % 60,
+    );
     let days = now / 86_400;
     let (y, m, d) = civil_from_days(days as i64);
     format!("{y:04}-{m:02}-{d:02}T{h:02}:{mi:02}:{s:02}Z")
@@ -178,9 +184,18 @@ mod tests {
         let date = current_date();
         let path = dir.join(format!("raw-{date}.log"));
         let contents = fs::read_to_string(&path).expect("raw file must exist");
-        assert!(contents.contains("[test.capture]"), "label missing: {contents}");
-        assert!(!contents.contains("leak"), "secret leaked into raw file: {contents}");
-        assert!(contents.contains("42"), "non-secret must survive: {contents}");
+        assert!(
+            contents.contains("[test.capture]"),
+            "label missing: {contents}"
+        );
+        assert!(
+            !contents.contains("leak"),
+            "secret leaked into raw file: {contents}"
+        );
+        assert!(
+            contents.contains("42"),
+            "non-secret must survive: {contents}"
+        );
         assert_eq!(contents.lines().count(), 1, "one capture = one line");
 
         let _ = fs::remove_dir_all(&dir);

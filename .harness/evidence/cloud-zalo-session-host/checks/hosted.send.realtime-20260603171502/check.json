@@ -1,0 +1,22 @@
+{
+  "name": "smoke.hosted-send-realtime",
+  "command": "ZCA_CLOUD_ACCOUNT_ID=<account-id> ZCA_CLOUD_DEVICE_TOKEN=<redacted> ZCA_LIVE_PHONE=********0825 ZCA_LIVE_TEXT=<smoke-text> bun server/scripts/live-hosted-send-validate.mjs",
+  "status": "pass",
+  "summary": "Restored hosted account resolved a phone recipient, sent a live text message, and observed the outgoing SSE realtime event with redacted output.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T17:15:01.944Z",
+  "finishedAt": "2026-06-03T17:15:03.194Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:5728f1309c0b263f73a28693fe725f08e1fcdb5290d779ddf767aecac4e0fe1a",
+  "stdoutHash": "sha256:01755e977cd1715cb8a4b924ad526b293d99532e8c11b2f898a73f09a2114fba",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stdout.txt",
+    ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/stderr.txt"
+  ],
+  "acceptanceId": "hosted-live-smoke",
+  "artifact": ".harness/evidence/cloud-zalo-session-host/checks/hosted.send.realtime-20260603171502/check.json"
+}

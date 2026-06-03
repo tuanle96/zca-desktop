@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-desktop-account-management",
+  "featureId": "cloud-desktop-account-management",
+  "createdAt": "2026-06-03T16:15:21Z",
+  "decision": "pass",
+  "checkedFiles": [
+    ".harness/docs/adr/0006-saas-session-host-and-confidential-at-rest.md",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/session.svelte.ts",
+    "src/lib/cloud.ts",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "adr-0003-forward-only-layers",
+    "adr-0006-session-host-boundary",
+    "keychain-session-boundary",
+    "local-cloud-mode-separation"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "reviewedFiles": [
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/session.svelte.ts",
+      "src/lib/cloud.ts",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.86,
+  "findings": [],
+  "controlsConfirmed": [
+    {
+      "id": "forward-only-core",
+      "evidence": "The new desktop backend bridge stays in command/cloud.rs and is only registered from lib.rs; no lower layer imports command/UI code."
+    },
+    {
+      "id": "mode-separation",
+      "evidence": "Session logout branches on cloudMode: cloud mode calls deleteCloudAccount, while local mode keeps the existing logout_account command."
+    },
+    {
+      "id": "saas-boundary",
+      "evidence": "Hosted account add is driven by backend QR start/status APIs and session.connectCloud hydration, matching ADR-0006 session-host ownership."
+    },
+    {
+      "id": "keychain-session-boundary",
+      "evidence": "Cloud device-token persistence is confined to command/cloud.rs, while the Svelte UI stores only the base URL and uses the non-secret keychain sentinel."
+    }
+  ],
+  "findings": [
+    {
+      "id": "live-worker-proof",
+      "severity": "info",
+      "file": ".harness/feature_list.json",
+      "evidence": "cloud-zalo-session-host remains passes=false for live hosted QR/listen/send/restart proof.",
+      "fix": "No action for this desktop wiring scope."
+    }
+  ],
+  "summary": "Architecture review pass: command-layer bridge, keychain-backed cloud session storage, Svelte helper, and session store branch keep the local/cloud boundaries aligned with ADR-0003 and ADR-0006."
+}

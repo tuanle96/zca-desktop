@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-auth-devices",
+  "featureId": "cloud-auth-devices",
+  "decision": "pass",
+  "createdAt": "2026-06-03T16:08:00Z",
+  "checkedFiles": [
+    "server/scripts/run-dev-smoke.sh",
+    "server/scripts/live-provider-smoke.mjs",
+    "server/scripts/smoke-mailhog.mjs",
+    "server/scripts/smoke-dev.mjs",
+    "server/docker-compose.dev.yml",
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/error.rs",
+    "server/src/mailer.rs",
+    "server/src/routes.rs"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "allowed-layers",
+    "backend-auth-boundary",
+    "smtp-provider-boundary",
+    "postgres-audit-boundary"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/docker-compose.dev.yml",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/live-provider-smoke.mjs",
+      "server/scripts/smoke-dev.mjs",
+      "server/scripts/smoke-mailhog.mjs",
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/error.rs",
+      "server/src/mailer.rs",
+      "server/src/routes.rs"
+    ],
+    "reviewedFiles": [
+      "server/docker-compose.dev.yml",
+      "server/scripts/run-dev-smoke.sh",
+      "server/scripts/live-provider-smoke.mjs",
+      "server/scripts/smoke-dev.mjs",
+      "server/scripts/smoke-mailhog.mjs",
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/error.rs",
+      "server/src/mailer.rs",
+      "server/src/routes.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Architecture review pass: SMTP provider configuration lives in Config, delivery lives in mailer, rate-limit config lives in Config, audit persistence lives in Db, auth/device behavior stays in routes, and smoke coverage remains server-side."
+}

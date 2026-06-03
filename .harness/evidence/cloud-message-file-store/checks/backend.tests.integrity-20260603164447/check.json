@@ -1,0 +1,20 @@
+{
+  "name": "backend.tests.integrity",
+  "command": "cargo test --manifest-path server/Cargo.toml",
+  "status": "pass",
+  "summary": "Backend tests passed, including lower-hex SHA-256 validation and realtime/user-scope tests after file integrity enforcement.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T16:44:47.343Z",
+  "finishedAt": "2026-06-03T16:44:49.557Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:a8131bf680d7b5dea52f3e367c3c90a40b5867b45dac365fd5f83a4b22d46079",
+  "stdoutHash": "sha256:024dea302f6d9dd8a8cc1998291bef1588a97ee978f19e4eac6d0ef8ff9d413f",
+  "stderrHash": "sha256:0281cc5fd712d07c3f1a8b98b0988d5361bfd9c6a060d1eef5ddc019c38dc4a8",
+  "stdoutPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stdout.txt",
+    ".harness/evidence/cloud-message-file-store/checks/backend.tests.integrity-20260603164447/stderr.txt"
+  ]
+}

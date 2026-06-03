@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "phoneSuffix": "0825",
+  "resolvedUidLen": 19,
+  "resolvedHasDisplayName": true,
+  "resolvedHasAvatar": true,
+  "sentText": true,
+  "msgIdLen": 13,
+  "realtimeEventSeen": true,
+  "realtimeEvent": {
+    "threadIdLen": 19,
+    "msgIdLen": 13,
+    "outgoing": true
+  }
+}

@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-ui-polish",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Polish the desktop cloud-only UI for daily use without changing backend trust boundaries.",
+    "goals": [
+      "Make cloud sign-in/device/linking states clearer in the QR/login gate",
+      "Expose cloud mode and realtime status in the chat shell",
+      "Improve file/send affordances in cloud mode"
+    ],
+    "nonGoals": [
+      "Backend API changes",
+      "Production deployment automation",
+      "Production deployment automation"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "cloud-ui-daily-use",
+      "description": "Cloud mode surfaces connection status, device/account state, retry/error states, and send/file affordances clearly with cloud-only copy.",
+      "verification": {
+        "manual": "Attach frontend check/build output and a static UI review summary for the touched Svelte components."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "ui",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-ui-polish.json"
+}

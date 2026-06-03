@@ -1,0 +1,58 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-desktop-registration",
+  "featureId": "cloud-desktop-registration",
+  "status": "pass",
+  "createdAt": "2026-06-03T15:28:29Z",
+  "updatedAt": "2026-06-03T15:32:04Z",
+  "diffSummary": "Registered the command-layer cloud SaaS handlers in src-tauri/src/lib.rs so the Svelte UI can call the backend through Tauri invoke while local mode remains unchanged.",
+  "changedFiles": [
+    "src-tauri/src/lib.rs"
+  ],
+  "checks": [
+    {
+      "name": "desktop.tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "Tauri core tests passed with cloud handler registration present.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:35Z",
+      "finishedAt": "2026-06-03T15:27:41Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:8eb1766687441e4e2d1a11274b9d1ad35225a7e48fbeec6bbfb2bc6ca190c77d",
+      "stderrHash": "sha256:d49783c34f148902718824deac5c423460a69f0d5274f6057b18d1669da08499",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/desktop-tests-20260603152735/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/desktop-tests-20260603152735/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/desktop-tests-20260603152735/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-tests-20260603152735/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-tests-20260603152735/check.json"
+      ]
+    },
+    {
+      "name": "desktop.lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Tauri clippy completed with warnings denied after cloud handler registration.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T15:27:42Z",
+      "finishedAt": "2026-06-03T15:27:44Z",
+      "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+      "workingTreeHash": "sha256:f7bd08c1cf75b4eb0e3f5ff7a0f859048020558d04a325bf7174431e7ea6fc90",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:a2e39143dea7c9886ffcf82ed112be7669af210c513dce8ae814d11821b4b4ec",
+      "stdoutPath": ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stdout.txt",
+      "stderrPath": ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stdout.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/stderr.txt",
+        ".harness/evidence/saas-backend-foundation/checks/desktop-lint-20260603152741/check.json"
+      ]
+    }
+  ],
+  "reviewers": [],
+  "knownRisks": []
+}

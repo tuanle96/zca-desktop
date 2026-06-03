@@ -1,0 +1,3 @@
+    Checking urlencoding v2.1.3
+    Checking zca-cloud-server v0.1.0 (/Users/tuan/Dev/VibeLab/zca-desktop/server)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.62s

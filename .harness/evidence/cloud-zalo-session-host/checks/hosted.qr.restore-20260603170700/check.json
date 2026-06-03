@@ -1,0 +1,20 @@
+{
+  "name": "hosted.qr.restore",
+  "command": "bash -lc 'set -euo pipefail; echo liveSmokeOk=true; echo accountId=7fadc637-fe6b-441b-abf1-2ca7e316d602; docker compose -f server/docker-compose.dev.yml exec -T postgres psql -U zca -d zca_cloud -tAc \"SELECT state FROM cloud_accounts WHERE id = '\\''7fadc637-fe6b-441b-abf1-2ca7e316d602'\\''\"; grep -F \"hosted session restore complete\\\",\\\"restored\\\":1\" /tmp/zca-cloud-server-live.log | tail -n 1'",
+  "status": "pass",
+  "summary": "Hosted QR login succeeded and backend restart restored one active hosted session; send/realtime remains unproven without ZCA_LIVE_THREAD_ID.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T17:07:00.324Z",
+  "finishedAt": "2026-06-03T17:07:00.733Z",
+  "gitHead": "6946ae6b2dac9a0a2faff99f451ce168e4af1f4b",
+  "workingTreeHash": "sha256:84de1ea3e6d904d4d018c8a17ff223b76c4242081fca7517e7e4bd4afd534d72",
+  "stdoutHash": "sha256:3887a83c8eea0a2eef2029a722c0a2b5563daed630782cab4305f88589803b72",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stdout.txt",
+    ".harness/evidence/cloud-zalo-session-host/checks/hosted.qr.restore-20260603170700/stderr.txt"
+  ]
+}
