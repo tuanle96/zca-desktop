@@ -6,6 +6,23 @@
 
 import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
+import {
+    CLOUD_DEVICE_TOKEN_KEYCHAIN,
+    CLOUD_EVENT,
+    deleteCloudAccount,
+    listCloudAccounts,
+    listCloudConversations,
+    listCloudMessages,
+    downloadCloudFileBlob,
+    initCloudFile,
+    loadCloudDeviceSession,
+    sendCloudReaction,
+    sendCloudSticker,
+    sendCloudText,
+    startCloudRealtime,
+    uploadCloudFileBlob,
+    type CloudAccount,
+} from "./cloud";
 import { log } from "./log";
 import type {
     AccountProfile,
@@ -29,6 +46,8 @@ import type {
 
 const MESSAGE_EVENT = "zalo://message";
 const QR_EVENT = "zalo://qr";
+const DEFAULT_CLOUD_BASE_URL = "http://127.0.0.1:37880";
+const CLOUD_BASE_URL_STORAGE_KEY = "zca.cloud.baseUrl";
 
 function snippet(text: string | null): string {
     if (!text) return "[non-text message]";
@@ -91,6 +110,37 @@ type AccountData = {
     activeThreadId: string | null;
 };
 
+type CloudConversationRow = {
+    id: string;
+    accountId: string;
+    threadId: string;
+    kind: "user" | "group";
+    title: string | null;
+    avatar: string | null;
+    lastAt: string | null;
+    unread: number;
+};
+
+type CloudMessageRow = {
+    id: string;
+    conversationId: string;
+    msgId: string;
+    fromId: string | null;
+    fromName: string | null;
+    fromAvatar?: string | null;
+    body: string | null;
+    outgoing: boolean;
+    kind: string;
+    observedAt: string;
+    deleted: boolean;
+};
+
+type CloudRealtimeEvent = {
+    type?: string;
+    accountId?: string;
+    message?: string;
+};
+
 /** A compact account entry for the left account rail. */
 export type AccountTab = {
     accountId: string;
@@ -129,6 +179,7 @@ class SessionStore {
     activeAccountId = $state<string | null>(null);
     /** Background buckets for non-active accounts (and the active one, synced on switch). */
     private buckets = new Map<string, AccountData>();
+    private cloudConversationIds = new Map<string, string>();
 
     sessionSummary = $state<CredentialSummary | null>(null);
     listening = $state(false);
@@ -136,6 +187,9 @@ class SessionStore {
     error = $state("");
     /** True while the startup session-restore attempt is in flight. */
     restoring = $state(true);
+    cloudMode = $state(false);
+    private cloudBaseUrl: string | null = null;
+    private cloudDeviceToken: string | null = null;
 
     /** which middle/main pane is shown: chats or contacts */
     view = $state<"chats" | "contacts">("chats");
@@ -157,6 +211,7 @@ class SessionStore {
 
     private unlisten: UnlistenFn | null = null;
     private unlistenQr: UnlistenFn | null = null;
+    private unlistenCloud: UnlistenFn | null = null;
     private qrTimer: ReturnType<typeof setInterval> | null = null;
 
     /** True once at least one account is authenticated; gates the chat shell. */
@@ -172,6 +227,10 @@ class SessionStore {
         return this.conversations.find((c) => c.threadId === this.activeThreadId) ?? null;
     }
 
+    get canUseCloudFiles(): boolean {
+        return this.cloudMode && Boolean(this.cloudBaseUrl && this.cloudDeviceToken && this.profile);
+    }
+
     async checkSession() {
         await this.run(async () => {
             this.sessionSummary = await invoke<CredentialSummary>("cred_file_summary");
@@ -179,6 +238,8 @@ class SessionStore {
     }
 
     async loginAndListen() {
+        this.cloudMode = false;
+        this.stopCloudRealtime();
         await this.run(async () => {
             await this.ensureListener();
             const profile = await invoke<AccountProfile>("start_listening_from_file");
@@ -188,36 +249,65 @@ class SessionStore {
         if (this.profile) this.warmUp();
     }
 
-    /**
-     * On app start, restore previously saved accounts from the local store
-     * (decrypted in the core; credentials never enter the webview). Every
-     * restored account is added to the rail; the first becomes active.
-     */
+    /** On app start, restore only a previously linked cloud device session. */
     async restore(): Promise<boolean> {
-        let restored = false;
-        await this.run(async () => {
-            await this.ensureListener();
-            const profiles = await invoke<AccountProfile[]>("restore_sessions");
-            for (const p of profiles) this.adoptAccount(p, { activate: false });
-            if (profiles.length > 0) {
-                this.activate(profiles[0].accountId);
-                this.listening = true;
-                restored = true;
-                log.info(`restore: ${profiles.length} account(s) restored`);
-            }
-        });
-        this.restoring = false;
-        if (restored) {
-            // Warm every restored account so background unread badges are right.
-            for (const tab of this.accounts) this.warmUp(tab.accountId);
+        const cloudRestored = await this.restoreCloud();
+        if (cloudRestored) {
+            this.restoring = false;
+            return true;
         }
-        return restored;
+
+        this.restoring = false;
+        return false;
     }
 
-    /** Trigger the QR flow to ADD another account (while already logged in). */
+    private async restoreCloud(): Promise<boolean> {
+        if (typeof localStorage === "undefined") return false;
+        const baseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
+        const saved = await loadCloudDeviceSession(baseUrl).catch((e) => {
+            log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
+            return null;
+        });
+        if (!saved?.hasDeviceToken) return false;
+
+        const connected = await this.connectCloud(baseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN).catch((e) => {
+            this.cloudMode = false;
+            this.cloudBaseUrl = null;
+            this.cloudDeviceToken = null;
+            log.error(`cloud-restore: connect failed: ${String(e)}`);
+            return false;
+        });
+        if (connected) {
+            localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, baseUrl);
+            log.info("cloud-restore: connected cloud device session");
+        }
+        return connected;
+    }
+
+    async connectCloud(baseUrl: string, deviceToken: string): Promise<boolean> {
+        let connected = false;
+        await this.run(async () => {
+            this.cloudMode = true;
+            this.cloudBaseUrl = baseUrl;
+            this.cloudDeviceToken = deviceToken;
+            await this.ensureCloudRealtime(baseUrl, deviceToken);
+            const accounts = await listCloudAccounts(baseUrl, deviceToken);
+            for (const account of accounts) this.adoptCloudAccount(account, { activate: false });
+            if (accounts.length > 0) {
+                this.activate(accounts[0].id);
+                this.listening = true;
+                connected = true;
+            }
+        });
+        if (connected) {
+            for (const tab of this.accounts) this.hydrateCloudHistory(tab.accountId);
+        }
+        return connected;
+    }
+
+    /** Trigger the hosted QR flow to add another Zalo account to the cloud user. */
     async addAccount() {
         this.qrAdding = true;
-        await this.startQrLogin();
     }
 
     /** Cancel an in-progress "add account" QR overlay. */
@@ -290,6 +380,17 @@ class SessionStore {
         if (activate) this.activate(profile.accountId);
     }
 
+    private adoptCloudAccount(account: CloudAccount, opts: { activate?: boolean } = {}) {
+        this.adoptAccount(
+            {
+                accountId: account.id,
+                displayName: account.displayName ?? account.zaloAccountId,
+                avatar: account.avatar,
+            },
+            opts,
+        );
+    }
+
     /** Switch the active account: persist the current view back to its bucket,
      * then load the target bucket into the reactive view fields. */
     switchAccount(accountId: string) {
@@ -298,15 +399,18 @@ class SessionStore {
     }
 
     /**
-     * Log out (forget) an account on this device: stop its live session +
-     * delete its persisted credential in the core, then prune the local bucket
+     * Remove an account from the current cloud user, then prune the UI bucket
      * and rail entry. If it was the active account, activate another; if it was
-     * the last account, drop back to the QR login gate. Cached history is kept
-     * in the store so a future re-login can restore it. No secret crosses IPC.
+     * the last account, drop back to the cloud login gate. No secret crosses IPC.
      */
     async logoutAccount(accountId: string) {
         await this.run(async () => {
-            await invoke("logout_account", { accountId });
+            if (this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken) {
+                await deleteCloudAccount(this.cloudBaseUrl, this.cloudDeviceToken, accountId);
+                this.cloudConversationIds.delete(accountId);
+            } else {
+                await invoke("logout_account", { accountId });
+            }
         });
         if (this.error) return; // surfaced by the dialog; keep the account listed
 
@@ -391,6 +495,10 @@ class SessionStore {
     private warmUp(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
+        if (this.cloudMode) {
+            this.hydrateCloudHistory(id);
+            return;
+        }
         this.loadContacts(id);
         this.loadGroups(id);
         this.hydrateHistory(id);
@@ -456,6 +564,7 @@ class SessionStore {
     async loadContacts(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
+        if (this.cloudMode) return;
         try {
             const contacts = await invoke<Contact[]>("list_contacts", { accountId: id });
             this.withBucket(id, (b) => {
@@ -475,6 +584,7 @@ class SessionStore {
     async loadGroups(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
+        if (this.cloudMode) return;
         try {
             const groups = await invoke<Group[]>("list_groups", { accountId: id });
             this.withBucket(id, (b) => {
@@ -515,9 +625,12 @@ class SessionStore {
         }));
     }
 
-    /** Hydrate conversations + per-thread messages from the local store for an
-     * account so chat history shows immediately at login/restore. */
+    /** Hydrate conversations + per-thread messages for an account. */
     async hydrateHistory(accountId?: string) {
+        if (this.cloudMode) {
+            await this.hydrateCloudHistory(accountId);
+            return;
+        }
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
         let history: History;
@@ -539,12 +652,14 @@ class SessionStore {
                 threadId: m.threadId,
                 body: m.deleted ? "Tin nhắn đã được thu hồi" : m.sticker ? "" : (m.body ?? "[non-text message]"),
                 sticker: m.sticker,
+                file: null,
                 quote: m.quote,
                 link: m.link,
                 reactionIcon: m.reactionIcon,
                 deleted: m.deleted,
                 outgoing: m.outgoing,
                 authorName: m.fromName,
+                authorAvatar: null,
                 at: m.ts ?? 0,
             });
         }
@@ -574,6 +689,66 @@ class SessionStore {
         // Reflect into the active view + the account's rail unread total.
         const totalUnread = b.conversations.reduce((s, c) => s + c.unread, 0);
         if (id !== this.activeAccountId) this.setAccountUnread(id, totalUnread);
+        if (id === this.activeAccountId) {
+            this.threads = b.threads;
+            this.conversations = b.conversations;
+        }
+    }
+
+    async hydrateCloudHistory(accountId?: string) {
+        const id = accountId ?? this.activeAccountId;
+        if (!id || !this.cloudBaseUrl || !this.cloudDeviceToken) return;
+        let rows: CloudConversationRow[] = [];
+        try {
+            rows = await listCloudConversations(this.cloudBaseUrl, this.cloudDeviceToken, id) as CloudConversationRow[];
+        } catch (e) {
+            log.error(`cloud conversations failed: ${String(e)}`);
+            return;
+        }
+        const b = this.buckets.get(id);
+        if (!b) return;
+
+        const threads: Record<string, ChatMessage[]> = {};
+        const conversations: Conversation[] = [];
+        for (const row of rows) {
+            this.cloudConversationIds.set(`${id}:${row.threadId}`, row.id);
+            let messages: CloudMessageRow[] = [];
+            try {
+                messages = await listCloudMessages(this.cloudBaseUrl, this.cloudDeviceToken, row.id, 100) as CloudMessageRow[];
+            } catch (e) {
+                log.error(`cloud messages failed: ${String(e)}`);
+            }
+            const mapped = messages
+                .map((m) => ({
+                    id: m.msgId,
+                    threadId: row.threadId,
+                    body: m.deleted ? "Tin nhắn đã được thu hồi" : (m.body ?? "[non-text message]"),
+                    sticker: null,
+                    file: null,
+                    quote: null,
+                    link: null,
+                    reactionIcon: null,
+                    deleted: m.deleted,
+                    outgoing: m.outgoing,
+                    authorName: m.fromName,
+                    authorAvatar: m.fromAvatar ?? (m.outgoing ? this.profile?.avatar : row.avatar),
+                    at: Date.parse(m.observedAt) || Date.now(),
+                }))
+                .sort((a, c) => a.at - c.at);
+            threads[row.threadId] = mapped;
+            const last = mapped[mapped.length - 1];
+            conversations.push({
+                threadId: row.threadId,
+                kind: row.kind,
+                title: row.title || row.threadId,
+                avatar: row.avatar,
+                lastAt: row.lastAt ? (Date.parse(row.lastAt) || 0) : (last?.at ?? 0),
+                lastSnippet: last ? messageSnippet(last.body, last.sticker, last.link, last.deleted) : "",
+                unread: row.unread ?? 0,
+            });
+        }
+        b.threads = threads;
+        b.conversations = conversations.sort((a, c) => c.lastAt - a.lastAt);
         if (id === this.activeAccountId) {
             this.threads = b.threads;
             this.conversations = b.conversations;
@@ -612,19 +787,22 @@ class SessionStore {
 
         let ok = false;
         await this.run(async () => {
-            const msgId = await invoke<string>("send_message", {
-                accountId: this.profile!.accountId,
-                threadId,
-                text,
-                kind,
-                quote: quote ?? null,
-            });
+            const msgId = this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken
+                ? String((await sendCloudText(this.cloudBaseUrl, this.cloudDeviceToken, this.profile!.accountId, threadId, text, kind)).msgId ?? "")
+                : await invoke<string>("send_message", {
+                    accountId: this.profile!.accountId,
+                    threadId,
+                    text,
+                    kind,
+                    quote: quote ?? null,
+                });
             this.appendToActive(
                 {
                     id: msgId || `local-${Date.now()}`,
                     threadId,
                     body: text,
                     sticker: null,
+                    file: null,
                     link: null,
                     quote: quote ? {
                         ownerId: quote.uidFrom,
@@ -639,6 +817,7 @@ class SessionStore {
                     deleted: false,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
+                    authorAvatar: this.profile?.avatar,
                     at: Date.now(),
                 },
                 snippet(text),
@@ -650,6 +829,7 @@ class SessionStore {
 
     /** Search stickers for the picker (reuses the active account's session). */
     async searchStickers(keyword: string, limit = 40): Promise<Sticker[]> {
+        if (this.cloudMode) return [];
         const term = keyword.trim();
         if (!term || !this.profile) return [];
         try {
@@ -666,6 +846,7 @@ class SessionStore {
 
     /** The account's recently-used stickers for the picker's "Gần đây" row. */
     async recentStickers(limit = 24): Promise<Sticker[]> {
+        if (this.cloudMode) return [];
         if (!this.profile) return [];
         try {
             return await invoke<Sticker[]>("recent_stickers", {
@@ -680,6 +861,7 @@ class SessionStore {
 
     /** The pack ids (categories) the account has used recently, for tab chips. */
     async stickerCategories(limit = 12): Promise<number[]> {
+        if (this.cloudMode) return [];
         if (!this.profile) return [];
         try {
             return await invoke<number[]>("sticker_categories", {
@@ -694,6 +876,7 @@ class SessionStore {
 
     /** Load all stickers in a pack (category) for the picker's per-pack tab. */
     async stickerCategory(catId: number): Promise<Sticker[]> {
+        if (this.cloudMode) return [];
         if (!this.profile) return [];
         try {
             return await invoke<Sticker[]>("sticker_category", {
@@ -715,24 +898,37 @@ class SessionStore {
 
         let ok = false;
         await this.run(async () => {
-            const msgId = await invoke<string>("send_sticker", {
-                accountId: this.profile!.accountId,
-                threadId,
-                kind,
-                sticker,
-            });
+            const msgId = this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken
+                ? String((await sendCloudSticker(
+                    this.cloudBaseUrl,
+                    this.cloudDeviceToken,
+                    this.profile!.accountId,
+                    threadId,
+                    sticker.id,
+                    sticker.catId,
+                    sticker.stickerType,
+                    kind,
+                )).msgId ?? "")
+                : await invoke<string>("send_sticker", {
+                    accountId: this.profile!.accountId,
+                    threadId,
+                    kind,
+                    sticker,
+                });
             this.appendToActive(
                 {
                     id: msgId || `local-${Date.now()}`,
                     threadId,
                     body: "",
                     sticker,
+                    file: null,
                     quote: null,
                     link: null,
                     reactionIcon: null,
                     deleted: false,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
+                    authorAvatar: this.profile?.avatar,
                     at: Date.now(),
                 },
                 "[Sticker]",
@@ -748,14 +944,27 @@ class SessionStore {
         const kind = convo?.kind ?? "user";
         let ok = false;
         await this.run(async () => {
-            await invoke("send_reaction", {
-                accountId: this.profile!.accountId,
-                threadId: message.threadId,
-                msgId: message.id,
-                cliMsgId: `${message.id}_cli`,
-                kind,
-                icon,
-            });
+            if (this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken) {
+                await sendCloudReaction(
+                    this.cloudBaseUrl,
+                    this.cloudDeviceToken,
+                    this.profile!.accountId,
+                    message.threadId,
+                    message.id,
+                    `${message.id}_cli`,
+                    icon,
+                    kind,
+                );
+            } else {
+                await invoke("send_reaction", {
+                    accountId: this.profile!.accountId,
+                    threadId: message.threadId,
+                    msgId: message.id,
+                    cliMsgId: `${message.id}_cli`,
+                    kind,
+                    icon,
+                });
+            }
             const b = this.activeBucket();
             if (b) {
                 this.applyReactionToBucket(b, {
@@ -775,11 +984,82 @@ class SessionStore {
         return ok;
     }
 
+    async uploadCloudFile(file: File): Promise<boolean> {
+        const threadId = this.activeThreadId;
+        const convo = this.activeConversation;
+        if (!threadId || !convo || !this.profile || !this.cloudBaseUrl || !this.cloudDeviceToken) return false;
+        if (!this.cloudMode) return false;
+
+        let ok = false;
+        await this.run(async () => {
+            const bytes = new Uint8Array(await file.arrayBuffer());
+            const digest = await crypto.subtle.digest("SHA-256", bytes);
+            const contentSha256 = [...new Uint8Array(digest)]
+                .map((b) => b.toString(16).padStart(2, "0"))
+                .join("");
+            const conversationId = this.cloudConversationIds.get(`${this.profile!.accountId}:${threadId}`);
+            const meta = await initCloudFile(this.cloudBaseUrl!, this.cloudDeviceToken!, {
+                accountId: this.profile!.accountId,
+                conversationId,
+                filename: file.name,
+                mime: file.type || "application/octet-stream",
+                sizeBytes: file.size,
+                contentSha256,
+            });
+            await uploadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, meta.id, [...bytes]);
+            this.appendToActive(
+                {
+                    id: `file-${meta.id}`,
+                    threadId,
+                    body: file.name || "Tệp đính kèm",
+                    sticker: null,
+                    file: {
+                        id: meta.id,
+                        filename: meta.filename,
+                        mime: meta.mime,
+                        sizeBytes: meta.sizeBytes,
+                    },
+                    quote: null,
+                    link: null,
+                    reactionIcon: null,
+                    deleted: false,
+                    outgoing: true,
+                    authorName: this.profile?.displayName ?? "Me",
+                    authorAvatar: this.profile?.avatar,
+                    at: Date.now(),
+                },
+                `[File] ${file.name || meta.id}`,
+            );
+            ok = true;
+        });
+        return ok;
+    }
+
+    async downloadCloudFile(message: ChatMessage): Promise<boolean> {
+        if (!message.file || !this.cloudBaseUrl || !this.cloudDeviceToken) return false;
+        let ok = false;
+        await this.run(async () => {
+            const bytes = await downloadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, message.file!.id);
+            const blob = new Blob([new Uint8Array(bytes)], {
+                type: message.file!.mime || "application/octet-stream",
+            });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = message.file!.filename || "download";
+            a.click();
+            URL.revokeObjectURL(url);
+            ok = true;
+        });
+        return ok;
+    }
+
     dispose() {
         this.unlisten?.();
         this.unlisten = null;
         this.unlistenQr?.();
         this.unlistenQr = null;
+        this.stopCloudRealtime();
         this.stopQrCountdown();
     }
 
@@ -788,6 +1068,33 @@ class SessionStore {
         this.unlisten = await listen<IncomingMessage>(MESSAGE_EVENT, (event) => {
             this.ingest(event.payload);
         });
+    }
+
+    private async ensureCloudRealtime(baseUrl: string, deviceToken: string) {
+        if (!this.unlistenCloud) {
+            this.unlistenCloud = await listen<CloudRealtimeEvent>(CLOUD_EVENT, (event) => {
+                const payload = event.payload;
+                if (payload.type === "error") {
+                    log.error(`cloud realtime failed: ${payload.message ?? "stream error"}`);
+                    return;
+                }
+                if (payload.type !== "message") return;
+                const accountId = payload.accountId;
+                if (accountId && this.buckets.has(accountId)) {
+                    void this.hydrateCloudHistory(accountId);
+                } else {
+                    for (const tab of this.accounts) void this.hydrateCloudHistory(tab.accountId);
+                }
+            });
+        }
+        await startCloudRealtime(baseUrl, deviceToken);
+    }
+
+    private stopCloudRealtime() {
+        this.unlistenCloud?.();
+        this.unlistenCloud = null;
+        this.cloudBaseUrl = null;
+        this.cloudDeviceToken = null;
     }
 
     private activeBucket(): AccountData | undefined {
@@ -842,12 +1149,14 @@ class SessionStore {
                 threadId: msg.threadId,
                 body: msg.sticker ? "" : (msg.text ?? "[non-text message]"),
                 sticker: msg.sticker,
+                file: null,
                 quote: msg.quote,
                 link: msg.link,
                 reactionIcon: null,
                 deleted: false,
                 outgoing: msg.isSelf,
                 authorName: name,
+                authorAvatar: msg.isSelf ? b.profile.avatar : this.avatarForIn(b, msg.threadId, msg.threadKind),
                 at: Date.now(),
             },
             messageSnippet(msg.text, msg.sticker, msg.link),

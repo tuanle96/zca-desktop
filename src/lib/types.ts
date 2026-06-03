@@ -146,12 +146,19 @@ export type ChatMessage = {
     threadId: string;
     body: string;
     sticker: Sticker | null;
+    file?: {
+        id: string;
+        filename: string | null;
+        mime: string | null;
+        sizeBytes: number;
+    } | null;
     quote: QuoteRef | null;
     link: LinkPreview | null;
     reactionIcon: string | null;
     deleted: boolean;
     outgoing: boolean;
     authorName: string | null;
+    authorAvatar?: string | null;
     at: number;
 };
 
@@ -167,7 +174,7 @@ export type Conversation = {
     avatar: string | null;
 };
 
-// Persisted history reloaded from the local store at login/restore.
+// Persisted history reloaded from the active session source.
 export type StoredThread = {
     accountId: string;
     threadId: string;

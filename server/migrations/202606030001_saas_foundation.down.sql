@@ -1,0 +1,9 @@
+DROP TABLE IF EXISTS audit_events;
+DROP TABLE IF EXISTS hosted_sessions;
+DROP TABLE IF EXISTS files;
+DROP TABLE IF EXISTS messages;
+DROP TABLE IF EXISTS conversations;
+DROP TABLE IF EXISTS cloud_accounts;
+DROP TABLE IF EXISTS devices;
+DROP TABLE IF EXISTS magic_links;
+DROP TABLE IF EXISTS users;

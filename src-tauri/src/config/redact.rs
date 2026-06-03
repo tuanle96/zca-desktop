@@ -131,7 +131,10 @@ mod tests {
         // Secret scalars masked, never echoed.
         assert!(out["imei"].as_str().unwrap().starts_with("***redacted("));
         assert_ne!(out["imei"], json!("device-imei-1234"));
-        assert!(out["nested"]["zpw_enk"].as_str().unwrap().starts_with("***redacted("));
+        assert!(out["nested"]["zpw_enk"]
+            .as_str()
+            .unwrap()
+            .starts_with("***redacted("));
         // The whole `cookie` array is keyed as secret → masked wholesale.
         assert!(out["cookie"].as_str().unwrap().starts_with("***redacted("));
         // Non-secret fields preserved.
@@ -151,7 +154,10 @@ mod tests {
         let out = redact_str(raw);
         assert!(!out.contains("abc123"), "zpsid value leaked: {out}");
         assert!(!out.contains("def456"), "zpw_sek value leaked: {out}");
-        assert!(out.contains("path=/"), "non-secret pair must survive: {out}");
+        assert!(
+            out.contains("path=/"),
+            "non-secret pair must survive: {out}"
+        );
     }
 
     #[test]
