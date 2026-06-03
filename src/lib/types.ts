@@ -148,6 +148,8 @@ export type ChatMessage = {
     sticker: Sticker | null;
     quote: QuoteRef | null;
     link: LinkPreview | null;
+    reactionIcon: string | null;
+    deleted: boolean;
     outgoing: boolean;
     authorName: string | null;
     at: number;
@@ -186,6 +188,8 @@ export type StoredMessage = {
     sticker: Sticker | null;
     quote: QuoteRef | null;
     link: LinkPreview | null;
+    reactionIcon: string | null;
+    deleted: boolean;
     outgoing: boolean;
     ts: number | null;
 };

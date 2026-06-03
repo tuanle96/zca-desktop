@@ -196,6 +196,20 @@ impl SessionManager<Arc<API>> {
         thread_id: &str,
         text: &str,
     ) -> Result<String, SessionError> {
+        self.send_text_with_quote(account_id, thread_id, text, None, crate::types::ThreadKind::User)
+            .await
+    }
+
+    /// Send a plain-text message or quoted reply from `account_id`, honouring
+    /// the per-account send throttle and preserving the destination thread kind.
+    pub async fn send_text_with_quote(
+        &self,
+        account_id: &AccountId,
+        thread_id: &str,
+        text: &str,
+        quote: Option<&crate::types::QuoteInput>,
+        kind: crate::types::ThreadKind,
+    ) -> Result<String, SessionError> {
         let api = self
             .get(account_id)
             .await
@@ -205,7 +219,7 @@ impl SessionManager<Arc<API>> {
         if !wait.is_zero() {
             tokio::time::sleep(wait).await;
         }
-        let msg_id = crate::zalo::send_text(&api, thread_id, text).await?;
+        let msg_id = crate::zalo::send_text_with_quote(&api, thread_id, text, quote, kind).await?;
         Ok(msg_id)
     }
 

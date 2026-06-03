@@ -203,8 +203,30 @@ async fn login_and_listen(
 /// Persist an incoming message into the local store (best-effort; a store
 /// failure is logged and never breaks the realtime bridge).
 fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
-    // Reactions and undo events are transient UI events.
-    if msg.reaction.is_some() || msg.undo.is_some() {
+    if let Some(reaction) = msg.reaction.as_ref() {
+        match db.apply_reaction(&msg.account_id, &reaction.msg_id, &reaction.icon) {
+            Ok(updated) => tracing::debug!(
+                account_id = %msg.account_id,
+                thread_id = %reaction.thread_id,
+                msg_id = %reaction.msg_id,
+                updated,
+                "persisted message reaction"
+            ),
+            Err(e) => tracing::warn!(error = %e, "failed to persist message reaction"),
+        }
+        return;
+    }
+    if let Some(undo) = msg.undo.as_ref() {
+        match db.mark_message_deleted(&msg.account_id, &undo.msg_id) {
+            Ok(updated) => tracing::debug!(
+                account_id = %msg.account_id,
+                thread_id = %undo.thread_id,
+                msg_id = %undo.msg_id,
+                updated,
+                "persisted message undo"
+            ),
+            Err(e) => tracing::warn!(error = %e, "failed to persist message undo"),
+        }
         return;
     }
     let kind = match msg.thread_kind {
@@ -218,7 +240,7 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
     // Sticker messages go through the sticker repository so the image survives a
     // restart; everything else is stored as text.
     if let Some(sticker) = msg.sticker.as_ref() {
-        match db.save_sticker_message(
+        match db.save_sticker_message_with_rich(
             &msg.account_id,
             &msg.thread_id,
             kind,
@@ -231,6 +253,7 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
             msg.from_name.as_deref(),
             None,
             bump_unread,
+            msg.quote.as_ref(),
         ) {
             Ok(()) => tracing::debug!(
                 account_id = %msg.account_id,
@@ -245,7 +268,7 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
         return;
     }
 
-    match db.save_message(
+    match db.save_message_with_rich(
         &msg.account_id,
         &msg.thread_id,
         kind,
@@ -258,6 +281,8 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
         msg.from_name.as_deref(),
         None,
         bump_unread,
+        msg.quote.as_ref(),
+        msg.link.as_ref(),
     ) {
         // Non-secret diagnostics: ids + a body length, never the body text.
         Ok(()) => tracing::debug!(
@@ -269,6 +294,18 @@ fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
             "persisted incoming message"
         ),
         Err(e) => tracing::warn!(error = %e, "failed to persist incoming message"),
+    }
+}
+
+fn quote_ref_from_input(q: &crate::types::QuoteInput) -> crate::types::QuoteRef {
+    crate::types::QuoteRef {
+        owner_id: q.uid_from.clone(),
+        from_d: String::new(),
+        global_msg_id: q.msg_id.parse().unwrap_or(0),
+        cli_msg_id: q.cli_msg_id.parse().unwrap_or(0),
+        msg: q.content.clone(),
+        cli_msg_type: if q.msg_type == "chat.sticker" { 7 } else { 1 },
+        ts: q.ts,
     }
 }
 
@@ -371,8 +408,8 @@ pub async fn start_listening_from_file(
     login_and_listen(&app, &state.0, credentials, store.0.as_ref(), true).await
 }
 
-/// Send a plain-text message to a user thread from an already-authenticated
-/// account, returning the new message id.
+/// Send a plain-text message or quoted reply to a user/group thread from an
+/// already-authenticated account, returning the new message id.
 ///
 /// Requires a prior `login`/`start_listening` for `account_id` (the session is
 /// reused from managed state — credentials are never re-sent from the UI).
@@ -384,6 +421,7 @@ pub async fn send_message(
     account_id: String,
     thread_id: String,
     text: String,
+    kind: crate::types::ThreadKind,
     quote: Option<crate::types::QuoteInput>,
 ) -> Result<String, String> {
     if thread_id.trim().is_empty() {
@@ -392,17 +430,13 @@ pub async fn send_message(
     if text.trim().is_empty() {
         return Err("message text is required".to_string());
     }
-    // Resolve the session and send, with optional quote (reply).
-    let api = state
+    // Resolve the session and send, with optional quote (reply), through the
+    // session layer so text sends use the same per-account throttle as stickers.
+    let msg_id = state
         .0
-        .get(&account_id)
+        .send_text_with_quote(&account_id, &thread_id, &text, quote.as_ref(), kind)
         .await
-        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
-    let msg_id = crate::zalo::send_text_with_quote(
-        &api, &thread_id, &text, quote.as_ref(),
-    )
-    .await
-    .map_err(|e| format!("send failed: {e}"))?;
+        .map_err(|e| format!("send failed: {e}"))?;
 
     // Persist the outgoing message so it survives restart (best-effort). Use a
     // local id when the API returned an empty one so the row is still stored.
@@ -412,10 +446,15 @@ pub async fn send_message(
         } else {
             msg_id.clone()
         };
-        if let Err(e) = db.save_message(
+        let quote_ref = quote.as_ref().map(quote_ref_from_input);
+        let kind_str = match kind {
+            crate::types::ThreadKind::Group => "group",
+            crate::types::ThreadKind::User => "user",
+        };
+        if let Err(e) = db.save_message_with_rich(
             &account_id,
             &thread_id,
-            "user",
+            kind_str,
             &stored_id,
             Some(&account_id),
             None,
@@ -425,6 +464,8 @@ pub async fn send_message(
             None,
             None,
             false,
+            quote_ref.as_ref(),
+            None,
         ) {
             tracing::warn!(error = %e, "failed to persist outgoing message");
         } else {

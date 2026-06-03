@@ -1,11 +1,10 @@
 <script lang="ts">
-  import { Phone, Video, Search, PanelRight, Send, Smile, Paperclip, MessageCircle } from "@lucide/svelte";
+  import { Phone, Video, Search, PanelRight, Send, Smile, Paperclip, MessageCircle, Quote, X, Heart } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { session } from "$lib/session.svelte";
   import StickerPicker from "./StickerPicker.svelte";
   import type { ChatMessage, QuoteInput, Sticker } from "$lib/types";
-  import { Reply, X } from "@lucide/svelte";
 
   let draft = $state("");
   let scroller = $state<HTMLElement | null>(null);
@@ -127,37 +126,98 @@
                 <span class="bg-muted text-muted-foreground rounded-full px-3 py-0.5 text-xs">{dayLabel(m.at)}</span>
               </div>
             {/if}
-            <div class="flex {m.outgoing ? 'justify-end' : 'justify-start'}">
+            <div class="group/message flex {m.outgoing ? 'justify-end' : 'justify-start'}">
               {#if m.sticker}
-                <div class="flex flex-col {m.outgoing ? 'items-end' : 'items-start'}">
-                  <img
-                    src={m.sticker.url}
-                    alt="sticker"
-                    class="size-32 object-contain"
-                    loading="lazy"
-                  />
-                  <span class="text-muted-foreground mt-0.5 text-[10px]">{clock(m.at)}</span>
+                <div class="flex items-end gap-1.5 {m.outgoing ? 'flex-row-reverse' : 'flex-row'}">
+                  <div class="flex flex-col {m.outgoing ? 'items-end' : 'items-start'}">
+                    <img
+                      src={m.sticker.url}
+                      alt="sticker"
+                      class="size-32 object-contain"
+                      loading="lazy"
+                    />
+                    <div class="text-muted-foreground mt-0.5 flex items-center gap-1 text-[10px]">
+                      {#if m.reactionIcon}
+                        <span class="text-xs leading-none">{m.reactionIcon}</span>
+                      {/if}
+                      <span>{clock(m.at)}</span>
+                    </div>
+                  </div>
+                  <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100">
+                    <button
+                      onclick={() => replyTo = m}
+                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                      title="Trích dẫn"
+                      aria-label="Trích dẫn"
+                    >
+                      <Quote class="size-3.5" />
+                    </button>
+                    <button
+                      onclick={() => session.sendReaction(m, "heart")}
+                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                      title="Thả tim"
+                      aria-label="Thả tim"
+                    >
+                      <Heart class="size-3.5" />
+                    </button>
+                  </div>
                 </div>
               {:else}
-                <div
-                  class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
-                    ? 'bg-brand text-brand-foreground rounded-br-md'
-                    : 'bg-background rounded-bl-md'}"
-                >
-                  <p class="whitespace-pre-wrap break-words">{m.body}</p>
-                  <div class="mt-1 flex items-center justify-end gap-1">
-                      <button
-                        onclick={() => replyTo = m}
-                        class="hover:text-brand text-[10px] opacity-50 hover:opacity-100"
-                        title="Trả lời"
+                <div class="flex items-end gap-1.5 {m.outgoing ? 'flex-row-reverse' : 'flex-row'}">
+                  <div
+                    class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
+                      ? 'bg-brand text-brand-foreground rounded-br-md'
+                      : 'bg-background rounded-bl-md'}"
+                  >
+                    {#if m.quote}
+                      <div class="mb-1 rounded-md border-l-2 border-current/30 bg-black/5 px-2 py-1 text-xs opacity-80">
+                        <div class="font-medium">{m.quote.fromD || "Tin nhắn"}</div>
+                        <div class="line-clamp-2 break-words">{m.quote.msg}</div>
+                      </div>
+                    {/if}
+                    {#if m.deleted}
+                      <p class="text-muted-foreground italic">{m.body}</p>
+                    {:else}
+                      <p class="whitespace-pre-wrap break-words">{m.body}</p>
+                    {/if}
+                    {#if m.link}
+                      <a
+                        href={m.link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        class="mt-2 block rounded-md border border-current/15 bg-black/5 p-2 text-xs hover:bg-black/10"
                       >
-                        <Reply class="size-3" />
-                      </button>
-                      {#if (m as any).reactionIcon}
-                        <span class="text-xs leading-none">{(m as any).reactionIcon}</span>
+                        <div class="font-medium">{m.link.title || m.link.href}</div>
+                        {#if m.link.description}
+                          <div class="mt-0.5 line-clamp-2 opacity-75">{m.link.description}</div>
+                        {/if}
+                      </a>
+                    {/if}
+                    <div class="mt-1 flex items-center justify-end gap-1">
+                      {#if m.reactionIcon}
+                        <span class="text-xs leading-none">{m.reactionIcon}</span>
                       {/if}
                       <span class="text-[10px] opacity-60">{clock(m.at)}</span>
                     </div>
+                  </div>
+                  <div class="flex items-center gap-1 opacity-0 transition-opacity group-hover/message:opacity-100 group-focus-within/message:opacity-100">
+                    <button
+                      onclick={() => replyTo = m}
+                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                      title="Trích dẫn"
+                      aria-label="Trích dẫn"
+                    >
+                      <Quote class="size-3.5" />
+                    </button>
+                    <button
+                      onclick={() => session.sendReaction(m, "heart")}
+                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                      title="Thả tim"
+                      aria-label="Thả tim"
+                    >
+                      <Heart class="size-3.5" />
+                    </button>
+                  </div>
                 </div>
               {/if}
             </div>
@@ -169,7 +229,7 @@
     <!-- Reply bar -->
     {#if replyTo}
       <div class="bg-muted/50 mx-4 flex items-center gap-2 rounded-t-lg px-3 py-2">
-        <Reply class="text-brand size-4" />
+        <Quote class="text-brand size-4" />
         <span class="text-muted-foreground min-w-0 flex-1 truncate text-xs">
           Trả lời <b>{replyTo.authorName ?? "bạn"}</b>: {replyTo.sticker ? "[Sticker]" : replyTo.body.slice(0, 60)}
         </span>
