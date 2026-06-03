@@ -28,7 +28,7 @@ use zca_rust::Zalo;
 
 use crate::types::{
     AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent,
-    ReactionEvent, ReactionIcon, Sticker, ThreadKind,
+    QuoteInput, QuoteRef, ReactionEvent, ReactionIcon, Sticker, ThreadKind,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -318,6 +318,21 @@ fn sticker_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<S
     Some(Sticker { id, cat_id, sticker_type, url: sticker_image_url(id) })
 }
 
+
+/// Map a `zca-rust` incoming `Quote` into a core [`QuoteRef`]. Confined to the
+/// `zalo` layer so `types` stays clean.
+fn to_quote_ref(q: &zca_rust::models::Quote) -> QuoteRef {
+    QuoteRef {
+        owner_id: q.owner_id.clone(),
+        from_d: q.from_d.clone(),
+        global_msg_id: q.global_msg_id,
+        cli_msg_id: q.cli_msg_id,
+        msg: q.msg.clone(),
+        cli_msg_type: q.cli_msg_type,
+        ts: q.ts,
+    }
+}
+
 /// Map a `zca-rust` `Message` into the core [`IncomingMessage`] DTO.
 ///
 /// Confined to the `zalo` layer so higher layers never see `zca-rust` types.
@@ -332,6 +347,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             text: message_text(&m.data.content),
             sticker: sticker_from_content(&m.data.msg_type, &m.data.content),
             reaction: None,
+            quote: m.data.quote.as_ref().map(to_quote_ref),
             msg_id: m.data.msg_id.clone(),
             timestamp: m.data.ts.clone(),
             is_self: m.is_self,
@@ -345,6 +361,7 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             text: message_text(&m.data.base.content),
             sticker: sticker_from_content(&m.data.base.msg_type, &m.data.base.content),
             reaction: None,
+            quote: m.data.base.quote.as_ref().map(to_quote_ref),
             msg_id: m.data.base.msg_id.clone(),
             timestamp: m.data.base.ts.clone(),
             is_self: m.is_self,
@@ -414,6 +431,7 @@ pub async fn start_message_listener(
                                 is_self,
                                 is_group,
                             }),
+                            quote: None,
                             msg_id: reaction.data.msg_id.clone(),
                             timestamp: ts,
                             is_self,
@@ -441,6 +459,40 @@ pub async fn send_text(api: &API, thread_id: &str, text: &str) -> ZaloResult<Str
         styles: None,
         urgency: None,
         quote: None,
+        mentions: None,
+        ttl: None,
+    };
+    let resp = api.send_message(&content, thread_id, ThreadType::User).await?;
+    Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
+}
+
+
+/// Send a plain-text message with an optional quote (reply). Returns the new
+/// message id.
+///
+/// When `quote` is provided, the message is sent as a quoted reply — the
+/// receiver sees the quoted message bubble above the reply text.
+pub async fn send_text_with_quote(
+    api: &API,
+    thread_id: &str,
+    text: &str,
+    quote: Option<&QuoteInput>,
+) -> ZaloResult<String> {
+    let zca_quote = quote.map(|q| zca_rust::apis::send_message::SendMessageQuote {
+        content: serde_json::Value::String(q.content.clone()),
+        msg_type: q.msg_type.clone(),
+        property_ext: None,
+        uid_from: q.uid_from.clone(),
+        msg_id: q.msg_id.clone(),
+        cli_msg_id: q.cli_msg_id.clone(),
+        ts: q.ts,
+        ttl: q.ttl,
+    });
+    let content = SendContent {
+        msg: text.to_string(),
+        styles: None,
+        urgency: None,
+        quote: zca_quote,
         mentions: None,
         ttl: None,
     };

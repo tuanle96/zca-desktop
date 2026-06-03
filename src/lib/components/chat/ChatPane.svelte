@@ -4,11 +4,13 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { session } from "$lib/session.svelte";
   import StickerPicker from "./StickerPicker.svelte";
-  import type { Sticker } from "$lib/types";
+  import type { ChatMessage, QuoteInput, Sticker } from "$lib/types";
+  import { Reply, X } from "@lucide/svelte";
 
   let draft = $state("");
   let scroller = $state<HTMLElement | null>(null);
   let showStickers = $state(false);
+  let replyTo = $state<ChatMessage | null>(null);
 
   const convo = $derived(session.activeConversation);
   const messages = $derived(session.activeMessages);
@@ -44,8 +46,20 @@
   }
 
   async function send() {
-    const ok = await session.sendActive(draft);
-    if (ok) draft = "";
+    let quote: QuoteInput | undefined;
+    if (replyTo) {
+      quote = {
+        content: replyTo.body,
+        msgType: replyTo.sticker ? "chat.sticker" : "webchat",
+        uidFrom: replyTo.outgoing ? (session.profile?.accountId ?? "") : replyTo.id,
+        msgId: replyTo.id,
+        cliMsgId: replyTo.id,
+        ts: replyTo.at,
+        ttl: 0,
+      };
+    }
+    const ok = await session.sendActive(draft, quote);
+    if (ok) { draft = ""; replyTo = null; }
   }
 
   async function pickSticker(sticker: Sticker) {
@@ -131,12 +145,19 @@
                     : 'bg-background rounded-bl-md'}"
                 >
                   <p class="whitespace-pre-wrap break-words">{m.body}</p>
-                  <span class="mt-1 flex items-center justify-end gap-1 text-[10px] opacity-60">
+                  <div class="mt-1 flex items-center justify-end gap-1">
+                      <button
+                        onclick={() => replyTo = m}
+                        class="hover:text-brand text-[10px] opacity-50 hover:opacity-100"
+                        title="Trả lời"
+                      >
+                        <Reply class="size-3" />
+                      </button>
                       {#if (m as any).reactionIcon}
                         <span class="text-xs leading-none">{(m as any).reactionIcon}</span>
                       {/if}
-                      {clock(m.at)}
-                    </span>
+                      <span class="text-[10px] opacity-60">{clock(m.at)}</span>
+                    </div>
                 </div>
               {/if}
             </div>
@@ -144,6 +165,19 @@
         </div>
       {/if}
     </div>
+
+    <!-- Reply bar -->
+    {#if replyTo}
+      <div class="bg-muted/50 mx-4 flex items-center gap-2 rounded-t-lg px-3 py-2">
+        <Reply class="text-brand size-4" />
+        <span class="text-muted-foreground min-w-0 flex-1 truncate text-xs">
+          Trả lời <b>{replyTo.authorName ?? "bạn"}</b>: {replyTo.sticker ? "[Sticker]" : replyTo.body.slice(0, 60)}
+        </span>
+        <button onclick={() => replyTo = null} class="text-muted-foreground hover:text-foreground">
+          <X class="size-3.5" />
+        </button>
+      </div>
+    {/if}
 
     <!-- Composer -->
     <footer class="bg-background border-t px-3 py-2.5">

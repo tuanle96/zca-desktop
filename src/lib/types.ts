@@ -89,6 +89,7 @@ export type IncomingMessage = {
     text: string | null;
     sticker: Sticker | null;
     reaction: ReactionEvent | null;
+    quote: QuoteRef | null;
     msgId: string;
     timestamp: string;
     isSelf: boolean;
@@ -97,11 +98,35 @@ export type IncomingMessage = {
 // A chat bubble rendered in the conversation pane. Outgoing messages are
 // created optimistically; incoming ones come from the zalo://message stream.
 // A sticker bubble carries `sticker` (rendered as an image) instead of text.
+
+// A quoted (replied-to) message reference, carried on incoming messages.
+export type QuoteRef = {
+    ownerId: string;
+    fromD: string;
+    globalMsgId: number;
+    cliMsgId: number;
+    msg: string;
+    cliMsgType: number;
+    ts: number;
+};
+
+// What the UI sends to quote a message when replying.
+export type QuoteInput = {
+    content: string;
+    msgType: string;
+    uidFrom: string;
+    msgId: string;
+    cliMsgId: string;
+    ts: number;
+    ttl: number;
+};
+
 export type ChatMessage = {
     id: string;
     threadId: string;
     body: string;
     sticker: Sticker | null;
+    quote: QuoteRef | null;
     outgoing: boolean;
     authorName: string | null;
     at: number;
@@ -138,6 +163,7 @@ export type StoredMessage = {
     fromName: string | null;
     body: string | null;
     sticker: Sticker | null;
+    quote: QuoteRef | null;
     outgoing: boolean;
     ts: number | null;
 };

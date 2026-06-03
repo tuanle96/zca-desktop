@@ -18,6 +18,8 @@ import type {
     IncomingMessage,
     QrLoginEvent,
     QrPhase,
+    QuoteInput,
+    QuoteRef,
     ReactionEvent,
     ReactionIcon,
     Sticker,
@@ -499,6 +501,7 @@ class SessionStore {
                 threadId: m.threadId,
                 body: m.sticker ? "" : (m.body ?? "[non-text message]"),
                 sticker: m.sticker,
+                quote: null,
                 outgoing: m.outgoing,
                 authorName: m.fromName,
                 at: m.ts ?? 0,
@@ -559,7 +562,7 @@ class SessionStore {
         }
     }
 
-    async sendActive(body: string): Promise<boolean> {
+    async sendActive(body: string, quote?: QuoteInput): Promise<boolean> {
         const text = body.trim();
         const threadId = this.activeThreadId;
         if (!text || !threadId || !this.profile) return false;
@@ -570,6 +573,7 @@ class SessionStore {
                 accountId: this.profile!.accountId,
                 threadId,
                 text,
+                quote: quote ?? null,
             });
             this.appendToActive(
                 {
@@ -577,6 +581,15 @@ class SessionStore {
                     threadId,
                     body: text,
                     sticker: null,
+                    quote: quote ? {
+                        ownerId: quote.uidFrom,
+                        fromD: "",
+                        globalMsgId: 0,
+                        cliMsgId: 0,
+                        msg: quote.content,
+                        cliMsgType: 1,
+                        ts: quote.ts,
+                    } : null,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
@@ -667,6 +680,7 @@ class SessionStore {
                     threadId,
                     body: "",
                     sticker,
+                    quote: null,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
@@ -727,6 +741,7 @@ class SessionStore {
                 threadId: msg.threadId,
                 body: msg.sticker ? "" : (msg.text ?? "[non-text message]"),
                 sticker: msg.sticker,
+                quote: msg.quote,
                 outgoing: msg.isSelf,
                 authorName: name,
                 at: Date.now(),

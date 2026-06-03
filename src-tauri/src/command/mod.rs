@@ -384,6 +384,7 @@ pub async fn send_message(
     account_id: String,
     thread_id: String,
     text: String,
+    quote: Option<crate::types::QuoteInput>,
 ) -> Result<String, String> {
     if thread_id.trim().is_empty() {
         return Err("thread_id is required".to_string());
@@ -391,13 +392,17 @@ pub async fn send_message(
     if text.trim().is_empty() {
         return Err("message text is required".to_string());
     }
-    // Delegate to the session layer: it resolves the authenticated session,
-    // applies the per-account send throttle (ban-risk r1), and sends.
-    let msg_id = state
+    // Resolve the session and send, with optional quote (reply).
+    let api = state
         .0
-        .send_text(&account_id, &thread_id, &text)
+        .get(&account_id)
         .await
-        .map_err(|e| format!("send failed: {e}"))?;
+        .ok_or_else(|| format!("no active session for account {account_id}; log in first"))?;
+    let msg_id = crate::zalo::send_text_with_quote(
+        &api, &thread_id, &text, quote.as_ref(),
+    )
+    .await
+    .map_err(|e| format!("send failed: {e}"))?;
 
     // Persist the outgoing message so it survives restart (best-effort). Use a
     // local id when the API returned an empty one so the row is still stored.
