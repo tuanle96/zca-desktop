@@ -203,8 +203,8 @@ async fn login_and_listen(
 /// Persist an incoming message into the local store (best-effort; a store
 /// failure is logged and never breaks the realtime bridge).
 fn persist_incoming(db: &Arc<crate::store::Db>, msg: &IncomingMessage) {
-    // Reactions are transient UI events — don't persist them as messages.
-    if msg.reaction.is_some() {
+    // Reactions and undo events are transient UI events.
+    if msg.reaction.is_some() || msg.undo.is_some() {
         return;
     }
     let kind = match msg.thread_kind {

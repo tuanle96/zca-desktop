@@ -16,6 +16,7 @@ import type {
     Group,
     History,
     IncomingMessage,
+    LinkPreview,
     QrLoginEvent,
     QrPhase,
     QuoteInput,
@@ -23,6 +24,7 @@ import type {
     ReactionEvent,
     ReactionIcon,
     Sticker,
+    UndoEvent,
 } from "./types";
 
 const MESSAGE_EVENT = "zalo://message";
@@ -502,6 +504,7 @@ class SessionStore {
                 body: m.sticker ? "" : (m.body ?? "[non-text message]"),
                 sticker: m.sticker,
                 quote: null,
+                link: null,
                 outgoing: m.outgoing,
                 authorName: m.fromName,
                 at: m.ts ?? 0,
@@ -581,6 +584,7 @@ class SessionStore {
                     threadId,
                     body: text,
                     sticker: null,
+                    link: null,
                     quote: quote ? {
                         ownerId: quote.uidFrom,
                         fromD: "",
@@ -681,6 +685,7 @@ class SessionStore {
                     body: "",
                     sticker,
                     quote: null,
+                    link: null,
                     outgoing: true,
                     authorName: this.profile?.displayName ?? "Me",
                     at: Date.now(),
@@ -742,6 +747,7 @@ class SessionStore {
                 body: msg.sticker ? "" : (msg.text ?? "[non-text message]"),
                 sticker: msg.sticker,
                 quote: msg.quote,
+                link: msg.link,
                 outgoing: msg.isSelf,
                 authorName: name,
                 at: Date.now(),

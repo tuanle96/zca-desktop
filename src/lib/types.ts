@@ -90,6 +90,8 @@ export type IncomingMessage = {
     sticker: Sticker | null;
     reaction: ReactionEvent | null;
     quote: QuoteRef | null;
+    link: LinkPreview | null;
+    undo: UndoEvent | null;
     msgId: string;
     timestamp: string;
     isSelf: boolean;
@@ -121,12 +123,31 @@ export type QuoteInput = {
     ttl: number;
 };
 
+
+// A link preview from a chat.link message.
+export type LinkPreview = {
+    href: string;
+    title: string | null;
+    description: string | null;
+    thumb: string | null;
+};
+
+// An undo event — someone deleted a message.
+export type UndoEvent = {
+    threadId: string;
+    msgId: string;
+    cliMsgId: string;
+    isSelf: boolean;
+    isGroup: boolean;
+};
+
 export type ChatMessage = {
     id: string;
     threadId: string;
     body: string;
     sticker: Sticker | null;
     quote: QuoteRef | null;
+    link: LinkPreview | null;
     outgoing: boolean;
     authorName: string | null;
     at: number;
@@ -164,6 +185,7 @@ export type StoredMessage = {
     body: string | null;
     sticker: Sticker | null;
     quote: QuoteRef | null;
+    link: LinkPreview | null;
     outgoing: boolean;
     ts: number | null;
 };
