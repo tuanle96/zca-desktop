@@ -27,8 +27,9 @@ use zca_rust::context::Options;
 use zca_rust::Zalo;
 
 use crate::types::{
-    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent,
-    QuoteInput, QuoteRef, ReactionEvent, ReactionIcon, Sticker, ThreadKind,
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage,
+    LinkPreview, QrLoginEvent, QuoteInput, QuoteRef, ReactionEvent, ReactionIcon,
+    Sticker, ThreadKind, UndoEvent,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -319,6 +320,29 @@ fn sticker_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<S
 }
 
 
+
+/// Extract a [`LinkPreview`] from an attachment-type message content when the
+/// message type is `chat.link`. Returns `None` for non-link messages.
+fn link_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<LinkPreview> {
+    if msg_type != "chat.link" {
+        return None;
+    }
+    match content {
+        ZcaMessageContent::Attachment(att) => {
+            if att.href.is_empty() {
+                return None;
+            }
+            Some(LinkPreview {
+                href: att.href.clone(),
+                title: non_empty(&att.title),
+                description: non_empty(&att.description),
+                thumb: non_empty(&att.thumb),
+            })
+        }
+        _ => None,
+    }
+}
+
 /// Map a `zca-rust` incoming `Quote` into a core [`QuoteRef`]. Confined to the
 /// `zalo` layer so `types` stays clean.
 fn to_quote_ref(q: &zca_rust::models::Quote) -> QuoteRef {
@@ -348,6 +372,8 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             sticker: sticker_from_content(&m.data.msg_type, &m.data.content),
             reaction: None,
             quote: m.data.quote.as_ref().map(to_quote_ref),
+            link: link_from_content(&m.data.msg_type, &m.data.content),
+            undo: None,
             msg_id: m.data.msg_id.clone(),
             timestamp: m.data.ts.clone(),
             is_self: m.is_self,
@@ -362,6 +388,8 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             sticker: sticker_from_content(&m.data.base.msg_type, &m.data.base.content),
             reaction: None,
             quote: m.data.base.quote.as_ref().map(to_quote_ref),
+            link: link_from_content(&m.data.base.msg_type, &m.data.base.content),
+            undo: None,
             msg_id: m.data.base.msg_id.clone(),
             timestamp: m.data.base.ts.clone(),
             is_self: m.is_self,
@@ -432,6 +460,8 @@ pub async fn start_message_listener(
                                 is_group,
                             }),
                             quote: None,
+                            link: None,
+                            undo: None,
                             msg_id: reaction.data.msg_id.clone(),
                             timestamp: ts,
                             is_self,
@@ -439,6 +469,42 @@ pub async fn start_message_listener(
                         if out.send(incoming).await.is_err() {
                             break;
                         }
+                    }
+                }
+                ListenerEvent::Undo(undo) => {
+                    let thread_id = undo.thread_id.clone();
+                    let msg_id = undo.data.msg_id.clone();
+                    let cli_msg_id = undo.data.cli_msg_id.clone();
+                    let uid_from = undo.data.uid_from.clone();
+                    let d_name = non_empty(&undo.data.d_name);
+                    let ts = undo.data.ts.clone();
+                    let is_self = undo.is_self;
+                    let is_group = undo.is_group;
+
+                    let incoming = IncomingMessage {
+                        account_id: account_id.clone(),
+                        thread_id: thread_id.clone(),
+                        thread_kind: if is_group { ThreadKind::Group } else { ThreadKind::User },
+                        from_id: uid_from,
+                        from_name: d_name,
+                        text: None,
+                        sticker: None,
+                        reaction: None,
+                        quote: None,
+                        link: None,
+                        undo: Some(UndoEvent {
+                            thread_id,
+                            msg_id,
+                            cli_msg_id,
+                            is_self,
+                            is_group,
+                        }),
+                        msg_id: undo.data.msg_id,
+                        timestamp: ts,
+                        is_self,
+                    };
+                    if out.send(incoming).await.is_err() {
+                        break;
                     }
                 }
                 _ => {} // Other events (typing, seen, etc.) ignored for now
