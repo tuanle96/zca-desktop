@@ -1,0 +1,87 @@
+{
+  "schemaVersion": 1,
+  "taskId": "account-switcher",
+  "featureId": "account-switcher",
+  "status": "pass",
+  "createdAt": "2026-06-03T02:20:00.000Z",
+  "diffSummary": "Reconciliation of the account-switcher feature shipped in the multi-account UI merge. The reactive session store (src/lib/session.svelte.ts) keeps one bucket per logged-in account (Map<accountId, AccountData>); adoptAccount adds rail entries from login/QR/restore profiles, and switchAccount/activate swap the reactive view (conversations, threads, contacts, composer target) to the selected account's bucket. RailNav.svelte renders one avatar per account with an active ring + unread badge + an add-account button. The originally-planned list_accounts/set_active_account Rust commands were intentionally not built — account state is frontend-managed from the existing login/restore profiles. This reconciliation adds a non-secret account-switch diagnostic (account ids + conversation count) and captures the live proof.",
+  "changedFiles": [
+    "src/lib/session.svelte.ts"
+  ],
+  "checks": [
+    {
+      "name": "lint",
+      "command": "npm run check",
+      "status": "pass",
+      "summary": "svelte-check 0 errors / 0 warnings with the account rail + switch diagnostic.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:21:20.411Z",
+      "finishedAt": "2026-06-03T02:21:23.681Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+      "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/account-switcher/checks/lint-20260603022120/stdout.txt",
+      "stderrPath": ".harness/evidence/account-switcher/checks/lint-20260603022120/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/account-switcher/checks/lint-20260603022120/stdout.txt",
+        ".harness/evidence/account-switcher/checks/lint-20260603022120/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "npm run build",
+      "status": "pass",
+      "summary": "npm run build succeeds with the account rail (RailNav) + switcher store.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:21:23.892Z",
+      "finishedAt": "2026-06-03T02:21:34.215Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+      "stdoutHash": "sha256:b70ba4b12fb923dd83dfe0339d0661b42b0b56ba361887d8d8da755aef9eb5b9",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stdout.txt",
+      "stderrPath": ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stdout.txt",
+        ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "grep -q 'account-switch: active' .harness/evidence/account-switcher/checks/gui-live-2026-06-03.log",
+      "status": "pass",
+      "summary": "Live: with two accounts logged in, clicking a rail avatar swaps the active account + its view. The captured non-secret log shows account-switch between 2299... and 1483... with the conversation count changing per account. Asserts the log artifact contains 'account-switch: active'.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:21:45.480Z",
+      "finishedAt": "2026-06-03T02:21:45.489Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/account-switcher/checks/smoke-20260603022145/stdout.txt",
+      "stderrPath": ".harness/evidence/account-switcher/checks/smoke-20260603022145/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/account-switcher/checks/smoke-20260603022145/stdout.txt",
+        ".harness/evidence/account-switcher/checks/smoke-20260603022145/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/account-switcher/advisor-decision.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/account-switcher/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [],
+  "updatedAt": "2026-06-03T02:21:45.593Z"
+}

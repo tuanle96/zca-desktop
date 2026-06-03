@@ -1,0 +1,62 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "fix-thread-avatar-persistence",
+    "featureId": "fix-thread-avatar-persistence",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:26:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor"
+    },
+    "checkedFiles": [
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        ".harness/task-contracts/fix-thread-avatar-persistence.json",
+        ".harness/evidence/fix-thread-avatar-persistence.json",
+        ".harness/reviews/fix-thread-avatar-persistence/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers",
+        "secret-handling",
+        "input-validation"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Root cause confirmed from the upstream model: zca-rust TMessage carries d_name but no avatar, so save_message could only ever store thread_avatar=None. Fix backfills identity from the directory the app already fetches. lib.rs + session.svelte.ts appear in git status but are prior-task changes this task did not need to touch."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "backfill_thread_identities is a bare UPDATE (no INSERT) scoped by (account_id, thread_id), so a directory entry with no conversation does not create a row; COALESCE plus the empty-string filter on title/avatar means a missing/empty directory value never blanks a known one. rusqlite stays confined to the store layer; ThreadIdentity is a pure types DTO; command/ reaches the store only via the injected StoreState and returns non-secret DTOs. The offline test thread_identity_backfill_updates_existing_only asserts updated==2 (the two existing threads) and that u404 creates no row; the ignored thread_identity_cache_roundtrip proves the title+avatar survive a close+reopen with no realtime event or directory fetch. tests/lint/build/structural/smoke checks are attested with exitCode 0.",
+            "fix": "None required to mark done. Persisting the full directory as its own table is recorded as an accepted low risk and an explicit non-goal."
+        }
+    ],
+    "summary": "fix-thread-avatar-persistence is honestly done. The user's observation was correct: chat history did not persist conversation avatars (and group titles were the last sender) because the realtime message model has no avatar field, so save_message always wrote thread_avatar=None. The fix backfills existing thread rows with title+avatar from the contacts/groups directory the app already fetches, in the store layer, called from the command layer after the directory load. Forward-only layering [types -> store -> command] intact, no secrets cross IPC, UPDATE-only so no phantom threads. Offline test + restart smoke prove durability; build/lint/tests/structural clean. Pass."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored message_cache_roundtrip --nocapture",
+  "status": "pass",
+  "summary": "Restart-persistence smoke: saved inbound+outbound+group messages, dropped the Db (app shutdown), reopened the same SQLite file (relaunch) and restored 2 threads + 3 messages with no realtime event.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T00:42:35.929Z",
+  "finishedAt": "2026-06-03T00:42:37.791Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:86675876df69402e1ec1209808b21ec88a343f7fa7ad57134a2106a0bc1df1cd",
+  "stdoutHash": "sha256:86b0e899b5735903aa4befd78753f8c5d9a928cf83986678232f6f274d22b33a",
+  "stderrHash": "sha256:cb6cf51c7279d677baba97261b4972bc3f072d495b0f19deeeda4dc11f08afdd",
+  "stdoutPath": ".harness/evidence/message-cache/checks/smoke-20260603004235/stdout.txt",
+  "stderrPath": ".harness/evidence/message-cache/checks/smoke-20260603004235/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/message-cache/checks/smoke-20260603004235/stdout.txt",
+    ".harness/evidence/message-cache/checks/smoke-20260603004235/stderr.txt"
+  ]
+}

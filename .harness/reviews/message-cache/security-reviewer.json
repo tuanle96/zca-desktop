@@ -1,0 +1,52 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "message-cache",
+    "featureId": "message-cache",
+    "decision": "pass",
+    "createdAt": "2026-06-03T00:36:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/types/stored.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "sql-injection"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked that persisted history carries no credential/token data, SQL is parameter-bound, and the restart smoke prints only non-secret counts."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "medium",
+            "rule": "user-data-at-rest",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "Message bodies are stored as plaintext in SQLite. These are user data on the user's own machine, not a bearer token; ADR-0005 accepts this for durability and the credential triple is encrypted at rest under the keychain master key. Recorded as the accepted known risk message-plaintext-at-rest.",
+            "fix": "Track SQLCipher / whole-DB encryption as a future ADR; non-blocking."
+        },
+        {
+            "severity": "info",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "All message/thread/attachment SQL uses positional parameter binding (no string interpolation), so persisted message bodies and ids cannot cause SQL injection. The history DTOs (StoredThread/StoredMessage) carry no credential fields, and the restart smoke prints only non-secret counts (2 threads / 3 messages).",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Security review (reconciliation): persisted history contains user message data only — no credential or token values — and all store SQL is parameter-bound. The plaintext-message-at-rest posture is the ADR-0005-accepted known risk (credentials remain encrypted). The reconciliation smoke leaks nothing. No blocking findings."
+}

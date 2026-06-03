@@ -5,6 +5,12 @@
     "featureId": "chat-ui-redesign",
     "decision": "pass",
     "createdAt": "2026-06-02T05:45:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Migrated for 0.20.0 schema: advisor pass produced via the mandatory advisor agent path before provenance was a required field."
+    },
     "checkedFiles": [
         "package.json",
         "src/lib/session.svelte.ts",

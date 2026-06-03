@@ -1,0 +1,42 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "per-account-routing",
+    "featureId": "per-account-routing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:36:00.000Z",
+    "checkedFiles": [
+        "src/lib/session.svelte.ts",
+        "src-tauri/src/types/events.rs"
+    ],
+    "checkedInvariants": [
+        "cross-account-isolation",
+        "no-data-leak"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Verified that a message for one account cannot enter another account's view, and that the routing diagnostic logs ids only."
+    },
+    "confidence": 0.86,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "ingest() resolves the bucket strictly by msg.accountId and returns early if the account is not tracked; it mirrors into the reactive view ONLY when msg.accountId === activeAccountId, otherwise it writes to that account's background bucket and bumps its own rail unread. There is no code path that writes another account's message into the active view. The live no-leak proof shows 'route: msg account=B -> background-bucket (active=A)' for both directions. The routing diagnostic logs account + thread ids only, never message content.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Security review: cross-account isolation holds — incoming messages are routed strictly by the per-account tag, and a background account's message lands in its own bucket without touching the active account's view (proven live in both directions). The diagnostic is non-secret (ids only). No blocking findings; pass."
+}

@@ -1,0 +1,68 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "message-cache",
+    "featureId": "message-cache",
+    "decision": "pass",
+    "createdAt": "2026-06-03T00:40:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Migrated for 0.20.0 schema: advisor pass produced via the mandatory advisor agent path before provenance was a required field."
+    },
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/types/stored.rs",
+        ".harness/task-contracts/message-cache.json",
+        ".harness/evidence/message-cache.json",
+        ".harness/reviews/message-cache/security-reviewer.json",
+        ".harness/reviews/message-cache/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "secret-handling",
+        "persistence-durability"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reconciliation: code merged in f343624; this task adds the missing offline restart smoke and the attested evidence bundle + reviewer artifacts the contract requires."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "evidence-bundle-missing",
+            "file": ".harness/evidence/message-cache.json",
+            "resolution": "Attested evidence bundle authored with build/lint/tests/structural/smoke checks (hash-verified) and the three required reviewer artifacts linked."
+        },
+        {
+            "id": "smoke-gate-unrun",
+            "file": "src-tauri/src/store/db.rs",
+            "resolution": "The contract's smoke (message_cache_roundtrip) now exists and passes: messages survive a Db close + reopen of the same file with no realtime event."
+        }
+    ],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/message-cache.json",
+            "evidence": "Evidence bundle status=pass with five attested checks (rust.build, lint, tests, structural, smoke) all exitCode 0; task-evidence-check --strict --verify-hashes passes. The restart smoke proves the feature's core claim (history survives relaunch) offline against the real SQLite store. Security + architecture reviewers pass; the plaintext-message-at-rest risk is recorded as accepted per ADR-0005.",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "message-cache is honestly done after reconciliation. The persistence code (merged in f343624) keeps rusqlite confined to the store layer with deduped message/thread/attachment repositories, command persists on ingest + send and hydrates via load_history, and the DTOs carry no secrets. The previously-missing proof is now in place: an offline restart smoke shows threads + messages survive a full DB close/reopen with no realtime event, captured as attested, hash-verified evidence alongside passing security + architecture reviews. The plaintext-message-at-rest posture is the ADR-0005-accepted known risk. Pass."
+}

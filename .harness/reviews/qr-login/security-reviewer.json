@@ -1,0 +1,58 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "qr-login",
+    "featureId": "qr-login",
+    "decision": "pass",
+    "createdAt": "2026-06-03T01:11:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/types/qr.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/qr.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/qr.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [
+            "src-tauri/src/types/mod.rs"
+        ],
+        "coverage": 0.75,
+        "notes": "Reviewed the QR event mapping, the credential assembly, and the command boundary for secret leakage; types/mod.rs is a pure re-export with no secret logic (uncovered). Confirmed the live log artifact carries cookie NAMES only."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "live-qr-scan",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "A real phone QR scan was completed against the running app; the captured non-secret log proves the flow reaches session established + persisted credential. No token value appears in the log (cookie NAMES + account ids only)."
+        }
+    ],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "rule": "secret-handling",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "map_qr_event drops the token-bearing LoginQREvent::GotLoginInfo (test-asserted by map_qr_event_forwards_only_non_secret_stages); QrLoginEvent models only renderable image + scanned display name/avatar + coarse stages. The credential triple is assembled in credentials_from_qr and consumed in-core; start_qr_login emits only QrLoginEvent and returns AccountProfile. The diagnostic capture_raw logs cookie names + counts only — confirmed by the live artifact (names incl. zpw_sek, no values).",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Security review (reconciliation): the QR flow keeps the credential triple in the core — the token-bearing GotLoginInfo event is dropped before the webview (test-asserted), only non-secret QrLoginEvent/AccountProfile cross IPC, and the captured live log carries cookie names + account ids but no token values. The earlier needs-human blocker (unrun live scan) is resolved by the project owner's real phone scan. No blocking findings; pass."
+}

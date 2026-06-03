@@ -8,6 +8,7 @@ export const STRICTNESS_TIERS = {
     gateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "permissions-drift",
@@ -16,6 +17,7 @@ export const STRICTNESS_TIERS = {
     optionalGateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "permissions-drift",
@@ -29,6 +31,7 @@ export const STRICTNESS_TIERS = {
     gateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "skill-examples",
@@ -51,6 +54,7 @@ export const STRICTNESS_TIERS = {
     gateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "skill-examples",
@@ -79,6 +83,7 @@ export const STRICTNESS_TIERS = {
     gateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "skill-examples",
@@ -111,6 +116,7 @@ export const STRICTNESS_TIERS = {
     gateIds: [
       "structural-baseline",
       "hook-integrity",
+      "runtime-surface",
       "structural",
       "skill-contracts",
       "skill-examples",

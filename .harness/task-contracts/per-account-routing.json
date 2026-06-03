@@ -1,0 +1,78 @@
+{
+    "schemaVersion": 1,
+    "id": "per-account-routing",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Incoming realtime events are tagged with the receiving account and routed to that account's data bucket, so a message on account B never enters account A's view. The account tag is carried on the types::IncomingMessage.account_id field (the core's zalo listener stamps each event with api.get_own_id()), which is the concrete form of the originally-planned AppEvent { account_id, payload }. The frontend session store keys all per-account state by account_id (Map<accountId, AccountData>); ingest() looks up the bucket by msg.accountId and only mirrors into the reactive view when that account is active, otherwise it accumulates in the background bucket and bumps that account's rail unread.",
+        "goals": [
+            "types/: IncomingMessage carries account_id (event tagging); the zalo listener stamps it per account so events are attributable",
+            "Frontend store keyed by account_id: ingest() routes by msg.accountId to the owning bucket; only the active account mirrors into the reactive view",
+            "A message for a background account bumps that account's unread badge and does NOT appear in the active account's conversations/threads",
+            "A non-secret routing diagnostic (account + thread ids, active-view vs background-bucket) is logged for observability"
+        ],
+        "nonGoals": [
+            "A separate AppEvent wrapper type (tagging is on IncomingMessage.account_id instead)",
+            "The account rail / switch UI (account-switcher)",
+            "Cross-device dedupe of the same account's echoes (handled by msg-id dedupe in appendToBucket)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "types",
+            "description": "types::IncomingMessage carries account_id and the zalo listener stamps it per account; cargo build + the listener mapping tests pass.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "route",
+            "description": "Frontend builds with the account-keyed store (ingest routes by msg.accountId; only the active account mirrors into the view); svelte-check clean.",
+            "verification": {
+                "command": "npm run check"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: with two accounts online, a message received on account B is routed to B's background bucket and does NOT enter account A's active view; the non-secret core log shows 'route: msg account=B ... -> background-bucket (active=A)'. Evidence captures only non-secret diagnostics.",
+            "verification": {
+                "command": "grep -q 'route: msg account=.* -> background-bucket' .harness/evidence/per-account-routing/checks/gui-live-2026-06-03.log"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/per-account-routing.json"
+}

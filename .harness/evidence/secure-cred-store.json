@@ -1,163 +1,162 @@
 {
-    "schemaVersion": 1,
-    "taskId": "secure-cred-store",
-    "featureId": "secure-cred-store",
-    "status": "partial",
-    "createdAt": "2026-06-02T14:07:28.309Z",
-    "diffSummary": "Local persistence foundation (ADR-0005): a store/ layer on bundled SQLite (rusqlite) plus an encrypted credential store. A random 32-byte master key lives only in the OS keychain (keyring); the credential triple is AES-256-GCM sealed (random nonce, nonce||ciphertext) with that key and stored as ciphertext in SQLite — never plaintext. command/ persists the account+encrypted credential after QR/cookie/file login and restore_sessions re-logs-in saved accounts on startup (frontend auto-restore with a loading gate, QR only when none). Verified live on the real macOS keychain: the credential round-trips and the on-disk blob is ciphertext (no plaintext cookie value). config/logging.rs + redact.rs keep raw API captures redacted by default.",
-    "changedFiles": [
-        "src-tauri/Cargo.toml",
-        "src-tauri/Cargo.lock",
-        "src-tauri/src/store/mod.rs",
-        "src-tauri/src/store/crypto.rs",
-        "src-tauri/src/store/db.rs",
-        "src-tauri/src/config/mod.rs",
-        "src-tauri/src/config/logging.rs",
-        "src-tauri/src/config/redact.rs",
-        "src-tauri/src/command/mod.rs",
-        "src-tauri/src/lib.rs"
-    ],
-    "checks": [
-        {
-            "name": "smoke",
-            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture",
-            "status": "pass",
-            "summary": "Live keychain + AES-256-GCM credential roundtrip: ciphertext on disk, decrypts in memory (real macOS keychain).",
-            "exitCode": 0,
-            "cwd": ".",
-            "startedAt": "2026-06-02T14:09:54.351Z",
-            "finishedAt": "2026-06-02T14:09:56.283Z",
-            "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
-            "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
-            "stdoutHash": "sha256:fb3fb3d34e323e115c5771722bf81133ffb8f74f625f35a97fe323f1d61da75c",
-            "stderrHash": "sha256:a9722faade396bd663e24d0d9f499f6a76c4b1b2df834c21dd7949ba55001239",
-            "stdoutPath": ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stdout.txt",
-            "stderrPath": ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stderr.txt",
-            "artifactPaths": [
-                ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stdout.txt",
-                ".harness/evidence/secure-cred-store/checks/smoke-20260602140954/stderr.txt"
-            ]
-        },
-        {
-            "name": "tests",
-            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
-            "status": "pass",
-            "summary": "cargo test: 23 passed offline (store/crypto/db incl. ciphertext-not-plaintext + dedupe); 8 live/interactive ignored.",
-            "exitCode": 0,
-            "cwd": ".",
-            "startedAt": "2026-06-02T14:10:07.353Z",
-            "finishedAt": "2026-06-02T14:10:08.733Z",
-            "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
-            "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
-            "stdoutHash": "sha256:7b360d2b938037c516e446f42ac70729d2e150ac5d0069685400e80500e3f84c",
-            "stderrHash": "sha256:6cdd225f46add54cc68c658fbce1d722af63729f821ae7017b479b4a5b026310",
-            "stdoutPath": ".harness/evidence/secure-cred-store/checks/tests-20260602141007/stdout.txt",
-            "stderrPath": ".harness/evidence/secure-cred-store/checks/tests-20260602141007/stderr.txt",
-            "artifactPaths": [
-                ".harness/evidence/secure-cred-store/checks/tests-20260602141007/stdout.txt",
-                ".harness/evidence/secure-cred-store/checks/tests-20260602141007/stderr.txt"
-            ]
-        },
-        {
-            "name": "lint",
-            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
-            "status": "pass",
-            "summary": "cargo clippy --all-targets -D warnings clean with the store layer + crypto + persistence.",
-            "exitCode": 0,
-            "cwd": ".",
-            "startedAt": "2026-06-02T14:10:41.498Z",
-            "finishedAt": "2026-06-02T14:10:42.248Z",
-            "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
-            "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
-            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            "stderrHash": "sha256:deb6cb4a6c3e79707fe01a80013f10f53ed028864b8a94992b33872d11736be8",
-            "stdoutPath": ".harness/evidence/secure-cred-store/checks/lint-20260602141041/stdout.txt",
-            "stderrPath": ".harness/evidence/secure-cred-store/checks/lint-20260602141041/stderr.txt",
-            "artifactPaths": [
-                ".harness/evidence/secure-cred-store/checks/lint-20260602141041/stdout.txt",
-                ".harness/evidence/secure-cred-store/checks/lint-20260602141041/stderr.txt"
-            ]
-        },
-        {
-            "name": "rust.build",
-            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
-            "status": "pass",
-            "summary": "cargo build compiles the store layer (rusqlite bundled + keyring + aes-gcm) + persistence wiring.",
-            "exitCode": 0,
-            "cwd": ".",
-            "startedAt": "2026-06-02T14:11:08.398Z",
-            "finishedAt": "2026-06-02T14:11:09.153Z",
-            "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
-            "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
-            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            "stderrHash": "sha256:7b89f9d8b45896e66051e0a6a0854f36f5acdc9e450391ac977c70c47d4c66e3",
-            "stdoutPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stdout.txt",
-            "stderrPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stderr.txt",
-            "artifactPaths": [
-                ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stdout.txt",
-                ".harness/evidence/secure-cred-store/checks/rust.build-20260602141108/stderr.txt"
-            ]
-        },
-        {
-            "name": "structural",
-            "command": "npm run --silent harness:check",
-            "status": "pass",
-            "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
-            "exitCode": 0,
-            "cwd": ".",
-            "startedAt": "2026-06-02T14:11:09.330Z",
-            "finishedAt": "2026-06-02T14:11:09.559Z",
-            "gitHead": "8a5aa84ccd6cfc66b0c7ce7e089b00537a5d85e8",
-            "workingTreeHash": "sha256:b6a2e31c05c90f99e0faa73567f8ac1ab438aebdc26e367edf11009dd4c82f8d",
-            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
-            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-            "stdoutPath": ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stdout.txt",
-            "stderrPath": ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stderr.txt",
-            "artifactPaths": [
-                ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stdout.txt",
-                ".harness/evidence/secure-cred-store/checks/structural-20260602141109/stderr.txt"
-            ]
-        }
-    ],
-    "reviewers": [
-        {
-            "name": "advisor",
-            "decision": "needs-human",
-            "artifact": ".harness/reviews/secure-cred-store/advisor-decision.json"
-        },
-        {
-            "name": "security-reviewer",
-            "decision": "needs-human",
-            "artifact": ".harness/reviews/secure-cred-store/security-reviewer.json"
-        },
-        {
-            "name": "architecture-reviewer",
-            "decision": "needs-human",
-            "artifact": ".harness/reviews/secure-cred-store/architecture-reviewer.json"
-        }
-    ],
-    "knownRisks": [
-        {
-            "id": "message-plaintext-at-rest",
-            "severity": "medium",
-            "description": "Message bodies are stored in SQLite as plaintext (user data on the user's own machine, not a bearer token). Credentials are encrypted; message text is not, in this iteration.",
-            "disposition": "accepted",
-            "owner": "project-owner",
-            "acceptedBy": "advisor",
-            "acceptanceReason": "ADR-0005 prioritizes durability of messages; the credential (the bearer token) is encrypted at rest. Whole-DB encryption is deferred to a future ADR.",
-            "mitigation": "Track SQLCipher / whole-DB encryption as a future ADR; the credential master key already protects the high-value secret.",
-            "acceptedUntil": "2026-09-01T00:00:00.000Z"
-        },
-        {
-            "id": "keychain-key-loss",
-            "severity": "medium",
-            "description": "If the OS keychain master key is lost (e.g. OS reinstall), stored credentials become undecryptable and those accounts need a fresh QR scan.",
-            "disposition": "accepted",
-            "owner": "project-owner",
-            "acceptedBy": "advisor",
-            "acceptanceReason": "This is the correct security posture (ADR-0005): a leaked DB without the keychain key is not a session leak. Re-scan is a low-cost recovery.",
-            "mitigation": "load_accounts skips undecryptable rows and the account is surfaced as reauth-needed for a re-scan rather than crashing."
-        }
-    ],
-    "updatedAt": "2026-06-02T14:11:09.599Z"
+  "schemaVersion": 1,
+  "taskId": "secure-cred-store",
+  "featureId": "secure-cred-store",
+  "status": "pass",
+  "createdAt": "2026-06-02T14:07:28.309Z",
+  "diffSummary": "Local persistence foundation (ADR-0005): a store/ layer on bundled SQLite (rusqlite) plus an encrypted credential store. A random 32-byte master key lives only in the OS keychain (keyring); the credential triple is AES-256-GCM sealed (random nonce, nonce||ciphertext) with that key and stored as ciphertext in SQLite — never plaintext. command/ persists the account+encrypted credential after QR/cookie/file login and restore_sessions re-logs-in saved accounts on startup (frontend auto-restore with a loading gate, QR only when none). Verified live on the real macOS keychain: the credential round-trips and the on-disk blob is ciphertext (no plaintext cookie value). config/logging.rs + redact.rs keep raw API captures redacted by default.",
+  "changedFiles": [
+    "src-tauri/Cargo.toml",
+    "src-tauri/Cargo.lock",
+    "src-tauri/src/store/mod.rs",
+    "src-tauri/src/store/crypto.rs",
+    "src-tauri/src/store/db.rs",
+    "src-tauri/src/config/mod.rs",
+    "src-tauri/src/config/logging.rs",
+    "src-tauri/src/config/redact.rs",
+    "src-tauri/src/command/mod.rs"
+  ],
+  "checks": [
+    {
+      "name": "smoke",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored cred_store_roundtrip --nocapture",
+      "status": "pass",
+      "summary": "Live keychain + AES-256-GCM credential roundtrip on the real macOS keychain: on-disk blob is ciphertext (no plaintext cookie value), decrypts in memory. Re-attested during reconciliation.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:39:22.960Z",
+      "finishedAt": "2026-06-03T00:39:25.006Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:386ee9eda0f944775999c804057e821ef27c5322fb1353af5b52c5f33a070f42",
+      "stdoutHash": "sha256:751710fbed4a7ab6cad7409da0c687694a0c0953d45de31990082f4068c6bf4a",
+      "stderrHash": "sha256:c44782e61fea6dc58ab8e06e20f35e268b1922ef713de13fbcb8f9e11c3f6573",
+      "stdoutPath": ".harness/evidence/secure-cred-store/checks/smoke-20260603003922/stdout.txt",
+      "stderrPath": ".harness/evidence/secure-cred-store/checks/smoke-20260603003922/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/secure-cred-store/checks/smoke-20260603003922/stdout.txt",
+        ".harness/evidence/secure-cred-store/checks/smoke-20260603003922/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test offline suite passes (store/crypto/db incl. ciphertext-not-plaintext + dedupe + restart smoke); live/interactive ignored by default.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:35:41.073Z",
+      "finishedAt": "2026-06-03T00:35:42.477Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:ff3c867bb097f20258cb95a2fc8eebe1b210bd66666f51ff724ddda90c891157",
+      "stdoutHash": "sha256:e622c68e48bfda801c3d9ce876ff460a5870d2a9df6f5e7a630580c422998bbb",
+      "stderrHash": "sha256:6cdd225f46add54cc68c658fbce1d722af63729f821ae7017b479b4a5b026310",
+      "stdoutPath": ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stdout.txt",
+      "stderrPath": ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stdout.txt",
+        ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean (store layer + crypto + persistence).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:35:42.636Z",
+      "finishedAt": "2026-06-03T00:35:42.993Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:c93b4cd2a6b4e5794272a3493f69bcde5c9c8b54c509f8359b9db4371b6e779e",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:0b53209db424367e80c52cd8cde8b75e37af110438a0efde777104a1463956de",
+      "stdoutPath": ".harness/evidence/secure-cred-store/checks/lint-20260603003542/stdout.txt",
+      "stderrPath": ".harness/evidence/secure-cred-store/checks/lint-20260603003542/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/secure-cred-store/checks/lint-20260603003542/stdout.txt",
+        ".harness/evidence/secure-cred-store/checks/lint-20260603003542/stderr.txt"
+      ]
+    },
+    {
+      "name": "rust.build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles the store layer (rusqlite bundled + keyring + aes-gcm) + persistence wiring.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:35:50.964Z",
+      "finishedAt": "2026-06-03T00:35:51.352Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fa0102d143a58e5acc6707d10bad42580ed62aa52bda43ebfd413cdb8da4c9be",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:8b1fd2394f7b6f177ede882431154a419bd9f404f00add314c912e91a7fc0ec0",
+      "stdoutPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260603003550/stdout.txt",
+      "stderrPath": ".harness/evidence/secure-cred-store/checks/rust.build-20260603003550/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/secure-cred-store/checks/rust.build-20260603003550/stdout.txt",
+        ".harness/evidence/secure-cred-store/checks/rust.build-20260603003550/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "npm run --silent harness:check",
+      "status": "pass",
+      "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:35:51.516Z",
+      "finishedAt": "2026-06-03T00:35:51.817Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:b25a4ed5e25a0242472bcf3e400069777c1170a7637417e19584e665317f7721",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/secure-cred-store/checks/structural-20260603003551/stdout.txt",
+      "stderrPath": ".harness/evidence/secure-cred-store/checks/structural-20260603003551/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/secure-cred-store/checks/structural-20260603003551/stdout.txt",
+        ".harness/evidence/secure-cred-store/checks/structural-20260603003551/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/secure-cred-store/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/secure-cred-store/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/secure-cred-store/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "message-plaintext-at-rest",
+      "severity": "medium",
+      "description": "Message bodies are stored in SQLite as plaintext (user data on the user's own machine, not a bearer token). Credentials are encrypted; message text is not, in this iteration.",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "ADR-0005 prioritizes durability of messages; the credential (the bearer token) is encrypted at rest. Whole-DB encryption is deferred to a future ADR.",
+      "mitigation": "Track SQLCipher / whole-DB encryption as a future ADR; the credential master key already protects the high-value secret.",
+      "acceptedUntil": "2026-09-01T00:00:00.000Z"
+    },
+    {
+      "id": "keychain-key-loss",
+      "severity": "medium",
+      "description": "If the OS keychain master key is lost (e.g. OS reinstall), stored credentials become undecryptable and those accounts need a fresh QR scan.",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "This is the correct security posture (ADR-0005): a leaked DB without the keychain key is not a session leak. Re-scan is a low-cost recovery.",
+      "mitigation": "load_accounts skips undecryptable rows and the account is surfaced as reauth-needed for a re-scan rather than crashing."
+    }
+  ],
+  "updatedAt": "2026-06-03T00:39:25.092Z"
 }

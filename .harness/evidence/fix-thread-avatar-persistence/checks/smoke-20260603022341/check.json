@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored thread_identity_cache_roundtrip --nocapture",
+  "status": "pass",
+  "summary": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored thread_identity_cache_roundtrip --nocapture exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:23:41.832Z",
+  "finishedAt": "2026-06-03T02:23:43.006Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:f7f7c64382f0cf077a411ff23bbe3ec6c9dfc37ecc3fe968413e78e66c5f6d8c",
+  "stdoutHash": "sha256:578efa278ac37942a6fde670aff7637fd6f70af448ce680e4fad43a8a6b09328",
+  "stderrHash": "sha256:2f9d714469e9b24f2bb33af699c608fed72665cc7d799971266e1cd1f6ed3be9",
+  "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stdout.txt",
+    ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stderr.txt"
+  ]
+}

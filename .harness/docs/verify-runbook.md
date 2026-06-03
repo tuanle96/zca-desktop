@@ -1,15 +1,29 @@
 # Live verification runbook (device-only steps)
 
+> STATUS 2026-06-03: All device-only steps below are DONE and validated from the
+> core logs. qr-login, secure-cred-store, message-cache, and session-restore are
+> all `passes: true`; readiness is green. This runbook is retained as the
+> procedure for re-validating on a fresh machine.
+
 What I (agent) already proved on this machine, and the exact steps left for you,
 plus how to read the logs to confirm each one.
 
-## Already proven (attested, offline + local keychain)
+## Already proven (attested, offline + local keychain + live GUI)
 
-- `cargo build` / `cargo clippy --all-targets -D warnings` / `cargo test`
-  (23 passed, 8 ignored) — green.
+- `cargo build` / `cargo clippy --all-targets -D warnings` / `cargo test` — green.
 - **Keychain + AES-256-GCM credential roundtrip** — PROVEN live on the real
-  macOS keychain: `cred_store_roundtrip OK: ciphertext on disk, decrypts in
-  memory`. Attested in `.harness/evidence/secure-cred-store.json` (check `smoke`).
+  macOS keychain (`cred_store_roundtrip`). Attested in
+  `.harness/evidence/secure-cred-store.json`.
+- **QR login end-to-end** — PROVEN live (real phone scan): the core log shows
+  `start_qr_login … zpw_sek extracted … session established … persisted
+  account credential`. Attested in `.harness/evidence/qr-login.json`
+  (log artifact `checks/gui-live-2026-06-03.log`).
+- **Session restore on relaunch** — PROVEN live: `saved_accounts=1 →
+  restore_sessions restored=1 → chat shell, no QR`. Attested in
+  `.harness/evidence/session-restore.json`.
+- **Message history survives restart** — PROVEN: offline restart smoke
+  (`message_cache_roundtrip`) + the live relaunch hydrated `threads=5
+  messages=16`. Attested in `.harness/evidence/message-cache.json`.
 
 ## Where the logs are
 

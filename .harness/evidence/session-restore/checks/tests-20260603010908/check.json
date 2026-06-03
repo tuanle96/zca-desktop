@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: offline suite passes incl. delete_removes_account_row exercising mark_reauth_needed; restore loop tolerates per-account failure.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T01:09:08.703Z",
+  "finishedAt": "2026-06-03T01:09:10.057Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:b086460c0482bfa156955d2fbf21d88ec5de7ac6b6e4ef60c29b91d67f51c410",
+  "stdoutHash": "sha256:d311c3abd8a96dd7a3e2384ebc0637b2d3e246aeb3cfe528ae03507c1b8aa732",
+  "stderrHash": "sha256:9fd1a72eb333af52f62a2257c7e1e60b280e1f9a0b54ece53aadb085df2b1c49",
+  "stdoutPath": ".harness/evidence/session-restore/checks/tests-20260603010908/stdout.txt",
+  "stderrPath": ".harness/evidence/session-restore/checks/tests-20260603010908/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/session-restore/checks/tests-20260603010908/stdout.txt",
+    ".harness/evidence/session-restore/checks/tests-20260603010908/stderr.txt"
+  ]
+}

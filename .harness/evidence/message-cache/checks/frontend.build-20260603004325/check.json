@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "npm run build succeeds; the frontend hydrates conversations + thread messages from load_history at login/restore (bun unavailable in this env; npm is the frontend build per prior bundles).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T00:43:25.107Z",
+  "finishedAt": "2026-06-03T00:43:33.857Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:50a2a02723794c13a63fdeb3069b964086cb1c966827e98083aba1d45425b1f8",
+  "stdoutHash": "sha256:a29e7194d3bb85de442ef16619231cf2532b6448b54607c54e366ee8d43aa5f3",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stdout.txt",
+  "stderrPath": ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stdout.txt",
+    ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stderr.txt"
+  ]
+}

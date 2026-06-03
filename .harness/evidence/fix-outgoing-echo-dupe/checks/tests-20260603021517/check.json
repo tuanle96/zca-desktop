@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: offline suite passes incl. save_message_dedupes_outgoing_echo_across_msg_ids (echo across differing msg_ids deduped; distinct outgoing still persists).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:15:17.285Z",
+  "finishedAt": "2026-06-03T02:15:26.664Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+  "stdoutHash": "sha256:293b7b8dfff0b89fdab2bcdeb433f686b96d8fa52df04a4d926be84e869677e1",
+  "stderrHash": "sha256:c4cb9c871d8b98ee2d4a96b3fd9e6885b9bc04fbbf847d5acb5859f259266bbb",
+  "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stdout.txt",
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stderr.txt"
+  ]
+}

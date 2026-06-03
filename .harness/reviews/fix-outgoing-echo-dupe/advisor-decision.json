@@ -1,0 +1,57 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "fix-outgoing-echo-dupe",
+    "featureId": "fix-outgoing-echo-dupe",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:12:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor"
+    },
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src/lib/session.svelte.ts",
+        ".harness/task-contracts/fix-outgoing-echo-dupe.json",
+        ".harness/evidence/fix-outgoing-echo-dupe.json",
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/db-after-fix-2026-06-03.txt",
+        ".harness/reviews/fix-outgoing-echo-dupe/architecture-reviewer.json",
+        ".harness/reviews/fix-outgoing-echo-dupe/reliability-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "idempotency",
+        "dedupe-correctness"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Root cause confirmed from the live store (same body under two msg_ids 0.75s apart); fix applied + tested on both the store and ui seams."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/fix-outgoing-echo-dupe.json",
+            "evidence": "Evidence bundle status=pass with attested tests/lint/ui/smoke checks; the offline test proves store-side dedupe across differing msg_ids; the live db-after-fix artifact records 0 outgoing (thread,body) duplicates after the rebuild. Architecture + reliability reviewers pass; the identical-rapid-send collapse is recorded as an accepted low risk.",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "fix-outgoing-echo-dupe is honestly done. Root cause (Zalo's listener echo carrying a different msg_id than the send response) was confirmed from the live SQLite store and fixed at both seams: the store skips a recent same-thread/same-body outgoing echo, and the ui store merges the echo into the optimistic bubble. Offline test + live db-state proof show no outgoing duplicates; build/lint/check are clean. Pass."
+}

@@ -1,0 +1,45 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "reliability-reviewer",
+    "taskId": "fix-outgoing-echo-dupe",
+    "featureId": "fix-outgoing-echo-dupe",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:11:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src/lib/session.svelte.ts"
+    ],
+    "checkedInvariants": [
+        "idempotency",
+        "dedupe-correctness"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked the dedupe window logic, false-merge risk, and that distinct messages still persist/render."
+    },
+    "confidence": 0.84,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "low",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "The dedupe is bounded and outcome-specific: it matches only outgoing rows with the same thread + body and a different msg_id within a 15s window (ABS(ts diff) <= 15000), then returns Ok(()) without inserting or bumping counters. It cannot loop and does not block the realtime bridge. The offline test save_message_dedupes_outgoing_echo_across_msg_ids proves both the dedupe and that a distinct outgoing line still persists. The frontend mirror uses the same 15s window and merges in place (adopts the authoritative id), so a later msg-id dedupe stays consistent.",
+            "fix": "Accepted limitation (echo-dedupe-identical-rapid-sends): two intentional identical sends within 15s collapse to one; a future client correlation id would make reconciliation exact."
+        }
+    ],
+    "summary": "Reliability review: the echo dedupe is bounded (outgoing + same thread/body + differing msg_id + 15s window), deterministic, and unit-tested on the store side; it never blocks the bridge and distinct messages still flow. The only trade-off (identical rapid sends collapsing) is recorded as an accepted low risk. No blocking findings; pass."
+}

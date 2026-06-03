@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the new session layer + command refactor (SessionManager replaces ListenerState).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-02T15:38:48.976Z",
+  "finishedAt": "2026-06-02T15:38:49.415Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:b2c020f27a01faabb96e5d55c11fd219cf7c484c9cf34b3342bfc8444d934c89",
+  "stdoutPath": ".harness/evidence/session-manager/checks/rust.build-20260602153848/stdout.txt",
+  "stderrPath": ".harness/evidence/session-manager/checks/rust.build-20260602153848/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/session-manager/checks/rust.build-20260602153848/stdout.txt",
+    ".harness/evidence/session-manager/checks/rust.build-20260602153848/stderr.txt"
+  ]
+}

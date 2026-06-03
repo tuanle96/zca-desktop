@@ -1,0 +1,83 @@
+{
+    "schemaVersion": 1,
+    "id": "fix-outgoing-echo-dupe",
+    "type": "bugfix",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Fix duplicate outgoing messages. Zalo redelivers an account's own sent message through the realtime listener with a DIFFERENT msg_id than the send-response id, so dedupe-by-msg_id stored/rendered the same message twice (once optimistically on send, once on the listener echo). Reconcile the echo by content signature in both layers: the frontend session store merges an incoming outgoing echo into the matching just-sent optimistic message (adopting the authoritative id) instead of appending a second row; the SQLite store skips inserting an outgoing message whose (account_id, thread_id, body) already exists within a short window under another msg_id.",
+        "allowedLayers": [
+            "store",
+            "command"
+        ],
+        "goals": [
+            "store/: save_message skips an outgoing message when a recent (<=15s) outgoing row with the same thread + body exists under a different msg_id (no duplicate row, no double thread/unread bump)",
+            "Frontend session store: appendToBucket reconciles an outgoing echo into the matching recent optimistic message (same thread + body within 15s), upgrading its id rather than adding a row",
+            "A genuinely distinct outgoing message in the same thread still persists/renders normally",
+            "Offline test proves the store-side echo dedupe across differing msg_ids"
+        ],
+        "nonGoals": [
+            "Changing the self_listen / listener delivery behavior in the zalo layer",
+            "Reconciling non-text message echoes (only text bodies are compared this slice)",
+            "Backfilling/removing duplicate rows already written before the fix (a one-off cleanup, not code)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "store",
+            "description": "store/ save_message dedupes an outgoing echo across differing msg_ids; the new offline test save_message_dedupes_outgoing_echo_across_msg_ids passes and distinct outgoing messages still persist.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "ui",
+            "description": "Frontend builds + type-checks with the appendToBucket echo reconciliation.",
+            "verification": {
+                "command": "npm run check"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: sending a message no longer renders/persists twice. Verified by the project owner on the running app after the fix; the SQLite store holds a single outgoing row per sent message (no body stored twice under two msg_ids in a thread).",
+            "verification": {
+                "command": "grep -q 'outgoing-dedupe-verified' .harness/evidence/fix-outgoing-echo-dupe/checks/db-after-fix-2026-06-03.txt"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer",
+        "reliability-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/fix-outgoing-echo-dupe.json"
+}

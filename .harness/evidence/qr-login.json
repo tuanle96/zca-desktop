@@ -1,0 +1,167 @@
+{
+  "schemaVersion": 1,
+  "taskId": "qr-login",
+  "featureId": "qr-login",
+  "status": "pass",
+  "createdAt": "2026-06-03T01:00:00.000Z",
+  "diffSummary": "Reconciliation of the QR-login feature merged in f343624 (its code shipped but the harness tracking was never completed; the contract required a live phone scan that could not be run by the agent). The zalo layer's run_qr_login wraps zca-rust API::login_qr, maps each LoginQREvent to a non-secret QrLoginEvent display DTO (dropping the token-bearing GotLoginInfo), generates a stable per-account imei (ADR-0004), and assembles a reusable types::Credentials from the QR cookie jar + user agent. command/start_qr_login streams QR display events to the UI over the zalo://qr Tauri event and, on success, establishes the session entirely in-core (credential triple never crosses IPC). The frontend QrLoginScreen.svelte renders the QR image, countdown, scanned avatar/name preview, and declined/success states. This reconciliation captures the previously-missing live proof: the project owner completed a real phone QR scan against the running app and the captured non-secret core log shows the full flow (start_qr_login -> 6 cookies incl. zpw_sek extracted from the jar -> QR confirmed -> credential persisted -> session established -> ui success).",
+  "changedFiles": [
+    "src-tauri/src/types/qr.rs",
+    "src-tauri/src/types/mod.rs",
+    "src-tauri/src/zalo/mod.rs",
+    "src-tauri/src/command/mod.rs"
+  ],
+  "checks": [
+    {
+      "name": "rust.build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles the QR login core (zalo run_qr_login + command start_qr_login + types/qr.rs).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:04:57.604Z",
+      "finishedAt": "2026-06-03T01:05:04.957Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:364a7c20b14de61b571116bb34963ec0d8b314a9090ebcc3237fed697b0b101e",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:cdab485c4e6bdafaca127d6f310b883ae77b4b165f260701a156e2092e0e9a3b",
+      "stdoutPath": ".harness/evidence/qr-login/checks/rust.build-20260603010457/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/rust.build-20260603010457/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/rust.build-20260603010457/stdout.txt",
+        ".harness/evidence/qr-login/checks/rust.build-20260603010457/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean (QR login core).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:05:05.197Z",
+      "finishedAt": "2026-06-03T01:05:06.099Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:364a7c20b14de61b571116bb34963ec0d8b314a9090ebcc3237fed697b0b101e",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:d9533554809e0846c6113df1671caf5d74f2a7b9763b0232786a0b652704164a",
+      "stdoutPath": ".harness/evidence/qr-login/checks/lint-20260603010505/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/lint-20260603010505/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/lint-20260603010505/stdout.txt",
+        ".harness/evidence/qr-login/checks/lint-20260603010505/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test: offline suite passes incl. map_qr_event_forwards_only_non_secret_stages (drops GotLoginInfo), generated_imei_has_expected_shape, credentials_from_qr_requires_cookies, cookies_from_jar_reads_zalo_host_cookies.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:05:19.053Z",
+      "finishedAt": "2026-06-03T01:05:23.400Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:364a7c20b14de61b571116bb34963ec0d8b314a9090ebcc3237fed697b0b101e",
+      "stdoutHash": "sha256:7ba54ab1a2288eae868a212ff31b5b60ad0aadd7b17c5fb01ed56e74aa17ee3b",
+      "stderrHash": "sha256:ea3525777a8c8c9723fa8bf6236457c5902af4eead36921e9dd11232c44249cb",
+      "stdoutPath": ".harness/evidence/qr-login/checks/tests-20260603010519/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/tests-20260603010519/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/tests-20260603010519/stdout.txt",
+        ".harness/evidence/qr-login/checks/tests-20260603010519/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "npm run --silent harness:check",
+      "status": "pass",
+      "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:05:23.641Z",
+      "finishedAt": "2026-06-03T01:05:23.966Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:364a7c20b14de61b571116bb34963ec0d8b314a9090ebcc3237fed697b0b101e",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/qr-login/checks/structural-20260603010523/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/structural-20260603010523/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/structural-20260603010523/stdout.txt",
+        ".harness/evidence/qr-login/checks/structural-20260603010523/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "npm run build",
+      "status": "pass",
+      "summary": "npm run build compiles the QrLoginScreen modal + session store QR plumbing.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:05:24.162Z",
+      "finishedAt": "2026-06-03T01:05:33.253Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:364a7c20b14de61b571116bb34963ec0d8b314a9090ebcc3237fed697b0b101e",
+      "stdoutHash": "sha256:ca1b404d9eaad974914d41d7534230fe415ec999bc292fc50e1299af557c5558",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/qr-login/checks/frontend.build-20260603010524/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/frontend.build-20260603010524/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/frontend.build-20260603010524/stdout.txt",
+        ".harness/evidence/qr-login/checks/frontend.build-20260603010524/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "grep -q 'start_qr_login: session established' .harness/evidence/qr-login/checks/gui-live-2026-06-03.log",
+      "status": "pass",
+      "summary": "Asserts the captured non-secret live QR-login log contains 'start_qr_login: session established' — the project owner completed a real phone scan against the running app; full flow (start_qr_login -> zpw_sek cookie extracted -> session established account_id=1483678772784051123 -> ui success) is in gui-live-2026-06-03.log (cookie NAMES + account ids only, no token values).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:12:51.912Z",
+      "finishedAt": "2026-06-03T01:12:51.919Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:bb0de69ab17b4fd69bb3e2539e68849930c4300773f4e91c2059920e887099e0",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/qr-login/checks/smoke-20260603011251/stdout.txt",
+      "stderrPath": ".harness/evidence/qr-login/checks/smoke-20260603011251/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/qr-login/checks/smoke-20260603011251/stdout.txt",
+        ".harness/evidence/qr-login/checks/smoke-20260603011251/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/qr-login/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/qr-login/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/qr-login/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "qr-imei-not-persisted-stable",
+      "severity": "low",
+      "description": "credentials_from_qr generates a fresh imei via generate_zalo_uuid per QR flow. Now that secure-cred-store persists the issued credential triple (incl. imei) per account, the persisted imei is reused on restore; a brand-new QR scan still mints a new device imei (ADR-0004 letter).",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "ADR-0004 defers upstream device-imei emission; the persisted-credential path (secure-cred-store) reuses the imei on re-login, which covers the stability goal for restored accounts.",
+      "mitigation": "secure-cred-store persists and reuses the per-account credential (incl. imei) on restore; a fresh scan minting a new imei is acceptable for a new device identity.",
+      "acceptedUntil": "2026-09-01T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2026-06-03T01:12:51.993Z"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build --manifest-path src-tauri/Cargo.toml exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:23:33.580Z",
+  "finishedAt": "2026-06-03T02:23:34.470Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:c5cd88c6b155682d8dad0aadfba385b0529e13ceb1302854997c49be8fc8bb18",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:d8e7be27693f18bdd0bb2bc7fac7ff672e29e0751c2e6f3e6d114e7550864c9f",
+  "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stdout.txt",
+    ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stderr.txt"
+  ]
+}

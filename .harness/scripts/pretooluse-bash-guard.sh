@@ -17,6 +17,8 @@
 #                                            baseline-monotonic guard, but the
 #                                            agent should not even try)
 #   7. Setting `disableAllHooks: true` via sed/jq into .claude/settings.json
+#   8. Direct writes to .harness/state/advisor-runs/ or manual subagent-stop.sh
+#      invocation, which can forge advisor runtime proof.
 #
 # Allowed escape hatch: `AHK_ALLOW_BYPASS=1` environment variable. When
 # present, the guard logs the attempt to .harness/bypass.log and lets the
@@ -90,6 +92,14 @@ if echo "$CMD" | grep -qE '(sed|jq).*disableAllHooks.*true.*\.claude/settings\.j
    || echo "$CMD" | grep -qE '\.claude/settings\.json.*disableAllHooks.*true' \
    || echo "$CMD" | grep -qE 'disableAllHooks.*true.*\.claude/settings\.json'; then
   REASON="disableAllHooks: true defeats every protection the kit installs. If you need to temporarily disable a specific hook for debugging, remove it explicitly with a commit message explaining why."
+fi
+
+# Pattern 6: advisor runtime proof must come from the real SubagentStop hook,
+# not from a shell redirection or manual invocation by the parent agent.
+if echo "$CMD" | grep -qE '>\s*\.harness/state/advisor-runs/' \
+   || echo "$CMD" | grep -qE '\.harness/state/advisor-runs/' \
+   || echo "$CMD" | grep -qE '\.harness/scripts/subagent-stop\.sh'; then
+  REASON="Advisor runtime proof is written only by the agent runtime's SubagentStop hook. Invoke the advisor subagent; do not create advisor-runs proof or run subagent-stop.sh manually."
 fi
 
 if [ -z "$REASON" ]; then

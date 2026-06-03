@@ -60,6 +60,13 @@
       ],
       "deny": []
     },
+    "context-query": {
+      "allow": [
+        "Read",
+        "Bash(node .harness/scripts/context-query.mjs*)"
+      ],
+      "deny": []
+    },
     "create-story": {
       "allow": [
         "Read",

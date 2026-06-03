@@ -1,0 +1,61 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "reliability-reviewer",
+    "taskId": "session-manager",
+    "featureId": "session-manager",
+    "decision": "pass",
+    "createdAt": "2026-06-02T15:47:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/session/mod.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "async-boundary",
+        "background-task-lifecycle",
+        "listener-shutdown"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Focus on listener lifecycle (replace/remove), throttle correctness under back-to-back sends, and lock-hold across await points."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "listener-leak-unbounded-vec",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "The previous unbounded Vec<Listener> that never stopped sockets is gone. SessionManager::insert gracefully stops a prior listener (Listener::stop, watch-channel based) before replacing it, and remove() stops it on teardown — resolving the explicit-teardown / per-account lifecycle follow-up from listener-events."
+        }
+    ],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/session/mod.rs",
+            "evidence": "Lifecycle is deterministic and unit-tested with a fake listener: insert_replaces_and_stops_previous_listener proves a re-login stops the old socket exactly once and does not grow the map; remove_stops_listener_and_reports_presence proves teardown + idempotent re-remove. The throttle is computed against an injected `now` Instant so pacing is tested without sleeping (throttle_spaces_same_account_only, throttle_clears_after_interval_elapses). In send_text the throttle lock is released before the await on sleep/send (reserve() returns a Duration and drops its guard), so no Mutex guard is held across an await.",
+            "fix": "None required."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/session/mod.rs",
+            "evidence": "send_text waits the reserved interval with tokio::time::sleep (bounded by the fixed interval, no busy-loop) and delegates the network send to zalo, whose timeouts/retries live in zca-rust. The shared-channel bridge tasks still terminate on receiver/emit error as before.",
+            "fix": "When a stop/restart command is surfaced to the UI, propagate listener disconnect events so a dropped socket becomes visible; non-blocking follow-up."
+        }
+    ],
+    "summary": "Reliability review of the session layer: listener shutdown is now explicit and graceful on both replace and remove (resolving the unbounded-Vec leak), throttle pacing is correct and deterministically tested, and no lock is held across an await on the send path. Live round-trip smoke passed. No blocking findings."
+}

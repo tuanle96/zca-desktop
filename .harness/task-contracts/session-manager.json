@@ -1,0 +1,83 @@
+{
+    "schemaVersion": 1,
+    "id": "session-manager",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Introduce the missing `session` layer (ADR-0003): a SessionManager that owns N concurrent per-account zalo sessions (API + realtime Listener) keyed by account_id, with add/remove/restart lifecycle, graceful listener shutdown via Listener::stop(), and a per-account send throttle (ban-risk r1). The command layer is refactored to delegate to SessionManager instead of holding the in-command HashMap<AccountId, Arc<API>> + Vec<Listener> store; behaviour the UI sees is unchanged.",
+        "goals": [
+            "session/: SessionManager holding AccountSession { api, listener } keyed by AccountId (tokio::sync::Mutex<HashMap>, no new dependency)",
+            "session/: lifecycle — add (insert + replace prior listener with graceful stop), remove (stop listener + drop), restart, get api, list account ids",
+            "session/: per-account send throttle (minimum interval between sends) so automation cannot look spam-like; throttle state lives with the session",
+            "command/: ListenerState replaced by managed SessionManager; login/qr/restore/file paths register via SessionManager; send_message/list_contacts/list_groups resolve the API through it",
+            "Graceful shutdown: replacing or removing a session stops its Listener (Listener::stop) instead of leaking sockets in an unbounded Vec"
+        ],
+        "nonGoals": [
+            "UI account switcher / per-account routing (already present in src/lib/session.svelte.ts)",
+            "Persistence/keychain changes (secure-cred-store / message-cache)",
+            "Adding a concurrency crate such as dashmap (would need an ADR)",
+            "Reconnect/backoff policy beyond what zca-rust already does"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "session",
+            "description": "session/ SessionManager compiles, owns per-account sessions, and unit tests cover add/replace (old listener stopped), remove, and throttle gating. zca-rust types stay confined to the zalo layer.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "lifecycle",
+            "description": "command/ delegates to SessionManager (no in-command session HashMap or listener Vec); cargo build + clippy -D warnings clean.",
+            "verification": {
+                "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: a real account logs in, registers in SessionManager, sends via the throttled send_text path, the manager-owned listener surfaces the marker tagged with the correct account id, and remove() stops the listener; sidecar captures only non-secret diagnostics. (two_accounts_live additionally proves concurrent cardinality once a second test credential is provisioned.)",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored session_manager_roundtrip_live --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer",
+        "reliability-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(npm run*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/session-manager.json"
+}

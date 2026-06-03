@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test offline suite passes (store/crypto/db incl. ciphertext-not-plaintext + dedupe + restart smoke); live/interactive ignored by default.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T00:35:41.073Z",
+  "finishedAt": "2026-06-03T00:35:42.477Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:ff3c867bb097f20258cb95a2fc8eebe1b210bd66666f51ff724ddda90c891157",
+  "stdoutHash": "sha256:e622c68e48bfda801c3d9ce876ff460a5870d2a9df6f5e7a630580c422998bbb",
+  "stderrHash": "sha256:6cdd225f46add54cc68c658fbce1d722af63729f821ae7017b479b4a5b026310",
+  "stdoutPath": ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stdout.txt",
+  "stderrPath": ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stdout.txt",
+    ".harness/evidence/secure-cred-store/checks/tests-20260603003541/stderr.txt"
+  ]
+}

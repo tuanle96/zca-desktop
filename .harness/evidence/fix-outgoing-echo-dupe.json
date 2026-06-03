@@ -1,0 +1,124 @@
+{
+  "schemaVersion": 1,
+  "taskId": "fix-outgoing-echo-dupe",
+  "featureId": "fix-outgoing-echo-dupe",
+  "status": "pass",
+  "createdAt": "2026-06-03T02:05:00.000Z",
+  "diffSummary": "Fix duplicate outgoing messages caused by Zalo redelivering an account's own sent message through the realtime listener with a different msg_id than the send-response id (so dedupe-by-msg_id stored/rendered it twice). store/db.rs save_message now skips an outgoing insert when a recent (<=15s) outgoing row with the same (account_id, thread_id, body) already exists under a different msg_id — no duplicate row and no double thread/unread bump. Frontend src/lib/session.svelte.ts appendToBucket reconciles an incoming outgoing echo into the matching just-sent optimistic message (same thread + body within 15s), upgrading its id in place rather than adding a second bubble. A distinct outgoing message in the same thread still persists/renders. Root cause was confirmed from the live SQLite store (same body under msg_ids 7894868867250 [send response] and 7894868928111 [listener echo], 0.75s apart).",
+  "changedFiles": [
+    "src-tauri/src/store/db.rs",
+    "src/lib/session.svelte.ts"
+  ],
+  "checks": [
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test: offline suite passes incl. save_message_dedupes_outgoing_echo_across_msg_ids (echo across differing msg_ids deduped; distinct outgoing still persists).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:15:17.285Z",
+      "finishedAt": "2026-06-03T02:15:26.664Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+      "stdoutHash": "sha256:293b7b8dfff0b89fdab2bcdeb433f686b96d8fa52df04a4d926be84e869677e1",
+      "stderrHash": "sha256:c4cb9c871d8b98ee2d4a96b3fd9e6885b9bc04fbbf847d5acb5859f259266bbb",
+      "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stdout.txt",
+      "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stdout.txt",
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/tests-20260603021517/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:15:26.874Z",
+      "finishedAt": "2026-06-03T02:15:27.947Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:cbad3e526dd89d5bff8a3fc4552fe58586db996b923a31cb8e637eef6e98bd9a",
+      "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stdout.txt",
+      "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stdout.txt",
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "grep -q outgoing-dedupe-verified .harness/evidence/fix-outgoing-echo-dupe/checks/db-after-fix-2026-06-03.txt",
+      "status": "pass",
+      "summary": "Live: after the fix, the local SQLite store has 0 outgoing (thread,body) duplicates; sends after the rebuild persisted as single rows (the one pre-fix dupe was cleaned up). Asserts the db-after-fix artifact contains the verified marker.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:15:48.650Z",
+      "finishedAt": "2026-06-03T02:15:48.657Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stdout.txt",
+      "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stdout.txt",
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.check",
+      "command": "npm run check",
+      "status": "pass",
+      "summary": "npm run check (svelte-check) 0 errors / 0 warnings with the appendToBucket echo reconciliation.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T02:19:31.127Z",
+      "finishedAt": "2026-06-03T02:19:34.150Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:d86fdd8d642c06be102f5ba0fb3026dbec996678270886c9e992e2c8d46e2397",
+      "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/frontend.check-20260603021931/stdout.txt",
+      "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/frontend.check-20260603021931/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/frontend.check-20260603021931/stdout.txt",
+        ".harness/evidence/fix-outgoing-echo-dupe/checks/frontend.check-20260603021931/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/fix-outgoing-echo-dupe/advisor-decision.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/fix-outgoing-echo-dupe/architecture-reviewer.json"
+    },
+    {
+      "name": "reliability-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/fix-outgoing-echo-dupe/reliability-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "echo-dedupe-identical-rapid-sends",
+      "severity": "low",
+      "description": "Two genuinely identical outgoing messages to the same thread within 15s collapse into one (the content+window signature cannot distinguish an intentional duplicate send from a listener echo).",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "Sending the exact same text twice within 15s is rare and low-impact; correctness of the common case (no echo dupes) outweighs it. The window is short and scoped to outgoing+same-body.",
+      "mitigation": "If needed later, carry a client-generated correlation id from send through the listener echo to reconcile exactly instead of by content signature."
+    }
+  ],
+  "updatedAt": "2026-06-03T02:19:34.265Z"
+}

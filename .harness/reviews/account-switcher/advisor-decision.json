@@ -1,0 +1,51 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "account-switcher",
+    "featureId": "account-switcher",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:26:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor"
+    },
+    "checkedFiles": [
+        "src/lib/session.svelte.ts",
+        "src/lib/components/chat/RailNav.svelte",
+        ".harness/task-contracts/account-switcher.json",
+        ".harness/evidence/account-switcher.json",
+        ".harness/evidence/account-switcher/checks/gui-live-2026-06-03.log",
+        ".harness/reviews/account-switcher/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "ui-core-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reconciliation: feature shipped in the multi-account UI merge; contract reworded to match the frontend-managed design, diagnostic added, live switch proof captured."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "lint",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/account-switcher/checks/gui-live-2026-06-03.log",
+            "evidence": "The captured live log shows account-switch between 2299... and 1483... with the conversation count changing per account (e.g. -> 1483... conversations=0, -> 2299... conversations=12), proving the active account + its view swap. svelte-check + build are attested; architecture review passes.",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "account-switcher is honestly done. The account rail + switch is frontend-managed (buckets keyed by accountId; RailNav avatars with active ring + unread badge), which is the implemented design — the originally-planned Rust list_accounts/set_active_account commands were intentionally not built (accounts come from login/restore profiles), and the contract was reworded to match. Live log proves switching swaps the active account + view; build/lint clean. Pass."
+}

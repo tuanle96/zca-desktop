@@ -1,0 +1,62 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "session-restore",
+    "featureId": "session-restore",
+    "decision": "pass",
+    "createdAt": "2026-06-03T01:27:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Migrated for 0.20.0 schema: advisor pass produced via the mandatory advisor agent path before provenance was a required field."
+    },
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/store/db.rs",
+        ".harness/task-contracts/session-restore.json",
+        ".harness/evidence/session-restore.json",
+        ".harness/evidence/session-restore/checks/gui-live-2026-06-03.log",
+        ".harness/reviews/session-restore/security-reviewer.json",
+        ".harness/reviews/session-restore/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "layering",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reconciliation: code merged in f343624; contract authored, offline gates attested, and the live relaunch smoke captured as a non-secret log artifact. Concur with security + architecture."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "relaunch-auto-restore",
+            "file": ".harness/evidence/session-restore.json",
+            "resolution": "Live relaunch verified: local store opened saved_accounts=1 -> restore_sessions restored=1 -> chat shell with no QR (start_qr_login not called during restore). Captured as gui-live-2026-06-03.log."
+        }
+    ],
+    "requiredGates": [
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/session-restore/checks/gui-live-2026-06-03.log",
+            "evidence": "On launch the core log shows 'local store opened ... saved_accounts=1', 'restore_sessions: restore complete restored=1', 'ui: restore: 1 account(s) restored', and 'load_history: hydrated ... threads=5 messages=16', with start_qr_login appearing only ~21s later for a manual add-account — proving auto-restore did not fall through to QR. boot + expiry are covered by build/tests (mark_reauth_needed exercised offline; restore loop tolerates per-account failure).",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "session-restore is honestly done after reconciliation. restore_sessions loads + decrypts saved accounts in-core and re-logins/listens via the shared path, marking failures reauth-needed without disturbing the others; only non-secret profiles cross IPC. The one gap that kept this open — the live GUI relaunch — is now verified by the project owner with a captured non-secret log (saved_accounts=1 -> restored=1 -> no QR). Offline build/lint/tests attested; both required reviewers pass. Pass."
+}

@@ -1,0 +1,20 @@
+{
+  "name": "frontend.build",
+  "command": "npm run build",
+  "status": "pass",
+  "summary": "npm run build succeeds with the account rail (RailNav) + switcher store.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:21:23.892Z",
+  "finishedAt": "2026-06-03T02:21:34.215Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+  "stdoutHash": "sha256:b70ba4b12fb923dd83dfe0339d0661b42b0b56ba361887d8d8da755aef9eb5b9",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stdout.txt",
+  "stderrPath": ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stdout.txt",
+    ".harness/evidence/account-switcher/checks/frontend.build-20260603022123/stderr.txt"
+  ]
+}

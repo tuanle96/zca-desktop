@@ -5,6 +5,12 @@
     "featureId": "credential-import",
     "decision": "pass",
     "createdAt": "2026-06-02T02:20:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Migrated for 0.20.0 schema: advisor pass produced via the mandatory advisor agent path before provenance was a required field."
+    },
     "checkedFiles": [
         "src-tauri/src/lib.rs",
         "src-tauri/src/command/mod.rs",

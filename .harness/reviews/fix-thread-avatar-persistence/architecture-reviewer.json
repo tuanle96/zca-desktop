@@ -1,0 +1,51 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "fix-thread-avatar-persistence",
+    "featureId": "fix-thread-avatar-persistence",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:25:30.000Z",
+    "checkedFiles": [
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/stored.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/store/db.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Change spans types -> store -> command, all within the forward-only order. No layer added, renamed, or reordered; no ADR needed."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "ThreadIdentity is added to the types layer (pure data, camelCase, no rusqlite). backfill_thread_identities lives in the store layer and keeps rusqlite confined there (prepared UPDATE inside a transaction). command/ list_contacts/list_groups depend downward on store + types only and call the store through the typed function via the injected StoreState — the Tauri IPC argument shape (accountId) is unchanged, so the frontend needs no change. Forward-only dependency direction (command -> store -> types) is preserved.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review: the avatar/title persistence fix is applied at the correct seams — a pure DTO in types, an UPDATE-only repository function in store (rusqlite confined), and a best-effort backfill call from command after the directory fetch. No layer boundary moved and no IPC contract changed. Forward-only layering intact. Approve."
+}

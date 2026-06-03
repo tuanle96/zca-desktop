@@ -164,7 +164,7 @@ function defaultLanes(config) {
       id: "explore",
       description: "Read-only inspection, discovery, and status lanes.",
       expectedModel: models.explore || models.main || "claude-haiku-4-5",
-      matchSkills: ["inspect-*", "map-domain", "project-status", "context-health", "skill-discovery"],
+      matchSkills: ["inspect-*", "map-domain", "project-status", "context-health", "skill-discovery", "context-query"],
     },
     {
       id: "eval",

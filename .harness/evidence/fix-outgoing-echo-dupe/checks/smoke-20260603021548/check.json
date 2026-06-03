@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q outgoing-dedupe-verified .harness/evidence/fix-outgoing-echo-dupe/checks/db-after-fix-2026-06-03.txt",
+  "status": "pass",
+  "summary": "Live: after the fix, the local SQLite store has 0 outgoing (thread,body) duplicates; sends after the rebuild persisted as single rows (the one pre-fix dupe was cleaned up). Asserts the db-after-fix artifact contains the verified marker.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:15:48.650Z",
+  "finishedAt": "2026-06-03T02:15:48.657Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stdout.txt",
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/smoke-20260603021548/stderr.txt"
+  ]
+}

@@ -1,0 +1,45 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "message-cache",
+    "featureId": "message-cache",
+    "decision": "pass",
+    "createdAt": "2026-06-03T00:35:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/store/mod.rs",
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reconciliation diff is a single-layer (store) test addition; verified the existing message/thread/attachment repositories keep rusqlite confined to store and that command consumes them through typed functions only."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "The message-cache repositories (save_message dedupe, save_attachment, load_threads, load_recent_messages, clear_unread) live entirely in the store layer; rusqlite types do not leak above it, and command/ persists via persist_incoming + the send path through typed functions. types/stored.rs holds the camelCase DTOs returned to the UI. The reconciliation change adds only an offline restart smoke (message_cache_roundtrip) in the store test module — no layer boundary is crossed.",
+            "fix": "None required. An attachment loader lands when the UI renders attachments (already noted as a future slice)."
+        }
+    ],
+    "summary": "Architecture review (reconciliation): the merged message-cache code keeps persistence confined to the store layer with typed repositories, command consumes them without touching rusqlite, and the DTOs are pure types. The reconciliation diff is a single store-layer test that proves restart durability. Forward-only layering intact. Approve."
+}

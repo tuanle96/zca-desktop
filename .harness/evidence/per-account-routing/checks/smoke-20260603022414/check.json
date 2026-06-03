@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q 'route: msg account=.* -> background-bucket' .harness/evidence/per-account-routing/checks/gui-live-2026-06-03.log",
+  "status": "pass",
+  "summary": "Live no-leak: with two accounts online, a message received on the background account is routed to ITS bucket, not the active account's view. The captured non-secret log shows 'route: msg account=1483... -> background-bucket (active=2299...)' and the reverse. Asserts the artifact contains a background-bucket route.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:24:14.695Z",
+  "finishedAt": "2026-06-03T02:24:14.705Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:3f602b932d2e21842a477c6070c2fb144a49aac4477e9bb0e95b6ae86632a2ea",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stdout.txt",
+  "stderrPath": ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stdout.txt",
+    ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stderr.txt"
+  ]
+}

@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q 'restore_sessions: restore complete restored=1' .harness/evidence/session-restore/checks/gui-live-2026-06-03.log",
+  "status": "pass",
+  "summary": "Asserts the captured non-secret live relaunch log contains 'restore_sessions: restore complete restored=1' — the project owner relaunched the app and the saved account auto-reconnected with no QR (saved_accounts=1 -> restored=1 -> load_history threads=5 messages=16; start_qr_login NOT called during restore). Log artifact is non-secret (account ids only).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T01:15:07.831Z",
+  "finishedAt": "2026-06-03T01:15:07.836Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:26cb3a23904a4c847dd42d4e6e672c9045ce76d17d4729200e5c59a3ff1264af",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/session-restore/checks/smoke-20260603011507/stdout.txt",
+  "stderrPath": ".harness/evidence/session-restore/checks/smoke-20260603011507/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/session-restore/checks/smoke-20260603011507/stdout.txt",
+    ".harness/evidence/session-restore/checks/smoke-20260603011507/stderr.txt"
+  ]
+}

@@ -1,0 +1,123 @@
+{
+  "schemaVersion": 1,
+  "taskId": "session-restore",
+  "featureId": "session-restore",
+  "status": "pass",
+  "createdAt": "2026-06-03T01:08:00.000Z",
+  "diffSummary": "Reconciliation of the session-restore feature merged in f343624 (code shipped; the contract/evidence were never authored and its smoke needed a live GUI relaunch). command/restore_sessions loads each saved account from the local store, decrypts its credential with the keychain master key, and re-logs-in + re-listens via the shared login_and_listen path, returning the restored profiles; an account whose login fails is marked reauth-needed (store.mark_reauth_needed) and skipped so the others still come online. The frontend (session.svelte.ts restore()) calls restore_sessions at startup behind a loading gate and shows the QR screen only when zero accounts restore. This reconciliation captures the previously-missing live relaunch proof: on launch the core log shows the saved account auto-reconnecting with no QR.",
+  "changedFiles": [
+    "src-tauri/src/command/mod.rs"
+  ],
+  "checks": [
+    {
+      "name": "rust.build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles restore_sessions + the shared login_and_listen restore path.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:09:06.531Z",
+      "finishedAt": "2026-06-03T01:09:07.337Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:b086460c0482bfa156955d2fbf21d88ec5de7ac6b6e4ef60c29b91d67f51c410",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:93a9750a90ebd973ec3f714d39e412b44eb5ed423aade70d185ebcb11081f183",
+      "stdoutPath": ".harness/evidence/session-restore/checks/rust.build-20260603010906/stdout.txt",
+      "stderrPath": ".harness/evidence/session-restore/checks/rust.build-20260603010906/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-restore/checks/rust.build-20260603010906/stdout.txt",
+        ".harness/evidence/session-restore/checks/rust.build-20260603010906/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:09:07.559Z",
+      "finishedAt": "2026-06-03T01:09:08.413Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:b086460c0482bfa156955d2fbf21d88ec5de7ac6b6e4ef60c29b91d67f51c410",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:deb6cb4a6c3e79707fe01a80013f10f53ed028864b8a94992b33872d11736be8",
+      "stdoutPath": ".harness/evidence/session-restore/checks/lint-20260603010907/stdout.txt",
+      "stderrPath": ".harness/evidence/session-restore/checks/lint-20260603010907/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-restore/checks/lint-20260603010907/stdout.txt",
+        ".harness/evidence/session-restore/checks/lint-20260603010907/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test: offline suite passes incl. delete_removes_account_row exercising mark_reauth_needed; restore loop tolerates per-account failure.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:09:08.703Z",
+      "finishedAt": "2026-06-03T01:09:10.057Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:b086460c0482bfa156955d2fbf21d88ec5de7ac6b6e4ef60c29b91d67f51c410",
+      "stdoutHash": "sha256:d311c3abd8a96dd7a3e2384ebc0637b2d3e246aeb3cfe528ae03507c1b8aa732",
+      "stderrHash": "sha256:9fd1a72eb333af52f62a2257c7e1e60b280e1f9a0b54ece53aadb085df2b1c49",
+      "stdoutPath": ".harness/evidence/session-restore/checks/tests-20260603010908/stdout.txt",
+      "stderrPath": ".harness/evidence/session-restore/checks/tests-20260603010908/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-restore/checks/tests-20260603010908/stdout.txt",
+        ".harness/evidence/session-restore/checks/tests-20260603010908/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "grep -q 'restore_sessions: restore complete restored=1' .harness/evidence/session-restore/checks/gui-live-2026-06-03.log",
+      "status": "pass",
+      "summary": "Asserts the captured non-secret live relaunch log contains 'restore_sessions: restore complete restored=1' — the project owner relaunched the app and the saved account auto-reconnected with no QR (saved_accounts=1 -> restored=1 -> load_history threads=5 messages=16; start_qr_login NOT called during restore). Log artifact is non-secret (account ids only).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T01:15:07.831Z",
+      "finishedAt": "2026-06-03T01:15:07.836Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:26cb3a23904a4c847dd42d4e6e672c9045ce76d17d4729200e5c59a3ff1264af",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/session-restore/checks/smoke-20260603011507/stdout.txt",
+      "stderrPath": ".harness/evidence/session-restore/checks/smoke-20260603011507/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-restore/checks/smoke-20260603011507/stdout.txt",
+        ".harness/evidence/session-restore/checks/smoke-20260603011507/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-restore/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-restore/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-restore/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "keychain-key-loss",
+      "severity": "medium",
+      "description": "If the OS keychain master key is lost (e.g. OS reinstall), saved credentials become undecryptable; load_accounts skips those rows and the account is surfaced for a fresh QR scan rather than crashing.",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "Correct security posture (ADR-0005): a leaked DB without the keychain key is not a session leak; re-scan is a low-cost recovery.",
+      "mitigation": "restore_sessions tolerates per-account failure and marks reauth-needed; undecryptable rows are skipped, not fatal."
+    }
+  ],
+  "updatedAt": "2026-06-03T01:15:07.900Z"
+}

@@ -1,0 +1,6 @@
+outgoing-dedupe-verified 2026-06-03
+local SQLite store after the echo-reconciliation fix (account ids/bodies are local user data on the owner machine; this artifact records only counts).
+outgoing_rows=4
+outgoing_threadbody_duplicates=0
+result: PASS (no outgoing message stored twice across differing msg_ids)
+note: one pre-fix duplicate (send-id 7894868867250 vs echo-id 7894868928111) was cleaned up; all sends after the rebuild persisted as single rows.

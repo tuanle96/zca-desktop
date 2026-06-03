@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q 'start_qr_login: session established' .harness/evidence/qr-login/checks/gui-live-2026-06-03.log",
+  "status": "pass",
+  "summary": "Asserts the captured non-secret live QR-login log contains 'start_qr_login: session established' — the project owner completed a real phone scan against the running app; full flow (start_qr_login -> zpw_sek cookie extracted -> session established account_id=1483678772784051123 -> ui success) is in gui-live-2026-06-03.log (cookie NAMES + account ids only, no token values).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T01:12:51.912Z",
+  "finishedAt": "2026-06-03T01:12:51.919Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:bb0de69ab17b4fd69bb3e2539e68849930c4300773f4e91c2059920e887099e0",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/qr-login/checks/smoke-20260603011251/stdout.txt",
+  "stderrPath": ".harness/evidence/qr-login/checks/smoke-20260603011251/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/qr-login/checks/smoke-20260603011251/stdout.txt",
+    ".harness/evidence/qr-login/checks/smoke-20260603011251/stderr.txt"
+  ]
+}

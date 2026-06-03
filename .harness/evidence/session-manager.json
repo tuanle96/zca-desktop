@@ -1,0 +1,151 @@
+{
+  "schemaVersion": 1,
+  "taskId": "session-manager",
+  "featureId": "session-manager",
+  "status": "pass",
+  "createdAt": "2026-06-02T15:37:00.000Z",
+  "diffSummary": "Introduced the missing `session` layer (ADR-0003 order types→config→store→zalo→session→command). Added src-tauri/src/session/mod.rs: a SessionManager that owns N concurrent per-account sessions keyed by AccountId, each pairing the authenticated API handle with its live realtime listener. Lifecycle: insert() treats a re-login as a restart and gracefully stops the previous listener (via Listener::stop) before replacing it; remove() stops the listener and clears the account's pacing state; get()/account_ids()/count() expose the set. A per-account SendThrottle spaces outbound messages by at least DEFAULT_SEND_INTERVAL (800ms) so the client cannot behave spam-like (project risk r1). The realtime listener is abstracted behind a MessageListener trait (implemented for zalo::Listener) so lifecycle logic is unit-testable and zca-rust's concrete type stays confined to the zalo layer. command/mod.rs: the in-command ListenerState { HashMap<AccountId, Arc<API>> + unbounded Vec<Listener> } is replaced by managed SessionState(SessionManager); login/QR/restore/file paths register via SessionManager::insert; send_message delegates to SessionManager::send_text (throttled); list_contacts/list_groups resolve the API via SessionManager::get. lib.rs manages SessionState::default(). The UI IPC surface is unchanged (the multi-account rail/routing in src/lib/session.svelte.ts already existed). 6 new offline tests cover replace-stops-old-listener, remove, multi-account tracking, and throttle pacing; a #[ignore] two_accounts_live smoke logs in two real accounts and proves both receive their own self-listen marker tagged with the correct account id (no cross-account leak) and that removal stops both listeners.",
+  "changedFiles": [
+    "src-tauri/src/session/mod.rs",
+    "src-tauri/src/command/mod.rs",
+    "src-tauri/src/lib.rs"
+  ],
+  "checks": [
+    {
+      "name": "rust.build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles the new session layer + command refactor (SessionManager replaces ListenerState).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-02T15:38:48.976Z",
+      "finishedAt": "2026-06-02T15:38:49.415Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:b2c020f27a01faabb96e5d55c11fd219cf7c484c9cf34b3342bfc8444d934c89",
+      "stdoutPath": ".harness/evidence/session-manager/checks/rust.build-20260602153848/stdout.txt",
+      "stderrPath": ".harness/evidence/session-manager/checks/rust.build-20260602153848/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-manager/checks/rust.build-20260602153848/stdout.txt",
+        ".harness/evidence/session-manager/checks/rust.build-20260602153848/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean for the session layer + command refactor + live test.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-02T15:39:12.705Z",
+      "finishedAt": "2026-06-02T15:39:13.294Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:45d8f7d972875790a6cec7ca48e9acc17c5af68372da1940633becec3b4cd60a",
+      "stdoutPath": ".harness/evidence/session-manager/checks/lint-20260602153912/stdout.txt",
+      "stderrPath": ".harness/evidence/session-manager/checks/lint-20260602153912/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-manager/checks/lint-20260602153912/stdout.txt",
+        ".harness/evidence/session-manager/checks/lint-20260602153912/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test: 29 passed offline incl. 6 new session-layer tests (replace stops old listener, remove, multi-account tracking, throttle pacing); 9 live tests ignored by default.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-02T15:39:34.032Z",
+      "finishedAt": "2026-06-02T15:39:35.342Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+      "stdoutHash": "sha256:9e8dd7627a4383008e3f353d42e9f365e5e60af0e34d9c71f7ca8c51ec3e91da",
+      "stderrHash": "sha256:6cdd225f46add54cc68c658fbce1d722af63729f821ae7017b479b4a5b026310",
+      "stdoutPath": ".harness/evidence/session-manager/checks/tests-20260602153934/stdout.txt",
+      "stderrPath": ".harness/evidence/session-manager/checks/tests-20260602153934/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-manager/checks/tests-20260602153934/stdout.txt",
+        ".harness/evidence/session-manager/checks/tests-20260602153934/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "npm run --silent harness:check",
+      "status": "pass",
+      "summary": "npm run harness:check no-op pass (structuralTest.engine=none per ADR-0003); layer order enforced by config domains[].layers.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-02T15:39:43.548Z",
+      "finishedAt": "2026-06-02T15:39:43.896Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/session-manager/checks/structural-20260602153943/stdout.txt",
+      "stderrPath": ".harness/evidence/session-manager/checks/structural-20260602153943/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-manager/checks/structural-20260602153943/stdout.txt",
+        ".harness/evidence/session-manager/checks/structural-20260602153943/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored session_manager_roundtrip_live --nocapture",
+      "status": "pass",
+      "summary": "Live: real account logged in, registered in SessionManager, sent ONE message via the throttled send_text path to the authorized recipient (resolved by phone); the manager-owned listener surfaced the marker tagged with the correct account id; remove() stopped the listener (count 1 -> 0). Non-secret diagnostics only.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-02T15:43:46.856Z",
+      "finishedAt": "2026-06-02T15:43:56.036Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:fe9c597a8f5e40dd658a7122be4943f2032fd957be69b4e50a323b8ad3920a20",
+      "stdoutHash": "sha256:d8fdbf03873a0c2c53d67f32b282379f1d757bb7f59d1380b6ca2d3e76e09984",
+      "stderrHash": "sha256:00f92fe304fbf994a1cc64e0b9d071d82e0860d0e6c63b861f6691fb5bb0c401",
+      "stdoutPath": ".harness/evidence/session-manager/checks/smoke-20260602154346/stdout.txt",
+      "stderrPath": ".harness/evidence/session-manager/checks/smoke-20260602154346/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/session-manager/checks/smoke-20260602154346/stdout.txt",
+        ".harness/evidence/session-manager/checks/smoke-20260602154346/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-manager/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-manager/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-manager/architecture-reviewer.json"
+    },
+    {
+      "name": "reliability-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/session-manager/reliability-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "send-throttle-missing",
+      "severity": "medium",
+      "description": "Per-account send rate limiting was missing; bulk/automated sends could look spam-like and risk an account ban (project risk r1).",
+      "disposition": "mitigated",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "Resolved by the session layer's per-account SendThrottle (DEFAULT_SEND_INTERVAL=800ms), exercised by offline tests and applied on the send_message path.",
+      "mitigation": "SessionManager::send_text reserves a per-account slot and waits before sending; different accounts are paced independently.",
+      "acceptedUntil": "2026-07-15T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2026-06-02T15:43:56.085Z"
+}

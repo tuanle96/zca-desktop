@@ -1,0 +1,55 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "per-account-routing",
+    "featureId": "per-account-routing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:37:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor"
+    },
+    "checkedFiles": [
+        "src/lib/session.svelte.ts",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs",
+        ".harness/task-contracts/per-account-routing.json",
+        ".harness/evidence/per-account-routing.json",
+        ".harness/evidence/per-account-routing/checks/gui-live-2026-06-03.log",
+        ".harness/reviews/per-account-routing/security-reviewer.json",
+        ".harness/reviews/per-account-routing/architecture-reviewer.json"
+    ],
+    "checkedInvariants": [
+        "cross-account-isolation",
+        "event-tagging",
+        "layering"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Reconciliation: shipped in the multi-account merge; contract reworded to match the IncomingMessage.account_id tagging design, diagnostic added, live no-leak proof captured."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/per-account-routing/checks/gui-live-2026-06-03.log",
+            "evidence": "The captured live log shows both directions of the no-leak invariant: 'route: msg account=1483... -> background-bucket (active=2299...)' and 'route: msg account=2299... -> background-bucket (active=1483...)'. Events are tagged at the source (IncomingMessage.account_id) and routed by the ui store keyed on it. cargo test (listener mapping) + svelte-check are attested; security + architecture reviewers pass.",
+            "fix": "None required to mark done."
+        }
+    ],
+    "summary": "per-account-routing is honestly done. Events carry the receiving account on IncomingMessage.account_id (the planned AppEvent design realized inline), and the frontend store routes strictly by it — a background account's message lands in its own bucket and never enters the active account's view, proven live in both directions. types/route covered by build + tests; the no-leak smoke is captured. Pass."
+}

@@ -1,9 +1,9 @@
 
 running 1 test
-cred_store_roundtrip OK: ciphertext on disk, decrypts in memory
-test store::db::tests::cred_store_roundtrip ... ok
+message_cache_roundtrip OK: 2 threads + 3 messages restored after restart (no realtime event)
+test store::db::tests::message_cache_roundtrip ... ok
 
-test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 30 filtered out; finished in 0.47s
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 39 filtered out; finished in 0.02s
 
 
 running 0 tests

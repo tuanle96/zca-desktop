@@ -1,0 +1,44 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "per-account-routing",
+    "featureId": "per-account-routing",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:35:00.000Z",
+    "checkedFiles": [
+        "src/lib/session.svelte.ts",
+        "src-tauri/src/types/events.rs",
+        "src-tauri/src/zalo/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "event-tagging"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Event tagging is on types::IncomingMessage.account_id (stamped in the zalo layer); the ui store routes by it. No layer boundary moved this slice."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/types/events.rs",
+            "evidence": "IncomingMessage.account_id is the per-account tag (pure types layer, no zca-rust dep); the zalo listener stamps it with api.get_own_id() so each event is attributable to its account. The ui session store keys AccountData by account_id and ingest() routes by msg.accountId. This is the concrete realization of the planned AppEvent { account_id, payload } — a separate wrapper type was unnecessary. Forward-only layering intact.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review: events are tagged at the source (IncomingMessage.account_id, stamped in zalo) and routed by the ui store keyed on account_id — the planned AppEvent design realized inline. No layer boundary changed. Approve."
+}

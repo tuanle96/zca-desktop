@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles restore_sessions + the shared login_and_listen restore path.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T01:09:06.531Z",
+  "finishedAt": "2026-06-03T01:09:07.337Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:b086460c0482bfa156955d2fbf21d88ec5de7ac6b6e4ef60c29b91d67f51c410",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:93a9750a90ebd973ec3f714d39e412b44eb5ed423aade70d185ebcb11081f183",
+  "stdoutPath": ".harness/evidence/session-restore/checks/rust.build-20260603010906/stdout.txt",
+  "stderrPath": ".harness/evidence/session-restore/checks/rust.build-20260603010906/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/session-restore/checks/rust.build-20260603010906/stdout.txt",
+    ".harness/evidence/session-restore/checks/rust.build-20260603010906/stderr.txt"
+  ]
+}

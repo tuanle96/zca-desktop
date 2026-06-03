@@ -1,26 +1,37 @@
 {
-  "$schema": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/v0.19.0/schema.json",
-  "version": "0.19.0",
+  "$schema": "https://raw.githubusercontent.com/tuanle96/agent-harness-kit/v0.20.0/schema.json",
+  "version": "0.20.0",
   "language": "rust",
   "framework": "tauri",
   "preset": "generic",
   "workspace": {
-  "units": []
-},
+    "units": []
+  },
   "domains": [
     {
       "name": "default",
       "root": "src-tauri/src",
-      "layers": ["types", "config", "store", "zalo", "session", "command"],
+      "layers": [
+        "types",
+        "config",
+        "store",
+        "zalo",
+        "session",
+        "command"
+      ],
       "layerDirPattern": "{layer}",
       "useIdentPattern": "{layer}"
     }
   ],
-  "providers": ["auth", "telemetry", "feature-flags"],
+  "providers": [
+    "auth",
+    "telemetry",
+    "feature-flags"
+  ],
   "agentRuntime": {
     "targets": [
-  "kiro"
-],
+      "kiro"
+    ],
     "primary": "kiro",
     "claude": {
       "instructionFile": "CLAUDE.md",
@@ -48,12 +59,12 @@
     "modelReasoningEffort": "high",
     "sandboxMode": "read-only",
     "triggers": [
-  "claim-done",
-  "high-risk-mutation",
-  "cross-layer-change",
-  "security-touching",
-  "new-public-api"
-],
+      "claim-done",
+      "high-risk-mutation",
+      "cross-layer-change",
+      "security-touching",
+      "new-public-api"
+    ],
     "blockOnSkip": true
   },
   "ownership": {
@@ -69,21 +80,49 @@
       {
         "id": "no-raw-env-outside-config",
         "kind": "no-raw-env",
-        "allowLayers": ["config"],
-        "allowPaths": ["src/config/**", "src/env.ts", "src/env.*"]
+        "allowLayers": [
+          "config"
+        ],
+        "allowPaths": [
+          "src/config/**",
+          "src/env.ts",
+          "src/env.*"
+        ]
       },
       {
         "id": "no-db-in-ui",
         "kind": "no-db-in-ui",
-        "uiLayers": ["ui"],
-        "dbLayers": ["repo"],
-        "dbImportSpecifiers": ["@prisma/client", "drizzle-orm", "knex", "mongodb", "mongoose", "mysql2", "pg", "sequelize", "typeorm"]
+        "uiLayers": [
+          "ui"
+        ],
+        "dbLayers": [
+          "repo"
+        ],
+        "dbImportSpecifiers": [
+          "@prisma/client",
+          "drizzle-orm",
+          "knex",
+          "mongodb",
+          "mongoose",
+          "mysql2",
+          "pg",
+          "sequelize",
+          "typeorm"
+        ]
       },
       {
         "id": "no-provider-bypass",
         "kind": "no-provider-bypass",
-        "allowLayers": ["config"],
-        "allowPaths": ["src/providers/**", "src/provider/**", "src/telemetry/**", "src/instrumentation.ts", "src/instrumentation.*"]
+        "allowLayers": [
+          "config"
+        ],
+        "allowPaths": [
+          "src/providers/**",
+          "src/provider/**",
+          "src/telemetry/**",
+          "src/instrumentation.ts",
+          "src/instrumentation.*"
+        ]
       },
       {
         "id": "no-dynamic-import-in-layered-code",
@@ -97,19 +136,26 @@
     "rulesDir": ".harness/fitness/rules",
     "checker": ".harness/scripts/check-architecture-fitness.mjs",
     "blockOnViolation": true,
-    "includeExamples": true  },
+    "includeExamples": true
+  },
   "policyPacks": {
-  "enabled": true,
-  "packsDir": ".harness/policy-packs",
-  "schemaPath": ".harness/schemas/policy-pack.schema.json",
-  "validator": ".harness/scripts/check-policy-packs.mjs",
-  "selected": [],
-  "applied": []
-},
+    "enabled": true,
+    "packsDir": ".harness/policy-packs",
+    "schemaPath": ".harness/schemas/policy-pack.schema.json",
+    "validator": ".harness/scripts/check-policy-packs.mjs",
+    "selected": [],
+    "applied": []
+  },
   "policyPackPublishing": {
     "publisher": ".harness/scripts/policy-pack-publish.mjs",
     "dryRunOnly": true,
-    "allowedFiles": ["pack.json", "README.md", "LICENSE", "LICENSE.md", "fitness-rules/*.json"]
+    "allowedFiles": [
+      "pack.json",
+      "README.md",
+      "LICENSE",
+      "LICENSE.md",
+      "fitness-rules/*.json"
+    ]
   },
   "schemaPolicy": {
     "policyPath": ".harness/schema-policy.json",
@@ -121,7 +167,13 @@
   },
   "strictness": {
     "tier": "standard",
-    "availableTiers": ["starter", "standard", "strict", "release", "team"],
+    "availableTiers": [
+      "starter",
+      "standard",
+      "strict",
+      "release",
+      "team"
+    ],
     "migrationCommand": "node .harness/scripts/strictness.mjs set <tier>"
   },
   "structuralBaseline": {
@@ -140,34 +192,83 @@
     "schemaPath": ".harness/schemas/eval-task.schema.json",
     "checker": ".harness/scripts/check-eval-tasks.mjs",
     "scheduleCron": "0 6 * * *",
-    "dimensions": ["outcome", "process", "style", "efficiency"],
-    "truthSignals": ["acceptanceChecks", "structuralTest", "requiredFiles", "skillsInvoked", "rubric"]
+    "dimensions": [
+      "outcome",
+      "process",
+      "style",
+      "efficiency"
+    ],
+    "truthSignals": [
+      "acceptanceChecks",
+      "structuralTest",
+      "requiredFiles",
+      "skillsInvoked",
+      "rubric"
+    ]
   },
   "adversarial": {
     "enabled": true,
     "casesDir": ".harness/adversarial/cases",
     "checker": ".harness/scripts/check-adversarial-suite.mjs",
-    "failureModes": ["false-done", "fake-evidence", "missing-attestation", "protected-path-bypass", "unsafe-command", "unreviewed-bypass", "prompt-injection", "hook-weakening", "permission-bypass", "review-gap", "adr-gap", "stale-evidence", "isolation-gap"]
+    "failureModes": [
+      "false-done",
+      "fake-evidence",
+      "missing-attestation",
+      "protected-path-bypass",
+      "unsafe-command",
+      "unreviewed-bypass",
+      "prompt-injection",
+      "hook-weakening",
+      "permission-bypass",
+      "review-gap",
+      "adr-gap",
+      "stale-evidence",
+      "isolation-gap"
+    ]
   },
   "skillExamples": {
     "enabled": true,
     "skillsDir": ".kiro/skills",
     "examplesDirName": "examples",
     "checker": ".harness/scripts/check-skill-examples.mjs",
-    "requiredCoreSkills": ["feature-intake", "create-story", "add-feature", "debug-flow", "inspect-app", "orchestrate", "verify-ui", "harness-improvement-loop"]
+    "requiredCoreSkills": [
+      "feature-intake",
+      "create-story",
+      "add-feature",
+      "debug-flow",
+      "inspect-app",
+      "orchestrate",
+      "verify-ui",
+      "harness-improvement-loop"
+    ]
   },
   "traceCorpus": {
     "enabled": true,
     "corpusDir": ".harness/trace-corpus",
     "schemaPath": ".harness/schemas/trace-corpus-entry.schema.json",
     "checker": ".harness/scripts/check-trace-corpus.mjs",
-    "requiredCases": ["success-tiny", "success-normal", "success-high-risk", "false-done", "overbroad-edit", "missing-reviewer", "evidence-replay-failure", "bypass-approval-flow", "runtime-parity-failure"],
+    "requiredCases": [
+      "success-tiny",
+      "success-normal",
+      "success-high-risk",
+      "false-done",
+      "overbroad-edit",
+      "missing-reviewer",
+      "evidence-replay-failure",
+      "bypass-approval-flow",
+      "runtime-parity-failure"
+    ],
     "redactSecrets": true
   },
   "garbageCollection": {
     "frequency": "weekly",
     "maxFixesPerRun": 3,
-    "scope": ["dead-imports", "duplicate-utils", "layer-violations", "doc-drift"]
+    "scope": [
+      "dead-imports",
+      "duplicate-utils",
+      "layer-violations",
+      "doc-drift"
+    ]
   },
   "claudeMd": {
     "path": "CLAUDE.md",
@@ -253,10 +354,20 @@
     "activeTaskEnvPath": ".harness/active-task.env",
     "worktreesDir": "../.agent-worktrees",
     "manifestDir": ".harness/sessions",
-    "protectedBranches": ["main", "master", "develop", "release/*"],
-    "branchPrefixes": ["agent/", "codex/"],
+    "protectedBranches": [
+      "main",
+      "master",
+      "develop",
+      "release/*"
+    ],
+    "branchPrefixes": [
+      "agent/",
+      "codex/"
+    ],
     "requireLinkedWorktree": true,
-    "requireForRiskTiers": ["high-risk"],
+    "requireForRiskTiers": [
+      "high-risk"
+    ],
     "requireForMutationTargets": true,
     "cleanupOnSessionEnd": false
   },
@@ -269,7 +380,14 @@
     "runtimeValidator": ".harness/scripts/orchestration-schema-check.mjs",
     "maxConcurrency": 3,
     "maxAgents": 6,
-    "allowedPatterns": ["pipeline", "fanout", "fanin", "expert-pool", "red-team", "supervisor"],
+    "allowedPatterns": [
+      "pipeline",
+      "fanout",
+      "fanin",
+      "expert-pool",
+      "red-team",
+      "supervisor"
+    ],
     "requireTaskForMutation": true,
     "requireReviewerLanes": true
   },
@@ -285,33 +403,57 @@
         "id": "review",
         "description": "Read-only reviewer and critique lanes.",
         "expectedModel": "claude-sonnet-4-6",
-        "matchSkills": ["review-this-pr", "*-reviewer", "security-reviewer", "architecture-reviewer"]
+        "matchSkills": [
+          "review-this-pr",
+          "*-reviewer",
+          "security-reviewer",
+          "architecture-reviewer"
+        ]
       },
       {
         "id": "high-risk",
         "description": "High-risk task contracts.",
         "expectedModel": "claude-sonnet-4-6",
         "requiresTaskId": true,
-        "riskTiers": ["high-risk"]
+        "riskTiers": [
+          "high-risk"
+        ]
       },
       {
         "id": "explore",
         "description": "Read-only inspection, discovery, and status lanes.",
         "expectedModel": "claude-haiku-4-5",
-        "matchSkills": ["inspect-*", "map-domain", "project-status", "context-health", "skill-discovery"]
+        "matchSkills": [
+          "inspect-*",
+          "map-domain",
+          "project-status",
+          "context-health",
+          "skill-discovery"
+        ]
       },
       {
         "id": "eval",
         "description": "Eval, benchmark, and regression lanes.",
         "expectedModel": "claude-sonnet-4-6",
-        "matchSkills": ["eval-*", "regression-benchmark", "benchmark-suite", "model-profile"]
+        "matchSkills": [
+          "eval-*",
+          "regression-benchmark",
+          "benchmark-suite",
+          "model-profile"
+        ]
       },
       {
         "id": "implementation",
         "description": "Feature, bugfix, refactor, and story implementation lanes.",
         "expectedModel": "claude-opus-4-8",
         "requiresTaskId": true,
-        "matchSkills": ["add-feature", "debug-flow", "refactor-feature", "create-story", "feature-intake"]
+        "matchSkills": [
+          "add-feature",
+          "debug-flow",
+          "refactor-feature",
+          "create-story",
+          "feature-intake"
+        ]
       }
     ]
   },
@@ -322,35 +464,140 @@
     "strictDoctor": false,
     "reviewPromotion": "fail",
     "gates": [
-      { "id": "structural-baseline", "command": "node .harness/scripts/check-structural-baseline.mjs", "required": true },
-      { "id": "hook-integrity", "command": "node .harness/scripts/check-hook-integrity.mjs", "required": true },
-      { "id": "structural", "command": "npm run --silent harness:check", "required": true },
-      { "id": "skill-contracts", "command": "node .harness/scripts/check-skill-contracts.mjs", "required": true },
-      { "id": "skill-examples", "command": "node .harness/scripts/check-skill-examples.mjs", "required": true },
-      { "id": "trace-corpus", "command": "node .harness/scripts/check-trace-corpus.mjs", "required": true },
-      { "id": "review-coverage", "command": "node .harness/scripts/check-review-coverage.mjs --strict", "required": true },
-      { "id": "architecture-fitness", "command": "node .harness/scripts/check-architecture-fitness.mjs --strict", "required": true },
-      { "id": "policy-packs", "command": "node .harness/scripts/check-policy-packs.mjs", "required": true },
-      { "id": "stable-schemas", "command": "node .harness/scripts/check-stable-schemas.mjs --strict", "required": true },
-      { "id": "permissions-drift", "command": "node .harness/scripts/check-permissions-drift.mjs", "required": true },
-      { "id": "bypass-audit", "command": "node .harness/scripts/check-bypass-audit.mjs --strict", "required": true },
-      { "id": "eval-tasks", "command": "node .harness/scripts/check-eval-tasks.mjs", "required": true },
-      { "id": "adversarial-suite", "command": "node .harness/scripts/check-adversarial-suite.mjs", "required": true },
-      { "id": "failure-records", "command": "node .harness/scripts/check-failure-records.mjs", "required": true },
-      { "id": "operational-state", "command": "node .harness/scripts/harness-state.mjs check --strict", "required": true },
-      { "id": "harness-report", "command": "node .harness/scripts/harness-report.mjs --json --fail-on=fail --review-promotion=fail", "required": true, "ifExists": ".harness/scripts/harness-report.mjs" },
-      { "id": "orchestration-contracts", "command": "node .harness/scripts/check-orchestration-contracts.mjs --strict", "required": true },
-      { "id": "session-isolation", "command": "node .harness/scripts/check-session-isolation.mjs --strict", "required": true },
-      { "id": "task-evidence", "command": "node .harness/scripts/task-evidence-check.mjs --strict", "required": true },
-      { "id": "evidence-attestation", "command": "node .harness/scripts/check-evidence-attestation.mjs --strict", "required": true },
-      { "id": "model-routing", "command": "node .harness/scripts/model-routing-report.mjs --strict", "required": false },
-      { "id": "runtime-parity", "command": "node .harness/scripts/runtime-parity-report.mjs --strict", "required": false, "ifExists": ".harness/scripts/runtime-parity-report.mjs" },
-      { "id": "runtime-conformance", "command": "node .harness/scripts/runtime-conformance.mjs --strict", "required": false, "ifExists": ".harness/scripts/runtime-conformance.mjs" }
+      {
+        "id": "structural-baseline",
+        "command": "node .harness/scripts/check-structural-baseline.mjs",
+        "required": true
+      },
+      {
+        "id": "hook-integrity",
+        "command": "node .harness/scripts/check-hook-integrity.mjs",
+        "required": true
+      },
+      {
+        "id": "structural",
+        "command": "npm run --silent harness:check",
+        "required": true
+      },
+      {
+        "id": "skill-contracts",
+        "command": "node .harness/scripts/check-skill-contracts.mjs",
+        "required": true
+      },
+      {
+        "id": "skill-examples",
+        "command": "node .harness/scripts/check-skill-examples.mjs",
+        "required": true
+      },
+      {
+        "id": "trace-corpus",
+        "command": "node .harness/scripts/check-trace-corpus.mjs",
+        "required": true
+      },
+      {
+        "id": "review-coverage",
+        "command": "node .harness/scripts/check-review-coverage.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "architecture-fitness",
+        "command": "node .harness/scripts/check-architecture-fitness.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "policy-packs",
+        "command": "node .harness/scripts/check-policy-packs.mjs",
+        "required": true
+      },
+      {
+        "id": "stable-schemas",
+        "command": "node .harness/scripts/check-stable-schemas.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "permissions-drift",
+        "command": "node .harness/scripts/check-permissions-drift.mjs",
+        "required": true
+      },
+      {
+        "id": "bypass-audit",
+        "command": "node .harness/scripts/check-bypass-audit.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "eval-tasks",
+        "command": "node .harness/scripts/check-eval-tasks.mjs",
+        "required": true
+      },
+      {
+        "id": "adversarial-suite",
+        "command": "node .harness/scripts/check-adversarial-suite.mjs",
+        "required": true
+      },
+      {
+        "id": "failure-records",
+        "command": "node .harness/scripts/check-failure-records.mjs",
+        "required": true
+      },
+      {
+        "id": "operational-state",
+        "command": "node .harness/scripts/harness-state.mjs check --strict",
+        "required": true
+      },
+      {
+        "id": "harness-report",
+        "command": "node .harness/scripts/harness-report.mjs --json --fail-on=fail --review-promotion=fail",
+        "required": true,
+        "ifExists": ".harness/scripts/harness-report.mjs"
+      },
+      {
+        "id": "orchestration-contracts",
+        "command": "node .harness/scripts/check-orchestration-contracts.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "session-isolation",
+        "command": "node .harness/scripts/check-session-isolation.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "task-evidence",
+        "command": "node .harness/scripts/task-evidence-check.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "evidence-attestation",
+        "command": "node .harness/scripts/check-evidence-attestation.mjs --strict",
+        "required": true
+      },
+      {
+        "id": "model-routing",
+        "command": "node .harness/scripts/model-routing-report.mjs --strict",
+        "required": false
+      },
+      {
+        "id": "runtime-parity",
+        "command": "node .harness/scripts/runtime-parity-report.mjs --strict",
+        "required": false,
+        "ifExists": ".harness/scripts/runtime-parity-report.mjs"
+      },
+      {
+        "id": "runtime-conformance",
+        "command": "node .harness/scripts/runtime-conformance.mjs --strict",
+        "required": false,
+        "ifExists": ".harness/scripts/runtime-conformance.mjs"
+      },
+      {
+        "id": "runtime-surface",
+        "command": "node .harness/scripts/check-runtime-surface.mjs",
+        "required": true,
+        "ifExists": ".harness/scripts/check-runtime-surface.mjs"
+      }
     ]
   },
   "budgets": {
-    "perRunUsd": 2.0,
-    "perDayUsd": 10.0
+    "perRunUsd": 2,
+    "perDayUsd": 10
   },
   "contextManagement": {
     "maxInputTokensPerSession": 160000,

@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --all-targets -- -D warnings clean.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:15:26.874Z",
+  "finishedAt": "2026-06-03T02:15:27.947Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:9a31a56151f208d7a7d71aa23f9e6287b1e879688c70715f155171ab4f69f53f",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:cbad3e526dd89d5bff8a3fc4552fe58586db996b923a31cb8e637eef6e98bd9a",
+  "stdoutPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stdout.txt",
+    ".harness/evidence/fix-outgoing-echo-dupe/checks/lint-20260603021526/stderr.txt"
+  ]
+}

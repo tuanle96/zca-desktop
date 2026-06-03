@@ -1,0 +1,20 @@
+{
+  "name": "smoke",
+  "command": "grep -q 'account-switch: active' .harness/evidence/account-switcher/checks/gui-live-2026-06-03.log",
+  "status": "pass",
+  "summary": "Live: with two accounts logged in, clicking a rail avatar swaps the active account + its view. The captured non-secret log shows account-switch between 2299... and 1483... with the conversation count changing per account. Asserts the log artifact contains 'account-switch: active'.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:21:45.480Z",
+  "finishedAt": "2026-06-03T02:21:45.489Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/account-switcher/checks/smoke-20260603022145/stdout.txt",
+  "stderrPath": ".harness/evidence/account-switcher/checks/smoke-20260603022145/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/account-switcher/checks/smoke-20260603022145/stdout.txt",
+    ".harness/evidence/account-switcher/checks/smoke-20260603022145/stderr.txt"
+  ]
+}

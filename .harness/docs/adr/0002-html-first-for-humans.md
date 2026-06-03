@@ -1,7 +1,7 @@
 # ADR 0002 — HTML for human deliverables, Markdown for agent files
 
 - **Status:** accepted
-- **Date:** 2026-06-01
+- **Date:** 2026-06-03
 - **Deciders:** project owner
 
 ## Context

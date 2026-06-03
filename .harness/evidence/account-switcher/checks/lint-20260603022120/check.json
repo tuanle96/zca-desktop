@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "npm run check",
+  "status": "pass",
+  "summary": "svelte-check 0 errors / 0 warnings with the account rail + switch diagnostic.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:21:20.411Z",
+  "finishedAt": "2026-06-03T02:21:23.681Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:f2df103757dcde3631226a27cce400118c753bb274b58ee113bfcc3d064690aa",
+  "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/account-switcher/checks/lint-20260603022120/stdout.txt",
+  "stderrPath": ".harness/evidence/account-switcher/checks/lint-20260603022120/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/account-switcher/checks/lint-20260603022120/stdout.txt",
+    ".harness/evidence/account-switcher/checks/lint-20260603022120/stderr.txt"
+  ]
+}

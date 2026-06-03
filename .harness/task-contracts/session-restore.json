@@ -1,0 +1,80 @@
+{
+    "schemaVersion": 1,
+    "id": "session-restore",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Auto-restore saved accounts on app start: on launch the core loads each saved account from the local store, decrypts its credential (keychain master key), and re-logs-in + re-listens; the frontend shows a brief loading gate and reaches the chat shell with no QR when at least one account restores. An account whose login fails (e.g. expired cookie) is marked reauth-needed and skipped so the others still come online.",
+        "goals": [
+            "command/ restore_sessions loads saved accounts, decrypts + re-logins/listens each via the shared login_and_listen path, and returns the restored profiles",
+            "An account that fails to restore is marked reauth-needed (store mark_reauth_needed) and skipped without disturbing the others",
+            "Frontend calls restore_sessions at startup behind a loading gate; the QR screen shows only when zero accounts restore",
+            "Credentials are decrypted in the core and never cross IPC"
+        ],
+        "nonGoals": [
+            "Initial credential acquisition (qr-login) and at-rest encryption (secure-cred-store)",
+            "Message history hydration internals (message-cache) — restore only triggers load_history",
+            "Proactive token-refresh / keepalive beyond what zca-rust does",
+            "A reauth-needed re-scan UI affordance (future UI slice)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "boot",
+            "description": "command/ restore_sessions compiles and re-logins saved accounts on startup via login_and_listen; cargo build clean.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "expiry",
+            "description": "A failed restore marks the account reauth-needed and skips it; store mark_reauth_needed is exercised offline (delete_removes_account_row) and the restore loop tolerates per-account failure.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: relaunch with a saved account auto-reconnects without QR; the core log shows local store opened saved_accounts>0, restore_sessions restored>=1, and no start_qr_login during restore. Verified by the project owner; the captured non-secret log is asserted to contain the restore-complete marker.",
+            "verification": {
+                "command": "grep -q 'restore_sessions: restore complete restored=1' .harness/evidence/session-restore/checks/gui-live-2026-06-03.log"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "security-reviewer",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(npm run*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/session-restore.json"
+}

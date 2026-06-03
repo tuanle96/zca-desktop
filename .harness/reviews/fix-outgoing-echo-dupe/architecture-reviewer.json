@@ -1,0 +1,44 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "fix-outgoing-echo-dupe",
+    "featureId": "fix-outgoing-echo-dupe",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:10:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/store/db.rs",
+        "src/lib/session.svelte.ts"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/store/db.rs",
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Dedupe added in the store layer (save_message) and the UI session store; no cross-layer boundary moved."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/store/db.rs",
+            "evidence": "The echo-dedup guard lives in the store layer's save_message (rusqlite stays confined to store) and the UI reconciliation lives in the ui session store; both operate on existing DTOs. No layer dependency changed and the fix is symmetric across the persistence + presentation boundaries.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review: the duplicate fix is applied at the two correct seams — the store layer's save_message (durable dedupe) and the ui session store's appendToBucket (render dedupe) — with no layer-boundary change. Approve."
+}

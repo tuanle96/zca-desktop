@@ -1,0 +1,44 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "session-restore",
+    "featureId": "session-restore",
+    "decision": "pass",
+    "createdAt": "2026-06-03T01:25:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/session/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "restore_sessions orchestrates store (load/decrypt) + zalo (login/listen) via session (SessionManager) from the command layer; forward-only order preserved."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "rule": "layering",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "restore_sessions reads from the store layer (load_accounts/mark_reauth_needed), reuses the shared login_and_listen path (zalo + session layers), and returns non-secret AccountProfile DTOs. It is command-layer orchestration over lower layers — no backward dependency, no zca-rust above zalo. After session-manager, sessions register via SessionManager.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review (reconciliation): startup auto-restore is command-layer orchestration over store + zalo + session through the shared login_and_listen path; forward-only layering holds and no secret types rise into command. Approve."
+}

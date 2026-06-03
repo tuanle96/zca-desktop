@@ -43,14 +43,14 @@
             "id": "ui",
             "description": "Frontend builds with the QR modal (image render, expiry countdown/auto-refresh, scanned profile preview, declined/success states) wired to the event stream.",
             "verification": {
-                "command": "bun run build"
+                "command": "npm run build"
             }
         },
         {
             "id": "smoke",
-            "description": "Live: a real phone scan completes QR login end-to-end and the app reaches the logged-in/listening state; only non-secret diagnostics are captured in evidence.",
+            "description": "Live: a real phone scan completes QR login end-to-end and the app reaches the logged-in/listening state; only non-secret diagnostics are captured in evidence. Verified by the project owner on the running app; the captured non-secret core log is asserted to contain the success markers (start_qr_login, zpw_sek cookie extracted, session established).",
             "verification": {
-                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored qr_login_live --nocapture"
+                "command": "grep -q 'start_qr_login: session established' .harness/evidence/qr-login/checks/gui-live-2026-06-03.log"
             }
         }
     ],

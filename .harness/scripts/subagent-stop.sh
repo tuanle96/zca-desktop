@@ -18,17 +18,117 @@ _LIB_DIR="$SCRIPT_DIR/_lib"
 . "$_LIB_DIR/jp.sh"
 . "$_LIB_DIR/telemetry.sh"
 
+TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
+SHA=$(git rev-parse --short HEAD 2>/dev/null || echo 'no-git')
 SUBAGENT="(unknown)"
-if have_jp; then
+LINE=""
+
+if command -v node >/dev/null 2>&1; then
+  META=$(AHK_SUBAGENT_TS="$TS" AHK_SUBAGENT_SHA="$SHA" node - "$INPUT" <<'NODE' 2>/dev/null || true
+const fs = require("node:fs");
+const crypto = require("node:crypto");
+const path = require("node:path");
+
+const input = process.argv[2] || "";
+let payload = {};
+try {
+  payload = JSON.parse(input);
+} catch {
+  payload = {};
+}
+
+function firstString(values, fallback = "") {
+  for (const value of values) {
+    if (typeof value === "string" && value.trim()) return value.trim();
+  }
+  return fallback;
+}
+
+function activeTaskFromState() {
+  try {
+    return fs.readFileSync(".harness/state/active-task.txt", "utf8").split(/\r?\n/)[0].trim();
+  } catch {
+    return "";
+  }
+}
+
+function stableTaskId(value) {
+  return /^[A-Za-z0-9._-]+$/.test(String(value || ""));
+}
+
+const subagent = firstString([
+  payload.subagent,
+  payload.subagent_type,
+  payload.subagentType,
+  payload.agent,
+  payload.agent_id,
+  payload.agentId,
+  payload.session_id,
+  payload.sessionId,
+], "unknown");
+const taskId = firstString([
+  process.env.AHK_ACTIVE_TASK,
+  payload.taskId,
+  payload.task_id,
+  payload.activeTask,
+  payload.active_task,
+  payload.tool_input?.taskId,
+  payload.tool_input?.activeTask,
+  activeTaskFromState(),
+]);
+const sessionId = firstString([payload.session_id, payload.sessionId]);
+const inputHash = `sha256:${crypto.createHash("sha256").update(input).digest("hex")}`;
+const eventId = `${Date.now().toString(36)}-${inputHash.slice(7, 19)}`;
+const base = {
+  schemaVersion: 1,
+  ts: process.env.AHK_SUBAGENT_TS || new Date().toISOString(),
+  source: "SubagentStop",
+  subagent,
+  taskId: taskId || undefined,
+  session_id: sessionId || undefined,
+  eventId,
+  inputHash,
+  sha: process.env.AHK_SUBAGENT_SHA || "no-git",
+};
+for (const key of Object.keys(base)) {
+  if (base[key] === undefined || base[key] === "") delete base[key];
+}
+
+let proofPath = "";
+if (subagent === "advisor" && stableTaskId(taskId)) {
+  const relPath = `.harness/state/advisor-runs/${taskId}.jsonl`;
+  proofPath = relPath;
+  fs.mkdirSync(path.dirname(relPath), { recursive: true });
+  fs.appendFileSync(
+    relPath,
+    `${JSON.stringify({ ...base, event: "advisor_subagent_stop", proofPath: relPath })}\n`,
+  );
+}
+
+process.stdout.write(JSON.stringify({
+  subagent,
+  taskId,
+  eventId,
+  inputHash,
+  proofPath,
+  telemetryLine: JSON.stringify({ ...base, event: "subagent_stop" }),
+}));
+NODE
+)
+  if [ -n "$META" ] && have_jp; then
+    SUBAGENT=$(printf '%s' "$META" | jp '.subagent // "unknown"' 2>/dev/null || echo "unknown")
+    LINE=$(printf '%s' "$META" | jp '.telemetryLine // empty' 2>/dev/null || true)
+  fi
+elif have_jp; then
   SUBAGENT=$(echo "$INPUT" | jp '.subagent // .session_id // "unknown"' 2>/dev/null || echo "unknown")
 fi
 
 # Telemetry first so we record every subagent boundary, even if the
 # structural-test bails below. telemetry_append handles rotation.
-TS=$(date -u +%Y-%m-%dT%H:%M:%SZ)
-SHA=$(git rev-parse --short HEAD 2>/dev/null || echo 'no-git')
-LINE=$(printf '{"schemaVersion":1,"ts":"%s","event":"subagent_stop","source":"SubagentStop","subagent":"%s","sha":"%s"}' \
-  "$TS" "$SUBAGENT" "$SHA")
+if [ -z "$LINE" ]; then
+  LINE=$(printf '{"schemaVersion":1,"ts":"%s","event":"subagent_stop","source":"SubagentStop","subagent":"%s","sha":"%s"}' \
+    "$TS" "$SUBAGENT" "$SHA")
+fi
 telemetry_append "$LINE"
 
 # Skip if structural test disabled.

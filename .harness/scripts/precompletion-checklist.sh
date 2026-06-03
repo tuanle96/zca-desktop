@@ -208,23 +208,307 @@ run_advisor_required_check() {
     return 1
   fi
 
-  if ! ADVISOR_DECISION=$(jp '.decision // empty' "$ADVISOR_FILE" 2>/dev/null); then
-    echo "Advisor decision is not valid JSON: $ADVISOR_FILE"
+  if ! command -v node >/dev/null 2>&1; then
+    echo "Cannot enforce advisor gate: node is required to validate $ADVISOR_FILE."
     return 1
   fi
-  ADVISOR_REVIEWER=$(jp '.reviewer // empty' "$ADVISOR_FILE" 2>/dev/null || true)
-  ADVISOR_TASK_ID=$(jp '.taskId // empty' "$ADVISOR_FILE" 2>/dev/null || true)
 
-  if [ "$ADVISOR_REVIEWER" != "advisor" ]; then
-    echo "Advisor decision reviewer must be 'advisor' in $ADVISOR_FILE (got '$ADVISOR_REVIEWER')."
-    return 1
-  fi
-  if [ "$ADVISOR_TASK_ID" != "$TASK_ID" ]; then
-    echo "Advisor decision taskId must match active task '$TASK_ID' in $ADVISOR_FILE (got '$ADVISOR_TASK_ID')."
-    return 1
-  fi
-  if [ "$ADVISOR_DECISION" != "pass" ]; then
-    echo "Advisor decision must be pass before completion (got '$ADVISOR_DECISION') in $ADVISOR_FILE."
+  if ! node - "$ADVISOR_FILE" "$TASK_ID" <<'NODE'
+const fs = require("node:fs");
+const path = require("node:path");
+
+const [file, taskId] = process.argv.slice(2);
+const root = process.cwd();
+const errors = [];
+const REQUIRED_GATES = new Set(["structural", "lint", "tests", "smoke", "ui"]);
+const STABLE_ID_RE = /^[a-z0-9][a-z0-9._-]*$/;
+const STABLE_INVARIANT_RE = /^[a-z0-9][a-z0-9._:-]*$/;
+const SHA256_RE = /^sha256:[a-f0-9]{64}$/;
+const MAX_RUNTIME_PROOF_AGE_MS = 24 * 60 * 60 * 1000;
+
+function concrete(value) {
+  if (typeof value !== "string") return false;
+  const text = value.trim();
+  return Boolean(text) && !/^(tbd|todo|n\/a|na|fill me|replace me|unknown|none|null)$/i.test(text);
+}
+
+function insideRoot(abs) {
+  const relative = path.relative(root, abs);
+  return relative === "" || (!relative.startsWith("..") && !path.isAbsolute(relative));
+}
+
+function hasUrlScheme(value) {
+  return /^[a-z][a-z0-9+.-]*:/i.test(String(value || ""));
+}
+
+function validateRepoPath(value, label) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    errors.push(`${label} must be a non-empty repo-local path`);
+    return;
+  }
+  const text = value.trim();
+  if (hasUrlScheme(text) || path.isAbsolute(text)) {
+    errors.push(`${label} must be a relative repo-local path`);
+    return;
+  }
+  if (!insideRoot(path.resolve(root, text))) {
+    errors.push(`${label} must stay inside the project root`);
+  }
+}
+
+function validateStringArray(value, label, { min = 0, stableIds = false, paths = false } = {}) {
+  if (!Array.isArray(value)) {
+    errors.push(`${label} must be an array`);
+    return;
+  }
+  if (value.length < min) {
+    errors.push(`${label} must contain at least ${min} item${min === 1 ? "" : "s"}`);
+  }
+  const seen = new Set();
+  value.forEach((item, idx) => {
+    if (typeof item !== "string" || item.trim().length === 0) {
+      errors.push(`${label}[${idx}] must be a non-empty string`);
+      return;
+    }
+    if (seen.has(item)) errors.push(`${label} contains duplicate "${item}"`);
+    seen.add(item);
+    if (stableIds && !STABLE_INVARIANT_RE.test(item)) {
+      errors.push(`${label}[${idx}] must be a stable lowercase id`);
+    }
+    if (paths) validateRepoPath(item, `${label}[${idx}]`);
+  });
+}
+
+function validateDiffCoverage(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push("Advisor decision diffCoverage must be an object");
+    return;
+  }
+  validateStringArray(value.changedFiles, "Advisor decision diffCoverage.changedFiles", { min: 1, paths: true });
+  validateStringArray(value.reviewedFiles, "Advisor decision diffCoverage.reviewedFiles", { min: 1, paths: true });
+  validateStringArray(value.uncoveredFiles, "Advisor decision diffCoverage.uncoveredFiles", { paths: true });
+  if (value.coverage !== 1) {
+    errors.push("Advisor decision diffCoverage.coverage must be 1 for pass");
+  }
+  if (Array.isArray(value.uncoveredFiles) && value.uncoveredFiles.length > 0) {
+    errors.push("Advisor decision diffCoverage.uncoveredFiles must be empty for pass");
+  }
+  if (Array.isArray(value.changedFiles) && Array.isArray(value.reviewedFiles)) {
+    const reviewed = new Set(value.reviewedFiles);
+    for (const changed of value.changedFiles) {
+      if (!reviewed.has(changed)) {
+        errors.push(`Advisor decision reviewedFiles must cover changed file "${changed}"`);
+      }
+    }
+  }
+  if (value.notes !== undefined && typeof value.notes !== "string") {
+    errors.push("Advisor decision diffCoverage.notes must be a string");
+  }
+}
+
+function validateProvenance(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push("Advisor decision=pass must include provenance");
+    return;
+  }
+  if (value.source !== "advisor-agent") {
+    errors.push("Advisor decision provenance.source must be advisor-agent");
+  }
+  if (!concrete(value.trigger)) {
+    errors.push("Advisor decision provenance.trigger must be concrete");
+  }
+  if (!concrete(value.createdBy)) {
+    errors.push("Advisor decision provenance.createdBy must be concrete");
+  }
+  for (const field of ["sessionId", "notes"]) {
+    if (value[field] !== undefined && typeof value[field] !== "string") {
+      errors.push(`Advisor decision provenance.${field} must be a string`);
+    }
+  }
+  for (const field of ["diffHash", "evidenceHash"]) {
+    if (value[field] !== undefined && !SHA256_RE.test(String(value[field]))) {
+      errors.push(`Advisor decision provenance.${field} must be sha256:<64 lowercase hex chars>`);
+    }
+  }
+  validateRuntimeProof(value.runtimeProof);
+}
+
+function advisorProofRelPath() {
+  return `.harness/state/advisor-runs/${taskId}.jsonl`;
+}
+
+function readJsonl(relPath) {
+  const abs = path.resolve(root, relPath);
+  try {
+    return fs.readFileSync(abs, "utf8")
+      .split(/\r?\n/)
+      .map((line) => line.trim())
+      .filter(Boolean)
+      .flatMap((line) => {
+        try {
+          return [JSON.parse(line)];
+        } catch {
+          return [];
+        }
+      });
+  } catch {
+    return [];
+  }
+}
+
+function validateRuntimeProof(value) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push("Advisor decision provenance.runtimeProof must reference an advisor SubagentStop proof");
+    return;
+  }
+  if (value.type !== "subagent-stop") {
+    errors.push("Advisor decision provenance.runtimeProof.type must be subagent-stop");
+  }
+  if (!concrete(value.eventId)) {
+    errors.push("Advisor decision provenance.runtimeProof.eventId must be concrete");
+  }
+  if (!SHA256_RE.test(String(value.inputHash || ""))) {
+    errors.push("Advisor decision provenance.runtimeProof.inputHash must be sha256:<64 lowercase hex chars>");
+  }
+  const expectedPath = advisorProofRelPath();
+  if (value.path !== expectedPath) {
+    errors.push(`Advisor decision provenance.runtimeProof.path must be ${expectedPath}`);
+  }
+  const records = readJsonl(expectedPath);
+  if (records.length === 0) {
+    errors.push(`Advisor SubagentStop proof file is missing or empty: ${expectedPath}`);
+    return;
+  }
+  const matched = records.find((record) =>
+    record?.event === "advisor_subagent_stop" &&
+    record?.eventId === value.eventId &&
+    record?.inputHash === value.inputHash
+  );
+  if (!matched) {
+    errors.push(`Advisor SubagentStop proof not found in ${expectedPath} for eventId=${value.eventId || "(missing)"}`);
+    return;
+  }
+  if (matched.source !== "SubagentStop") {
+    errors.push("Advisor SubagentStop proof source must be SubagentStop");
+  }
+  if (matched.subagent !== "advisor") {
+    errors.push(`Advisor SubagentStop proof subagent must be advisor (got '${matched.subagent || ""}')`);
+  }
+  if (matched.taskId !== taskId) {
+    errors.push(`Advisor SubagentStop proof taskId must match active task '${taskId}'`);
+  }
+  if (matched.proofPath !== expectedPath) {
+    errors.push(`Advisor SubagentStop proofPath must be ${expectedPath}`);
+  }
+  const proofTime = Date.parse(matched.ts || "");
+  const decisionTime = Date.parse(decision?.createdAt || "");
+  if (Number.isNaN(proofTime)) {
+    errors.push("Advisor SubagentStop proof ts must be an ISO date-time");
+  } else if (!Number.isNaN(decisionTime)) {
+    if (proofTime - decisionTime > 60_000) {
+      errors.push("Advisor SubagentStop proof cannot be newer than the advisor decision by more than 60 seconds");
+    }
+    if (decisionTime - proofTime > MAX_RUNTIME_PROOF_AGE_MS) {
+      errors.push("Advisor SubagentStop proof is older than 24 hours for this decision");
+    }
+  }
+}
+
+function validateResolvedFindings(value) {
+  if (value === undefined) return;
+  if (!Array.isArray(value)) {
+    errors.push("Advisor decision resolvedFindings must be an array");
+    return;
+  }
+  const seen = new Set();
+  value.forEach((finding, idx) => {
+    if (!finding || typeof finding !== "object" || Array.isArray(finding)) {
+      errors.push(`Advisor decision resolvedFindings[${idx}] must be an object`);
+      return;
+    }
+    if (!STABLE_INVARIANT_RE.test(String(finding.id || ""))) {
+      errors.push(`Advisor decision resolvedFindings[${idx}].id must be a stable lowercase id`);
+    } else if (seen.has(finding.id)) {
+      errors.push(`Advisor decision resolvedFindings contains duplicate "${finding.id}"`);
+    }
+    seen.add(finding.id);
+    if (finding.file !== undefined) validateRepoPath(finding.file, `Advisor decision resolvedFindings[${idx}].file`);
+    if (finding.line !== undefined && (!Number.isInteger(finding.line) || finding.line < 1)) {
+      errors.push(`Advisor decision resolvedFindings[${idx}].line must be a positive integer`);
+    }
+    if (!concrete(finding.resolution)) {
+      errors.push(`Advisor decision resolvedFindings[${idx}].resolution must be concrete`);
+    }
+  });
+}
+
+let decision;
+try {
+  decision = JSON.parse(fs.readFileSync(file, "utf8"));
+} catch (err) {
+  console.error(`Advisor decision is not valid JSON: ${file} (${err.message})`);
+  process.exit(1);
+}
+
+if (!decision || typeof decision !== "object" || Array.isArray(decision)) {
+  errors.push(`Advisor decision must be a JSON object: ${file}`);
+} else {
+  if (decision.schemaVersion !== 1) {
+    errors.push(`Advisor decision schemaVersion must be 1 in ${file}.`);
+  }
+  if (decision.reviewer !== "advisor") {
+    errors.push(`Advisor decision reviewer must be 'advisor' in ${file} (got '${decision.reviewer || ""}').`);
+  }
+  if (decision.taskId !== taskId) {
+    errors.push(`Advisor decision taskId must match active task '${taskId}' in ${file} (got '${decision.taskId || ""}').`);
+  }
+  if (decision.decision !== "pass") {
+    errors.push(`Advisor decision must be pass before completion (got '${decision.decision || ""}') in ${file}.`);
+  }
+  if (!STABLE_ID_RE.test(String(decision.featureId || ""))) {
+    errors.push("Advisor decision=pass must include a stable featureId");
+  }
+  if (!decision.createdAt || Number.isNaN(Date.parse(decision.createdAt))) {
+    errors.push("Advisor decision createdAt must be an ISO date-time");
+  }
+  if (!concrete(decision.summary)) {
+    errors.push("Advisor decision summary must be concrete");
+  }
+  validateStringArray(decision.checkedFiles, "Advisor decision checkedFiles", { min: 1, paths: true });
+  validateStringArray(decision.checkedInvariants, "Advisor decision checkedInvariants", { min: 1, stableIds: true });
+  validateDiffCoverage(decision.diffCoverage);
+  if (typeof decision.confidence !== "number" || !Number.isFinite(decision.confidence) || decision.confidence < 0.6 || decision.confidence > 1) {
+    errors.push("Advisor decision=pass must include confidence between 0.6 and 1");
+  }
+  validateStringArray(decision.unreviewedRiskAreas, "Advisor decision unreviewedRiskAreas");
+  if (Array.isArray(decision.unreviewedRiskAreas) && decision.unreviewedRiskAreas.length > 0) {
+    errors.push("Advisor decision=pass cannot include unreviewedRiskAreas");
+  }
+  validateResolvedFindings(decision.resolvedFindings);
+  if (!Array.isArray(decision.findings)) {
+    errors.push("Advisor decision findings must be an array");
+  } else if (decision.findings.some((finding) => finding && finding.blocking === true)) {
+    errors.push("Advisor decision=pass cannot include blocking findings");
+  }
+  if (decision.requiredGates !== undefined) {
+    validateStringArray(decision.requiredGates, "Advisor decision requiredGates");
+    if (Array.isArray(decision.requiredGates)) {
+      for (const [idx, gate] of decision.requiredGates.entries()) {
+        if (!REQUIRED_GATES.has(gate)) {
+          errors.push(`Advisor decision requiredGates[${idx}] must be one of structural, lint, tests, smoke, ui`);
+        }
+      }
+    }
+  }
+  validateProvenance(decision.provenance);
+}
+
+if (errors.length > 0) {
+  for (const error of errors) console.error(error);
+  process.exit(1);
+}
+NODE
+  then
     return 1
   fi
 }
@@ -243,7 +527,8 @@ print_advisor_guidance() {
   echo
   echo "Advisor recovery:"
   echo "  - Read the active task id in .harness/state/active-task.txt or AHK_ACTIVE_TASK."
-  echo "  - Invoke the advisor agent before claiming done."
+  echo "  - Invoke the advisor as an actual subagent before claiming done."
+  echo "  - Read .harness/state/advisor-runs/<task_id>.jsonl and copy eventId/inputHash into provenance.runtimeProof."
   echo "  - Persist its decision JSON to .harness/reviews/<task_id>/advisor-decision.json."
   echo "  - The JSON must match .harness/schemas/review-decision.schema.json with reviewer=advisor, taskId=<task_id>, and decision=pass."
 }

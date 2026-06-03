@@ -1,0 +1,55 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "session-manager",
+    "featureId": "session-manager",
+    "decision": "pass",
+    "createdAt": "2026-06-02T15:45:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/session/mod.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers",
+        "no-zca-rust-above-zalo"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Verified the new session layer sits between zalo and command in the forward-only order and that command no longer holds session state directly."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "in-command-session-store",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "The command-layer ListenerState { HashMap<AccountId, Arc<API>> + Vec<Listener> } is removed; session state now lives in the dedicated session/ layer as SessionManager, resolving the architecture follow-up logged on send-text and listener-events."
+        }
+    ],
+    "requiredGates": [
+        "lint",
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/session/mod.rs",
+            "evidence": "session/ depends only on types and zalo (lower layers) and is consumed by command (higher). The realtime listener is abstracted behind the MessageListener trait, implemented for zca-rust's Listener inside this layer via crate::zalo::Listener, so zca-rust concrete types stay confined to zalo and are not re-exposed above session. command/mod.rs imports crate::session::SessionManager and crate::zalo only for the API/send facade. Forward-only DAG (types → config → store → zalo → session → command) preserved.",
+            "fix": "None required. When persistence-driven lifecycle (reauth/restart UI) lands, keep the session orchestration in this layer rather than command."
+        }
+    ],
+    "summary": "Cross-layer change reviewed for layering. The previously-missing session/ layer is added in its correct position; SessionManager owns per-account API+Listener and lifecycle, command delegates to it, and zca-rust stays confined to zalo behind the MessageListener seam. The long-standing in-command session-store debt is resolved. Forward-only order intact. Approve."
+}

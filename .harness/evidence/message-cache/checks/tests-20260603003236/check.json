@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: offline suite passes incl. message_persistence_roundtrips_and_dedupes + attachment_metadata_persists (store repositories).",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T00:32:36.859Z",
+  "finishedAt": "2026-06-03T00:32:37.973Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+  "stdoutHash": "sha256:f665774ddd4c64021b2c0ab2d7223cd792e0affc9e110edb4c5276ad022f078c",
+  "stderrHash": "sha256:2f9d714469e9b24f2bb33af699c608fed72665cc7d799971266e1cd1f6ed3be9",
+  "stdoutPath": ".harness/evidence/message-cache/checks/tests-20260603003236/stdout.txt",
+  "stderrPath": ".harness/evidence/message-cache/checks/tests-20260603003236/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/message-cache/checks/tests-20260603003236/stdout.txt",
+    ".harness/evidence/message-cache/checks/tests-20260603003236/stderr.txt"
+  ]
+}

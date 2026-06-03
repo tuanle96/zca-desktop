@@ -1,0 +1,164 @@
+{
+  "schemaVersion": 1,
+  "taskId": "message-cache",
+  "featureId": "message-cache",
+  "status": "pass",
+  "createdAt": "2026-06-03T00:00:00.000Z",
+  "diffSummary": "Reconciliation of the message-cache feature merged in f343624 (its code shipped but the harness tracking was never completed). The store/ layer (src-tauri/src/store/db.rs) persists threads/messages/attachments on the bundled SQLite store: save_message upserts the thread and inserts the message deduped by (account_id, msg_id), bumping unread only for distinct inbound messages; save_attachment stores attachment metadata; load_threads/load_recent_messages return ordered history; clear_unread resets a thread. The command/ layer persists incoming messages on the listener bridge (persist_incoming) and outgoing messages on send, exposes load_history + mark_thread_read, and the frontend (src/lib/session.svelte.ts) hydrates conversations + per-thread messages from load_history at login/restore. types/stored.rs carries the StoredThread/StoredMessage/History DTOs (camelCase, no secrets). This reconciliation adds the previously-missing offline restart smoke (message_cache_roundtrip): it saves an inbound + outbound + group message, drops the Db (simulating app shutdown / connection close), reopens the SAME SQLite file (relaunch), and asserts all threads + messages are restored with no realtime event — which is exactly the durability boundary the feature claims.",
+  "changedFiles": [
+    "src-tauri/src/store/db.rs"
+  ],
+  "checks": [
+    {
+      "name": "rust.build",
+      "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo build compiles the store message/thread/attachment repositories + command persistence wiring.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:32:18.102Z",
+      "finishedAt": "2026-06-03T00:32:19.998Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:00a5ed0a89f8828997acd03c51457906993757898e80039474c2454a03cd9a9d",
+      "stdoutPath": ".harness/evidence/message-cache/checks/rust.build-20260603003218/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/rust.build-20260603003218/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/rust.build-20260603003218/stdout.txt",
+        ".harness/evidence/message-cache/checks/rust.build-20260603003218/stderr.txt"
+      ]
+    },
+    {
+      "name": "lint",
+      "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+      "status": "pass",
+      "summary": "cargo clippy --all-targets -- -D warnings clean (store repositories + restart smoke).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:32:27.299Z",
+      "finishedAt": "2026-06-03T00:32:28.178Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:d45006197a58d3591511e8220a2f4a8bd039e9a092cd6a66dbadf79d6dc77af2",
+      "stdoutPath": ".harness/evidence/message-cache/checks/lint-20260603003227/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/lint-20260603003227/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/lint-20260603003227/stdout.txt",
+        ".harness/evidence/message-cache/checks/lint-20260603003227/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "cargo test: offline suite passes incl. message_persistence_roundtrips_and_dedupes + attachment_metadata_persists (store repositories).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:32:36.859Z",
+      "finishedAt": "2026-06-03T00:32:37.973Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+      "stdoutHash": "sha256:f665774ddd4c64021b2c0ab2d7223cd792e0affc9e110edb4c5276ad022f078c",
+      "stderrHash": "sha256:2f9d714469e9b24f2bb33af699c608fed72665cc7d799971266e1cd1f6ed3be9",
+      "stdoutPath": ".harness/evidence/message-cache/checks/tests-20260603003236/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/tests-20260603003236/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/tests-20260603003236/stdout.txt",
+        ".harness/evidence/message-cache/checks/tests-20260603003236/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "command": "npm run --silent harness:check",
+      "status": "pass",
+      "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:32:50.725Z",
+      "finishedAt": "2026-06-03T00:32:51.213Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+      "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/message-cache/checks/structural-20260603003250/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/structural-20260603003250/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/structural-20260603003250/stdout.txt",
+        ".harness/evidence/message-cache/checks/structural-20260603003250/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored message_cache_roundtrip --nocapture",
+      "status": "pass",
+      "summary": "Restart-persistence smoke: saved inbound+outbound+group messages, dropped the Db (app shutdown), reopened the same SQLite file (relaunch) and restored 2 threads + 3 messages with no realtime event.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:42:35.929Z",
+      "finishedAt": "2026-06-03T00:42:37.791Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:86675876df69402e1ec1209808b21ec88a343f7fa7ad57134a2106a0bc1df1cd",
+      "stdoutHash": "sha256:86b0e899b5735903aa4befd78753f8c5d9a928cf83986678232f6f274d22b33a",
+      "stderrHash": "sha256:cb6cf51c7279d677baba97261b4972bc3f072d495b0f19deeeda4dc11f08afdd",
+      "stdoutPath": ".harness/evidence/message-cache/checks/smoke-20260603004235/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/smoke-20260603004235/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/smoke-20260603004235/stdout.txt",
+        ".harness/evidence/message-cache/checks/smoke-20260603004235/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "command": "npm run build",
+      "status": "pass",
+      "summary": "npm run build succeeds; the frontend hydrates conversations + thread messages from load_history at login/restore (bun unavailable in this env; npm is the frontend build per prior bundles).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-03T00:43:25.107Z",
+      "finishedAt": "2026-06-03T00:43:33.857Z",
+      "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+      "workingTreeHash": "sha256:50a2a02723794c13a63fdeb3069b964086cb1c966827e98083aba1d45425b1f8",
+      "stdoutHash": "sha256:a29e7194d3bb85de442ef16619231cf2532b6448b54607c54e366ee8d43aa5f3",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stdout.txt",
+      "stderrPath": ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stdout.txt",
+        ".harness/evidence/message-cache/checks/frontend.build-20260603004325/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/message-cache/advisor-decision.json"
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/message-cache/security-reviewer.json"
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/message-cache/architecture-reviewer.json"
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "message-plaintext-at-rest",
+      "severity": "medium",
+      "description": "Message bodies are stored in SQLite as plaintext (user data on the user's own machine, not a bearer token). Credentials are encrypted at rest; message text is not, in this iteration.",
+      "disposition": "accepted",
+      "owner": "project-owner",
+      "acceptedBy": "advisor",
+      "acceptanceReason": "ADR-0005 prioritizes message durability; the high-value secret (the credential triple) is AES-GCM encrypted under the keychain master key. Whole-DB encryption (SQLCipher) is deferred to a future ADR.",
+      "mitigation": "Track SQLCipher / whole-DB encryption as a future ADR.",
+      "acceptedUntil": "2026-09-01T00:00:00.000Z"
+    }
+  ],
+  "updatedAt": "2026-06-03T00:43:33.919Z"
+}

@@ -1,0 +1,20 @@
+{
+  "name": "tests",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo test: offline suite passes incl. the zalo listener mapping tests that stamp IncomingMessage.account_id per account.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:23:57.808Z",
+  "finishedAt": "2026-06-03T02:23:59.730Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:3f602b932d2e21842a477c6070c2fb144a49aac4477e9bb0e95b6ae86632a2ea",
+  "stdoutHash": "sha256:cca758e8e062950ab7371c3839bbf754c9e3dc9ab0374849fee53c29dc3327ea",
+  "stderrHash": "sha256:0dd7db57246fd409457ea1db7928c240b183cd060f57eecb2b3055af4bb23d15",
+  "stdoutPath": ".harness/evidence/per-account-routing/checks/tests-20260603022357/stdout.txt",
+  "stderrPath": ".harness/evidence/per-account-routing/checks/tests-20260603022357/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/per-account-routing/checks/tests-20260603022357/stdout.txt",
+    ".harness/evidence/per-account-routing/checks/tests-20260603022357/stderr.txt"
+  ]
+}

@@ -1,0 +1,76 @@
+{
+    "schemaVersion": 1,
+    "id": "account-switcher",
+    "type": "feature",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "UI account rail that lists every logged-in account and switches the active one. Account state is managed frontend-side in the reactive session store (src/lib/session.svelte.ts): accounts are adopted from login/QR/restore AccountProfiles into a per-account bucket, RailNav renders one avatar per account with an active ring + unread badge, and switchAccount swaps the reactive view (conversations, threads, contacts, composer target) to the selected account's bucket. No new Rust command is needed — accounts come from the existing login/restore commands, so the originally-planned list_accounts/set_active_account backend pair was intentionally not built.",
+        "goals": [
+            "session store: per-account buckets (Map<accountId, AccountData>); adoptAccount adds rail entries; switchAccount/activate swap the reactive view to the target account",
+            "RailNav: one avatar per account with active-ring + unread badge + an add-account button",
+            "Switching swaps the conversation list + active thread + composer target to the selected account",
+            "A non-secret account-switch diagnostic (account ids + conversation count only) is logged for observability"
+        ],
+        "nonGoals": [
+            "Rust list_accounts/set_active_account commands (state is frontend-managed from login/restore profiles)",
+            "Per-account event routing / no-leak guarantee (per-account-routing)",
+            "Account removal/logout UI (future slice)",
+            "Persisting the active-account selection across restarts"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "ui",
+            "description": "Frontend builds with the account rail (avatar per account, active ring, unread badge, add-account button) and svelte-check is clean.",
+            "verification": {
+                "command": "npm run check"
+            }
+        },
+        {
+            "id": "build",
+            "description": "Frontend production build succeeds with the switcher store + RailNav.",
+            "verification": {
+                "command": "npm run build"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Live: with two accounts logged in, clicking a rail avatar swaps the active account and its view; the non-secret core log shows 'account-switch: active <A> -> <B>'. Evidence captures only non-secret diagnostics.",
+            "verification": {
+                "command": "grep -q 'account-switch: active' .harness/evidence/account-switcher/checks/gui-live-2026-06-03.log"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(cargo build*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/account-switcher.json"
+}

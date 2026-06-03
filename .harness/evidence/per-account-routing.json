@@ -1,0 +1,92 @@
+{
+    "schemaVersion": 1,
+    "taskId": "per-account-routing",
+    "featureId": "per-account-routing",
+    "status": "pass",
+    "createdAt": "2026-06-03T02:23:00.000Z",
+    "diffSummary": "Reconciliation of per-account event routing shipped in the multi-account merge. Incoming realtime events are tagged with the receiving account via types::IncomingMessage.account_id (the zalo listener stamps each event with api.get_own_id()) — the concrete form of the originally-planned AppEvent { account_id, payload }. The frontend session store (src/lib/session.svelte.ts) keys all per-account state by account_id (Map<accountId, AccountData>); ingest() looks up the owning bucket by msg.accountId and only mirrors into the reactive view when that account is active, otherwise it accumulates in that account's background bucket and bumps its rail unread — so a message on account B never enters account A's view. This reconciliation adds a non-secret routing diagnostic (account + thread ids, active-view vs background-bucket) and captures the live no-leak proof.",
+    "changedFiles": [
+        "src/lib/session.svelte.ts"
+    ],
+    "checks": [
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: offline suite passes incl. the zalo listener mapping tests that stamp IncomingMessage.account_id per account.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:57.808Z",
+            "finishedAt": "2026-06-03T02:23:59.730Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:3f602b932d2e21842a477c6070c2fb144a49aac4477e9bb0e95b6ae86632a2ea",
+            "stdoutHash": "sha256:cca758e8e062950ab7371c3839bbf754c9e3dc9ab0374849fee53c29dc3327ea",
+            "stderrHash": "sha256:0dd7db57246fd409457ea1db7928c240b183cd060f57eecb2b3055af4bb23d15",
+            "stdoutPath": ".harness/evidence/per-account-routing/checks/tests-20260603022357/stdout.txt",
+            "stderrPath": ".harness/evidence/per-account-routing/checks/tests-20260603022357/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/per-account-routing/checks/tests-20260603022357/stdout.txt",
+                ".harness/evidence/per-account-routing/checks/tests-20260603022357/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "npm run check",
+            "status": "pass",
+            "summary": "svelte-check 0 errors / 0 warnings with the account-keyed routing + diagnostic.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:24:00.106Z",
+            "finishedAt": "2026-06-03T02:24:02.914Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:3f602b932d2e21842a477c6070c2fb144a49aac4477e9bb0e95b6ae86632a2ea",
+            "stdoutHash": "sha256:5924ae74a97fae1b8f6b7d2979921967b979a5963e26a399b2159f61d00df9f4",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/per-account-routing/checks/lint-20260603022400/stdout.txt",
+            "stderrPath": ".harness/evidence/per-account-routing/checks/lint-20260603022400/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/per-account-routing/checks/lint-20260603022400/stdout.txt",
+                ".harness/evidence/per-account-routing/checks/lint-20260603022400/stderr.txt"
+            ]
+        },
+        {
+            "name": "smoke",
+            "command": "grep -q 'route: msg account=.* -> background-bucket' .harness/evidence/per-account-routing/checks/gui-live-2026-06-03.log",
+            "status": "pass",
+            "summary": "Live no-leak: with two accounts online, a message received on the background account is routed to ITS bucket, not the active account's view. The captured non-secret log shows 'route: msg account=1483... -> background-bucket (active=2299...)' and the reverse. Asserts the artifact contains a background-bucket route.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:24:14.695Z",
+            "finishedAt": "2026-06-03T02:24:14.705Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:3f602b932d2e21842a477c6070c2fb144a49aac4477e9bb0e95b6ae86632a2ea",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stdout.txt",
+            "stderrPath": ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stdout.txt",
+                ".harness/evidence/per-account-routing/checks/smoke-20260603022414/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/per-account-routing/advisor-decision.json"
+        },
+        {
+            "name": "security-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/per-account-routing/security-reviewer.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/per-account-routing/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [],
+    "updatedAt": "2026-06-03T02:24:15.021Z"
+}

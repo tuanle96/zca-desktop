@@ -1,0 +1,20 @@
+{
+  "name": "lint",
+  "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+  "status": "pass",
+  "summary": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T02:23:24.838Z",
+  "finishedAt": "2026-06-03T02:23:26.032Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:22f250d7c9d0441f4b362fd1e7bac1ea1b354e3c28c4619ece73276e04a1b32c",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:3fb4c357e099ce4d60cdc4fe4308b22f751bb05485809f35137528350af48811",
+  "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stdout.txt",
+  "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stdout.txt",
+    ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stderr.txt"
+  ]
+}

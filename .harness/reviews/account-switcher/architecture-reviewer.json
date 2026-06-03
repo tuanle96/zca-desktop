@@ -1,0 +1,41 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "account-switcher",
+    "featureId": "account-switcher",
+    "decision": "pass",
+    "createdAt": "2026-06-03T02:25:00.000Z",
+    "checkedFiles": [
+        "src/lib/session.svelte.ts",
+        "src/lib/components/chat/RailNav.svelte"
+    ],
+    "checkedInvariants": [
+        "ui-core-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "reviewedFiles": [
+            "src/lib/session.svelte.ts"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Account state is frontend-managed in the ui session store; RailNav (unchanged this slice) renders it. No Rust command added — accounts come from existing login/restore profiles, so the ui->core boundary is unchanged."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src/lib/session.svelte.ts",
+            "evidence": "switchAccount/activate operate entirely on the ui session store's per-account buckets (Map<accountId, AccountData>); the reactive view fields are swapped to the target bucket. No new Tauri command and no core change — the account set is derived from the AccountProfiles returned by login/qr/restore. The added switch diagnostic logs account ids + a conversation count only.",
+            "fix": "None required. If active-account persistence across restarts is wanted later, store the selection in the local store."
+        }
+    ],
+    "summary": "Architecture review: the account switcher is correctly frontend-managed — buckets keyed by accountId in the ui session store, RailNav rendering, no backend command needed (accounts come from login/restore profiles). The ui->core boundary is unchanged. Approve."
+}

@@ -42,7 +42,7 @@
             "id": "ui",
             "description": "Frontend builds and hydrates the conversation list + active thread from persisted history at login/restore.",
             "verification": {
-                "command": "bun run build"
+                "command": "npm run build"
             }
         },
         {

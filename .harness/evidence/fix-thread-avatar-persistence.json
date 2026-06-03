@@ -1,0 +1,141 @@
+{
+    "schemaVersion": 1,
+    "taskId": "fix-thread-avatar-persistence",
+    "featureId": "fix-thread-avatar-persistence",
+    "status": "pass",
+    "createdAt": "2026-06-03T02:24:00.000Z",
+    "diffSummary": "Persist conversation identity (title + avatar) so chat history shows the right name and avatar after a restart. Root cause: the realtime listener message model (zca-rust TMessage) carries only a sender display name and NO avatar, so store/db.rs save_message always wrote thread_avatar = None and a group thread's title became the last sender's name. Avatars/names only exist in the directory data the app already fetches (list_contacts via get_all_friends, list_groups via get_group_info), which was never persisted onto thread rows. Fix: types/stored.rs adds a ThreadIdentity DTO (thread_id + title + avatar, camelCase, no secrets); store/db.rs adds backfill_thread_identities(account_id, identities), which UPDATEs (never inserts) the title + avatar of threads that already exist using COALESCE so a missing/empty directory value never blanks a known one, and returns the updated-row count as a non-secret diagnostic; command/mod.rs list_contacts + list_groups now accept the store State and, after fetching the directory, map contacts/groups to ThreadIdentity and backfill existing thread rows (best-effort; a store error is logged, never fails the directory load). A directory entry with no conversation does not create a thread row. No realtime data source was added and the Tauri IPC argument shape is unchanged (the store State is injected, not passed from the webview), so no frontend change is needed — load_history already returns the persisted avatar/title.",
+    "changedFiles": [
+        "src-tauri/src/types/stored.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/store/db.rs",
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checks": [
+        {
+            "name": "tests",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo test: offline suite passes (31) incl. the new thread_identity_backfill_updates_existing_only (existing threads get title+avatar; a directory entry with no conversation does not create a row; empty values do not blank a known value).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:10.181Z",
+            "finishedAt": "2026-06-03T02:23:11.643Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:22f250d7c9d0441f4b362fd1e7bac1ea1b354e3c28c4619ece73276e04a1b32c",
+            "stdoutHash": "sha256:6841e78535c57a2cfef06025251ca669b864d2062e7b1e732acd066b289ef643",
+            "stderrHash": "sha256:e8e29cc2eb8e98f7b36f85207ffda55bf3eb8e3c6a0274f25d91c6d179b2440a",
+            "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/tests-20260603022310/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/tests-20260603022310/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-thread-avatar-persistence/checks/tests-20260603022310/stdout.txt",
+                ".harness/evidence/fix-thread-avatar-persistence/checks/tests-20260603022310/stderr.txt"
+            ]
+        },
+        {
+            "name": "lint",
+            "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings",
+            "status": "pass",
+            "summary": "cargo clippy --all-targets -- -D warnings clean with the new store backfill method + command wiring.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:24.838Z",
+            "finishedAt": "2026-06-03T02:23:26.032Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:22f250d7c9d0441f4b362fd1e7bac1ea1b354e3c28c4619ece73276e04a1b32c",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:3fb4c357e099ce4d60cdc4fe4308b22f751bb05485809f35137528350af48811",
+            "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stdout.txt",
+                ".harness/evidence/fix-thread-avatar-persistence/checks/lint-20260603022324/stderr.txt"
+            ]
+        },
+        {
+            "name": "build",
+            "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+            "status": "pass",
+            "summary": "cargo build compiles: list_contacts/list_groups take the store State and backfill identities without changing the IPC argument shape; no token values cross IPC.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:33.580Z",
+            "finishedAt": "2026-06-03T02:23:34.470Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:c5cd88c6b155682d8dad0aadfba385b0529e13ceb1302854997c49be8fc8bb18",
+            "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stderrHash": "sha256:d8e7be27693f18bdd0bb2bc7fac7ff672e29e0751c2e6f3e6d114e7550864c9f",
+            "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stdout.txt",
+                ".harness/evidence/fix-thread-avatar-persistence/checks/build-20260603022333/stderr.txt"
+            ]
+        },
+        {
+            "name": "structural",
+            "command": "npm run --silent harness:check",
+            "status": "pass",
+            "summary": "harness:check no-op pass (structuralTest.engine=none per ADR-0003).",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:49.513Z",
+            "finishedAt": "2026-06-03T02:23:49.957Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:f3072a808272fa9052e842de403f5ce42483e185f65a8172e11bbd0cdf531583",
+            "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+            "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+            "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/structural-20260603022349/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/structural-20260603022349/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-thread-avatar-persistence/checks/structural-20260603022349/stdout.txt",
+                ".harness/evidence/fix-thread-avatar-persistence/checks/structural-20260603022349/stderr.txt"
+            ]
+        },
+        {
+            "name": "smoke",
+            "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored thread_identity_cache_roundtrip --nocapture",
+            "status": "pass",
+            "summary": "Restart-persistence smoke: saved a group message (title = last sender, no avatar), backfilled the directory identity (title 'Team Zalo' + avatar URL), dropped the Db (app shutdown), reopened the same SQLite file (relaunch) and load_threads returned the persisted title + avatar with no realtime event and no directory fetch.",
+            "exitCode": 0,
+            "cwd": ".",
+            "startedAt": "2026-06-03T02:23:41.832Z",
+            "finishedAt": "2026-06-03T02:23:43.006Z",
+            "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+            "workingTreeHash": "sha256:f7f7c64382f0cf077a411ff23bbe3ec6c9dfc37ecc3fe968413e78e66c5f6d8c",
+            "stdoutHash": "sha256:578efa278ac37942a6fde670aff7637fd6f70af448ce680e4fad43a8a6b09328",
+            "stderrHash": "sha256:2f9d714469e9b24f2bb33af699c608fed72665cc7d799971266e1cd1f6ed3be9",
+            "stdoutPath": ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stdout.txt",
+            "stderrPath": ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stderr.txt",
+            "artifactPaths": [
+                ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stdout.txt",
+                ".harness/evidence/fix-thread-avatar-persistence/checks/smoke-20260603022341/stderr.txt"
+            ]
+        }
+    ],
+    "reviewers": [
+        {
+            "name": "advisor",
+            "decision": "pass",
+            "artifact": ".harness/reviews/fix-thread-avatar-persistence/advisor-decision.json"
+        },
+        {
+            "name": "architecture-reviewer",
+            "decision": "pass",
+            "artifact": ".harness/reviews/fix-thread-avatar-persistence/architecture-reviewer.json"
+        }
+    ],
+    "knownRisks": [
+        {
+            "id": "directory-only-thread-not-backfilled",
+            "severity": "low",
+            "description": "Backfill only enriches threads that already exist as conversations. A contact/group the user has never exchanged a message with has no thread row, so its avatar is not persisted (it is still resolved live from the directory when the UI needs it).",
+            "disposition": "accepted",
+            "owner": "project-owner",
+            "acceptedBy": "advisor",
+            "acceptanceReason": "The bug is about conversation history showing the wrong/blank identity after restart; that only concerns threads that exist. Persisting the entire directory as its own table is a separate, larger slice and an explicit non-goal here.",
+            "mitigation": "If a persisted full directory is needed later, add a contacts/groups table and resolve identity from it at load_history time."
+        }
+    ],
+    "updatedAt": "2026-06-03T02:24:30.000Z"
+}

@@ -1,0 +1,62 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "session-manager",
+    "featureId": "session-manager",
+    "decision": "pass",
+    "createdAt": "2026-06-02T15:46:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/session/mod.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "input-validation",
+        "auth-session-boundary",
+        "abuse-rate-limit"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked that the refactor preserves the credential-never-in-UI boundary, that the new throttle is on the send path, and that the live smoke sidecar carries no secrets/PII."
+    },
+    "confidence": 0.88,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "send-throttle-missing",
+            "file": "src-tauri/src/session/mod.rs",
+            "resolution": "A per-account SendThrottle (DEFAULT_SEND_INTERVAL=800ms) now spaces outbound messages per account on the SessionManager::send_text path, reducing the spam-like-burst ban risk (project risk r1). Different accounts are throttled independently; removal clears pacing state."
+        }
+    ],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "The refactor preserves the trust boundary: credentials are still consumed by zalo::login inside the core and never returned across IPC; SessionManager stores only the authenticated Arc<API> handle and the listener, not the credential triple. send_message still validates thread_id/text at the boundary before delegating to the throttled SessionManager::send_text. SessionError messages contain only an account id (a public uid), never token values.",
+            "fix": "None required."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/session/mod.rs",
+            "evidence": "The attested live-smoke sidecar prints only non-secret diagnostics (uid length 19, msg-id length 13) and was scanned for token/recipient leakage — none present. The throttle is a fixed minimum interval, not a hard quota, so it paces but does not block legitimate user-initiated sends.",
+            "fix": "If automated/bulk sending is added later, layer an explicit per-window quota on top of the interval throttle."
+        }
+    ],
+    "summary": "Security review of the session refactor: the credential-never-in-webview boundary is preserved (manager holds only the API handle), boundary input validation is intact, and the new per-account send throttle resolves the previously-accepted ban-risk follow-up (r1 / send-throttle-missing). Live-smoke evidence is free of secrets and PII. No blocking findings."
+}

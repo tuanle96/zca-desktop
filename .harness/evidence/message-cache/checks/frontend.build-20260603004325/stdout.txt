@@ -1,0 +1,71 @@
+
+> zca-desktop@0.1.0 build
+> vite build
+
+vite v6.4.3 building SSR bundle for production...
+transforming...
+✓ 4415 modules transformed.
+rendering chunks...
+vite v6.4.3 building for production...
+transforming...
+✓ 4415 modules transformed.
+rendering chunks...
+computing gzip size...
+.svelte-kit/output/client/_app/version.json                                                      0.03 kB │ gzip:  0.05 kB
+.svelte-kit/output/client/.vite/manifest.json                                                    5.64 kB │ gzip:  0.87 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-vietnamese-wght-normal.CBcvBZtf.woff2     10.25 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-greek-ext-wght-normal.DlzME5K_.woff2      11.23 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2       18.75 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-greek-wght-normal.CkhJZR-_.woff2          19.00 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-cyrillic-ext-wght-normal.BOeWTOD4.woff2   25.96 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-latin-wght-normal.Dx4kXJAl.woff2          48.26 kB
+.svelte-kit/output/client/_app/immutable/assets/inter-latin-ext-wght-normal.DO1Apj_S.woff2      85.07 kB
+.svelte-kit/output/client/_app/immutable/assets/2.bHHIbcsu.css                                   0.35 kB │ gzip:  0.19 kB
+.svelte-kit/output/client/_app/immutable/assets/0.Bcvb8iNw.css                                  45.58 kB │ gzip:  8.47 kB
+.svelte-kit/output/client/_app/immutable/entry/start.Cl_7m803.js                                 0.08 kB │ gzip:  0.09 kB
+.svelte-kit/output/client/_app/immutable/chunks/B4RLyDih.js                                      0.19 kB │ gzip:  0.17 kB
+.svelte-kit/output/client/_app/immutable/chunks/YipB1QQr.js                                      0.30 kB │ gzip:  0.22 kB
+.svelte-kit/output/client/_app/immutable/nodes/0.BJKqQJkB.js                                     0.34 kB │ gzip:  0.26 kB
+.svelte-kit/output/client/_app/immutable/nodes/1.D3kPMsls.js                                     0.54 kB │ gzip:  0.34 kB
+.svelte-kit/output/client/_app/immutable/chunks/DS8kL8mF.js                                      1.80 kB │ gzip:  0.90 kB
+.svelte-kit/output/client/_app/immutable/chunks/DzoToycJ.js                                      2.24 kB │ gzip:  0.98 kB
+.svelte-kit/output/client/_app/immutable/chunks/0SRUKDNk.js                                      3.27 kB │ gzip:  1.50 kB
+.svelte-kit/output/client/_app/immutable/entry/app.6kbeUxuw.js                                   5.92 kB │ gzip:  2.73 kB
+.svelte-kit/output/client/_app/immutable/chunks/x1RFhmh8.js                                      9.56 kB │ gzip:  4.04 kB
+.svelte-kit/output/client/_app/immutable/chunks/DGTPRah1.js                                     28.70 kB │ gzip: 11.08 kB
+.svelte-kit/output/client/_app/immutable/chunks/DZDQzgRB.js                                     29.01 kB │ gzip: 11.07 kB
+.svelte-kit/output/client/_app/immutable/nodes/2.DZdpaNYp.js                                   146.79 kB │ gzip: 45.29 kB
+✓ built in 3.93s
+.svelte-kit/output/server/.vite/manifest.json                                                    5.42 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-vietnamese-wght-normal.CBcvBZtf.woff2     10.25 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-greek-ext-wght-normal.DlzME5K_.woff2      11.23 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-cyrillic-wght-normal.DqGufNeO.woff2       18.75 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-greek-wght-normal.CkhJZR-_.woff2          19.00 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-cyrillic-ext-wght-normal.BOeWTOD4.woff2   25.96 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-latin-wght-normal.Dx4kXJAl.woff2          48.26 kB
+.svelte-kit/output/server/_app/immutable/assets/inter-latin-ext-wght-normal.DO1Apj_S.woff2      85.07 kB
+.svelte-kit/output/server/_app/immutable/assets/_page.bHHIbcsu.css                               0.35 kB
+.svelte-kit/output/server/_app/immutable/assets/_layout.B-nJs-zY.css                            45.62 kB
+.svelte-kit/output/server/entries/pages/_layout.ts.js                                            0.04 kB
+.svelte-kit/output/server/chunks/false.js                                                        0.04 kB
+.svelte-kit/output/server/entries/pages/_layout.svelte.js                                        0.17 kB
+.svelte-kit/output/server/internal.js                                                            0.35 kB
+.svelte-kit/output/server/chunks/server.js                                                       0.62 kB
+.svelte-kit/output/server/chunks/utils2.js                                                       1.09 kB
+.svelte-kit/output/server/entries/fallbacks/error.svelte.js                                      1.38 kB
+.svelte-kit/output/server/chunks/render-context.js                                               2.26 kB
+.svelte-kit/output/server/chunks/internal.js                                                     3.28 kB
+.svelte-kit/output/server/chunks/exports.js                                                      6.97 kB
+.svelte-kit/output/server/chunks/utils.js                                                       34.89 kB
+.svelte-kit/output/server/remote-entry.js                                                       37.83 kB
+.svelte-kit/output/server/chunks/index.js                                                       39.69 kB
+.svelte-kit/output/server/chunks/root.js                                                        86.26 kB
+.svelte-kit/output/server/index.js                                                             130.53 kB
+.svelte-kit/output/server/entries/pages/_page.svelte.js                                        144.10 kB
+✓ built in 7.65s
+
+Run npm run preview to preview your production build locally.
+
+> Using @sveltejs/adapter-static
+  Wrote site to "build"
+  ✔ done

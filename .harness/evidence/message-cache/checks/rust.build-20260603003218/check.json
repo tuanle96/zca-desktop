@@ -1,0 +1,20 @@
+{
+  "name": "rust.build",
+  "command": "cargo build --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "cargo build compiles the store message/thread/attachment repositories + command persistence wiring.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-03T00:32:18.102Z",
+  "finishedAt": "2026-06-03T00:32:19.998Z",
+  "gitHead": "f34362495b6810ec61ddb371c5750d587c89795b",
+  "workingTreeHash": "sha256:64059116f2980ca5a0c218272fe668cf1bd9370de0e5fc73912e9aff7a8f85cf",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:00a5ed0a89f8828997acd03c51457906993757898e80039474c2454a03cd9a9d",
+  "stdoutPath": ".harness/evidence/message-cache/checks/rust.build-20260603003218/stdout.txt",
+  "stderrPath": ".harness/evidence/message-cache/checks/rust.build-20260603003218/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/message-cache/checks/rust.build-20260603003218/stdout.txt",
+    ".harness/evidence/message-cache/checks/rust.build-20260603003218/stderr.txt"
+  ]
+}

@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 import { existsSync, readFileSync, readdirSync } from "node:fs";
-import { resolve, join } from "node:path";
+import { resolve, join, isAbsolute } from "node:path";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { concreteCommand, validateProofCommand } from "./_lib/command-policy.mjs";
@@ -11,6 +11,7 @@ const RISK_TIERS = new Set(["tiny", "normal", "high-risk"]);
 const TASK_TYPES = new Set(["feature", "bugfix", "refactor", "release", "docs", "harness"]);
 const REVIEW_DECISIONS = new Set(["pass", "block", "needs-human"]);
 const EVIDENCE_REVIEW_DECISIONS = new Set([...REVIEW_DECISIONS, "not-required"]);
+const REVIEW_PROVENANCE_SOURCES = new Set(["advisor-agent", "review-agent", "manual-review", "external-review"]);
 const FINDING_SEVERITIES = new Set(["critical", "high", "medium", "low", "info"]);
 const KNOWN_RISK_SEVERITIES = new Set(["critical", "high", "medium", "low", "info"]);
 const KNOWN_RISK_DISPOSITIONS = new Set(["mitigated", "accepted", "open"]);
@@ -883,6 +884,7 @@ function validateReviewDecision(decision, path, expectedReviewer) {
   validateReviewConfidence(decision, prefix);
   validateReviewStringArray(decision, "unreviewedRiskAreas", prefix, { stableIds: true, paths: false });
   validateResolvedFindings(decision, prefix);
+  validateReviewProvenance(decision, prefix);
   if (decision.decision === "pass") {
     if (!Array.isArray(decision.checkedInvariants) || decision.checkedInvariants.length === 0) {
       errors.push(`${prefix}: decision=pass must include non-empty checkedInvariants`);
@@ -953,6 +955,176 @@ function validateReviewDecision(decision, path, expectedReviewer) {
     }
   }
   return decision;
+}
+
+function validateReviewProvenance(decision, prefix) {
+  if (decision.provenance === undefined) {
+    if (decision.reviewer === "advisor" && decision.decision === "pass") {
+      errors.push(`${prefix}: advisor decision=pass must include provenance`);
+    }
+    return;
+  }
+  const provenance = decision.provenance;
+  if (!provenance || typeof provenance !== "object" || Array.isArray(provenance)) {
+    errors.push(`${prefix}: provenance must be an object`);
+    return;
+  }
+  if (!REVIEW_PROVENANCE_SOURCES.has(provenance.source)) {
+    errors.push(`${prefix}: provenance.source must be one of ${[...REVIEW_PROVENANCE_SOURCES].join(", ")}`);
+  }
+  if (decision.reviewer === "advisor" && decision.decision === "pass" && provenance.source !== "advisor-agent") {
+    errors.push(`${prefix}: advisor decision=pass provenance.source must be advisor-agent`);
+  }
+  for (const field of ["trigger", "createdBy"]) {
+    if (!concrete(provenance[field])) {
+      errors.push(`${prefix}: provenance.${field} must be concrete`);
+    }
+  }
+  for (const field of ["sessionId", "notes"]) {
+    if (provenance[field] !== undefined && typeof provenance[field] !== "string") {
+      errors.push(`${prefix}: provenance.${field} must be a string`);
+    }
+  }
+  for (const field of ["diffHash", "evidenceHash"]) {
+    if (provenance[field] !== undefined && !/^sha256:[a-f0-9]{64}$/.test(String(provenance[field]))) {
+      errors.push(`${prefix}: provenance.${field} must be sha256:<64 lowercase hex chars>`);
+    }
+  }
+  if (decision.decision === "pass" && provenance.source === "review-agent" && provenance.runtimeProof === undefined) {
+    errors.push(`${prefix}: review-agent decision=pass must include provenance.runtimeProof`);
+  }
+  if (provenance.runtimeProof !== undefined) {
+    validateReviewRuntimeProof(provenance.runtimeProof, prefix, decision);
+    if (provenance.source === "review-agent" && provenance.runtimeProof?.type !== "orchestration-run") {
+      errors.push(`${prefix}: review-agent decision=pass runtimeProof.type must be orchestration-run`);
+    }
+  }
+}
+
+function validateReviewRuntimeProof(value, prefix, decision) {
+  if (!value || typeof value !== "object" || Array.isArray(value)) {
+    errors.push(`${prefix}: provenance.runtimeProof must be an object`);
+    return;
+  }
+  let shapeOk = true;
+  if (!["subagent-stop", "orchestration-run"].includes(value.type)) {
+    errors.push(`${prefix}: provenance.runtimeProof.type must be subagent-stop or orchestration-run`);
+    shapeOk = false;
+  }
+  if (!concrete(value.eventId)) {
+    errors.push(`${prefix}: provenance.runtimeProof.eventId must be concrete`);
+    shapeOk = false;
+  }
+  if (!/^sha256:[a-f0-9]{64}$/.test(String(value.inputHash || ""))) {
+    errors.push(`${prefix}: provenance.runtimeProof.inputHash must be sha256:<64 lowercase hex chars>`);
+    shapeOk = false;
+  }
+  if (typeof value.path !== "string" || value.path.trim().length === 0) {
+    errors.push(`${prefix}: provenance.runtimeProof.path must be a non-empty string`);
+    shapeOk = false;
+  } else {
+    validateProjectPath(value.path, `${prefix}: provenance.runtimeProof.path`);
+  }
+  if (shapeOk && value.type === "orchestration-run") {
+    validateOrchestrationRunRuntimeProof(value, prefix, decision);
+  }
+}
+
+function resolveRuntimeProjectPath(value, label) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    errors.push(`${label}: path is required`);
+    return null;
+  }
+  if (/^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(value)) {
+    errors.push(`${label}: must be a repo-local path`);
+    return null;
+  }
+  const abs = isAbsolute(value) ? resolve(value) : resolve(ROOT, value);
+  if (!insideRoot(abs)) {
+    errors.push(`${label}: must stay inside the project root`);
+    return null;
+  }
+  return abs;
+}
+
+function splitOrchestrationEventId(value, prefix) {
+  const raw = String(value || "");
+  const idx = raw.lastIndexOf(":");
+  if (idx <= 0 || idx === raw.length - 1) {
+    errors.push(`${prefix}: provenance.runtimeProof.eventId must be <runId>:<agentId> for orchestration-run`);
+    return null;
+  }
+  return {
+    runId: raw.slice(0, idx),
+    agentId: raw.slice(idx + 1),
+  };
+}
+
+function validateOrchestrationRunRuntimeProof(value, prefix, decision) {
+  const normalizedProofPath = normalizedProjectPath(value.path);
+  if (!normalizedProofPath) return;
+  if (!normalizedProofPath.startsWith(".harness/orchestration/") || !normalizedProofPath.endsWith("/summary.json")) {
+    errors.push(`${prefix}: orchestration-run runtimeProof.path must point to .harness/orchestration/<run>/summary.json`);
+    return;
+  }
+  const ids = splitOrchestrationEventId(value.eventId, prefix);
+  if (!ids) return;
+  const summaryPath = resolve(ROOT, normalizedProofPath);
+  if (!existsSync(summaryPath)) {
+    errors.push(`${prefix}: orchestration-run summary not found: ${normalizedProofPath}`);
+    return;
+  }
+  const summary = readJson(summaryPath, normalizedProofPath);
+  if (!summary || typeof summary !== "object" || Array.isArray(summary)) {
+    errors.push(`${prefix}: orchestration-run summary must be an object`);
+    return;
+  }
+  if (summary.runId !== ids.runId) {
+    errors.push(`${prefix}: orchestration-run summary runId must match runtimeProof.eventId`);
+  }
+  if (summary.status !== "passed") {
+    errors.push(`${prefix}: orchestration-run summary status must be passed`);
+  }
+  if (summary.validation?.status !== undefined && summary.validation.status !== "passed") {
+    errors.push(`${prefix}: orchestration-run summary validation.status must be passed`);
+  }
+  const result = (summary.results || []).find((row) => row?.agentId === ids.agentId);
+  if (!result) {
+    errors.push(`${prefix}: orchestration-run result not found for agent ${ids.agentId}`);
+    return;
+  }
+  if (!["passed", "skipped"].includes(result.status)) {
+    errors.push(`${prefix}: orchestration-run result ${ids.agentId} must be passed or skipped`);
+  }
+  if (result.requiredReviewer && result.requiredReviewer !== decision.reviewer) {
+    errors.push(`${prefix}: orchestration-run requiredReviewer must match reviewer ${decision.reviewer}`);
+  }
+  if (!result.runtimeProof || typeof result.runtimeProof !== "object") {
+    errors.push(`${prefix}: orchestration-run summary result must include runtimeProof`);
+  } else {
+    if (result.runtimeProof.type !== "orchestration-run") {
+      errors.push(`${prefix}: orchestration-run summary result runtimeProof.type must be orchestration-run`);
+    }
+    if (result.runtimeProof.eventId !== value.eventId) {
+      errors.push(`${prefix}: orchestration-run summary result runtimeProof.eventId must match review provenance`);
+    }
+    if (result.runtimeProof.inputHash !== value.inputHash) {
+      errors.push(`${prefix}: orchestration-run summary result runtimeProof.inputHash must match review provenance`);
+    }
+    if (result.runtimeProof.path !== normalizedProofPath) {
+      errors.push(`${prefix}: orchestration-run summary result runtimeProof.path must match review provenance`);
+    }
+  }
+  const transcriptPath = resolveRuntimeProjectPath(result.transcriptPath, `${prefix}: orchestration-run transcriptPath`);
+  if (!transcriptPath) return;
+  if (!existsSync(transcriptPath)) {
+    errors.push(`${prefix}: orchestration-run transcript not found: ${result.transcriptPath}`);
+    return;
+  }
+  const transcriptHash = hashFile(transcriptPath);
+  if (transcriptHash !== value.inputHash) {
+    errors.push(`${prefix}: orchestration-run transcript hash must match runtimeProof.inputHash`);
+  }
 }
 
 function validateReviewStringArray(decision, field, prefix, { stableIds = false, paths = false } = {}) {

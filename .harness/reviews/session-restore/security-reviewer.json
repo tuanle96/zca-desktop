@@ -1,0 +1,50 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "security-reviewer",
+    "taskId": "session-restore",
+    "featureId": "session-restore",
+    "decision": "pass",
+    "createdAt": "2026-06-03T01:26:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/store/db.rs"
+    ],
+    "checkedInvariants": [
+        "secret-handling",
+        "auth-session-boundary"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Checked that restore decrypts credentials in-core, returns only non-secret profiles, and that the captured relaunch log carries no token values."
+    },
+    "confidence": 0.85,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "relaunch-auto-restore",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "Live relaunch verified by the project owner: the saved account auto-reconnected with no QR; the captured non-secret log shows restored=1 and load_history hydration, with start_qr_login NOT called during restore."
+        }
+    ],
+    "requiredGates": [
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "rule": "secret-handling",
+            "file": "src-tauri/src/command/mod.rs",
+            "evidence": "restore_sessions decrypts each credential inside the core (store layer, keychain master key) and passes it straight into login; only non-secret AccountProfile DTOs are returned to the UI. A per-account login failure is logged with the account id only and the account is marked reauth-needed (no token value logged). The captured relaunch log artifact contains account ids only — no imei/cookie/userAgent values.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Security review (reconciliation): startup restore keeps credentials in-core (decrypt -> login), returns only non-secret profiles, and degrades safely on failure (mark reauth-needed, skip). The captured live relaunch log is free of token values. The earlier needs-human blocker (unrun relaunch) is resolved by the project owner's device run. No blocking findings; pass."
+}

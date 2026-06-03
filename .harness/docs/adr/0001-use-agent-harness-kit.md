@@ -1,7 +1,7 @@
 # ADR 0001 — Adopt agent-harness-kit
 
 - **Status:** accepted
-- **Date:** 2026-06-01
+- **Date:** 2026-06-03
 - **Deciders:** project owner
 
 ## Context
@@ -23,7 +23,7 @@ work.
 
 ## Decision
 
-Adopt `agent-harness-kit v0.19.0` as the harness layer. Specifically:
+Adopt `agent-harness-kit v0.20.0` as the harness layer. Specifically:
 
 - Use the layer order `types → config → repo → service → runtime → ui` and enforce it via the structural
   test bundled with the kit.

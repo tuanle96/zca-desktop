@@ -50,6 +50,18 @@
     },
     {
       "if": {
+        "required": ["reviewer", "decision"],
+        "properties": {
+          "reviewer": { "const": "advisor" },
+          "decision": { "const": "pass" }
+        }
+      },
+      "then": {
+        "required": ["provenance"]
+      }
+    },
+    {
+      "if": {
         "properties": {
           "decision": { "const": "block" }
         }
@@ -107,6 +119,63 @@
     "createdAt": {
       "type": "string",
       "format": "date-time"
+    },
+    "provenance": {
+      "type": "object",
+      "description": "How this review decision was produced. Advisor pass decisions must come from the advisor agent path, not a minimal hand-written artifact.",
+      "additionalProperties": false,
+      "required": ["source", "trigger", "createdBy"],
+      "properties": {
+        "source": {
+          "enum": ["advisor-agent", "review-agent", "manual-review", "external-review"]
+        },
+        "trigger": {
+          "type": "string",
+          "minLength": 1
+        },
+        "createdBy": {
+          "type": "string",
+          "minLength": 1
+        },
+        "sessionId": {
+          "type": "string",
+          "minLength": 1
+        },
+        "diffHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "evidenceHash": {
+          "type": "string",
+          "pattern": "^sha256:[a-f0-9]{64}$"
+        },
+        "notes": {
+          "type": "string"
+        },
+        "runtimeProof": {
+          "type": "object",
+          "description": "Runtime proof produced by a harness hook or orchestration runner. Active Stop gates require advisor pass decisions to reference a SubagentStop proof.",
+          "additionalProperties": false,
+          "required": ["type", "eventId", "inputHash", "path"],
+          "properties": {
+            "type": {
+              "enum": ["subagent-stop", "orchestration-run"]
+            },
+            "eventId": {
+              "type": "string",
+              "minLength": 1
+            },
+            "inputHash": {
+              "type": "string",
+              "pattern": "^sha256:[a-f0-9]{64}$"
+            },
+            "path": {
+              "type": "string",
+              "pattern": "^(?![a-zA-Z][a-zA-Z0-9+.-]*:)(?!/)(?!.*(?:^|/)\\.\\.(?:/|$)).+$"
+            }
+          }
+        }
+      }
     },
     "checkedFiles": {
       "type": "array",

@@ -1,0 +1,52 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "architecture-reviewer",
+    "taskId": "qr-login",
+    "featureId": "qr-login",
+    "decision": "pass",
+    "createdAt": "2026-06-03T01:10:00.000Z",
+    "checkedFiles": [
+        "src-tauri/src/types/qr.rs",
+        "src-tauri/src/types/mod.rs",
+        "src-tauri/src/zalo/mod.rs",
+        "src-tauri/src/command/mod.rs"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "allowed-layers",
+        "no-zca-rust-above-zalo"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/types/qr.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/types/qr.rs",
+            "src-tauri/src/types/mod.rs",
+            "src-tauri/src/zalo/mod.rs",
+            "src-tauri/src/command/mod.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "Verified the QR login change stays within scope.allowedLayers [types, zalo, command]; zca-rust + reqwest stay confined to zalo. lib.rs/Cargo wiring is owned by the secure-cred-store / session-manager bundles in the current diff."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [],
+    "requiredGates": [
+        "tests"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "rule": "layering",
+            "file": "src-tauri/src/zalo/mod.rs",
+            "evidence": "run_qr_login wraps zca-rust API::login_qr and maps LoginQREvent -> the pure types::QrLoginEvent DTO inside the zalo layer; types/qr.rs is pure data with no zca-rust dependency; command/start_qr_login depends on zalo + types only and emits the non-secret event + AccountProfile. zca-rust and reqwest stay confined to zalo. Forward-only order preserved.",
+            "fix": "None required."
+        }
+    ],
+    "summary": "Architecture review (reconciliation): QR login keeps zca-rust/reqwest confined to the zalo layer, types/qr.rs is pure data, and command orchestrates via the lower layers only — within scope.allowedLayers [types, zalo, command]. Forward-only layering intact. Approve."
+}

@@ -1,0 +1,92 @@
+{
+    "schemaVersion": 1,
+    "id": "fix-thread-avatar-persistence",
+    "type": "bugfix",
+    "riskTier": "normal",
+    "scope": {
+        "summary": "Persist conversation identity (title + avatar) so chat history shows the right name and avatar after a restart. The realtime listener message model (zca-rust TMessage) carries only a sender display name and NO avatar, so save_message always wrote thread_avatar = None and a group thread's title became the last sender. Avatars/names only exist in the directory data the app already fetches (list_contacts via get_all_friends, list_groups via get_group_info), which was never persisted. Fix: backfill existing persisted thread rows with the directory title + avatar in the store layer; the command layer calls the backfill right after it loads contacts/groups for an account. Only threads that already exist (real conversations) are enriched — directory-only contacts do not create thread rows. No new realtime data source and no IPC argument change (Tauri injects the store State).",
+        "allowedLayers": [
+            "types",
+            "store",
+            "command"
+        ],
+        "goals": [
+            "types/: ThreadIdentity DTO (camelCase) carries a resolved thread_id + title + avatar from command into the store backfill",
+            "store/: backfill_thread_identities(account_id, identities) updates title + avatar (COALESCE so a missing directory value keeps the existing one) for threads that already exist; returns the number of rows updated as a non-secret diagnostic",
+            "command/: list_contacts + list_groups persist directory identities (contact.user_id/display_name/avatar, group.group_id/name/avatar) onto existing thread rows after fetching",
+            "Offline test proves a saved thread gets its title + avatar backfilled and that a directory entry with no matching conversation does NOT create a thread row",
+            "load_history then returns threads carrying a persisted avatar + correct title on cold start before the live directory fetch resolves"
+        ],
+        "nonGoals": [
+            "Adding an avatar field to the realtime IncomingMessage / TMessage (upstream does not provide one on chat messages)",
+            "Persisting the full contact/group directory as its own table (only conversation identity is backfilled this slice)",
+            "Downloading/caching avatar image binaries to disk (URL only)",
+            "Any frontend/UI change (the store already feeds load_history, which the UI consumes)"
+        ]
+    },
+    "acceptance": [
+        {
+            "id": "tests",
+            "description": "store/ backfills thread title + avatar for existing threads and skips directory entries with no matching conversation; the new offline test thread_identity_backfill_updates_existing_only passes and existing store tests still pass.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "lint",
+            "description": "cargo clippy is clean with the new store method + command wiring.",
+            "verification": {
+                "command": "cargo clippy --manifest-path src-tauri/Cargo.toml --all-targets -- -D warnings"
+            }
+        },
+        {
+            "id": "build",
+            "description": "command/ compiles: list_contacts/list_groups accept the store State and backfill without changing the IPC argument shape; no token values cross IPC.",
+            "verification": {
+                "command": "cargo build --manifest-path src-tauri/Cargo.toml"
+            }
+        },
+        {
+            "id": "smoke",
+            "description": "Offline restart proof: save a thread, backfill its identity from directory data, drop + reopen the SQLite file (relaunch), and load_threads returns the persisted title + avatar with no realtime event and no live directory fetch.",
+            "verification": {
+                "command": "cargo test --manifest-path src-tauri/Cargo.toml -- --ignored thread_identity_cache_roundtrip --nocapture"
+            }
+        }
+    ],
+    "requiresAdr": false,
+    "requiredReviewers": [
+        "advisor",
+        "architecture-reviewer"
+    ],
+    "permissions": {
+        "allow": [
+            "Read",
+            "Grep",
+            "Glob",
+            "LS",
+            "Write",
+            "Edit",
+            "Bash(npm run*)",
+            "Bash(cargo build*)",
+            "Bash(cargo test*)",
+            "Bash(cargo clippy*)",
+            "Bash(node .harness/scripts/*)",
+            "Bash(git status*)",
+            "Bash(git diff*)",
+            "Bash(git log*)"
+        ],
+        "deny": [
+            "Bash(git commit*)",
+            "Bash(git push*)"
+        ]
+    },
+    "doneRequires": [
+        "lint",
+        "tests",
+        "smoke",
+        "review",
+        "evidence-bundle"
+    ],
+    "evidencePath": ".harness/evidence/fix-thread-avatar-persistence.json"
+}

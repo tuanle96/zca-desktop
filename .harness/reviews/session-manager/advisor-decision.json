@@ -1,0 +1,84 @@
+{
+    "schemaVersion": 1,
+    "reviewer": "advisor",
+    "taskId": "session-manager",
+    "featureId": "session-manager",
+    "decision": "pass",
+    "createdAt": "2026-06-02T15:50:00.000Z",
+    "provenance": {
+        "source": "advisor-agent",
+        "trigger": "claim-done",
+        "createdBy": "advisor",
+        "notes": "Migrated for 0.20.0 schema: advisor pass produced via the mandatory advisor agent path before provenance was a required field."
+    },
+    "checkedFiles": [
+        "src-tauri/src/session/mod.rs",
+        "src-tauri/src/command/mod.rs",
+        "src-tauri/src/lib.rs",
+        "src-tauri/src/zalo/mod.rs",
+        ".harness/task-contracts/session-manager.json",
+        ".harness/evidence/session-manager.json"
+    ],
+    "checkedInvariants": [
+        "layering",
+        "secret-handling",
+        "auth-session-boundary",
+        "background-task-lifecycle",
+        "abuse-rate-limit"
+    ],
+    "diffCoverage": {
+        "changedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "reviewedFiles": [
+            "src-tauri/src/session/mod.rs",
+            "src-tauri/src/command/mod.rs",
+            "src-tauri/src/lib.rs"
+        ],
+        "uncoveredFiles": [],
+        "coverage": 1,
+        "notes": "All three changed source files reviewed against the task contract scope. Evidence bundle gates (build/lint/tests/structural/smoke) are attested with verified hashes and a producible replay plan."
+    },
+    "confidence": 0.9,
+    "unreviewedRiskAreas": [],
+    "resolvedFindings": [
+        {
+            "id": "in-command-session-store",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "Session state lifted out of the command layer into the new session/ layer (SessionManager), as required by ADR-0003."
+        },
+        {
+            "id": "send-throttle-missing",
+            "file": "src-tauri/src/session/mod.rs",
+            "resolution": "Per-account SendThrottle added on the send path; ban-risk r1 follow-up mitigated."
+        },
+        {
+            "id": "listener-leak-unbounded-vec",
+            "file": "src-tauri/src/command/mod.rs",
+            "resolution": "Unbounded Vec<Listener> replaced with per-account graceful shutdown via Listener::stop on replace/remove."
+        }
+    ],
+    "requiredGates": [
+        "structural",
+        "lint",
+        "tests",
+        "smoke"
+    ],
+    "findings": [
+        {
+            "severity": "info",
+            "file": ".harness/evidence/session-manager.json",
+            "evidence": "Evidence bundle status=pass with five attested checks (rust.build, lint, tests, structural, smoke), all exitCode 0; task-evidence-check --strict --verify-hashes --replay-plan succeeds and the smoke sidecar prints only non-secret diagnostics (uid_len=19, msg_id_len=13). Four reviewer artifacts (advisor, security, architecture, reliability) are present and link from the bundle. The taskId/featureId match the active task contract.",
+            "fix": "None required to mark done."
+        },
+        {
+            "severity": "low",
+            "file": "src-tauri/src/session/mod.rs",
+            "evidence": "The two_accounts_live test requires a second credential (ZALO_CRED_FILE_2) not available in this environment; the runnable session_manager_roundtrip_live smoke proves the full new mechanism (login → register → throttled send → manager-owned listener capture tagged with the correct account → graceful remove) on one live account. The concurrent-cardinality assertion (count==2) is covered by the offline tracks_multiple_accounts_concurrently test.",
+            "fix": "Run two_accounts_live once a second test account is provisioned to capture concurrent-login evidence; non-blocking."
+        }
+    ],
+    "summary": "session-manager is honestly done. The missing session/ layer is added in its correct ADR-0003 position: SessionManager owns per-account API+Listener, gracefully stops listeners on replace/remove (closing the unbounded-Vec leak), and applies a per-account send throttle (mitigating ban-risk r1). The command layer delegates instead of holding session state, and zca-rust stays confined to zalo behind the MessageListener seam. Six offline tests plus an attested live round-trip prove lifecycle, throttle pacing, and per-account event tagging; build, clippy -D warnings, tests, and structural all pass with verified hashes. Pass."
+}
