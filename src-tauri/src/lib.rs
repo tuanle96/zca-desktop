@@ -3,6 +3,7 @@
 // Rust core layers (ADR-0003): types → config → store → zalo → session → command.
 pub mod command;
 pub mod config;
+pub mod session;
 pub mod store;
 pub mod types;
 pub mod zalo;
@@ -27,7 +28,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(command::ListenerState::default())
+        .manage(command::SessionState::default())
         .manage(store_state)
         .setup(move |_app| {
             // Keep the file-logging guard alive for the whole app lifetime.
@@ -42,6 +43,11 @@ pub fn run() {
             command::start_qr_login,
             command::restore_sessions,
             command::send_message,
+            command::send_sticker,
+            command::search_stickers,
+            command::recent_stickers,
+            command::sticker_categories,
+            command::sticker_category,
             command::list_contacts,
             command::list_groups,
             command::load_history,
@@ -50,6 +56,7 @@ pub fn run() {
             command::cred_file_summary,
             command::login_from_file,
             command::start_listening_from_file,
+            command::logout_account,
             command::log_from_ui
         ])
         .run(tauri::generate_context!())

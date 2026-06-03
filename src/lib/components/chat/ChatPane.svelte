@@ -3,9 +3,12 @@
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { session } from "$lib/session.svelte";
+  import StickerPicker from "./StickerPicker.svelte";
+  import type { Sticker } from "$lib/types";
 
   let draft = $state("");
   let scroller = $state<HTMLElement | null>(null);
+  let showStickers = $state(false);
 
   const convo = $derived(session.activeConversation);
   const messages = $derived(session.activeMessages);
@@ -43,6 +46,11 @@
   async function send() {
     const ok = await session.sendActive(draft);
     if (ok) draft = "";
+  }
+
+  async function pickSticker(sticker: Sticker) {
+    showStickers = false;
+    await session.sendSticker(sticker);
   }
 </script>
 
@@ -106,14 +114,26 @@
               </div>
             {/if}
             <div class="flex {m.outgoing ? 'justify-end' : 'justify-start'}">
-              <div
-                class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
-                  ? 'bg-brand text-brand-foreground rounded-br-md'
-                  : 'bg-background rounded-bl-md'}"
-              >
-                <p class="whitespace-pre-wrap break-words">{m.body}</p>
-                <span class="mt-1 block text-right text-[10px] opacity-60">{clock(m.at)}</span>
-              </div>
+              {#if m.sticker}
+                <div class="flex flex-col {m.outgoing ? 'items-end' : 'items-start'}">
+                  <img
+                    src={m.sticker.url}
+                    alt="sticker"
+                    class="size-32 object-contain"
+                    loading="lazy"
+                  />
+                  <span class="text-muted-foreground mt-0.5 text-[10px]">{clock(m.at)}</span>
+                </div>
+              {:else}
+                <div
+                  class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
+                    ? 'bg-brand text-brand-foreground rounded-br-md'
+                    : 'bg-background rounded-bl-md'}"
+                >
+                  <p class="whitespace-pre-wrap break-words">{m.body}</p>
+                  <span class="mt-1 block text-right text-[10px] opacity-60">{clock(m.at)}</span>
+                </div>
+              {/if}
             </div>
           {/each}
         </div>
@@ -122,18 +142,42 @@
 
     <!-- Composer -->
     <footer class="bg-background border-t px-3 py-2.5">
-      <form class="flex items-center gap-1.5" onsubmit={(e) => { e.preventDefault(); send(); }}>
-        <button type="button" class="text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 items-center justify-center rounded-md transition-colors" title="Sticker" aria-label="Sticker"><Smile class="size-5" /></button>
-        <button type="button" class="text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 items-center justify-center rounded-md transition-colors" title="Đính kèm" aria-label="Đính kèm"><Paperclip class="size-5" /></button>
-        <input
-          bind:value={draft}
-          placeholder={`Nhập tin nhắn tới ${convo.title}`}
-          class="border-input bg-background focus-visible:ring-brand/40 flex-1 rounded-full border px-4 py-2 text-sm outline-none focus-visible:ring-2"
-        />
-        <Button type="submit" size="icon" class="bg-brand hover:bg-brand/90 text-brand-foreground rounded-full" disabled={session.busy || draft.trim().length === 0}>
-          <Send class="size-4" />
-        </Button>
-      </form>
+      <div class="relative">
+        {#if showStickers}
+          <!-- Click-away backdrop closes the picker. -->
+          <button
+            type="button"
+            class="fixed inset-0 z-40 cursor-default"
+            aria-label="Đóng bảng sticker"
+            onclick={() => (showStickers = false)}
+          ></button>
+          <div class="absolute bottom-2 left-0 z-50">
+            <StickerPicker onpick={pickSticker} />
+          </div>
+        {/if}
+        <form class="flex items-center gap-1.5" onsubmit={(e) => { e.preventDefault(); send(); }}>
+          <button
+            type="button"
+            onclick={() => (showStickers = !showStickers)}
+            class="flex size-9 items-center justify-center rounded-md transition-colors {showStickers
+              ? 'bg-brand/10 text-brand'
+              : 'text-muted-foreground hover:bg-muted hover:text-foreground'}"
+            title="Sticker"
+            aria-label="Sticker"
+          >
+            <Smile class="size-5" />
+          </button>
+          <button type="button" class="text-muted-foreground hover:bg-muted hover:text-foreground flex size-9 items-center justify-center rounded-md transition-colors" title="Đính kèm" aria-label="Đính kèm"><Paperclip class="size-5" /></button>
+          <input
+            bind:value={draft}
+            placeholder={`Nhập tin nhắn tới ${convo.title}`}
+            class="border-input bg-background focus-visible:ring-brand/40 flex-1 rounded-full border px-4 py-2 text-sm outline-none focus-visible:ring-2"
+          />
+          <Button type="submit" size="icon" class="bg-brand hover:bg-brand/90 text-brand-foreground rounded-full" disabled={session.busy || draft.trim().length === 0}>
+            <Send class="size-4" />
+          </Button>
+        </form>
+      </div>
     </footer>
   </section>
 {/if}
