@@ -44,3 +44,46 @@ services:
       mc alias set local http://minio:9000 zca zca-password &&
       mc mb --ignore-existing local/zca-cloud-dev
       "
+
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    depends_on:
+      postgres:
+        condition: service_healthy
+      minio:
+        condition: service_healthy
+      create-bucket:
+        condition: service_completed_successfully
+    environment:
+      DATABASE_URL: postgres://zca:zca@postgres:5432/zca_cloud
+      ZCA_CLOUD_BIND: 0.0.0.0:37880
+      ZCA_CLOUD_PUBLIC_BASE_URL: http://127.0.0.1:37880
+      # Dev convenience: the login code is returned in the API response (no email needed).
+      # For a real deploy build the `runtime` target and set these to production values.
+      ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS: "1"
+      ZCA_CLOUD_SMTP_ADDR: mailhog:1025
+      ZCA_CLOUD_MASTER_KEY: dev-only-zca-cloud-master-key-change-me
+      ZCA_CLOUD_OBJECT_STORE: s3
+      ZCA_CLOUD_S3_ENDPOINT: http://minio:9000
+      ZCA_CLOUD_S3_ALLOW_HTTP: "1"
+      ZCA_CLOUD_S3_BUCKET: zca-cloud-dev
+      AWS_ACCESS_KEY_ID: zca
+      AWS_SECRET_ACCESS_KEY: zca-password
+    volumes:
+      # Live source for hot-reload; deps + build artifacts cached in named volumes
+      # so the host's macOS target/ stays separate from the Linux build.
+      - ./:/app
+      - server-target:/app/target
+      - cargo-registry:/usr/local/cargo/registry
+      - cargo-git:/usr/local/cargo/git
+    ports:
+      - "37880:37880"
+    restart: always
+
+volumes:
+  server-target:
+  cargo-registry:
+  cargo-git:

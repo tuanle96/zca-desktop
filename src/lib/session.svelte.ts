@@ -47,7 +47,8 @@ import type {
 const MESSAGE_EVENT = "zalo://message";
 const QR_EVENT = "zalo://qr";
 const DEFAULT_CLOUD_BASE_URL = "http://127.0.0.1:37880";
-const CLOUD_BASE_URL_STORAGE_KEY = "zca.cloud.baseUrl";
+export const CLOUD_BASE_URL_STORAGE_KEY = "zca.cloud.baseUrl";
+export const CLOUD_DEVICE_LINKED_STORAGE_KEY = "zca.cloud.deviceLinked";
 
 function snippet(text: string | null): string {
     if (!text) return "[non-text message]";
@@ -148,6 +149,11 @@ type CloudMessageRow = {
     reactionIcon?: string | null;
 };
 
+export type UploadResult = {
+    ok: boolean;
+    error?: string;
+};
+
 type CloudRealtimeEvent = {
     type?: string;
     accountId?: string;
@@ -208,8 +214,8 @@ class SessionStore {
     realtimeDetail = $state("");
     busy = $state(false);
     error = $state("");
-    /** True while the startup session-restore attempt is in flight. */
-    restoring = $state(true);
+      /** True while the startup cloud-device state check is in flight. */
+      restoring = $state(true);
     cloudMode = $state(false);
     private cloudBaseUrl: string | null = null;
     private cloudDeviceToken: string | null = null;
@@ -281,40 +287,35 @@ class SessionStore {
         this.error = "Cloud-only mode: đăng nhập bằng magic link và hosted QR.";
     }
 
-    /** On app start, restore only a previously linked cloud device session. */
-    async restore(): Promise<boolean> {
-        const cloudRestored = await this.restoreCloud();
-        if (cloudRestored) {
-            this.restoring = false;
-            return true;
-        }
+      /** On app start, do not touch the OS keychain before user intent is clear. */
+      async restore(): Promise<boolean> {
+          this.restoring = false;
+          return false;
+      }
 
-        this.restoring = false;
-        return false;
-    }
+      async restoreCloudDevice(baseUrl?: string): Promise<boolean> {
+          if (typeof localStorage === "undefined") return false;
+          const targetBaseUrl = baseUrl || localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
+          const saved = await loadCloudDeviceSession(targetBaseUrl).catch((e) => {
+              log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
+              return null;
+          });
+          if (!saved?.hasDeviceToken) return false;
 
-    private async restoreCloud(): Promise<boolean> {
-        if (typeof localStorage === "undefined") return false;
-        const baseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
-        const saved = await loadCloudDeviceSession(baseUrl).catch((e) => {
-            log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
-            return null;
-        });
-        if (!saved?.hasDeviceToken) return false;
-
-        const connected = await this.connectCloud(baseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN).catch((e) => {
-            this.cloudMode = false;
-            this.cloudBaseUrl = null;
-            this.cloudDeviceToken = null;
+          const connected = await this.connectCloud(targetBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN).catch((e) => {
+              this.cloudMode = false;
+              this.cloudBaseUrl = null;
+              this.cloudDeviceToken = null;
             log.error(`cloud-restore: connect failed: ${String(e)}`);
             return false;
-        });
-        if (connected) {
-            localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, baseUrl);
-            log.info("cloud-restore: connected cloud device session");
-        }
-        return connected;
-    }
+          });
+          if (connected) {
+              localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
+              localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+              log.info("cloud-restore: connected cloud device session");
+          }
+          return connected;
+      }
 
     async connectCloud(baseUrl: string, deviceToken: string): Promise<boolean> {
         let connected = false;
@@ -865,14 +866,17 @@ class SessionStore {
         return ok;
     }
 
-    async uploadCloudFile(file: File): Promise<boolean> {
+    async uploadCloudFile(file: File): Promise<UploadResult> {
         const threadId = this.activeThreadId;
         const convo = this.activeConversation;
-        if (!threadId || !convo || !this.profile || !this.cloudBaseUrl || !this.cloudDeviceToken) return false;
-        if (!this.cloudMode) return false;
+        if (!threadId || !convo || !this.profile || !this.cloudBaseUrl || !this.cloudDeviceToken) {
+            return { ok: false, error: "cloud device session not connected" };
+        }
+        if (!this.cloudMode) return { ok: false, error: "cloud mode is not active" };
 
-        let ok = false;
-        await this.run(async () => {
+        let result: UploadResult = { ok: false, error: "upload did not complete" };
+        this.busy = true;
+        try {
             const bytes = new Uint8Array(await file.arrayBuffer());
             const digest = await crypto.subtle.digest("SHA-256", bytes);
             const contentSha256 = [...new Uint8Array(digest)]
@@ -923,9 +927,15 @@ class SessionStore {
                 },
                 `[File] ${file.name || meta.id}`,
             );
-            ok = true;
-        });
-        return ok;
+            result = { ok: true };
+        } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            log.error(`cloud file upload/send failed: ${message}`);
+            result = { ok: false, error: message };
+        } finally {
+            this.busy = false;
+        }
+        return result;
     }
 
     async downloadCloudFile(message: ChatMessage): Promise<boolean> {

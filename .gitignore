@@ -18,6 +18,11 @@ dist-ssr
 cookies.json
 /credentials/
 
+# Local env files with secrets (docker compose reads these) — keep *.example templates
+.env
+.env.*
+!.env.*.example
+
 # Local debug logs + raw API captures (may contain redacted/raw payloads)
 /logs/
 *.log

@@ -27,9 +27,12 @@
   let showStickers = $state(false);
   let replyTo = $state<ChatMessage | null>(null);
   let fileInput = $state<HTMLInputElement | null>(null);
+  let dragDepth = $state(0);
+  let uploadError = $state("");
 
   const convo = $derived(session.activeConversation);
   const messages = $derived(session.activeMessages);
+  const isDraggingFile = $derived(dragDepth > 0 && session.canUseCloudFiles);
   const realtimeLabel = $derived(session.realtimeLabel);
   const realtimeDotClass = $derived(
     session.realtimeState === "live"
@@ -101,12 +104,53 @@
     await session.sendSticker(sticker);
   }
 
+  async function uploadFiles(files: File[]) {
+    if (!files.length || !session.canUseCloudFiles || session.busy) return;
+    uploadError = "";
+    for (const file of files) {
+      const result = await session.uploadCloudFile(file);
+      if (!result.ok) {
+        uploadError = `Không gửi được ${file.name || "tệp đính kèm"}: ${result.error ?? "không rõ lỗi"}`;
+        return;
+      }
+    }
+  }
+
   async function pickFile(event: Event) {
     const input = event.currentTarget as HTMLInputElement;
-    const file = input.files?.[0];
+    const files = Array.from(input.files ?? []);
     input.value = "";
-    if (!file) return;
-    await session.uploadCloudFile(file);
+    await uploadFiles(files);
+  }
+
+  function hasDraggedFiles(event: DragEvent): boolean {
+    return Array.from(event.dataTransfer?.types ?? []).includes("Files");
+  }
+
+  function dragEnter(event: DragEvent) {
+    if (!hasDraggedFiles(event) || !session.canUseCloudFiles) return;
+    event.preventDefault();
+    dragDepth += 1;
+  }
+
+  function dragOver(event: DragEvent) {
+    if (!hasDraggedFiles(event) || !session.canUseCloudFiles) return;
+    event.preventDefault();
+    if (event.dataTransfer) event.dataTransfer.dropEffect = "copy";
+  }
+
+  function dragLeave(event: DragEvent) {
+    if (!hasDraggedFiles(event) || !session.canUseCloudFiles) return;
+    event.preventDefault();
+    dragDepth = Math.max(0, dragDepth - 1);
+  }
+
+  async function dropFiles(event: DragEvent) {
+    if (!hasDraggedFiles(event) || !session.canUseCloudFiles) return;
+    event.preventDefault();
+    const files = Array.from(event.dataTransfer?.files ?? []);
+    dragDepth = 0;
+    await uploadFiles(files);
   }
 
   function fileSize(bytes: number): string {
@@ -163,7 +207,19 @@
     {/if}
   </section>
 {:else}
-  <section class="bg-muted/20 flex min-h-0 flex-1 flex-col">
+  <section
+    class="bg-muted/20 relative flex min-h-0 flex-1 flex-col"
+    aria-label={`Hội thoại ${convo.title}`}
+    ondragenter={dragEnter}
+    ondragover={dragOver}
+    ondragleave={dragLeave}
+    ondrop={dropFiles}
+  >
+    {#if isDraggingFile}
+      <div class="border-brand/70 bg-brand/10 text-brand pointer-events-none absolute inset-3 z-30 flex items-center justify-center rounded-lg border-2 border-dashed text-sm font-medium">
+        Thả tệp vào đây để gửi
+      </div>
+    {/if}
     <!-- Header -->
     <header class="bg-background flex items-center gap-3 border-b px-4 py-2.5">
       <Avatar.Root class="size-10 shrink-0">
@@ -406,7 +462,14 @@
           >
             <Smile class="size-5" />
           </button>
-          <input bind:this={fileInput} class="hidden" type="file" onchange={pickFile} />
+          <input
+            bind:this={fileInput}
+            class="pointer-events-none fixed -left-[9999px] top-0 size-px opacity-0"
+            type="file"
+            multiple
+            tabindex="-1"
+            onchange={pickFile}
+          />
           <button
             type="button"
             class="text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-40 flex size-9 items-center justify-center rounded-md transition-colors"
@@ -426,6 +489,9 @@
             <Send class="size-4" />
           </Button>
         </form>
+        {#if uploadError}
+          <div class="text-destructive px-12 pt-1 text-xs" aria-live="polite">{uploadError}</div>
+        {/if}
       </div>
     </footer>
   </section>

@@ -540,7 +540,7 @@ async fn send_file(
         ));
     }
 
-    let mut sent = state
+    let mut sent = match state
         .sessions
         .send_file(
             account_id,
@@ -550,7 +550,20 @@ async fn send_file(
             plaintext,
             kind,
         )
-        .await?;
+        .await
+    {
+        Ok(sent) => sent,
+        Err(error) => {
+            tracing::warn!(
+                %account_id,
+                file_id = %req.file_id,
+                size_bytes = secret.size_bytes,
+                error = %error,
+                "hosted attachment send rejected"
+            );
+            return Err(error);
+        }
+    };
     sent.file.id = Some(req.file_id.to_string());
     sent.file.filename = sent.file.filename.or_else(|| Some(filename.clone()));
     sent.file.mime = sent.file.mime.or_else(|| secret.mime.clone());
@@ -564,6 +577,14 @@ async fn send_file(
         .filter(|id| !id.trim().is_empty())
         .map(str::to_string)
         .unwrap_or_else(|| format!("cloud-file-{}", req.file_id));
+    tracing::info!(
+        %account_id,
+        file_id = %req.file_id,
+        msg_id = %msg_id,
+        media_kind = sent.file.media_kind.as_deref().unwrap_or("file"),
+        size_bytes = sent.file.size_bytes,
+        "hosted attachment send accepted"
+    );
     persist_outgoing_file_message(
         &state,
         OutgoingFileMessage {

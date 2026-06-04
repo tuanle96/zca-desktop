@@ -229,10 +229,10 @@
                 <div class="bg-muted/40 rounded-lg border p-3">
                   <div class="text-muted-foreground flex items-center gap-2 text-xs">
                     <Cloud class="size-4" />
-                    Cloud SaaS
+                    Zalo Cloud
                   </div>
                   <p class="mt-1 text-sm font-medium">
-                    Đồng bộ qua backend
+                    Đồng bộ qua cloud
                   </p>
                 </div>
                 <div class="bg-muted/40 rounded-lg border p-3">
@@ -255,8 +255,8 @@
             <div class="mt-8 border-t pt-5">
               <p class="text-sm font-medium">Đăng xuất</p>
               <p class="text-muted-foreground mt-1 text-xs">
-                Xoá hosted Zalo account này khỏi cloud backend. Các thiết bị khác của cùng SaaS
-                user sẽ không còn thấy account này sau khi đồng bộ lại.
+                Xoá tài khoản Zalo này khỏi cloud. Các thiết bị khác cùng tài khoản cloud sẽ
+                không còn thấy tài khoản này sau khi đồng bộ lại.
               </p>
 
               {#if session.error}
@@ -271,7 +271,7 @@
                     {:else}
                       <LogOut />
                     {/if}
-                    Xác nhận xoá account cloud
+                    Xác nhận xoá tài khoản cloud
                   </Button>
                   <Button variant="ghost" disabled={session.busy} onclick={() => (confirmingLogout = false)}>
                     Huỷ
@@ -280,7 +280,7 @@
               {:else}
                 <Button variant="destructive" class="mt-4" onclick={() => (confirmingLogout = true)}>
                   <LogOut />
-                  Xoá account cloud này
+                  Xoá tài khoản cloud này
                 </Button>
               {/if}
             </div>
@@ -311,14 +311,14 @@
         {:else if tab === "data"}
           <h3 class="text-base font-semibold">Dữ liệu cloud</h3>
           <p class="text-muted-foreground mt-1 text-sm">
-            Dữ liệu hội thoại nằm trên backend SaaS. Desktop chỉ giữ device token trong Keychain.
+            Dữ liệu hội thoại được lưu trên cloud. Máy này chỉ giữ khoá đăng nhập trong Keychain của máy.
           </p>
           {#if cloudDataError}
             <p class="text-destructive mt-4 text-xs" role="alert">{cloudDataError}</p>
           {:else if cloudDeviceLinked}
             <dl class="mt-5 grid grid-cols-3 gap-3">
               <div class="bg-muted/40 rounded-xl border p-4">
-                <dt class="text-muted-foreground text-xs">Hosted accounts</dt>
+                <dt class="text-muted-foreground text-xs">Tài khoản cloud</dt>
                 <dd class="mt-1 text-2xl font-semibold tabular-nums">{activeCloudAccounts}</dd>
               </div>
               <div class="bg-muted/40 rounded-xl border p-4">

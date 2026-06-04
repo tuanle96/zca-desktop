@@ -4,6 +4,7 @@
     Loader2,
     RotateCw,
     CircleCheck,
+    Check,
     X,
     Cloud,
     Copy,
@@ -11,6 +12,9 @@
     ShieldCheck,
     Server,
     Wifi,
+    MonitorSmartphone,
+    ChevronDown,
+    Plus,
   } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -18,14 +22,13 @@
   import {
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
     listCloudAccounts,
-    loadCloudDeviceSession,
     requestCloudMagicLink,
     startCloudAccountQr,
     getCloudQrStatus,
     verifyCloudMagicLink,
     type CloudAccount,
   } from "$lib/cloud";
-  import { session } from "$lib/session.svelte";
+  import { CLOUD_BASE_URL_STORAGE_KEY, CLOUD_DEVICE_LINKED_STORAGE_KEY, session } from "$lib/session.svelte";
 
   // `adding` = shown as an overlay to add another account (cancellable);
   // otherwise this is the full-screen login gate (auto-starts the flow).
@@ -48,6 +51,7 @@
   let cloudStatus = $state("");
   let cloudError = $state("");
   let cloudAccounts = $state<CloudAccount[]>([]);
+  let cloudDeviceLinked = $state(false);
   let cloudQrBusy = $state(false);
   let cloudQrFlowId = $state("");
   let cloudQrImage = $state<string | null>(null);
@@ -57,6 +61,8 @@
   let cloudQrPoll: ReturnType<typeof setInterval> | null = null;
 
   const cloudConnected = $derived(session.cloudMode && session.realtimeState === "live");
+  // Step 1 = link this device; step 2 = add a Zalo account (device already linked).
+  const step = $derived(adding || cloudConnected ? 2 : 1);
   const cloudShowRetry = $derived(["expired", "declined", "error"].includes(cloudQrPhase));
   const cloudDimQr = $derived(cloudQrPhase === "scanned" || cloudShowRetry);
 
@@ -79,12 +85,30 @@
 
   async function loadCloudSettings() {
     if (typeof localStorage === "undefined") return;
-    cloudBaseUrl = localStorage.getItem("zca.cloud.baseUrl") || cloudBaseUrl;
-    const saved = await loadCloudDeviceSession(cloudBaseUrl).catch(() => null);
-    if (saved?.hasDeviceToken) {
-      cloudStatus = "Thiết bị này đã liên kết cloud.";
-      refreshCloudAccounts(CLOUD_DEVICE_TOKEN_KEYCHAIN);
-      session.connectCloud(cloudBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN);
+    cloudBaseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || cloudBaseUrl;
+    cloudDeviceLinked = localStorage.getItem(CLOUD_DEVICE_LINKED_STORAGE_KEY) === "1";
+    if (cloudDeviceLinked) cloudStatus = "Thiết bị này đã từng liên kết cloud.";
+  }
+
+  async function continueLinkedCloudDevice() {
+    cloudBusy = true;
+    cloudError = "";
+    try {
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+      const connected = await session.restoreCloudDevice(cloudBaseUrl);
+      if (!connected) {
+        cloudDeviceLinked = false;
+        localStorage.removeItem(CLOUD_DEVICE_LINKED_STORAGE_KEY);
+        cloudStatus = "Không tìm thấy phiên cloud đã liên kết trên Keychain.";
+        return;
+      }
+      cloudDeviceLinked = true;
+      cloudStatus = "Đã kết nối thiết bị cloud.";
+      await refreshCloudAccounts(CLOUD_DEVICE_TOKEN_KEYCHAIN);
+    } catch (e) {
+      cloudError = String(e);
+    } finally {
+      cloudBusy = false;
     }
   }
 
@@ -94,10 +118,10 @@
     try {
       const res = await requestCloudMagicLink(cloudBaseUrl, cloudEmail);
       cloudStatus = res.devMagicToken
-        ? "Dev token đã được trả về từ backend."
-        : "Đã gửi magic link qua email.";
+        ? "Đã nhận mã đăng nhập (chế độ dev)."
+        : "Đã gửi mã đăng nhập qua email.";
       if (res.devMagicToken) cloudToken = res.devMagicToken;
-      localStorage.setItem("zca.cloud.baseUrl", cloudBaseUrl);
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
     } catch (e) {
       cloudError = String(e);
     } finally {
@@ -116,7 +140,9 @@
         cloudDeviceName,
         cloudRecoveryKey || undefined,
       );
-      localStorage.setItem("zca.cloud.baseUrl", cloudBaseUrl);
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+      localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+      cloudDeviceLinked = true;
       cloudStatus = res.recoveryKey
         ? "Cloud đã liên kết. Lưu recovery key ở nơi an toàn."
         : "Cloud đã liên kết thiết bị này.";
@@ -163,7 +189,7 @@
     cloudQrScannedName = null;
     cloudQrPhase = "starting";
     try {
-      localStorage.setItem("zca.cloud.baseUrl", cloudBaseUrl);
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
       const res = await startCloudAccountQr(cloudBaseUrl, token);
       cloudQrFlowId = String(res.flowId ?? "");
       cloudQrPhase = String(res.state ?? "starting");
@@ -235,8 +261,10 @@
   }
 </script>
 
-<div class="from-brand/10 via-background to-background flex h-screen w-screen items-center justify-center bg-gradient-to-b p-6">
-  <div class="bg-card relative flex w-full max-w-3xl overflow-hidden rounded-2xl border shadow-xl">
+<div class="bg-background flex h-screen w-screen items-center justify-center overflow-y-auto p-6">
+  <div
+    class="bg-card relative flex w-full max-w-3xl flex-col overflow-hidden rounded-[1.5rem] border shadow-[0_18px_48px_-24px_oklch(0.2_0.02_265_/_0.28)] sm:flex-row"
+  >
     {#if adding}
       <button
         type="button"
@@ -248,45 +276,88 @@
         <X class="size-5" />
       </button>
     {/if}
-    <!-- Left: brand + QR -->
-    <div class="flex flex-1 flex-col items-center border-r px-8 py-10 text-center">
-      <h1 class="text-brand text-4xl font-extrabold tracking-tight">Zalo</h1>
-      <p class="text-muted-foreground mt-1 text-sm">Cloud session host</p>
 
-      <div class="relative mt-7 flex size-64 items-center justify-center rounded-xl border p-3">
-        {#if cloudQrImage}
-          <img
-            src={`data:image/png;base64,${cloudQrImage}`}
-            alt="Mã QR đăng nhập Zalo cloud"
-            class="size-full object-contain transition {cloudDimQr ? 'opacity-10 blur-sm' : ''}"
-          />
-        {:else}
-          <div class="flex flex-col items-center gap-3 text-center">
-            <span class="bg-brand/10 text-brand flex size-20 items-center justify-center rounded-full">
-              <Cloud class="size-10" />
+    <!-- Left: brand + stepper + quiet visual -->
+    <div class="flex flex-1 flex-col items-center border-b px-8 py-11 text-center sm:border-b-0 sm:border-r">
+      <h1 class="font-display text-brand text-[2.6rem] leading-none font-bold tracking-tight">Zalo</h1>
+      <p class="text-muted-foreground mt-2 text-sm">Đăng nhập cloud</p>
+
+      <!-- Stepper -->
+      <div class="mt-9 w-56">
+        <div class="flex items-center">
+          <span
+            class="flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors {step >
+            1
+              ? 'border-brand bg-brand text-brand-foreground'
+              : 'border-brand text-brand'}"
+          >
+            {#if step > 1}<Check class="size-4" />{:else}1{/if}
+          </span>
+          <div class="mx-2 h-px flex-1 {step > 1 ? 'bg-brand' : 'bg-border'}"></div>
+          <span
+            class="flex size-8 shrink-0 items-center justify-center rounded-full border-2 text-sm font-semibold transition-colors {step >=
+            2
+              ? 'border-brand text-brand'
+              : 'border-border text-muted-foreground'}"
+          >
+            2
+          </span>
+        </div>
+        <div class="mt-2.5 flex justify-between text-xs">
+          <span class={step === 1 ? "text-foreground font-medium" : "text-muted-foreground"}>Kết nối thiết bị</span>
+          <span class={step === 2 ? "text-foreground font-medium" : "text-muted-foreground"}>Thêm Zalo</span>
+        </div>
+      </div>
+
+      <!-- Visual: device tile (step 1) or QR (step 2) -->
+      <div class="relative mt-9 flex size-52 items-center justify-center">
+        {#if step === 1}
+          <div
+            class="bg-brand/[0.04] ring-brand/10 flex size-full flex-col items-center justify-center gap-4 rounded-2xl ring-1"
+          >
+            <span class="bg-brand/10 text-brand flex size-16 items-center justify-center rounded-2xl">
+              <MonitorSmartphone class="size-8" />
             </span>
-            <span class="text-muted-foreground max-w-44 text-sm">
-              Liên kết thiết bị cloud rồi thêm tài khoản Zalo bằng hosted QR.
-            </span>
+            <span class="text-muted-foreground max-w-40 text-sm">Liên kết máy này với cloud để bắt đầu.</span>
+          </div>
+        {:else if cloudQrImage && cloudQrPhase !== "success"}
+          <div class="rounded-2xl border bg-white p-3 shadow-sm">
+            <img
+              src={`data:image/png;base64,${cloudQrImage}`}
+              alt="Mã QR đăng nhập Zalo cloud"
+              class="size-40 object-contain transition {cloudDimQr ? 'opacity-10 blur-sm' : ''}"
+            />
+          </div>
+        {:else if cloudQrBusy}
+          <div class="flex flex-col items-center gap-3">
+            <Loader2 class="text-brand size-8 animate-spin" />
+            <span class="text-muted-foreground text-sm">Đang tạo mã QR…</span>
+          </div>
+        {:else if cloudQrPhase !== "success"}
+          <div
+            class="border-border/70 flex size-full flex-col items-center justify-center gap-3 rounded-2xl border border-dashed px-5"
+          >
+            <Cloud class="text-muted-foreground size-8" />
+            <span class="text-muted-foreground max-w-40 text-sm">Bấm “Thêm tài khoản Zalo” để hiện mã QR.</span>
           </div>
         {/if}
 
-        {#if cloudQrPhase === "success"}
-          <div class="absolute inset-0 flex flex-col items-center justify-center gap-2 text-green-600">
-            <CircleCheck class="size-16" />
+        {#if step === 2 && cloudQrPhase === "success"}
+          <div class="bg-card absolute inset-0 flex flex-col items-center justify-center gap-2 text-green-600">
+            <CircleCheck class="size-14" />
             <span class="text-foreground text-sm font-medium">Đã thêm vào cloud</span>
           </div>
-        {:else if cloudQrPhase === "scanned"}
+        {:else if step === 2 && cloudQrPhase === "scanned"}
           <div class="absolute inset-0 flex flex-col items-center justify-center gap-2">
-            <span class="bg-brand/10 text-brand flex size-16 items-center justify-center rounded-full">
-              <Cloud class="size-8" />
+            <span class="bg-brand/10 text-brand flex size-14 items-center justify-center rounded-full">
+              <Cloud class="size-7" />
             </span>
             {#if cloudQrScannedName}
               <span class="text-sm font-semibold">{cloudQrScannedName}</span>
             {/if}
             <span class="text-muted-foreground text-xs">Xác nhận trên điện thoại</span>
           </div>
-        {:else if cloudShowRetry}
+        {:else if step === 2 && cloudShowRetry}
           <button
             type="button"
             onclick={startCloudZaloQr}
@@ -294,179 +365,196 @@
             class="absolute inset-0 flex flex-col items-center justify-center gap-2"
             aria-label="Tải lại mã QR cloud"
           >
-            <span class="bg-brand text-brand-foreground flex size-14 items-center justify-center rounded-full shadow">
-              <RotateCw class="size-7" />
+            <span class="bg-brand text-brand-foreground flex size-12 items-center justify-center rounded-full shadow">
+              <RotateCw class="size-6" />
             </span>
             <span class="text-foreground text-sm font-medium">Bấm để tạo mã mới</span>
           </button>
         {/if}
       </div>
 
-      <!-- Status line: countdown / scanned / error -->
-      <div class="mt-4 h-5 text-sm">
-        {#if cloudErrorText}
+      <!-- Status line -->
+      <div class="mt-7 h-5 text-sm">
+        {#if step === 1}
+          <span class="text-muted-foreground">Bước 1 / 2</span>
+        {:else if cloudErrorText}
           <span class="text-destructive font-medium" role="alert">{cloudErrorText}</span>
         {:else if cloudQrPhase === "scanned"}
           <span class="text-green-600" role="status">Đã quét — xác nhận trên điện thoại.</span>
         {:else if ["starting", "waiting", "pending"].includes(cloudQrPhase)}
           <span class="text-muted-foreground" role="status">Đang chờ quét mã cloud…</span>
         {:else}
-          <span class="text-muted-foreground" role="status">Cloud-only mode</span>
+          <span class="text-muted-foreground">Bước 2 / 2</span>
         {/if}
       </div>
     </div>
 
-    <!-- Right: instructions + cloud mode -->
-    <div class="hidden w-80 flex-col justify-center gap-5 px-7 py-8 sm:flex">
-      <h2 class="text-base font-semibold">Cloud SaaS</h2>
-      <p class="text-muted-foreground text-sm">
-        Thiết bị đăng nhập bằng magic link; tài khoản Zalo được thêm bằng hosted QR trên backend.
-      </p>
+    <!-- Right: controls for the active step -->
+    <div class="flex w-full flex-col justify-center gap-5 px-7 py-9 sm:w-80">
+      <!-- Header: brand eyebrow + connection state -->
+      <div class="flex items-center justify-between">
+        <span class="text-muted-foreground inline-flex items-center gap-1.5 text-xs font-medium">
+          <Cloud class="size-3.5" />
+          Zalo Cloud
+        </span>
+        <span
+          class="flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium {cloudConnected
+            ? 'bg-green-500/10 text-green-700 dark:text-green-400'
+            : 'bg-muted text-muted-foreground'}"
+        >
+          {#if cloudConnected}
+            <Wifi class="size-3" />
+            Đã kết nối
+          {:else}
+            <Server class="size-3" />
+            Chưa kết nối
+          {/if}
+        </span>
+      </div>
 
-      {#if !adding}
-        <div class="mt-3 rounded-xl border bg-background shadow-sm">
-          <div class="flex items-start justify-between gap-3 border-b p-3">
-            <div class="min-w-0">
-              <div class="flex items-center gap-2 text-sm font-semibold">
-                <Cloud class="size-4" />
-                Cloud SaaS
-              </div>
-              <p class="text-muted-foreground mt-0.5 truncate text-xs">{cloudBaseUrl}</p>
-            </div>
-            <span
-              class="flex shrink-0 items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium {cloudConnected
-                ? 'bg-green-500/10 text-green-700 dark:text-green-400'
-                : 'bg-muted text-muted-foreground'}"
-            >
-              {#if cloudConnected}
-                <Wifi class="size-3" />
-                Online
-              {:else}
-                <Server class="size-3" />
-                  Chưa liên kết
-              {/if}
-            </span>
+      {#if cloudIssuedRecoveryKey}
+        <div class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2.5">
+          <div class="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
+            <KeyRound class="size-3.5" />
+            Lưu recovery key này
           </div>
-          <div class="flex flex-col gap-3 p-3">
-            <div class="grid gap-2">
-              <Input bind:value={cloudBaseUrl} placeholder="Cloud backend URL" />
-              <div class="grid grid-cols-[1fr_auto] gap-2">
-                <Input bind:value={cloudEmail} placeholder="Email đăng nhập cloud" />
-                <Button size="sm" variant="secondary" disabled={cloudBusy || !cloudEmail} onclick={requestCloudLink}>
-                  {#if cloudBusy}<Loader2 class="animate-spin" />{/if}
-                  Gửi link
-                </Button>
-              </div>
-              <Input bind:value={cloudToken} placeholder="Token từ email/MailHog" />
-              <Input bind:value={cloudDeviceName} placeholder="Tên thiết bị" />
-              <Input bind:value={cloudRecoveryKey} placeholder="Recovery key nếu thêm thiết bị mới" />
-              <Button size="sm" disabled={cloudBusy || !cloudToken || !cloudEmail} onclick={verifyCloudLink}>
-                {#if cloudBusy}<Loader2 class="animate-spin" />{:else}<ShieldCheck class="size-4" />{/if}
-                Liên kết thiết bị
-              </Button>
-            </div>
-
-            {#if cloudIssuedRecoveryKey}
-              <div class="rounded-lg border border-amber-500/30 bg-amber-500/10 p-2">
-                <div class="flex items-center gap-2 text-xs font-medium text-amber-700 dark:text-amber-300">
-                  <KeyRound class="size-3.5" />
-                  Recovery key mới
-                </div>
-                <div class="mt-1 flex items-center gap-2">
-                  <code class="min-w-0 flex-1 truncate rounded bg-background/70 px-2 py-1 text-[11px]">
-                    {cloudIssuedRecoveryKey}
-                  </code>
-                  <button
-                    type="button"
-                    onclick={copyRecoveryKey}
-                    title="Copy recovery key"
-                    aria-label="Copy recovery key"
-                    class="hover:bg-background flex size-7 items-center justify-center rounded-md"
-                  >
-                    <Copy class="size-3.5" />
-                  </button>
-                </div>
-              </div>
-            {/if}
-
-            {#if cloudStatus}
-              <p class="text-muted-foreground text-xs" role="status">{cloudStatus}</p>
-            {/if}
-            {#if cloudError}
-              <p class="text-destructive text-xs" role="alert">{cloudError}</p>
-            {/if}
-
-            {#if cloudAccounts.length > 0}
-              <div class="flex flex-col gap-1.5">
-                {#each cloudAccounts as account (account.id)}
-                  <div class="bg-muted/40 flex items-center gap-2 rounded-lg px-2 py-1.5">
-                    <Avatar.Root class="size-7">
-                      {#if account.avatar}
-                        <Avatar.Image src={account.avatar} alt={account.displayName ?? "avatar"} />
-                      {/if}
-                      <Avatar.Fallback class="bg-brand/15 text-brand text-[10px]">
-                        {initials(account.displayName ?? account.zaloAccountId)}
-                      </Avatar.Fallback>
-                    </Avatar.Root>
-                    <div class="min-w-0 flex-1">
-                      <div class="truncate text-xs font-medium">{account.displayName || account.zaloAccountId}</div>
-                      <div class="text-muted-foreground truncate text-[11px]">{account.zaloAccountId}</div>
-                    </div>
-                    <span
-                      class="shrink-0 rounded-full px-2 py-0.5 text-[10px] {account.state === 'active'
-                        ? 'bg-green-500/10 text-green-700 dark:text-green-400'
-                        : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'}"
-                    >
-                      {stateLabel(account.state)}
-                    </span>
-                  </div>
-                {/each}
-              </div>
-            {/if}
-
-            <Button size="sm" variant="outline" disabled={cloudQrBusy || !cloudBaseUrl} onclick={startCloudZaloQr}>
-              {#if cloudQrBusy}<Loader2 class="animate-spin" />{/if}
-              Thêm Zalo cloud
-            </Button>
-            {#if cloudQrImage || cloudQrPhase}
-              <div class="flex flex-col items-center gap-2 rounded-lg border p-2">
-                {#if cloudQrImage && cloudQrPhase !== "success"}
-                  <img
-                    src={`data:image/png;base64,${cloudQrImage}`}
-                    alt="Mã QR Zalo cloud"
-                    class="size-32 object-contain"
-                  />
-                {/if}
-                {#if cloudQrPhase === "success"}
-                  <CircleCheck class="size-8 text-green-600" />
-                {/if}
-                <p class="text-muted-foreground text-center text-xs">
-                  {#if cloudQrPhase === "scanned"}
-                    Đã quét{cloudQrScannedName ? ` bởi ${cloudQrScannedName}` : ""}; xác nhận trên điện thoại.
-                  {:else if cloudQrPhase === "success"}
-                    Đăng nhập cloud thành công.
-                  {:else if cloudQrPhase === "expired"}
-                    Mã QR cloud đã hết hạn.
-                  {:else if cloudQrPhase === "declined"}
-                    Đăng nhập cloud bị từ chối.
-                  {:else if cloudQrPhase === "error"}
-                    {cloudQrError || "Cloud QR lỗi."}
-                  {:else}
-                    Đang chờ backend tạo mã QR cloud.
-                  {/if}
-                </p>
-                {#if ["expired", "declined", "error"].includes(cloudQrPhase)}
-                  <Button size="sm" variant="secondary" disabled={cloudQrBusy} onclick={startCloudZaloQr}>
-                    <RotateCw class="size-4" />
-                    Tạo mã mới
-                  </Button>
-                {/if}
-              </div>
-            {/if}
+          <p class="text-muted-foreground mt-0.5 text-[11px]">Dùng để khôi phục khi đổi thiết bị. Chỉ hiện một lần.</p>
+          <div class="mt-1.5 flex items-center gap-2">
+            <code class="bg-background/70 min-w-0 flex-1 truncate rounded px-2 py-1 text-[11px]">
+              {cloudIssuedRecoveryKey}
+            </code>
+            <button
+              type="button"
+              onclick={copyRecoveryKey}
+              title="Copy recovery key"
+              aria-label="Copy recovery key"
+              class="hover:bg-background flex size-7 shrink-0 items-center justify-center rounded-md border"
+            >
+              <Copy class="size-3.5" />
+            </button>
           </div>
         </div>
       {/if}
 
+      {#if step === 1}
+        <!-- Step 1: link this device via magic link -->
+        <div>
+          <h2 class="font-display text-xl font-semibold tracking-tight">Kết nối thiết bị</h2>
+          <p class="text-muted-foreground mt-1 text-sm">Nhận mã đăng nhập qua email để liên kết máy này với cloud.</p>
+        </div>
+
+        {#if cloudDeviceLinked && !cloudConnected}
+          <Button variant="outline" disabled={cloudBusy || !cloudBaseUrl} onclick={continueLinkedCloudDevice}>
+            {#if cloudBusy}<Loader2 class="animate-spin" />{:else}<ShieldCheck class="size-4" />{/if}
+            Tiếp tục với thiết bị đã liên kết
+          </Button>
+          <div class="text-muted-foreground flex items-center gap-3 text-xs">
+            <span class="bg-border h-px flex-1"></span>
+            hoặc liên kết lại
+            <span class="bg-border h-px flex-1"></span>
+          </div>
+        {/if}
+
+        <div class="grid gap-1.5">
+          <label for="cloud-email" class="text-xs font-medium">Email</label>
+          <div class="grid grid-cols-[1fr_auto] gap-2">
+            <Input id="cloud-email" type="email" bind:value={cloudEmail} placeholder="ban@example.com" />
+            <Button variant="secondary" disabled={cloudBusy || !cloudEmail} onclick={requestCloudLink}>
+              {#if cloudBusy}<Loader2 class="animate-spin" />{/if}
+              Gửi mã
+            </Button>
+          </div>
+        </div>
+
+        <div class="grid gap-1.5">
+          <label for="cloud-token" class="text-xs font-medium">Mã xác thực</label>
+          <Input id="cloud-token" bind:value={cloudToken} placeholder="Dán mã từ email" />
+        </div>
+
+        <div class="grid gap-1.5">
+          <label for="cloud-device" class="text-xs font-medium">Tên thiết bị</label>
+          <Input id="cloud-device" bind:value={cloudDeviceName} placeholder="Máy của tôi" />
+        </div>
+
+        <Button
+          class="bg-brand text-brand-foreground hover:bg-brand/90"
+          disabled={cloudBusy || !cloudToken || !cloudEmail}
+          onclick={verifyCloudLink}
+        >
+          {#if cloudBusy}<Loader2 class="animate-spin" />{:else}<ShieldCheck class="size-4" />{/if}
+          Kết nối thiết bị
+        </Button>
+
+        <details class="group border-border/70 bg-background/40 rounded-lg border px-3 py-2 text-sm">
+          <summary
+            class="text-muted-foreground flex cursor-pointer list-none items-center justify-between font-medium [&::-webkit-details-marker]:hidden"
+          >
+            Tùy chọn nâng cao
+            <ChevronDown class="size-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div class="mt-3 grid gap-3">
+            <div class="grid gap-1.5">
+              <label for="cloud-url" class="text-xs font-medium">Địa chỉ máy chủ cloud</label>
+              <Input id="cloud-url" bind:value={cloudBaseUrl} placeholder="https://cloud.example.com" />
+            </div>
+            <div class="grid gap-1.5">
+              <label for="cloud-recovery" class="text-xs font-medium">Recovery key</label>
+              <Input id="cloud-recovery" bind:value={cloudRecoveryKey} placeholder="Dán khi chuyển sang thiết bị mới" />
+            </div>
+            <p class="text-muted-foreground text-xs">
+              Mã xác thực được gửi tới email của bạn.
+            </p>
+          </div>
+        </details>
+      {:else}
+        <!-- Step 2: add a Zalo account via hosted QR -->
+        <div>
+          <h2 class="font-display text-xl font-semibold tracking-tight">Thêm tài khoản Zalo</h2>
+          <p class="text-muted-foreground mt-1 text-sm">
+            Mở Zalo trên điện thoại › quét mã QR bên trái để thêm tài khoản vào cloud.
+          </p>
+        </div>
+
+        {#if cloudAccounts.length > 0}
+          <div class="flex flex-col gap-1.5">
+            {#each cloudAccounts as account (account.id)}
+              <div class="bg-muted/40 flex items-center gap-2 rounded-lg px-2 py-1.5">
+                <Avatar.Root class="size-7">
+                  {#if account.avatar}
+                    <Avatar.Image src={account.avatar} alt={account.displayName ?? "avatar"} />
+                  {/if}
+                  <Avatar.Fallback class="bg-brand/15 text-brand text-[10px]">
+                    {initials(account.displayName ?? account.zaloAccountId)}
+                  </Avatar.Fallback>
+                </Avatar.Root>
+                <div class="min-w-0 flex-1">
+                  <div class="truncate text-xs font-medium">{account.displayName || account.zaloAccountId}</div>
+                  <div class="text-muted-foreground truncate text-[11px]">{account.zaloAccountId}</div>
+                </div>
+                <span
+                  class="shrink-0 rounded-full px-2 py-0.5 text-[10px] {account.state === 'active'
+                    ? 'bg-green-500/10 text-green-700 dark:text-green-400'
+                    : 'bg-amber-500/10 text-amber-700 dark:text-amber-300'}"
+                >
+                  {stateLabel(account.state)}
+                </span>
+              </div>
+            {/each}
+          </div>
+        {/if}
+
+        <Button variant="outline" disabled={cloudQrBusy || !cloudBaseUrl} onclick={startCloudZaloQr}>
+          {#if cloudQrBusy}<Loader2 class="animate-spin" />{:else}<Plus class="size-4" />{/if}
+          {cloudQrImage ? "Tạo mã QR mới" : "Thêm tài khoản Zalo"}
+        </Button>
+      {/if}
+
+      {#if cloudStatus}
+        <p class="text-muted-foreground text-xs" role="status">{cloudStatus}</p>
+      {/if}
+      {#if cloudError}
+        <p class="text-destructive text-xs" role="alert">{cloudError}</p>
+      {/if}
       {#if session.error}
         <p class="text-destructive text-xs" role="alert">{session.error}</p>
       {/if}
