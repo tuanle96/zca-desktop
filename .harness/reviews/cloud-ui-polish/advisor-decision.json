@@ -4,42 +4,50 @@
   "taskId": "cloud-ui-polish",
   "featureId": "cloud-ui-polish",
   "decision": "pass",
-  "createdAt": "2026-06-03T17:26:00.489Z",
+    "createdAt": "2026-06-04T01:08:16Z",
   "provenance": {
     "source": "advisor-agent",
     "trigger": "cloud-ui-polish-review",
     "createdBy": "codex",
-    "notes": "Static review of UI-only polish after Svelte check/build pass."
+    "notes": "Static review of cloud-only UI/code-path polish after Svelte check/build, server tests/clippy, and runtime smoke pass."
   },
   "checkedFiles": [
-    "src/lib/components/chat/QrLoginScreen.svelte",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
     "src/lib/components/chat/ChatPane.svelte",
     "src/lib/components/chat/RailNav.svelte",
-    "src/lib/components/chat/SettingsDialog.svelte"
+    "src/lib/components/chat/SettingsDialog.svelte",
+    "src/lib/session.svelte.ts"
   ],
   "checkedInvariants": [
-    "ui-only-scope",
-    "local-mode-preserved",
+    "cloud-only-frontend-scope",
+    "no-frontend-local-command-calls",
     "cloud-state-visible",
+    "device-revoke-visible",
+    "group-sender-avatar-metadata",
     "no-secret-display-except-user-copyable-recovery-key"
   ],
   "diffCoverage": {
     "changedFiles": [
-      "src/lib/components/chat/QrLoginScreen.svelte",
-      "src/lib/components/chat/ChatPane.svelte",
-      "src/lib/components/chat/RailNav.svelte",
-      "src/lib/components/chat/SettingsDialog.svelte"
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "src/lib/session.svelte.ts"
     ],
     "reviewedFiles": [
-      "src/lib/components/chat/QrLoginScreen.svelte",
-      "src/lib/components/chat/ChatPane.svelte",
-      "src/lib/components/chat/RailNav.svelte",
-      "src/lib/components/chat/SettingsDialog.svelte"
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "src/lib/session.svelte.ts"
     ],
     "uncoveredFiles": [],
     "coverage": 1
   },
-  "confidence": 0.84,
+  "confidence": 0.88,
   "findings": [],
-  "summary": "Advisor review pass: cloud UI states are clearer, local mode remains visible and preserved, and recovery key display is intentionally user-facing for first setup only."
+  "summary": "Advisor review pass: frontend local command invocations are removed from the cloud-only flow, Settings exposes cloud device revoke controls, message APIs carry sender avatar metadata, and runtime smoke proves hosted restore/send/realtime/file roundtrip without exposing secrets."
 }

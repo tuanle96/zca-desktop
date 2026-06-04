@@ -1,0 +1,92 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-reconnect-offline",
+  "featureId": "cloud-reconnect-offline",
+  "status": "pass",
+  "createdAt": "2026-06-04T01:35:45Z",
+  "updatedAt": "2026-06-04T01:43:31Z",
+  "diffSummary": "Cloud-only realtime now has explicit Tauri SSE lifecycle events, frontend reconnect state with bounded backoff, visible Live/Reconnecting/Offline badges, retrying cloud conversation/message hydration, and cloud-only empty-state copy.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-reconnect-offline.json",
+    ".harness/evidence/cloud-reconnect-offline.json",
+    ".harness/reviews/cloud-reconnect-offline/advisor-decision.json",
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/components/chat/RailNav.svelte",
+    "src/lib/components/chat/SettingsDialog.svelte",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/components/chat/ConversationList.svelte"
+  ],
+  "checks": [
+    {
+      "name": "cloud-reconnect.gates",
+      "acceptanceId": "cloud-reconnect-offline",
+      "artifact": ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/check.json",
+      "command": "bun run check && bun run build && cargo test --manifest-path src-tauri/Cargo.toml && git diff --check",
+      "status": "pass",
+      "summary": "Svelte check/build, Tauri Rust tests, and diff whitespace checks passed for cloud realtime reconnect/offline handling.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T01:40:00Z",
+      "finishedAt": "2026-06-04T01:42:53.837Z",
+      "gitHead": "5643500b2283d8cdd5640bb8442feac1814e00ca",
+      "workingTreeHash": "sha256:0b88fc9c56007c67ed6c302d1b3f04522c4ac15b4d93a0dd6f72f3cccac8d1e4",
+      "stdoutHash": "sha256:2ac2f8a6aba5aca4b1ee662d230b0725a6c2181e37a320a9e8cc844799b4daf4",
+      "stderrHash": "sha256:982b3b68c8fffc1d4f94b48b819e991bb6b46d52a1b6a43c192e3d404abea877",
+      "stdoutPath": ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/check.json",
+        ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stdout.txt",
+        ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "acceptanceId": "cloud-reconnect-offline",
+      "artifact": ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/check.json",
+      "command": "kill backend tmux session; observe reconnecting UI/log retries; restart backend; observe Live UI and healthy backend",
+      "status": "pass",
+      "summary": "Runtime smoke passed: killing the backend forced UI into amber Reconnecting while preserving messages, retry logs recorded failed realtime requests, restarting backend returned health ok and UI back to green Live.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T01:35:45Z",
+      "finishedAt": "2026-06-04T01:43:31.346Z",
+      "gitHead": "5643500b2283d8cdd5640bb8442feac1814e00ca",
+      "workingTreeHash": "sha256:0b88fc9c56007c67ed6c302d1b3f04522c4ac15b4d93a0dd6f72f3cccac8d1e4",
+      "stdoutHash": "sha256:8ded02a54dcbe27b6bb82b70d9e246f9459b2ad8457df749f5027989c3e00369",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/check.json",
+        ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stdout.txt",
+        ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stderr.txt",
+        ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/reconnecting.png",
+        ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/live.png"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-reconnect-offline/advisor-decision.json",
+      "summary": "Advisor pass: lifecycle events, backoff reconnect, retrying hydration, visible offline state, and runtime restart smoke are covered."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "reconnect-delay-backoff",
+      "severity": "low",
+      "description": "After several failed attempts, reconnect waits up to the bounded 30 second backoff before returning Live.",
+      "disposition": "accepted",
+      "acceptedBy": "codex",
+      "acceptanceReason": "Bounded backoff avoids tight reconnect loops; the UI shows Reconnecting during the wait and runtime smoke proves it recovers automatically.",
+      "mitigation": "Runtime smoke confirmed the UI clearly shows Reconnecting during the wait and automatically returns to Live when the next retry succeeds.",
+      "owner": "codex"
+    }
+  ]
+}

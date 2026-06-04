@@ -1,9 +1,9 @@
 //! Cloud SaaS client boundary for the desktop app.
 //!
-//! Local mode remains the default. These commands let the Svelte UI opt into
-//! the hosted session backend (ADR-0006) without moving Zalo credentials into
-//! the webview. Cloud device tokens are SaaS bearer tokens; callers must store
-//! them carefully, but they are not Zalo credential triples.
+//! Cloud SaaS is the desktop app's active session path. These commands let the
+//! Svelte UI talk to the hosted session backend (ADR-0006) without moving Zalo
+//! credentials into the webview. Cloud device tokens are SaaS bearer tokens;
+//! callers must store them carefully, but they are not Zalo credential triples.
 
 use futures_util::StreamExt;
 use serde::{Deserialize, Serialize};
@@ -205,26 +205,46 @@ pub async fn cloud_start_realtime(
         {
             Ok(res) => res,
             Err(e) => {
+                let message = e.to_string();
                 let _ = app.emit(
                     CLOUD_EVENT,
-                    serde_json::json!({ "type": "error", "message": e.to_string() }),
+                    serde_json::json!({ "type": "error", "message": message }),
+                );
+                let _ = app.emit(
+                    CLOUD_EVENT,
+                    serde_json::json!({ "type": "disconnected", "reason": "connect-error" }),
                 );
                 return;
             }
         };
         if !res.status().is_success() {
+            let status = res.status().as_u16();
             let _ = app.emit(
                 CLOUD_EVENT,
-                serde_json::json!({ "type": "error", "status": res.status().as_u16() }),
+                serde_json::json!({ "type": "error", "status": status }),
+            );
+            let _ = app.emit(
+                CLOUD_EVENT,
+                serde_json::json!({ "type": "disconnected", "reason": "status", "status": status }),
             );
             return;
         }
 
+        let _ = app.emit(CLOUD_EVENT, serde_json::json!({ "type": "connected" }));
         let mut stream = res.bytes_stream();
         let mut buffer = String::new();
+        let mut disconnect_reason = "stream-ended";
         while let Some(item) = stream.next().await {
-            let Ok(bytes) = item else {
-                break;
+            let bytes = match item {
+                Ok(bytes) => bytes,
+                Err(e) => {
+                    disconnect_reason = "stream-error";
+                    let _ = app.emit(
+                        CLOUD_EVENT,
+                        serde_json::json!({ "type": "error", "message": e.to_string() }),
+                    );
+                    break;
+                }
             };
             buffer.push_str(&String::from_utf8_lossy(&bytes));
             while let Some(idx) = buffer.find("\n\n") {
@@ -240,6 +260,10 @@ pub async fn cloud_start_realtime(
                 }
             }
         }
+        let _ = app.emit(
+            CLOUD_EVENT,
+            serde_json::json!({ "type": "disconnected", "reason": disconnect_reason }),
+        );
     });
     Ok(())
 }

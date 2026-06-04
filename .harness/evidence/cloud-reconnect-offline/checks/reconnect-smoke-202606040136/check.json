@@ -1,0 +1,22 @@
+{
+  "name": "smoke",
+  "acceptanceId": "cloud-reconnect-offline",
+  "command": "kill backend tmux session; observe reconnecting UI/log retries; restart backend; observe Live UI and healthy backend",
+  "status": "pass",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T01:35:45Z",
+  "finishedAt": "2026-06-04T01:43:31.346Z",
+  "stdoutHash": "sha256:8ded02a54dcbe27b6bb82b70d9e246f9459b2ad8457df749f5027989c3e00369",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/check.json",
+    ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stdout.txt",
+    ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/stderr.txt",
+    ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/reconnecting.png",
+    ".harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/live.png"
+  ],
+  "summary": "Runtime smoke passed: killing the backend forced UI into amber Reconnecting while preserving messages, retry logs recorded failed realtime requests, restarting backend returned health ok and UI back to green Live."
+}

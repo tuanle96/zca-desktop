@@ -1,0 +1,6 @@
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+$ vite build
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.77s
+     Running unittests src/lib.rs (src-tauri/target/debug/deps/zca_desktop_lib-beb6a30d8bb6b458)
+     Running unittests src/main.rs (src-tauri/target/debug/deps/zca_desktop-7a236b464c6e0a5c)
+   Doc-tests zca_desktop_lib

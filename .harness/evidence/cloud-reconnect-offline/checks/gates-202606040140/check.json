@@ -1,0 +1,20 @@
+{
+  "name": "cloud-reconnect.gates",
+  "acceptanceId": "cloud-reconnect-offline",
+  "command": "bun run check && bun run build && cargo test --manifest-path src-tauri/Cargo.toml && git diff --check",
+  "status": "pass",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T01:40:00Z",
+  "finishedAt": "2026-06-04T01:42:53.837Z",
+  "stdoutHash": "sha256:2ac2f8a6aba5aca4b1ee662d230b0725a6c2181e37a320a9e8cc844799b4daf4",
+  "stderrHash": "sha256:982b3b68c8fffc1d4f94b48b819e991bb6b46d52a1b6a43c192e3d404abea877",
+  "stdoutPath": ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/check.json",
+    ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stdout.txt",
+    ".harness/evidence/cloud-reconnect-offline/checks/gates-202606040140/stderr.txt"
+  ],
+  "summary": "Svelte check/build, Tauri Rust tests, and diff whitespace checks passed for cloud realtime reconnect/offline handling."
+}

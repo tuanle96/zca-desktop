@@ -4,16 +4,18 @@
   "type": "feature",
   "riskTier": "normal",
   "scope": {
-    "summary": "Polish the desktop cloud-only UI for daily use without changing backend trust boundaries.",
+    "summary": "Polish the desktop cloud-only UI for daily use, remove frontend local-mode code paths, expose device revoke controls, and render group sender avatars.",
     "goals": [
       "Make cloud sign-in/device/linking states clearer in the QR/login gate",
       "Expose cloud mode and realtime status in the chat shell",
+      "Remove frontend calls to legacy local commands",
+      "List and revoke cloud devices from Settings",
+      "Render message-bubble avatars from per-sender metadata for group messages",
       "Improve file/send affordances in cloud mode"
     ],
     "nonGoals": [
-      "Backend API changes",
       "Production deployment automation",
-      "Production deployment automation"
+      "Removing Rust core local commands used by dev/test"
     ],
     "allowedLayers": [
       "command"
@@ -22,7 +24,7 @@
   "acceptance": [
     {
       "id": "cloud-ui-daily-use",
-      "description": "Cloud mode surfaces connection status, device/account state, retry/error states, and send/file affordances clearly with cloud-only copy.",
+      "description": "Cloud mode surfaces connection status, device/account state, retry/error states, device revocation, group sender avatars, and send/file affordances clearly with cloud-only copy and no frontend legacy local command calls.",
       "verification": {
         "manual": "Attach frontend check/build output and a static UI review summary for the touched Svelte components."
       }

@@ -1,0 +1,55 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-reconnect-offline",
+  "featureId": "cloud-reconnect-offline",
+  "decision": "pass",
+  "createdAt": "2026-06-04T01:43:31Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-reconnect-offline-review",
+    "createdBy": "codex",
+    "notes": "Reviewed cloud realtime lifecycle, reconnect backoff, retrying hydration, UI status indicators, and backend restart smoke evidence."
+  },
+  "checkedFiles": [
+    "src-tauri/src/command/cloud.rs",
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/ChatPane.svelte",
+    "src/lib/components/chat/RailNav.svelte",
+    "src/lib/components/chat/SettingsDialog.svelte",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/lib/components/chat/ConversationList.svelte"
+  ],
+  "checkedInvariants": [
+    "cloud-sse-lifecycle-events",
+    "bounded-realtime-reconnect",
+    "cloud-ui-offline-status-visible",
+    "retrying-cloud-hydration",
+    "no-zalo-secret-logging"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/components/chat/RailNav.svelte",
+      "src/lib/components/chat/SettingsDialog.svelte",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/components/chat/ConversationList.svelte"
+    ],
+    "reviewedFiles": [
+      "src-tauri/src/command/cloud.rs",
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/ChatPane.svelte",
+      "src/lib/components/chat/RailNav.svelte",
+      "src/lib/components/chat/SettingsDialog.svelte",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/lib/components/chat/ConversationList.svelte"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.9,
+  "findings": [],
+  "summary": "Advisor review pass: the Tauri SSE bridge emits connected/disconnected events, the Svelte session store retries realtime with bounded backoff and retries hydration without clearing cached conversations, and runtime smoke proves backend restart moves UI from Reconnecting back to Live."
+}

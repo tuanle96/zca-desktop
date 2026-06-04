@@ -1,0 +1,35 @@
+{
+  "name": "cloud-only.runtime-smoke",
+  "acceptanceId": "cloud-ui-daily-use",
+  "status": "pass",
+  "cwd": ".",
+  "startedAt": "2026-06-04T01:04:14Z",
+  "finishedAt": "2026-06-04T01:08:16Z",
+  "gitHead": "5643500b2283d8cdd5640bb8442feac1814e00ca",
+  "commands": [
+    "cargo test --manifest-path server/Cargo.toml",
+    "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+    "bun run check",
+    "bun run build",
+    "cargo test --manifest-path src-tauri/Cargo.toml",
+    "node .harness/scripts/harness-readiness.mjs --strict",
+    "git diff --check"
+  ],
+  "runtimeProof": {
+    "backendHealth": "http://127.0.0.1:37880/health returned ok=true",
+    "compose": "Postgres, MinIO, and MailHog were running; Postgres accepted SELECT now()",
+    "migrations": [
+      "202606030001",
+      "202606040001"
+    ],
+    "hostedSessionRestore": "backend log reported restored=2",
+    "devices": "GET /api/v1/devices returned 2 devices, 2 active",
+    "accounts": "GET /api/v1/accounts returned 2 active hosted accounts",
+    "conversations": "GET /api/v1/conversations returned non-empty rows with threadId and avatar",
+    "messages": "GET /api/v1/conversations/:id/messages returned incoming direct row with fromAvatar=true and incoming group row with fromAvatar=true from sender metadata",
+    "sendRealtime": "POST /api/v1/accounts/:id/send/text returned msgId=7898420034356 and SSE /api/v1/realtime emitted message for the same account",
+    "files": "POST /api/v1/files/init, POST /api/v1/files/:id/blob, GET /api/v1/files/:id/blob round-tripped upload.txt with cmp success",
+    "desktop": "bun run tauri dev relaunched Vite localhost:1420 and target/debug/zca-desktop"
+  },
+  "secretHandling": "No device token, Zalo credential, cookie, message body, or file content is stored in this artifact."
+}

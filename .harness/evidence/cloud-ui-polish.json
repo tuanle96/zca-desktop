@@ -4,17 +4,25 @@
   "featureId": "cloud-ui-polish",
   "status": "pass",
   "createdAt": "2026-06-03T17:26:00.489Z",
-  "updatedAt": "2026-06-03T17:26:22.096Z",
-  "diffSummary": "Cloud mode UI polish adds a clearer SaaS panel on the QR login gate, copyable recovery key display, connected cloud status, cloud account rows with state, QR retry affordance, rail cloud status, settings cloud data diagnostics, and chat header/composer cloud indicators with cloud-only copy.",
+  "updatedAt": "2026-06-04T01:08:16Z",
+  "diffSummary": "Cloud mode UI polish adds a clearer SaaS panel on the QR login gate, copyable recovery key display, connected cloud status, cloud account rows with state, QR retry affordance, rail cloud status, settings cloud data diagnostics, device revoke controls, chat header/composer cloud indicators, and group sender avatars with cloud-only copy.",
   "changedFiles": [
     ".harness/feature_list.json",
     ".harness/task-contracts/cloud-ui-polish.json",
     ".harness/evidence/cloud-ui-polish.json",
     ".harness/reviews/cloud-ui-polish/advisor-decision.json",
-    "src/lib/components/chat/QrLoginScreen.svelte",
+    "server/migrations/202606040001_message_sender_avatar.up.sql",
+    "server/migrations/202606040001_message_sender_avatar.down.sql",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
     "src/lib/components/chat/ChatPane.svelte",
     "src/lib/components/chat/RailNav.svelte",
-    "src/lib/components/chat/SettingsDialog.svelte"
+    "src/lib/components/chat/SettingsDialog.svelte",
+    "src/lib/components/chat/ContactList.svelte",
+    "src/lib/session.svelte.ts",
+    "src/routes/+page.svelte"
   ],
   "checks": [
     {
@@ -37,6 +45,29 @@
       "artifactPaths": [
         ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stdout.txt",
         ".harness/evidence/cloud-ui-polish/checks/ui-20260603172516/stderr.txt"
+      ]
+    },
+    {
+      "name": "cloud-only.runtime-smoke",
+      "acceptanceId": "cloud-ui-daily-use",
+      "artifact": ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/check.json",
+      "command": "backend restart + API smoke + send/realtime + file roundtrip + bun/cargo/readiness gates",
+      "status": "pass",
+      "summary": "Cloud-only smoke passed: no frontend local command calls remain, Settings lists/revokes devices, conversations have avatars, direct and group messages return fromAvatar for incoming sender rows, cloud send emits realtime SSE, file blob roundtrip matches, backend restored 2 hosted sessions, and Tauri relaunched.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T01:04:14Z",
+      "finishedAt": "2026-06-04T01:08:16Z",
+      "gitHead": "5643500b2283d8cdd5640bb8442feac1814e00ca",
+      "workingTreeHash": "sha256:c89f3a8fc1e5cf19ce710624068c4b263bd1a1334449dc1c3877866318991965",
+      "stdoutHash": "sha256:244d33c4b40f472a372bb2295745a77e301d2e3e3da2be8868ed10f6d73d4413",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/check.json",
+        ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/stdout.txt",
+        ".harness/evidence/cloud-ui-polish/checks/cloud-only-smoke-202606040108/stderr.txt"
       ]
     }
   ],

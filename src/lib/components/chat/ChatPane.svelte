@@ -30,7 +30,21 @@
 
   const convo = $derived(session.activeConversation);
   const messages = $derived(session.activeMessages);
-  const realtimeLabel = $derived(session.listening ? "Realtime đang bật" : "Realtime chưa kết nối");
+  const realtimeLabel = $derived(session.realtimeLabel);
+  const realtimeDotClass = $derived(
+    session.realtimeState === "live"
+      ? "bg-green-500"
+      : session.realtimeState === "connecting" || session.realtimeState === "reconnecting"
+        ? "bg-amber-500"
+        : "bg-muted-foreground/40",
+  );
+  const realtimeShortLabel = $derived(
+    session.realtimeState === "live"
+      ? "Live"
+      : session.realtimeState === "connecting" || session.realtimeState === "reconnecting"
+        ? "Reconnecting"
+        : "Offline",
+  );
   const fileButtonTitle = $derived(
     session.canUseCloudFiles ? "Đính kèm tệp cloud" : "Đính kèm bật sau khi cloud kết nối",
   );
@@ -119,7 +133,7 @@
     <div class="space-y-1.5">
       <h2 class="text-xl font-semibold">Chào mừng đến Zalo Desktop</h2>
       <p class="text-muted-foreground mx-auto max-w-sm text-sm">
-        Chọn một cuộc trò chuyện ở bên trái, hoặc mở danh bạ để bắt đầu trò chuyện.
+        Chọn một cuộc trò chuyện ở bên trái, hoặc chờ cloud đồng bộ hội thoại mới nhất.
       </p>
     </div>
     {#if session.profile}
@@ -129,7 +143,7 @@
           Cloud mode
         </span>
         <span class="flex items-center gap-1.5 rounded-full border bg-background px-2 py-1">
-          <span class="size-2 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
+          <span class="size-2 rounded-full {realtimeDotClass}"></span>
           {realtimeLabel}
         </span>
       </div>
@@ -151,7 +165,7 @@
         <div class="truncate text-sm font-semibold">{convo.title}</div>
       <div class="text-muted-foreground flex items-center gap-2 text-xs">
           <span class="flex items-center gap-1">
-            <span class="size-1.5 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
+            <span class="size-1.5 rounded-full {realtimeDotClass}"></span>
             {convo.kind === "group" ? "Nhóm" : "Liên hệ"}
           </span>
           <span class="flex items-center gap-1">
@@ -159,12 +173,12 @@
             Cloud
           </span>
           <span class="flex items-center gap-1">
-            {#if session.listening}
+            {#if session.realtimeState === "live"}
               <Wifi class="size-3" />
             {:else}
               <WifiOff class="size-3" />
             {/if}
-            {session.listening ? "Live" : "Offline"}
+            {realtimeShortLabel}
           </span>
         </div>
       </div>

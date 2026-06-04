@@ -16,6 +16,7 @@
     Wifi,
     WifiOff,
     ShieldCheck,
+    Trash2,
   } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -24,6 +25,7 @@
     listCloudAccounts,
     listCloudDevices,
     loadCloudDeviceSession,
+    revokeCloudDevice,
     type CloudAccount,
     type CloudDevice,
   } from "$lib/cloud";
@@ -40,11 +42,19 @@
   let cloudAccounts = $state<CloudAccount[]>([]);
   let cloudDevices = $state<CloudDevice[]>([]);
   let cloudDataError = $state("");
+  let revokingDeviceId = $state<string | null>(null);
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
   const appVersion = "0.1.0";
   const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
   const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
+  const realtimeDotClass = $derived(
+    session.realtimeState === "live"
+      ? "bg-green-500"
+      : session.realtimeState === "connecting" || session.realtimeState === "reconnecting"
+        ? "bg-amber-500"
+        : "bg-muted-foreground/40",
+  );
 
   const navItems: { id: Tab; icon: typeof User; label: string }[] = [
     { id: "account", icon: User, label: "Tài khoản" },
@@ -103,6 +113,31 @@
     await session.logoutAccount(id);
     confirmingLogout = false;
     // logoutAccount closes the dialog when the last account is removed.
+  }
+
+  async function revokeDevice(deviceId: string) {
+    revokingDeviceId = deviceId;
+    cloudDataError = "";
+    try {
+      await revokeCloudDevice(cloudBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN, deviceId);
+      await loadCloudOverview();
+    } catch (e) {
+      cloudDataError = String(e);
+    } finally {
+      revokingDeviceId = null;
+    }
+  }
+
+  function timeLabel(value: string | null): string {
+    if (!value) return "Chưa thấy";
+    const t = Date.parse(value);
+    if (!Number.isFinite(t)) return value;
+    return new Date(t).toLocaleString("vi-VN", {
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
   }
 
   function onKeydown(e: KeyboardEvent) {
@@ -202,7 +237,7 @@
                 </div>
                 <div class="bg-muted/40 rounded-lg border p-3">
                   <div class="text-muted-foreground flex items-center gap-2 text-xs">
-                    {#if session.listening}
+                    {#if session.realtimeState === "live"}
                       <Wifi class="size-4" />
                       Realtime
                     {:else}
@@ -211,7 +246,7 @@
                     {/if}
                   </div>
                   <p class="mt-1 text-sm font-medium">
-                    {session.listening ? "Đang nhận sự kiện" : "Chưa kết nối"}
+                    {session.realtimeLabel}
                   </p>
                 </div>
               </div>
@@ -293,8 +328,8 @@
               <div class="bg-muted/40 rounded-xl border p-4">
                 <dt class="text-muted-foreground text-xs">Realtime</dt>
                 <dd class="mt-2 flex items-center gap-2 text-sm font-medium">
-                  <span class="size-2 rounded-full {session.listening ? 'bg-green-500' : 'bg-muted-foreground/40'}"></span>
-                  {session.listening ? "Đang bật" : "Chưa kết nối"}
+                  <span class="size-2 rounded-full {realtimeDotClass}"></span>
+                  {session.realtimeLabel}
                 </dd>
               </div>
             </dl>
@@ -317,6 +352,49 @@
               <p class="text-muted-foreground mt-2 text-xs">
                 Token thiết bị nằm trong macOS Keychain; Zalo credential không được trả về UI.
               </p>
+            </div>
+            <div class="mt-3 rounded-xl border p-4">
+              <div class="mb-3 flex items-center justify-between gap-3">
+                <div>
+                  <p class="text-sm font-medium">Thiết bị đã liên kết</p>
+                  <p class="text-muted-foreground text-xs">Revoke thiết bị không còn dùng để chặn fetch/stream.</p>
+                </div>
+                <Button variant="ghost" size="sm" disabled={Boolean(revokingDeviceId)} onclick={loadCloudOverview}>
+                  Làm mới
+                </Button>
+              </div>
+              <div class="space-y-2">
+                {#each cloudDevices as device (device.id)}
+                  <div class="flex items-center justify-between gap-3 rounded-lg border bg-muted/30 px-3 py-2">
+                    <div class="min-w-0">
+                      <p class="truncate text-sm font-medium">{device.name}</p>
+                      <p class="text-muted-foreground truncate text-xs">
+                        {device.revokedAt ? `Đã revoke ${timeLabel(device.revokedAt)}` : `Seen ${timeLabel(device.lastSeenAt)}`}
+                      </p>
+                    </div>
+                    {#if device.revokedAt}
+                      <span class="text-muted-foreground shrink-0 rounded-full border px-2 py-1 text-xs">Revoked</span>
+                    {:else}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        class="text-destructive hover:text-destructive"
+                        disabled={Boolean(revokingDeviceId)}
+                        onclick={() => revokeDevice(device.id)}
+                      >
+                        {#if revokingDeviceId === device.id}
+                          <Loader2 class="animate-spin" />
+                        {:else}
+                          <Trash2 />
+                        {/if}
+                        Revoke
+                      </Button>
+                    {/if}
+                  </div>
+                {:else}
+                  <p class="text-muted-foreground py-3 text-sm">Chưa có device nào.</p>
+                {/each}
+              </div>
             </div>
           {:else}
             <p class="text-muted-foreground mt-5 text-sm">

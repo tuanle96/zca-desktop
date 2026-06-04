@@ -930,6 +930,36 @@
       ]
     },
     {
+      "id": "cloud-reconnect-offline",
+      "title": "Cloud/SaaS: realtime reconnect, offline badge, and retrying cloud hydration",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/cloud-reconnect-offline.json",
+      "evidencePath": ".harness/evidence/cloud-reconnect-offline.json",
+      "steps": [
+        {
+          "id": "sse-lifecycle",
+          "title": "Tauri cloud SSE bridge emits connected and disconnected lifecycle events",
+          "done": true
+        },
+        {
+          "id": "ui-reconnect",
+          "title": "Chat shell shows reconnecting/offline status and automatically retries realtime",
+          "done": true
+        },
+        {
+          "id": "fetch-retry",
+          "title": "Cloud conversation/message hydration retries transient backend failures and preserves existing UI data",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Frontend/Rust gates and backend restart smoke prove reconnect back to Live",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "app-packaging",
       "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,

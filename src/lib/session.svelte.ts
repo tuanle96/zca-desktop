@@ -4,7 +4,6 @@
 // data bucket; the UI shows the active account and a rail of all accounts.
 // No mock data — everything here reflects real IPC.
 
-import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
@@ -139,6 +138,8 @@ type CloudRealtimeEvent = {
     type?: string;
     accountId?: string;
     message?: string;
+    reason?: string;
+    status?: number;
 };
 
 /** A compact account entry for the left account rail. */
@@ -148,6 +149,12 @@ export type AccountTab = {
     avatar: string | null;
     unread: number;
 };
+
+type RealtimeState = "offline" | "connecting" | "live" | "reconnecting";
+
+function sleep(ms: number): Promise<void> {
+    return new Promise((resolve) => setTimeout(resolve, ms));
+}
 
 function emptyAccount(profile: AccountProfile): AccountData {
     return {
@@ -183,6 +190,8 @@ class SessionStore {
 
     sessionSummary = $state<CredentialSummary | null>(null);
     listening = $state(false);
+    realtimeState = $state<RealtimeState>("offline");
+    realtimeDetail = $state("");
     busy = $state(false);
     error = $state("");
     /** True while the startup session-restore attempt is in flight. */
@@ -213,6 +222,9 @@ class SessionStore {
     private unlistenQr: UnlistenFn | null = null;
     private unlistenCloud: UnlistenFn | null = null;
     private qrTimer: ReturnType<typeof setInterval> | null = null;
+    private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    private reconnectAttempt = 0;
+    private realtimeStarting = false;
 
     /** True once at least one account is authenticated; gates the chat shell. */
     get loggedIn(): boolean {
@@ -231,22 +243,28 @@ class SessionStore {
         return this.cloudMode && Boolean(this.cloudBaseUrl && this.cloudDeviceToken && this.profile);
     }
 
+    get realtimeLabel(): string {
+        switch (this.realtimeState) {
+            case "live":
+                return "Realtime đang bật";
+            case "connecting":
+                return "Đang kết nối realtime";
+            case "reconnecting":
+                return this.reconnectAttempt > 0
+                    ? `Đang reconnect lần ${this.reconnectAttempt}`
+                    : "Đang reconnect realtime";
+            case "offline":
+            default:
+                return "Realtime offline";
+        }
+    }
+
     async checkSession() {
-        await this.run(async () => {
-            this.sessionSummary = await invoke<CredentialSummary>("cred_file_summary");
-        });
+        this.sessionSummary = null;
     }
 
     async loginAndListen() {
-        this.cloudMode = false;
-        this.stopCloudRealtime();
-        await this.run(async () => {
-            await this.ensureListener();
-            const profile = await invoke<AccountProfile>("start_listening_from_file");
-            this.adoptAccount(profile);
-            this.listening = true;
-        });
-        if (this.profile) this.warmUp();
+        this.error = "Cloud-only mode: đăng nhập bằng magic link và hosted QR.";
     }
 
     /** On app start, restore only a previously linked cloud device session. */
@@ -290,12 +308,11 @@ class SessionStore {
             this.cloudMode = true;
             this.cloudBaseUrl = baseUrl;
             this.cloudDeviceToken = deviceToken;
-            await this.ensureCloudRealtime(baseUrl, deviceToken);
+            await this.ensureCloudRealtime();
             const accounts = await listCloudAccounts(baseUrl, deviceToken);
             for (const account of accounts) this.adoptCloudAccount(account, { activate: false });
             if (accounts.length > 0) {
                 this.activate(accounts[0].id);
-                this.listening = true;
                 connected = true;
             }
         });
@@ -323,37 +340,8 @@ class SessionStore {
      * added to the rail and becomes active.
      */
     async startQrLogin() {
-        if (this.busy) return;
-        this.qrPhase = "loading";
-        this.qrImage = null;
-        this.qrScannedName = null;
-        this.qrScannedAvatar = null;
-        this.qrError = "";
-
-        await this.ensureQrListener();
-        await this.ensureListener();
-
-        this.error = "";
-        this.busy = true;
-        try {
-            log.info("qr-login: starting interactive QR flow");
-            const profile = await invoke<AccountProfile>("start_qr_login");
-            this.adoptAccount(profile);
-            this.listening = true;
-            this.qrPhase = "success";
-            this.qrAdding = false;
-            log.info(`qr-login: success, account=${profile.accountId}`);
-            this.warmUp();
-        } catch (e) {
-            this.qrError = String(e);
-            log.error(`qr-login: failed: ${this.qrError}`);
-            const friendlyTerminal: QrPhase[] = ["declined", "expired"];
-            if (!friendlyTerminal.includes(this.qrPhase)) {
-                this.qrPhase = "error";
-            }
-        } finally {
-            this.busy = false;
-        }
+        this.qrError = "Cloud-only mode: use hosted cloud QR.";
+        this.qrPhase = "error";
     }
 
     // --- account management -------------------------------------------------
@@ -405,12 +393,11 @@ class SessionStore {
      */
     async logoutAccount(accountId: string) {
         await this.run(async () => {
-            if (this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken) {
-                await deleteCloudAccount(this.cloudBaseUrl, this.cloudDeviceToken, accountId);
-                this.cloudConversationIds.delete(accountId);
-            } else {
-                await invoke("logout_account", { accountId });
+            if (!this.cloudBaseUrl || !this.cloudDeviceToken) {
+                throw new Error("cloud device session not connected");
             }
+            await deleteCloudAccount(this.cloudBaseUrl, this.cloudDeviceToken, accountId);
+            this.cloudConversationIds.delete(accountId);
         });
         if (this.error) return; // surfaced by the dialog; keep the account listed
 
@@ -495,13 +482,7 @@ class SessionStore {
     private warmUp(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
-        if (this.cloudMode) {
-            this.hydrateCloudHistory(id);
-            return;
-        }
-        this.loadContacts(id);
-        this.loadGroups(id);
-        this.hydrateHistory(id);
+        this.hydrateCloudHistory(id);
     }
 
     // --- QR event plumbing --------------------------------------------------
@@ -564,40 +545,26 @@ class SessionStore {
     async loadContacts(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
-        if (this.cloudMode) return;
-        try {
-            const contacts = await invoke<Contact[]>("list_contacts", { accountId: id });
-            this.withBucket(id, (b) => {
-                b.contacts = contacts;
-                b.contactsLoaded = true;
-            });
-            if (id === this.activeAccountId) {
-                this.contacts = contacts;
-                this.contactsLoaded = true;
-                this.refreshConversationIdentities();
-            }
-        } catch (e) {
-            log.error(`list_contacts failed: ${String(e)}`);
+        this.withBucket(id, (b) => {
+            b.contacts = [];
+            b.contactsLoaded = true;
+        });
+        if (id === this.activeAccountId) {
+            this.contacts = [];
+            this.contactsLoaded = true;
         }
     }
 
     async loadGroups(accountId?: string) {
         const id = accountId ?? this.activeAccountId;
         if (!id) return;
-        if (this.cloudMode) return;
-        try {
-            const groups = await invoke<Group[]>("list_groups", { accountId: id });
-            this.withBucket(id, (b) => {
-                b.groups = groups;
-                b.groupsLoaded = true;
-            });
-            if (id === this.activeAccountId) {
-                this.groups = groups;
-                this.groupsLoaded = true;
-                this.refreshConversationIdentities();
-            }
-        } catch (e) {
-            log.error(`list_groups failed: ${String(e)}`);
+        this.withBucket(id, (b) => {
+            b.groups = [];
+            b.groupsLoaded = true;
+        });
+        if (id === this.activeAccountId) {
+            this.groups = [];
+            this.groupsLoaded = true;
         }
     }
 
@@ -627,72 +594,7 @@ class SessionStore {
 
     /** Hydrate conversations + per-thread messages for an account. */
     async hydrateHistory(accountId?: string) {
-        if (this.cloudMode) {
-            await this.hydrateCloudHistory(accountId);
-            return;
-        }
-        const id = accountId ?? this.activeAccountId;
-        if (!id) return;
-        let history: History;
-        try {
-            history = await invoke<History>("load_history", { accountId: id });
-        } catch (e) {
-            log.error(`load_history failed: ${String(e)}`);
-            return;
-        }
-        const b = this.buckets.get(id);
-        if (!b) return;
-
-        const threads: Record<string, ChatMessage[]> = { ...b.threads };
-        for (const m of history.messages) {
-            const list = threads[m.threadId] ?? (threads[m.threadId] = []);
-            if (list.some((x) => x.id === m.msgId)) continue;
-            list.push({
-                id: m.msgId,
-                threadId: m.threadId,
-                body: m.deleted ? "Tin nhắn đã được thu hồi" : m.sticker ? "" : (m.body ?? "[non-text message]"),
-                sticker: m.sticker,
-                file: null,
-                quote: m.quote,
-                link: m.link,
-                reactionIcon: m.reactionIcon,
-                deleted: m.deleted,
-                outgoing: m.outgoing,
-                authorName: m.fromName,
-                authorAvatar: null,
-                at: m.ts ?? 0,
-            });
-        }
-        for (const tid of Object.keys(threads)) threads[tid].sort((a, c) => a.at - c.at);
-        b.threads = threads;
-
-        const byId = new Map(b.conversations.map((c) => [c.threadId, c]));
-        for (const t of history.threads) {
-            const msgs = threads[t.threadId] ?? [];
-            const last = msgs[msgs.length - 1];
-            const existing = byId.get(t.threadId);
-            const title = this.titleForIn(b, t.threadId, t.kind, existing?.title || t.title || t.threadId);
-            const avatar =
-                this.avatarForIn(b, t.threadId, t.kind) ?? existing?.avatar ?? t.avatar ?? null;
-            byId.set(t.threadId, {
-                threadId: t.threadId,
-                kind: t.kind,
-                title,
-                lastSnippet: last ? messageSnippet(last.body, last.sticker, last.link, last.deleted) : (existing?.lastSnippet ?? ""),
-                lastAt: t.lastAt ?? existing?.lastAt ?? 0,
-                unread: t.unread ?? existing?.unread ?? 0,
-                avatar,
-            });
-        }
-        b.conversations = [...byId.values()].sort((a, c) => c.lastAt - a.lastAt);
-
-        // Reflect into the active view + the account's rail unread total.
-        const totalUnread = b.conversations.reduce((s, c) => s + c.unread, 0);
-        if (id !== this.activeAccountId) this.setAccountUnread(id, totalUnread);
-        if (id === this.activeAccountId) {
-            this.threads = b.threads;
-            this.conversations = b.conversations;
-        }
+        await this.hydrateCloudHistory(accountId);
     }
 
     async hydrateCloudHistory(accountId?: string) {
@@ -700,9 +602,13 @@ class SessionStore {
         if (!id || !this.cloudBaseUrl || !this.cloudDeviceToken) return;
         let rows: CloudConversationRow[] = [];
         try {
-            rows = await listCloudConversations(this.cloudBaseUrl, this.cloudDeviceToken, id) as CloudConversationRow[];
+            rows = await this.retryCloud(
+                "cloud conversations",
+                () => listCloudConversations(this.cloudBaseUrl!, this.cloudDeviceToken!, id) as Promise<CloudConversationRow[]>,
+            );
         } catch (e) {
             log.error(`cloud conversations failed: ${String(e)}`);
+            this.scheduleCloudReconnect("hydrate-conversations-failed");
             return;
         }
         const b = this.buckets.get(id);
@@ -713,9 +619,15 @@ class SessionStore {
         for (const row of rows) {
             this.cloudConversationIds.set(`${id}:${row.threadId}`, row.id);
             let messages: CloudMessageRow[] = [];
+            let messageFetchFailed = false;
             try {
-                messages = await listCloudMessages(this.cloudBaseUrl, this.cloudDeviceToken, row.id, 100) as CloudMessageRow[];
+                messages = await this.retryCloud(
+                    "cloud messages",
+                    () => listCloudMessages(this.cloudBaseUrl!, this.cloudDeviceToken!, row.id, 100) as Promise<CloudMessageRow[]>,
+                    2,
+                );
             } catch (e) {
+                messageFetchFailed = true;
                 log.error(`cloud messages failed: ${String(e)}`);
             }
             const mapped = messages
@@ -735,15 +647,15 @@ class SessionStore {
                     at: Date.parse(m.observedAt) || Date.now(),
                 }))
                 .sort((a, c) => a.at - c.at);
-            threads[row.threadId] = mapped;
+            threads[row.threadId] = messageFetchFailed ? (b.threads[row.threadId] ?? []) : mapped;
             const last = mapped[mapped.length - 1];
             conversations.push({
                 threadId: row.threadId,
                 kind: row.kind,
                 title: row.title || row.threadId,
                 avatar: row.avatar,
-                lastAt: row.lastAt ? (Date.parse(row.lastAt) || 0) : (last?.at ?? 0),
-                lastSnippet: last ? messageSnippet(last.body, last.sticker, last.link, last.deleted) : "",
+                lastAt: row.lastAt ? (Date.parse(row.lastAt) || 0) : (last?.at ?? b.conversations.find((c) => c.threadId === row.threadId)?.lastAt ?? 0),
+                lastSnippet: last ? messageSnippet(last.body, last.sticker, last.link, last.deleted) : (b.conversations.find((c) => c.threadId === row.threadId)?.lastSnippet ?? ""),
                 unread: row.unread ?? 0,
             });
         }
@@ -770,10 +682,7 @@ class SessionStore {
                 c.threadId === threadId ? { ...c, unread: 0 } : c,
             );
             if (this.profile) {
-                invoke("mark_thread_read", {
-                    accountId: this.profile.accountId,
-                    threadId,
-                }).catch(() => { });
+                log.info(`thread-read: ${this.profile.accountId}/${threadId}`);
             }
         }
     }
@@ -787,18 +696,13 @@ class SessionStore {
 
         let ok = false;
         await this.run(async () => {
-            const msgId = this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken
-                ? String((await sendCloudText(this.cloudBaseUrl, this.cloudDeviceToken, this.profile!.accountId, threadId, text, kind)).msgId ?? "")
-                : await invoke<string>("send_message", {
-                    accountId: this.profile!.accountId,
-                    threadId,
-                    text,
-                    kind,
-                    quote: quote ?? null,
-                });
+            if (!this.cloudBaseUrl || !this.cloudDeviceToken) {
+                throw new Error("cloud device session not connected");
+            }
+            const msgId = String((await sendCloudText(this.cloudBaseUrl, this.cloudDeviceToken, this.profile!.accountId, threadId, text, kind)).msgId ?? "");
             this.appendToActive(
                 {
-                    id: msgId || `local-${Date.now()}`,
+                    id: msgId || `cloud-${Date.now()}`,
                     threadId,
                     body: text,
                     sticker: null,
@@ -829,64 +733,27 @@ class SessionStore {
 
     /** Search stickers for the picker (reuses the active account's session). */
     async searchStickers(keyword: string, limit = 40): Promise<Sticker[]> {
-        if (this.cloudMode) return [];
-        const term = keyword.trim();
-        if (!term || !this.profile) return [];
-        try {
-            return await invoke<Sticker[]>("search_stickers", {
-                accountId: this.profile.accountId,
-                keyword: term,
-                limit,
-            });
-        } catch (e) {
-            log.error(`search_stickers failed: ${String(e)}`);
-            return [];
-        }
+        void keyword;
+        void limit;
+        return [];
     }
 
     /** The account's recently-used stickers for the picker's "Gần đây" row. */
     async recentStickers(limit = 24): Promise<Sticker[]> {
-        if (this.cloudMode) return [];
-        if (!this.profile) return [];
-        try {
-            return await invoke<Sticker[]>("recent_stickers", {
-                accountId: this.profile.accountId,
-                limit,
-            });
-        } catch (e) {
-            log.error(`recent_stickers failed: ${String(e)}`);
-            return [];
-        }
+        void limit;
+        return [];
     }
 
     /** The pack ids (categories) the account has used recently, for tab chips. */
     async stickerCategories(limit = 12): Promise<number[]> {
-        if (this.cloudMode) return [];
-        if (!this.profile) return [];
-        try {
-            return await invoke<number[]>("sticker_categories", {
-                accountId: this.profile.accountId,
-                limit,
-            });
-        } catch (e) {
-            log.error(`sticker_categories failed: ${String(e)}`);
-            return [];
-        }
+        void limit;
+        return [];
     }
 
     /** Load all stickers in a pack (category) for the picker's per-pack tab. */
     async stickerCategory(catId: number): Promise<Sticker[]> {
-        if (this.cloudMode) return [];
-        if (!this.profile) return [];
-        try {
-            return await invoke<Sticker[]>("sticker_category", {
-                accountId: this.profile.accountId,
-                catId,
-            });
-        } catch (e) {
-            log.error(`sticker_category failed: ${String(e)}`);
-            return [];
-        }
+        void catId;
+        return [];
     }
 
     /** Send a sticker to the active thread, rendering it optimistically. */
@@ -898,26 +765,22 @@ class SessionStore {
 
         let ok = false;
         await this.run(async () => {
-            const msgId = this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken
-                ? String((await sendCloudSticker(
-                    this.cloudBaseUrl,
-                    this.cloudDeviceToken,
-                    this.profile!.accountId,
-                    threadId,
-                    sticker.id,
-                    sticker.catId,
-                    sticker.stickerType,
-                    kind,
-                )).msgId ?? "")
-                : await invoke<string>("send_sticker", {
-                    accountId: this.profile!.accountId,
-                    threadId,
-                    kind,
-                    sticker,
-                });
+            if (!this.cloudBaseUrl || !this.cloudDeviceToken) {
+                throw new Error("cloud device session not connected");
+            }
+            const msgId = String((await sendCloudSticker(
+                this.cloudBaseUrl,
+                this.cloudDeviceToken,
+                this.profile!.accountId,
+                threadId,
+                sticker.id,
+                sticker.catId,
+                sticker.stickerType,
+                kind,
+            )).msgId ?? "");
             this.appendToActive(
                 {
-                    id: msgId || `local-${Date.now()}`,
+                    id: msgId || `cloud-${Date.now()}`,
                     threadId,
                     body: "",
                     sticker,
@@ -944,27 +807,19 @@ class SessionStore {
         const kind = convo?.kind ?? "user";
         let ok = false;
         await this.run(async () => {
-            if (this.cloudMode && this.cloudBaseUrl && this.cloudDeviceToken) {
-                await sendCloudReaction(
-                    this.cloudBaseUrl,
-                    this.cloudDeviceToken,
-                    this.profile!.accountId,
-                    message.threadId,
-                    message.id,
-                    `${message.id}_cli`,
-                    icon,
-                    kind,
-                );
-            } else {
-                await invoke("send_reaction", {
-                    accountId: this.profile!.accountId,
-                    threadId: message.threadId,
-                    msgId: message.id,
-                    cliMsgId: `${message.id}_cli`,
-                    kind,
-                    icon,
-                });
+            if (!this.cloudBaseUrl || !this.cloudDeviceToken) {
+                throw new Error("cloud device session not connected");
             }
+            await sendCloudReaction(
+                this.cloudBaseUrl,
+                this.cloudDeviceToken,
+                this.profile!.accountId,
+                message.threadId,
+                message.id,
+                `${message.id}_cli`,
+                icon,
+                kind,
+            );
             const b = this.activeBucket();
             if (b) {
                 this.applyReactionToBucket(b, {
@@ -1070,15 +925,26 @@ class SessionStore {
         });
     }
 
-    private async ensureCloudRealtime(baseUrl: string, deviceToken: string) {
+    private async ensureCloudRealtime() {
         if (!this.unlistenCloud) {
             this.unlistenCloud = await listen<CloudRealtimeEvent>(CLOUD_EVENT, (event) => {
                 const payload = event.payload;
+                if (payload.type === "connected") {
+                    this.markCloudRealtimeConnected();
+                    return;
+                }
                 if (payload.type === "error") {
-                    log.error(`cloud realtime failed: ${payload.message ?? "stream error"}`);
+                    log.error(`cloud realtime failed: ${payload.message ?? `status ${payload.status ?? "unknown"}`}`);
+                    this.scheduleCloudReconnect("realtime-error");
+                    return;
+                }
+                if (payload.type === "disconnected") {
+                    log.info(`cloud realtime disconnected: ${payload.reason ?? "unknown"}`);
+                    this.scheduleCloudReconnect(payload.reason ?? "realtime-disconnected");
                     return;
                 }
                 if (payload.type !== "message") return;
+                if (this.realtimeState !== "live") this.markCloudRealtimeConnected({ refresh: false });
                 const accountId = payload.accountId;
                 if (accountId && this.buckets.has(accountId)) {
                     void this.hydrateCloudHistory(accountId);
@@ -1087,14 +953,87 @@ class SessionStore {
                 }
             });
         }
-        await startCloudRealtime(baseUrl, deviceToken);
+        await this.startCloudRealtimeStream("connect");
     }
 
     private stopCloudRealtime() {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
         this.unlistenCloud?.();
         this.unlistenCloud = null;
         this.cloudBaseUrl = null;
         this.cloudDeviceToken = null;
+        this.reconnectAttempt = 0;
+        this.realtimeStarting = false;
+        this.realtimeState = "offline";
+        this.realtimeDetail = "";
+        this.listening = false;
+    }
+
+    private async startCloudRealtimeStream(reason: string) {
+        if (!this.cloudBaseUrl || !this.cloudDeviceToken) return;
+        if (this.realtimeStarting) return;
+        if (this.realtimeState === "live" && reason !== "retry") return;
+
+        this.realtimeStarting = true;
+        this.realtimeState = this.reconnectAttempt > 0 ? "reconnecting" : "connecting";
+        this.realtimeDetail = reason;
+        this.listening = false;
+        try {
+            await startCloudRealtime(this.cloudBaseUrl, this.cloudDeviceToken);
+            log.info(`cloud realtime start requested: ${reason}`);
+        } catch (e) {
+            log.error(`cloud realtime start failed: ${String(e)}`);
+            this.scheduleCloudReconnect("start-failed");
+        } finally {
+            this.realtimeStarting = false;
+        }
+    }
+
+    private markCloudRealtimeConnected(opts: { refresh?: boolean } = {}) {
+        if (this.reconnectTimer) {
+            clearTimeout(this.reconnectTimer);
+            this.reconnectTimer = null;
+        }
+        this.reconnectAttempt = 0;
+        this.realtimeState = "live";
+        this.realtimeDetail = "";
+        this.listening = true;
+        log.info("cloud realtime connected");
+        if (opts.refresh ?? true) {
+            for (const tab of this.accounts) void this.hydrateCloudHistory(tab.accountId);
+        }
+    }
+
+    private scheduleCloudReconnect(reason: string) {
+        if (!this.cloudMode || !this.cloudBaseUrl || !this.cloudDeviceToken) return;
+        if (this.reconnectTimer) return;
+        this.listening = false;
+        this.realtimeState = "reconnecting";
+        this.realtimeDetail = reason;
+        this.reconnectAttempt = Math.min(this.reconnectAttempt + 1, 6);
+        const delayMs = Math.min(30_000, 1_000 * 2 ** (this.reconnectAttempt - 1));
+        log.info(`cloud realtime reconnect scheduled: reason=${reason} attempt=${this.reconnectAttempt} delayMs=${delayMs}`);
+        this.reconnectTimer = setTimeout(() => {
+            this.reconnectTimer = null;
+            void this.startCloudRealtimeStream("retry");
+        }, delayMs);
+    }
+
+    private async retryCloud<T>(label: string, operation: () => Promise<T>, attempts = 3): Promise<T> {
+        let lastError: unknown;
+        for (let attempt = 1; attempt <= attempts; attempt += 1) {
+            try {
+                return await operation();
+            } catch (e) {
+                lastError = e;
+                log.error(`${label} attempt ${attempt}/${attempts} failed: ${String(e)}`);
+                if (attempt < attempts) await sleep(Math.min(2_500, 300 * 2 ** (attempt - 1)));
+            }
+        }
+        throw lastError;
     }
 
     private activeBucket(): AccountData | undefined {

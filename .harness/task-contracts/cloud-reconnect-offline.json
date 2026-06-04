@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-reconnect-offline",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Make cloud-only desktop realtime resilient to backend restarts/SSE drops with visible offline status and retrying conversation/message hydration.",
+    "goals": [
+      "Emit explicit cloud realtime connected/disconnected events from the Tauri SSE bridge",
+      "Auto-reconnect realtime with bounded backoff after backend restart, stream end, or connect error",
+      "Show offline/reconnecting status in the chat shell instead of only a boolean live badge",
+      "Retry cloud conversation/message fetches before surfacing failure",
+      "Refresh hosted conversations/messages after reconnect succeeds"
+    ],
+    "nonGoals": [
+      "Production deployment automation",
+      "Changing Zalo hosted session semantics",
+      "Removing Rust core local dev/test commands"
+    ],
+    "allowedLayers": [
+      "command",
+      "session"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "cloud-reconnect-offline",
+      "description": "If the backend or SSE stream drops, the UI enters reconnecting/offline status, retries the realtime stream with backoff, and rehydrates conversations/messages after reconnect.",
+      "verification": {
+        "manual": "Attach frontend/server check output and a runtime smoke that kills/restarts backend or the SSE stream and proves reconnect + fetch retry."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(tmux*)",
+      "Bash(curl*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "ui",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-reconnect-offline.json"
+}

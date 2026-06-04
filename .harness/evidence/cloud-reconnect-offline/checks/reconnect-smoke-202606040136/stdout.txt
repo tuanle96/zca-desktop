@@ -1,0 +1,45 @@
+== health after backend restart ==
+{"ok":true,"service":"zca-cloud-server"}
+== tauri log since smoke start ==
+[1m[92m     Running[0m `target/debug/zca-desktop`
+2026-06-04T01:36:10.997755Z ERROR ui: cloud realtime failed: error decoding response body
+2026-06-04T01:36:12.005763Z ERROR ui: cloud realtime failed: error sending request for url (http://127.0.0.1:37880/api/v1/realtime)
+2026-06-04T01:36:14.013378Z ERROR ui: cloud realtime failed: error sending request for url (http://127.0.0.1:37880/api/v1/realtime)
+2026-06-04T01:36:18.020770Z ERROR ui: cloud realtime failed: error sending request for url (http://127.0.0.1:37880/api/v1/realtime)
+2026-06-04T01:36:26.029089Z ERROR ui: cloud realtime failed: error sending request for url (http://127.0.0.1:37880/api/v1/realtime)
+2026-06-04T01:36:42.039821Z ERROR ui: cloud realtime failed: error sending request for url (http://127.0.0.1:37880/api/v1/realtime)
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+8:41:45 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+8:41:45 AM [vite] (client) page reload .svelte-kit/generated/root.js
+8:41:45 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+8:41:54 AM [vite] (client) page reload build/index.html
+8:41:54 AM [vite] (client) page reload build/index.html
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/0.js
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/1.js
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/client/nodes/2.js
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/client/app.js
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/client/matchers.js
+8:42:35 AM [vite] (ssr) page reload .svelte-kit/generated/server/internal.js
+8:42:35 AM [vite] (client) page reload .svelte-kit/generated/root.js
+8:42:35 AM [vite] (ssr) page reload .svelte-kit/generated/root.js
+8:42:51 AM [vite] (client) page reload build/index.html
+8:42:51 AM [vite] (client) page reload build/index.html
+
+== server log restart evidence ==
+{"timestamp":"2026-06-04T01:04:14.738736Z","level":"INFO","fields":{"message":"relation \"_sqlx_migrations\" already exists, skipping"},"target":"sqlx::postgres::notice"}
+{"timestamp":"2026-06-04T01:04:14.787466Z","level":"INFO","fields":{"message":"Using Static credential provider"},"target":"object_store::aws::builder"}
+{"timestamp":"2026-06-04T01:04:15.332375Z","level":"INFO","fields":{"message":"hosted session restore complete","restored":2},"target":"zca_cloud_server"}
+{"timestamp":"2026-06-04T01:04:15.334375Z","level":"INFO","fields":{"message":"zca cloud server listening","addr":"127.0.0.1:37880"},"target":"zca_cloud_server"}
+{"timestamp":"2026-06-04T01:09:47.738536Z","level":"WARN","fields":{"message":"skipping hosted message with empty thread id","account_id":"7fadc637-fe6b-441b-abf1-2ca7e316d602","msg_id":""},"target":"zca_cloud_server::sessions"}
+{"timestamp":"2026-06-04T01:36:57.845509Z","level":"INFO","fields":{"message":"relation \"_sqlx_migrations\" already exists, skipping"},"target":"sqlx::postgres::notice"}
+{"timestamp":"2026-06-04T01:36:57.851826Z","level":"INFO","fields":{"message":"Using Static credential provider"},"target":"object_store::aws::builder"}
+{"timestamp":"2026-06-04T01:36:58.184601Z","level":"INFO","fields":{"message":"hosted session restore complete","restored":2},"target":"zca_cloud_server"}
+{"timestamp":"2026-06-04T01:36:58.188564Z","level":"INFO","fields":{"message":"zca cloud server listening","addr":"127.0.0.1:37880"},"target":"zca_cloud_server"}
+
+== screenshots ==
+.harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/reconnecting.png
+.harness/evidence/cloud-reconnect-offline/checks/reconnect-smoke-202606040136/live.png

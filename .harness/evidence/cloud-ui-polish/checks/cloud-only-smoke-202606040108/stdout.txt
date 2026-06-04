@@ -1,0 +1,10 @@
+cloud-only runtime smoke PASS
+migrations: 202606030001, 202606040001(from_avatar)
+devices: 2 total, 2 active
+accounts: 2 active hosted accounts
+conversation avatars: present
+incoming direct message fromAvatar: true
+incoming group message fromAvatar: true (fromId sender metadata, not group fallback)
+send+realtime: msgId=7898420034356 realtime=true
+file roundtrip: upload.txt cmp success file=37d92e3a-1abf-4af2-9323-2d887e6bfd6d
+tauri: target/debug/zca-desktop relaunched
