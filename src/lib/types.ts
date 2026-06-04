@@ -147,10 +147,13 @@ export type ChatMessage = {
     body: string;
     sticker: Sticker | null;
     file?: {
-        id: string;
+        id?: string | null;
         filename: string | null;
         mime: string | null;
         sizeBytes: number;
+        sourceUrl?: string | null;
+        thumb?: string | null;
+        mediaKind?: "image" | "video" | "audio" | "file" | string | null;
     } | null;
     quote: QuoteRef | null;
     link: LinkPreview | null;

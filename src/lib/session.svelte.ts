@@ -132,6 +132,19 @@ type CloudMessageRow = {
     kind: string;
     observedAt: string;
     deleted: boolean;
+    sticker?: Sticker | null;
+    quote?: QuoteRef | null;
+    link?: LinkPreview | null;
+    file?: {
+        id?: string | null;
+        filename: string | null;
+        mime: string | null;
+        sizeBytes: number;
+        href?: string | null;
+        thumb?: string | null;
+        mediaKind?: string | null;
+    } | null;
+    reactionIcon?: string | null;
 };
 
 type CloudRealtimeEvent = {
@@ -634,12 +647,24 @@ class SessionStore {
                 .map((m) => ({
                     id: m.msgId,
                     threadId: row.threadId,
-                    body: m.deleted ? "Tin nhắn đã được thu hồi" : (m.body ?? "[non-text message]"),
-                    sticker: null,
-                    file: null,
-                    quote: null,
-                    link: null,
-                    reactionIcon: null,
+                    body: m.deleted
+                        ? "Tin nhắn đã được thu hồi"
+                        : (m.body ?? (m.file?.filename || (m.sticker ? "" : "[non-text message]"))),
+                    sticker: m.sticker ?? null,
+                    file: m.file
+                        ? {
+                            id: m.file.id ?? null,
+                            filename: m.file.filename,
+                            mime: m.file.mime,
+                            sizeBytes: m.file.sizeBytes,
+                            sourceUrl: m.file.href ?? null,
+                            thumb: m.file.thumb ?? null,
+                            mediaKind: m.file.mediaKind ?? null,
+                        }
+                        : null,
+                    quote: m.quote ?? null,
+                    link: m.link ?? null,
+                    reactionIcon: m.reactionIcon ?? null,
                     deleted: m.deleted,
                     outgoing: m.outgoing,
                     authorName: m.fromName,
@@ -891,10 +916,11 @@ class SessionStore {
     }
 
     async downloadCloudFile(message: ChatMessage): Promise<boolean> {
-        if (!message.file || !this.cloudBaseUrl || !this.cloudDeviceToken) return false;
+        const fileId = message.file?.id;
+        if (!fileId || !this.cloudBaseUrl || !this.cloudDeviceToken) return false;
         let ok = false;
         await this.run(async () => {
-            const bytes = await downloadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, message.file!.id);
+            const bytes = await downloadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, fileId);
             const blob = new Blob([new Uint8Array(bytes)], {
                 type: message.file!.mime || "application/octet-stream",
             });

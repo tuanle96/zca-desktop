@@ -1,5 +1,6 @@
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+use serde_json::Value;
 use uuid::Uuid;
 
 #[derive(Debug, Clone)]
@@ -189,6 +190,88 @@ pub struct MessageView {
     pub kind: String,
     pub observed_at: DateTime<Utc>,
     pub deleted: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sticker: Option<RichSticker>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quote: Option<RichQuote>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<RichLink>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<RichFile>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reaction_icon: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw: Option<Value>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RichSticker {
+    pub id: i64,
+    pub cat_id: i64,
+    pub sticker_type: i64,
+    pub url: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RichQuote {
+    pub owner_id: String,
+    pub from_d: String,
+    pub global_msg_id: i64,
+    pub cli_msg_id: i64,
+    pub msg: String,
+    pub cli_msg_type: i64,
+    pub ts: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RichLink {
+    pub href: String,
+    pub title: Option<String>,
+    pub description: Option<String>,
+    pub thumb: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct RichFile {
+    pub id: Option<String>,
+    pub filename: Option<String>,
+    pub mime: Option<String>,
+    pub size_bytes: i64,
+    pub href: Option<String>,
+    pub thumb: Option<String>,
+    pub media_kind: Option<String>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "camelCase")]
+pub struct MessageRichPayload {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sticker: Option<RichSticker>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub quote: Option<RichQuote>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub link: Option<RichLink>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub file: Option<RichFile>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reaction_icon: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub raw: Option<Value>,
+}
+
+impl MessageRichPayload {
+    pub fn is_empty(&self) -> bool {
+        self.sticker.is_none()
+            && self.quote.is_none()
+            && self.link.is_none()
+            && self.file.is_none()
+            && self.reaction_icon.is_none()
+            && self.raw.is_none()
+    }
 }
 
 #[derive(Debug, Deserialize)]
