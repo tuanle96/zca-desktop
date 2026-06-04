@@ -1,0 +1,24 @@
+{
+  "name": "ui",
+  "taskId": "cloud-message-richness",
+  "acceptanceId": "cloud-rich-message-hydration",
+  "artifact": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/check.json",
+  "command": "bun run check && bun run build",
+  "status": "pass",
+  "summary": "Svelte diagnostics and production build passed for cloud rich-message hydration/rendering.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T03:03:16Z",
+  "finishedAt": "2026-06-04T03:03:28Z",
+  "gitHead": "d8456223749c88cea942e5d07e7b89d534ff354b",
+  "workingTreeHash": "sha256:f1a2b98382bc96b2a75b52d4be1a01bdd322c65cd50ccaf75b63d7e5ae8f51fd",
+  "stdoutHash": "sha256:51f6662b3a77e1f07c8ecc15280c6d79c602d6bbe13aacd686753a2becb3b19d",
+  "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+  "stdoutPath": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/check.json",
+    ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stdout.txt",
+    ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stderr.txt"
+  ]
+}

@@ -1,0 +1,24 @@
+{
+  "name": "tests",
+  "taskId": "cloud-message-richness",
+  "acceptanceId": "cloud-rich-realtime-events",
+  "artifact": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/check.json",
+  "command": "cargo test --manifest-path server/Cargo.toml && cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend tests and clippy passed, including rich payload extraction and hosted reaction icon mapping.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T03:03:28Z",
+  "finishedAt": "2026-06-04T03:03:30Z",
+  "gitHead": "d8456223749c88cea942e5d07e7b89d534ff354b",
+  "workingTreeHash": "sha256:f1a2b98382bc96b2a75b52d4be1a01bdd322c65cd50ccaf75b63d7e5ae8f51fd",
+  "stdoutHash": "sha256:eaebb2f8d3e583aa91ec0f39c8dc8fb34b3665bffee936b72fdb61c00d124deb",
+  "stderrHash": "sha256:2f9c466faae5a40b56e79f9b07d9bec4a175d345e39b7e2350e61acb8a8b877d",
+  "stdoutPath": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/check.json",
+    ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stdout.txt",
+    ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stderr.txt"
+  ]
+}

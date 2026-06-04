@@ -960,6 +960,36 @@
       ]
     },
     {
+      "id": "cloud-message-richness",
+      "title": "Cloud/SaaS: rich message media, quote, reaction, delete, and link hydration",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/cloud-message-richness.json",
+      "evidencePath": ".harness/evidence/cloud-message-richness.json",
+      "steps": [
+        {
+          "id": "encrypted-rich-payload",
+          "title": "Hosted message rich metadata is encrypted at rest and returned by cloud message list API",
+          "done": true
+        },
+        {
+          "id": "realtime-rich-events",
+          "title": "Hosted reaction and delete events update stored cloud messages and notify realtime subscribers",
+          "done": true
+        },
+        {
+          "id": "desktop-rich-rendering",
+          "title": "Desktop cloud hydration renders quote, link, sticker, file/media preview, reactions, and deleted state",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Backend/frontend gates and evidence bundle prove rich metadata roundtrip",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "app-packaging",
       "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,

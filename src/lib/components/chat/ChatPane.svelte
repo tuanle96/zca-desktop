@@ -110,9 +110,22 @@
   }
 
   function fileSize(bytes: number): string {
+    if (!Number.isFinite(bytes) || bytes <= 0) return "";
     if (bytes < 1024) return `${bytes} B`;
     if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
     return `${(bytes / 1024 / 1024).toFixed(1)} MB`;
+  }
+
+  function filePreviewUrl(m: ChatMessage): string | null {
+    return m.file?.thumb || m.file?.sourceUrl || null;
+  }
+
+  function canDownloadCloudFile(m: ChatMessage): boolean {
+    return Boolean(m.file?.id);
+  }
+
+  function openRemoteFile(m: ChatMessage) {
+    if (m.file?.sourceUrl) window.open(m.file.sourceUrl, "_blank", "noopener,noreferrer");
   }
 
   function bubbleAvatar(m: ChatMessage): string | null {
@@ -274,17 +287,34 @@
                       </div>
                     {/if}
                     {#if m.file}
-                      <button
-                        type="button"
-                        onclick={() => session.downloadCloudFile(m)}
-                        class="flex max-w-full items-center gap-2 rounded-md border border-current/15 bg-black/5 p-2 text-left text-xs hover:bg-black/10"
-                      >
-                        <FileDown class="size-4 shrink-0" />
-                        <span class="min-w-0 flex-1">
-                          <span class="block truncate font-medium">{m.file.filename || "Tệp đính kèm"}</span>
-                          <span class="opacity-70">{fileSize(m.file.sizeBytes)}</span>
-                        </span>
-                      </button>
+                      <div class="flex max-w-full flex-col gap-2 rounded-md border border-current/15 bg-black/5 p-2 text-left text-xs">
+                        {#if m.file.mediaKind === "image" && filePreviewUrl(m)}
+                          <button
+                            type="button"
+                            onclick={() => canDownloadCloudFile(m) ? session.downloadCloudFile(m) : openRemoteFile(m)}
+                            class="overflow-hidden rounded-md border border-current/10 bg-background/50"
+                            title={m.file.filename || "Mở hình ảnh"}
+                            aria-label={m.file.filename || "Mở hình ảnh"}
+                          >
+                            <img src={filePreviewUrl(m)!} alt={m.file.filename || "Hình ảnh"} class="max-h-56 w-full object-cover" loading="lazy" />
+                          </button>
+                        {/if}
+                        <button
+                          type="button"
+                          onclick={() => canDownloadCloudFile(m) ? session.downloadCloudFile(m) : openRemoteFile(m)}
+                          class="hover:bg-background/40 flex max-w-full items-center gap-2 rounded-md p-1 text-left transition-colors"
+                          disabled={!canDownloadCloudFile(m) && !m.file.sourceUrl}
+                        >
+                          <FileDown class="size-4 shrink-0" />
+                          <span class="min-w-0 flex-1">
+                            <span class="block truncate font-medium">{m.file.filename || "Tệp đính kèm"}</span>
+                            <span class="opacity-70">
+                              {#if m.file.mediaKind && m.file.mediaKind !== "file"}{m.file.mediaKind}{/if}
+                              {#if fileSize(m.file.sizeBytes)} {fileSize(m.file.sizeBytes)}{/if}
+                            </span>
+                          </span>
+                        </button>
+                      </div>
                     {:else if m.deleted}
                       <p class="text-muted-foreground italic">{m.body}</p>
                     {:else}

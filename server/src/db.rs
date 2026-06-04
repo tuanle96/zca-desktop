@@ -56,10 +56,17 @@ pub struct MessageCiphertextRow {
     pub from_avatar: Option<String>,
     pub enc_body: Option<Vec<u8>>,
     pub body_nonce: Option<Vec<u8>>,
+    pub enc_rich: Option<Vec<u8>>,
+    pub rich_nonce: Option<Vec<u8>>,
     pub outgoing: bool,
     pub kind: String,
     pub observed_at: DateTime<Utc>,
     pub deleted: bool,
+}
+
+pub struct MessageRichCiphertext {
+    pub enc_rich: Option<Vec<u8>>,
+    pub rich_nonce: Option<Vec<u8>>,
 }
 
 impl Db {
@@ -501,6 +508,8 @@ impl Db {
         from_avatar: Option<&str>,
         enc_body: Option<&[u8]>,
         body_nonce: Option<&[u8]>,
+        enc_rich: Option<&[u8]>,
+        rich_nonce: Option<&[u8]>,
         outgoing: bool,
         kind: &str,
         z_ts: Option<&str>,
@@ -508,10 +517,12 @@ impl Db {
         let row = sqlx::query(
             "INSERT INTO messages
                 (user_id, account_id, conversation_id, msg_id, from_id, from_name,
-                 from_avatar, enc_body, body_nonce, outgoing, kind, z_ts)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+                 from_avatar, enc_body, body_nonce, enc_rich, rich_nonce, outgoing, kind, z_ts)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14)
              ON CONFLICT(account_id, msg_id) DO UPDATE SET
                 from_avatar = COALESCE(excluded.from_avatar, messages.from_avatar),
+                enc_rich = COALESCE(excluded.enc_rich, messages.enc_rich),
+                rich_nonce = COALESCE(excluded.rich_nonce, messages.rich_nonce),
                 observed_at = messages.observed_at
              RETURNING id",
         )
@@ -524,6 +535,8 @@ impl Db {
         .bind(from_avatar)
         .bind(enc_body)
         .bind(body_nonce)
+        .bind(enc_rich)
+        .bind(rich_nonce)
         .bind(outgoing)
         .bind(kind)
         .bind(z_ts)
@@ -592,7 +605,8 @@ impl Db {
         limit: i64,
     ) -> AppResult<Vec<MessageCiphertextRow>> {
         let rows = sqlx::query(
-            "SELECT id, account_id, conversation_id, msg_id, from_id, from_name, from_avatar, enc_body, body_nonce,
+            "SELECT id, account_id, conversation_id, msg_id, from_id, from_name, from_avatar,
+                    enc_body, body_nonce, enc_rich, rich_nonce,
                     outgoing, kind, observed_at, deleted
              FROM messages WHERE user_id = $1 AND conversation_id = $2
              ORDER BY observed_at DESC LIMIT $3",
@@ -614,12 +628,80 @@ impl Db {
                 from_avatar: row.get("from_avatar"),
                 enc_body: row.get("enc_body"),
                 body_nonce: row.get("body_nonce"),
+                enc_rich: row.get("enc_rich"),
+                rich_nonce: row.get("rich_nonce"),
                 outgoing: row.get("outgoing"),
                 kind: row.get("kind"),
                 observed_at: row.get("observed_at"),
                 deleted: row.get("deleted"),
             })
             .collect())
+    }
+
+    pub async fn apply_message_reaction(
+        &self,
+        user_id: Uuid,
+        account_id: Uuid,
+        msg_id: &str,
+        enc_rich: &[u8],
+        rich_nonce: &[u8],
+    ) -> AppResult<bool> {
+        let changed = sqlx::query(
+            "UPDATE messages
+             SET enc_rich = $4, rich_nonce = $5
+             WHERE user_id = $1 AND account_id = $2 AND msg_id = $3",
+        )
+        .bind(user_id)
+        .bind(account_id)
+        .bind(msg_id)
+        .bind(enc_rich)
+        .bind(rich_nonce)
+        .execute(&self.pool)
+        .await?
+        .rows_affected();
+        Ok(changed > 0)
+    }
+
+    pub async fn message_rich_ciphertext(
+        &self,
+        user_id: Uuid,
+        account_id: Uuid,
+        msg_id: &str,
+    ) -> AppResult<Option<MessageRichCiphertext>> {
+        let row = sqlx::query(
+            "SELECT enc_rich, rich_nonce
+             FROM messages
+             WHERE user_id = $1 AND account_id = $2 AND msg_id = $3",
+        )
+        .bind(user_id)
+        .bind(account_id)
+        .bind(msg_id)
+        .fetch_optional(&self.pool)
+        .await?;
+        Ok(row.map(|row| MessageRichCiphertext {
+            enc_rich: row.get("enc_rich"),
+            rich_nonce: row.get("rich_nonce"),
+        }))
+    }
+
+    pub async fn mark_message_deleted(
+        &self,
+        user_id: Uuid,
+        account_id: Uuid,
+        msg_id: &str,
+    ) -> AppResult<bool> {
+        let changed = sqlx::query(
+            "UPDATE messages
+             SET deleted = true
+             WHERE user_id = $1 AND account_id = $2 AND msg_id = $3",
+        )
+        .bind(user_id)
+        .bind(account_id)
+        .bind(msg_id)
+        .execute(&self.pool)
+        .await?
+        .rows_affected();
+        Ok(changed > 0)
     }
 
     pub async fn update_message_sender_avatar(

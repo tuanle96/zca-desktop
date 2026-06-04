@@ -9,9 +9,11 @@ use zca_rust::apis::send_message::MessageContent as SendContent;
 use zca_rust::apis::send_sticker::SendStickerPayload;
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::{Listener, ListenerEvent};
-use zca_rust::models::{Message, MessageContent as ZcaMessageContent, ThreadType};
+use zca_rust::models::{Message, MessageContent as ZcaMessageContent, Reactions, ThreadType};
 use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
 use zca_rust::{Result as ZaloResult, Zalo, ZaloError, API};
+
+use crate::models::{MessageRichPayload, RichFile, RichLink, RichQuote, RichSticker};
 
 const DEFAULT_QR_USER_AGENT: &str =
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:133.0) Gecko/20100101 Firefox/133.0";
@@ -89,8 +91,36 @@ pub struct HostedIncomingMessage {
     pub from_id: Option<String>,
     pub from_name: Option<String>,
     pub text: Option<String>,
+    pub rich: Option<MessageRichPayload>,
     pub outgoing: bool,
     pub timestamp: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HostedReactionEvent {
+    pub thread_id: String,
+    pub msg_id: String,
+    pub icon: String,
+    pub from_id: Option<String>,
+    pub from_name: Option<String>,
+    pub outgoing: bool,
+    pub is_group: bool,
+}
+
+#[derive(Debug, Clone)]
+pub struct HostedUndoEvent {
+    pub thread_id: String,
+    pub msg_id: String,
+    pub cli_msg_id: String,
+    pub outgoing: bool,
+    pub is_group: bool,
+}
+
+#[derive(Debug, Clone)]
+pub enum HostedRealtimeEvent {
+    Message(Box<HostedIncomingMessage>),
+    Reaction(HostedReactionEvent),
+    Undo(HostedUndoEvent),
 }
 
 #[derive(Debug, Clone, Default)]
@@ -266,7 +296,7 @@ fn listener_urls(api: &API) -> ZaloResult<Vec<String>> {
 
 pub async fn start_message_listener(
     api: Arc<API>,
-    out: mpsc::Sender<HostedIncomingMessage>,
+    out: mpsc::Sender<HostedRealtimeEvent>,
 ) -> ZaloResult<Listener> {
     let urls = listener_urls(&api)?;
     let (mut listener, mut rx) = Listener::new(api.ctx.clone(), urls);
@@ -274,7 +304,12 @@ pub async fn start_message_listener(
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
             let incoming = match event {
-                ListenerEvent::Message(boxed) => to_incoming_message(&boxed),
+                ListenerEvent::Message(boxed) => to_incoming_message(&boxed)
+                    .map(|message| HostedRealtimeEvent::Message(Box::new(message))),
+                ListenerEvent::Reaction(reaction) => {
+                    Some(HostedRealtimeEvent::Reaction(to_reaction_event(&reaction)))
+                }
+                ListenerEvent::Undo(undo) => Some(HostedRealtimeEvent::Undo(to_undo_event(&undo))),
                 _ => None,
             };
             if let Some(message) = incoming {
@@ -296,6 +331,7 @@ fn to_incoming_message(message: &Message) -> Option<HostedIncomingMessage> {
             from_id: Some(m.data.uid_from.clone()),
             from_name: non_empty(&m.data.d_name),
             text: message_text(&m.data.content),
+            rich: rich_from_parts(&m.data.msg_type, &m.data.content, m.data.quote.as_ref()),
             outgoing: m.is_self,
             timestamp: Some(m.data.ts.clone()),
         }),
@@ -306,9 +342,187 @@ fn to_incoming_message(message: &Message) -> Option<HostedIncomingMessage> {
             from_id: Some(m.data.base.uid_from.clone()),
             from_name: non_empty(&m.data.base.d_name),
             text: message_text(&m.data.base.content),
+            rich: rich_from_parts(
+                &m.data.base.msg_type,
+                &m.data.base.content,
+                m.data.base.quote.as_ref(),
+            ),
             outgoing: m.is_self,
             timestamp: Some(m.data.base.ts.clone()),
         }),
+    }
+}
+
+fn sticker_image_url(sticker_id: i64) -> String {
+    format!("https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid={sticker_id}&size=130")
+}
+
+fn sticker_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<RichSticker> {
+    if msg_type != "chat.sticker" {
+        return None;
+    }
+    let value = serde_json::to_value(content).ok()?;
+    let as_i64 = |v: &serde_json::Value| -> Option<i64> {
+        v.as_i64()
+            .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+    };
+    let id = value.get("id").and_then(as_i64)?;
+    if id == 0 {
+        return None;
+    }
+    Some(RichSticker {
+        id,
+        cat_id: value.get("catId").and_then(as_i64).unwrap_or(0),
+        sticker_type: value.get("type").and_then(as_i64).unwrap_or(0),
+        url: sticker_image_url(id),
+    })
+}
+
+fn link_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<RichLink> {
+    if msg_type != "chat.link" {
+        return None;
+    }
+    match content {
+        ZcaMessageContent::Attachment(att) if !att.href.trim().is_empty() => Some(RichLink {
+            href: att.href.clone(),
+            title: non_empty(&att.title),
+            description: non_empty(&att.description),
+            thumb: non_empty(&att.thumb),
+        }),
+        _ => None,
+    }
+}
+
+fn file_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<RichFile> {
+    if msg_type == "chat.link" || msg_type == "chat.sticker" {
+        return None;
+    }
+    match content {
+        ZcaMessageContent::Attachment(att) => {
+            if att.href.trim().is_empty()
+                && att.title.trim().is_empty()
+                && att.thumb.trim().is_empty()
+            {
+                return None;
+            }
+            Some(RichFile {
+                id: None,
+                filename: non_empty(&att.title),
+                mime: None,
+                size_bytes: 0,
+                href: non_empty(&att.href),
+                thumb: non_empty(&att.thumb),
+                media_kind: media_kind(msg_type, att.type_.as_str()),
+            })
+        }
+        _ => None,
+    }
+}
+
+fn media_kind(msg_type: &str, attachment_type: &str) -> Option<String> {
+    let raw = if !msg_type.trim().is_empty() {
+        msg_type
+    } else {
+        attachment_type
+    }
+    .to_ascii_lowercase();
+    if raw.contains("photo") || raw.contains("image") || raw.contains("picture") {
+        Some("image".to_string())
+    } else if raw.contains("video") {
+        Some("video".to_string())
+    } else if raw.contains("audio") || raw.contains("voice") {
+        Some("audio".to_string())
+    } else if raw.contains("file") || raw.contains("attach") {
+        Some("file".to_string())
+    } else {
+        None
+    }
+}
+
+fn quote_from_zca(q: &zca_rust::models::Quote) -> RichQuote {
+    RichQuote {
+        owner_id: q.owner_id.clone(),
+        from_d: q.from_d.clone(),
+        global_msg_id: q.global_msg_id,
+        cli_msg_id: q.cli_msg_id,
+        msg: q.msg.clone(),
+        cli_msg_type: q.cli_msg_type,
+        ts: q.ts,
+    }
+}
+
+fn rich_from_parts(
+    msg_type: &str,
+    content: &ZcaMessageContent,
+    quote: Option<&zca_rust::models::Quote>,
+) -> Option<MessageRichPayload> {
+    let rich = MessageRichPayload {
+        sticker: sticker_from_content(msg_type, content),
+        quote: quote.map(quote_from_zca),
+        link: link_from_content(msg_type, content),
+        file: file_from_content(msg_type, content),
+        reaction_icon: None,
+        raw: None,
+    };
+    (!rich.is_empty()).then_some(rich)
+}
+
+fn reaction_icon(reaction: &Reactions) -> String {
+    match reaction {
+        Reactions::Heart => "❤️",
+        Reactions::Like => "👍",
+        Reactions::Haha => "😆",
+        Reactions::Wow => "😮",
+        Reactions::Cry => "😢",
+        Reactions::Angry => "😠",
+        Reactions::Kiss => "😘",
+        Reactions::TearsOfJoy => "😂",
+        Reactions::Shit => "💩",
+        Reactions::Rose => "🌹",
+        Reactions::BrokenHeart => "💔",
+        Reactions::Dislike => "👎",
+        Reactions::Love => "😍",
+        Reactions::Confused => "😕",
+        Reactions::Wink => "😉",
+        Reactions::Sun => "☀️",
+        Reactions::Birthday => "🎂",
+        Reactions::Bomb => "💣",
+        Reactions::Ok => "👌",
+        Reactions::Peace => "✌️",
+        Reactions::Thanks => "🙏",
+        Reactions::Punch => "👊",
+        _ => "👍",
+    }
+    .to_string()
+}
+
+fn to_reaction_event(reaction: &zca_rust::models::Reaction) -> HostedReactionEvent {
+    let msg_id = reaction
+        .data
+        .content
+        .r_msg
+        .first()
+        .map(|m| m.g_msg_id.clone())
+        .filter(|id| !id.trim().is_empty())
+        .unwrap_or_else(|| reaction.data.msg_id.clone());
+    HostedReactionEvent {
+        thread_id: reaction.thread_id.clone(),
+        msg_id,
+        icon: reaction_icon(&reaction.data.content.r_icon),
+        from_id: Some(reaction.data.uid_from.clone()),
+        from_name: reaction.data.d_name.clone().and_then(|s| non_empty(&s)),
+        outgoing: reaction.is_self,
+        is_group: reaction.is_group,
+    }
+}
+
+fn to_undo_event(undo: &zca_rust::models::Undo) -> HostedUndoEvent {
+    HostedUndoEvent {
+        thread_id: undo.thread_id.clone(),
+        msg_id: undo.data.content.global_msg_id.to_string(),
+        cli_msg_id: undo.data.content.cli_msg_id.to_string(),
+        outgoing: undo.is_self,
+        is_group: undo.is_group,
     }
 }
 
@@ -470,10 +684,70 @@ fn non_empty(s: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use zca_rust::models::{AttachmentContent, MessageContent, Quote};
 
     #[test]
     fn hosted_credentials_do_not_debug_print() {
         fn assert_no_debug<T>() {}
         assert_no_debug::<HostedCredentials>();
+    }
+
+    #[test]
+    fn rich_payload_maps_quote_link_file_and_sticker() {
+        let quote = Quote {
+            owner_id: "u1".to_string(),
+            from_d: "Tuấn".to_string(),
+            global_msg_id: 42,
+            cli_msg_id: 24,
+            msg: "quoted".to_string(),
+            cli_msg_type: 1,
+            ts: 123,
+            ..Default::default()
+        };
+        let link_content = MessageContent::Attachment(AttachmentContent {
+            title: "Example".to_string(),
+            description: "Description".to_string(),
+            href: "https://example.com".to_string(),
+            thumb: "https://example.com/thumb.jpg".to_string(),
+            ..Default::default()
+        });
+        let link = rich_from_parts("chat.link", &link_content, Some(&quote)).unwrap();
+        assert_eq!(link.quote.as_ref().unwrap().msg, "quoted");
+        assert_eq!(link.link.as_ref().unwrap().href, "https://example.com");
+        assert!(link.file.is_none());
+
+        let file_content = MessageContent::Attachment(AttachmentContent {
+            title: "photo.jpg".to_string(),
+            href: "https://zalo.example/photo.jpg".to_string(),
+            thumb: "https://zalo.example/photo-thumb.jpg".to_string(),
+            type_: "photo".to_string(),
+            ..Default::default()
+        });
+        let file = rich_from_parts("chat.photo", &file_content, None).unwrap();
+        assert_eq!(
+            file.file.as_ref().unwrap().media_kind.as_deref(),
+            Some("image")
+        );
+        assert_eq!(
+            file.file.as_ref().unwrap().filename.as_deref(),
+            Some("photo.jpg")
+        );
+
+        let sticker_content = serde_json::from_value::<MessageContent>(serde_json::json!({
+            "id": "123",
+            "catId": 9,
+            "type": 1
+        }))
+        .unwrap();
+        let sticker = rich_from_parts("chat.sticker", &sticker_content, None).unwrap();
+        assert_eq!(sticker.sticker.as_ref().unwrap().id, 123);
+        assert!(sticker.sticker.as_ref().unwrap().url.contains("eid=123"));
+    }
+
+    #[test]
+    fn reaction_icons_are_ui_ready_emoji() {
+        assert_eq!(reaction_icon(&Reactions::Heart), "❤️");
+        assert_eq!(reaction_icon(&Reactions::Like), "👍");
+        assert_eq!(reaction_icon(&Reactions::Wow), "😮");
     }
 }

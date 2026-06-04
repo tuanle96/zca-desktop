@@ -582,6 +582,16 @@ async fn list_messages(
             }
             _ => None,
         };
+        let rich = match (row.enc_rich.as_deref(), row.rich_nonce.as_deref()) {
+            (Some(ciphertext), Some(nonce)) => {
+                let plaintext = crypto::open(&data_key, nonce, ciphertext)?;
+                Some(
+                    serde_json::from_slice::<crate::models::MessageRichPayload>(&plaintext)
+                        .map_err(|_| AppError::Crypto)?,
+                )
+            }
+            _ => None,
+        };
         let mut from_avatar = row.from_avatar;
         if from_avatar.is_none() && !row.outgoing {
             if let Some(from_id) = row.from_id.as_deref().filter(|id| !id.trim().is_empty()) {
@@ -618,6 +628,12 @@ async fn list_messages(
             kind: row.kind,
             observed_at: row.observed_at,
             deleted: row.deleted,
+            sticker: rich.as_ref().and_then(|r| r.sticker.clone()),
+            quote: rich.as_ref().and_then(|r| r.quote.clone()),
+            link: rich.as_ref().and_then(|r| r.link.clone()),
+            file: rich.as_ref().and_then(|r| r.file.clone()),
+            reaction_icon: rich.as_ref().and_then(|r| r.reaction_icon.clone()),
+            raw: rich.as_ref().and_then(|r| r.raw.clone()),
         });
     }
     Ok(Json(messages))

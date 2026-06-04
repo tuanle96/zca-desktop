@@ -1,0 +1,79 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-message-richness",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Carry rich Zalo message metadata through the cloud hosted backend and render it in the cloud-only desktop UI.",
+    "goals": [
+      "Persist quote, link preview, sticker, attachment/media metadata, reaction, and delete state for hosted cloud messages",
+      "Encrypt rich message metadata at rest alongside message bodies",
+      "Expose rich message metadata from the cloud messages API without returning Zalo credentials",
+      "Hydrate cloud conversations into existing ChatMessage fields for quote/link/reaction/delete/sticker/file-like previews",
+      "Handle hosted realtime reaction and undo events without requiring a new message to arrive"
+    ],
+    "nonGoals": [
+      "Downloading arbitrary remote Zalo media bytes into S3",
+      "Production media transcoding or thumbnail generation",
+      "Changing the local SQLite mode"
+    ],
+    "allowedLayers": [
+      "command",
+      "session",
+      "store",
+      "types",
+      "zalo"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "cloud-rich-message-hydration",
+      "description": "Cloud message rows can carry encrypted rich metadata, list API decrypts it into quote/link/sticker/file/reaction fields, and desktop cloud hydration renders those fields instead of dropping them.",
+      "verification": {
+        "manual": "Attach backend/frontend gates plus API or unit evidence proving rich metadata roundtrip and plaintext-leak scan for encrypted rows."
+      }
+    },
+    {
+      "id": "cloud-rich-realtime-events",
+      "description": "Hosted reaction and undo listener events update cloud rows and notify desktop realtime subscribers to rehydrate.",
+      "verification": {
+        "manual": "Attach test or runtime smoke proving reaction/delete events are mapped to DB updates and realtime notification payloads."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(curl*)",
+      "Bash(tmux*)"
+      ,
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "deny": [
+    ]
+  },
+  "doneRequires": [
+    "tests",
+    "ui",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-message-richness.json"
+}

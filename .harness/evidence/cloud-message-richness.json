@@ -1,0 +1,119 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-message-richness",
+  "featureId": "cloud-message-richness",
+  "status": "pass",
+  "createdAt": "2026-06-04T02:59:39Z",
+  "updatedAt": "2026-06-04T03:03:30Z",
+  "diffSummary": "Cloud hosted messages now persist encrypted rich metadata for quote, link, sticker, file/media preview, and reaction state; hosted reaction/undo listener events update stored rows and notify realtime subscribers; cloud desktop hydration renders the rich fields.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-message-richness.json",
+    ".harness/evidence/cloud-message-richness.json",
+    ".harness/reviews/cloud-message-richness/advisor-decision.json",
+    "server/migrations/202606040002_message_rich_payload.up.sql",
+    "server/migrations/202606040002_message_rich_payload.down.sql",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src/lib/types.ts",
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/ChatPane.svelte"
+  ],
+  "checks": [
+    {
+      "name": "ui",
+      "taskId": "cloud-message-richness",
+      "acceptanceId": "cloud-rich-message-hydration",
+      "artifact": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/check.json",
+      "command": "bun run check && bun run build",
+      "status": "pass",
+      "summary": "Svelte diagnostics and production build passed for cloud rich-message hydration/rendering.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T03:03:16Z",
+      "finishedAt": "2026-06-04T03:03:28Z",
+      "gitHead": "d8456223749c88cea942e5d07e7b89d534ff354b",
+      "workingTreeHash": "sha256:f1a2b98382bc96b2a75b52d4be1a01bdd322c65cd50ccaf75b63d7e5ae8f51fd",
+      "stdoutHash": "sha256:51f6662b3a77e1f07c8ecc15280c6d79c602d6bbe13aacd686753a2becb3b19d",
+      "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+      "stdoutPath": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/check.json",
+        ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stdout.txt",
+        ".harness/evidence/cloud-message-richness/checks/ui-20260604T030/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "taskId": "cloud-message-richness",
+      "acceptanceId": "cloud-rich-realtime-events",
+      "artifact": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/check.json",
+      "command": "cargo test --manifest-path server/Cargo.toml && cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend tests and clippy passed, including rich payload extraction and hosted reaction icon mapping.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T03:03:28Z",
+      "finishedAt": "2026-06-04T03:03:30Z",
+      "gitHead": "d8456223749c88cea942e5d07e7b89d534ff354b",
+      "workingTreeHash": "sha256:f1a2b98382bc96b2a75b52d4be1a01bdd322c65cd50ccaf75b63d7e5ae8f51fd",
+      "stdoutHash": "sha256:eaebb2f8d3e583aa91ec0f39c8dc8fb34b3665bffee936b72fdb61c00d124deb",
+      "stderrHash": "sha256:2f9c466faae5a40b56e79f9b07d9bec4a175d345e39b7e2350e61acb8a8b877d",
+      "stdoutPath": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/check.json",
+        ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stdout.txt",
+        ".harness/evidence/cloud-message-richness/checks/tests-20260604T030/stderr.txt"
+      ]
+    },
+    {
+      "name": "diff.whitespace",
+      "taskId": "cloud-message-richness",
+      "acceptanceId": "cloud-rich-message-hydration",
+      "artifact": ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/check.json",
+      "command": "git diff --check",
+      "status": "pass",
+      "summary": "No whitespace errors in the rich-message diff.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T03:03:30Z",
+      "finishedAt": "2026-06-04T03:03:30Z",
+      "gitHead": "d8456223749c88cea942e5d07e7b89d534ff354b",
+      "workingTreeHash": "sha256:f1a2b98382bc96b2a75b52d4be1a01bdd322c65cd50ccaf75b63d7e5ae8f51fd",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/check.json",
+        ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/stdout.txt",
+        ".harness/evidence/cloud-message-richness/checks/diff.whitespace-20260604T030/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-message-richness/advisor-decision.json",
+      "summary": "Advisor pass: sealed rich metadata, typed API hydration, hosted reaction/undo mutation, and cloud UI rendering are covered."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "remote-media-lifetime",
+      "severity": "medium",
+      "description": "V1 stores remote Zalo media URLs and metadata for preview/opening; it does not yet mirror all remote media bytes into S3.",
+      "disposition": "accepted",
+      "acceptedBy": "codex",
+      "acceptanceReason": "The task contract explicitly scoped out arbitrary remote Zalo media mirroring; UI now exposes available preview/open/download affordances while keeping stored metadata encrypted.",
+      "mitigation": "Add a follow-up media-mirroring worker if long-term retention of image/video/audio bytes becomes required.",
+      "owner": "codex"
+    }
+  ]
+}

@@ -8,7 +8,11 @@ use uuid::Uuid;
 use crate::crypto;
 use crate::error::{AppError, AppResult};
 use crate::models::{QrFlowStatus, RealtimeEvent};
-use crate::zalo_host::{HostedCredentials, HostedIncomingMessage, HostedQrEvent};
+use crate::zalo_host::{
+    HostedCredentials, HostedIncomingMessage, HostedQrEvent, HostedRealtimeEvent,
+};
+
+type RichCiphertext = (Option<Vec<u8>>, Option<Vec<u8>>);
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum HostedSessionState {
@@ -52,6 +56,16 @@ pub struct HostedSessionManager {
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
     qr_flows: Arc<Mutex<HashMap<Uuid, QrFlowStatus>>>,
     throttle: SendThrottle,
+}
+
+struct HostedRealtimeContext<'a> {
+    db: &'a crate::Db,
+    config: &'a crate::Config,
+    api: &'a zca_rust::apis::API,
+    events: &'a tokio::sync::broadcast::Sender<RealtimeEvent>,
+    user_id: Uuid,
+    account_id: Uuid,
+    source: &'a str,
 }
 
 impl Default for HostedSessionManager {
@@ -306,7 +320,7 @@ async fn restore_one_account(
             .await
             .map_err(|e| AppError::BadRequest(format!("restore login failed: {e}")))?,
     );
-    let (message_tx, mut message_rx) = tokio::sync::mpsc::channel::<HostedIncomingMessage>(256);
+    let (message_tx, mut message_rx) = tokio::sync::mpsc::channel::<HostedRealtimeEvent>(256);
     let listener = crate::zalo_host::start_message_listener(api.clone(), message_tx)
         .await
         .map_err(|e| AppError::BadRequest(format!("restore listener failed: {e}")))?;
@@ -321,30 +335,17 @@ async fn restore_one_account(
         },
     );
     tokio::spawn(async move {
-        while let Some(message) = message_rx.recv().await {
-            if let Err(e) = persist_hosted_message(
-                &db,
-                &config,
-                api.as_ref(),
-                account.user_id,
-                account.id,
-                &message,
-            )
-            .await
-            {
-                tracing::warn!(account_id = %account.id, error = %e, "failed to persist restored hosted message");
-            }
-            let _ = events.send(RealtimeEvent {
+        while let Some(event) = message_rx.recv().await {
+            let ctx = HostedRealtimeContext {
+                db: &db,
+                config: &config,
+                api: api.as_ref(),
+                events: &events,
                 user_id: account.user_id,
-                data: serde_json::json!({
-                    "type": "message",
-                    "accountId": account.id,
-                    "threadId": message.thread_id,
-                    "msgId": message.msg_id,
-                    "outgoing": message.outgoing
-                })
-                .to_string(),
-            });
+                account_id: account.id,
+                source: "restored",
+            };
+            handle_hosted_realtime_event(&ctx, event).await;
         }
     });
     Ok(())
@@ -427,7 +428,7 @@ async fn run_qr_flow(
         .await?;
     db.mark_account_active(account.id, None).await?;
 
-    let (message_tx, mut message_rx) = tokio::sync::mpsc::channel::<HostedIncomingMessage>(256);
+    let (message_tx, mut message_rx) = tokio::sync::mpsc::channel::<HostedRealtimeEvent>(256);
     let listener_api = Arc::new(api);
     let listener = crate::zalo_host::start_message_listener(listener_api.clone(), message_tx)
         .await
@@ -458,33 +459,163 @@ async fn run_qr_flow(
     }
 
     tokio::spawn(async move {
-        while let Some(message) = message_rx.recv().await {
-            if let Err(e) = persist_hosted_message(
-                &db,
-                &config,
-                listener_api.as_ref(),
+        while let Some(event) = message_rx.recv().await {
+            let ctx = HostedRealtimeContext {
+                db: &db,
+                config: &config,
+                api: listener_api.as_ref(),
+                events: &events,
                 user_id,
-                account.id,
+                account_id: account.id,
+                source: "qr",
+            };
+            handle_hosted_realtime_event(&ctx, event).await;
+        }
+    });
+
+    Ok(())
+}
+
+async fn handle_hosted_realtime_event(ctx: &HostedRealtimeContext<'_>, event: HostedRealtimeEvent) {
+    match event {
+        HostedRealtimeEvent::Message(message) => {
+            if let Err(e) = persist_hosted_message(
+                ctx.db,
+                ctx.config,
+                ctx.api,
+                ctx.user_id,
+                ctx.account_id,
                 &message,
             )
             .await
             {
-                tracing::warn!(account_id = %account.id, error = %e, "failed to persist hosted message");
+                tracing::warn!(account_id = %ctx.account_id, source = ctx.source, error = %e, "failed to persist hosted message");
             }
-            let _ = events.send(RealtimeEvent {
-                user_id,
-                data: serde_json::json!({
-                    "type": "message",
-                    "accountId": account.id,
-                    "threadId": message.thread_id,
-                    "msgId": message.msg_id,
-                    "outgoing": message.outgoing
-                })
-                .to_string(),
-            });
+            emit_hosted_realtime(
+                ctx.events,
+                ctx.user_id,
+                ctx.account_id,
+                "message",
+                &message.thread_id,
+                &message.msg_id,
+                message.outgoing,
+            );
         }
-    });
+        HostedRealtimeEvent::Reaction(reaction) => {
+            if let Err(e) =
+                persist_hosted_reaction(ctx.db, ctx.config, ctx.user_id, ctx.account_id, &reaction)
+                    .await
+            {
+                tracing::warn!(account_id = %ctx.account_id, source = ctx.source, error = %e, "failed to persist hosted reaction");
+            }
+            emit_hosted_realtime(
+                ctx.events,
+                ctx.user_id,
+                ctx.account_id,
+                "reaction",
+                &reaction.thread_id,
+                &reaction.msg_id,
+                reaction.outgoing,
+            );
+        }
+        HostedRealtimeEvent::Undo(undo) => {
+            if let Err(e) = ctx
+                .db
+                .mark_message_deleted(ctx.user_id, ctx.account_id, &undo.msg_id)
+                .await
+            {
+                tracing::warn!(account_id = %ctx.account_id, source = ctx.source, error = %e, "failed to persist hosted undo");
+            }
+            emit_hosted_realtime(
+                ctx.events,
+                ctx.user_id,
+                ctx.account_id,
+                "undo",
+                &undo.thread_id,
+                &undo.msg_id,
+                undo.outgoing,
+            );
+        }
+    }
+}
 
+fn emit_hosted_realtime(
+    events: &tokio::sync::broadcast::Sender<RealtimeEvent>,
+    user_id: Uuid,
+    account_id: Uuid,
+    event_type: &str,
+    thread_id: &str,
+    msg_id: &str,
+    outgoing: bool,
+) {
+    let _ = events.send(RealtimeEvent {
+        user_id,
+        data: serde_json::json!({
+            "type": "message",
+            "event": event_type,
+            "accountId": account_id,
+            "threadId": thread_id,
+            "msgId": msg_id,
+            "outgoing": outgoing
+        })
+        .to_string(),
+    });
+}
+
+async fn data_key_for_user(
+    db: &crate::Db,
+    config: &crate::Config,
+    user_id: Uuid,
+) -> AppResult<[u8; 32]> {
+    let user_secrets = db.user_secrets(user_id).await?;
+    crypto::unwrap_data_key_for_server(
+        &config.master_key_seed,
+        &user_secrets.server_key_nonce,
+        &user_secrets.server_wrapped_data_key,
+    )
+}
+
+fn encrypted_rich(
+    data_key: &[u8; 32],
+    rich: Option<&crate::models::MessageRichPayload>,
+) -> AppResult<RichCiphertext> {
+    let Some(rich) = rich.filter(|payload| !payload.is_empty()) else {
+        return Ok((None, None));
+    };
+    let json = serde_json::to_vec(rich).map_err(|_| AppError::Crypto)?;
+    let (nonce, ciphertext) = crypto::seal(data_key, &json)?;
+    Ok((Some(nonce), Some(ciphertext)))
+}
+
+async fn persist_hosted_reaction(
+    db: &crate::Db,
+    config: &crate::Config,
+    user_id: Uuid,
+    account_id: Uuid,
+    reaction: &crate::zalo_host::HostedReactionEvent,
+) -> AppResult<()> {
+    let data_key = data_key_for_user(db, config, user_id).await?;
+    let mut rich = match db
+        .message_rich_ciphertext(user_id, account_id, &reaction.msg_id)
+        .await?
+    {
+        Some(existing) => match (existing.enc_rich.as_deref(), existing.rich_nonce.as_deref()) {
+            (Some(ciphertext), Some(nonce)) => {
+                let plaintext = crypto::open(&data_key, nonce, ciphertext)?;
+                serde_json::from_slice::<crate::models::MessageRichPayload>(&plaintext)
+                    .unwrap_or_default()
+            }
+            _ => crate::models::MessageRichPayload::default(),
+        },
+        None => crate::models::MessageRichPayload::default(),
+    };
+    rich.reaction_icon = Some(reaction.icon.clone());
+    let (rich_nonce, enc_rich) = encrypted_rich(&data_key, Some(&rich))?;
+    if let (Some(nonce), Some(ciphertext)) = (rich_nonce, enc_rich) {
+        let _ = db
+            .apply_message_reaction(user_id, account_id, &reaction.msg_id, &ciphertext, &nonce)
+            .await?;
+    }
     Ok(())
 }
 
@@ -505,12 +636,7 @@ async fn persist_hosted_message(
         return Ok(());
     }
 
-    let user_secrets = db.user_secrets(user_id).await?;
-    let data_key = crypto::unwrap_data_key_for_server(
-        &config.master_key_seed,
-        &user_secrets.server_key_nonce,
-        &user_secrets.server_wrapped_data_key,
-    )?;
+    let data_key = data_key_for_user(db, config, user_id).await?;
     let (body_nonce, enc_body) = match message.text.as_deref() {
         Some(text) => {
             let (nonce, ciphertext) = crypto::seal(&data_key, text.as_bytes())?;
@@ -518,6 +644,7 @@ async fn persist_hosted_message(
         }
         None => (None, None),
     };
+    let (rich_nonce, enc_rich) = encrypted_rich(&data_key, message.rich.as_ref())?;
     let metadata = crate::zalo_host::thread_metadata(api, &message.thread_id, message.kind)
         .await
         .unwrap_or_default();
@@ -557,12 +684,29 @@ async fn persist_hosted_message(
             sender_metadata.avatar.as_deref(),
             enc_body.as_deref(),
             body_nonce.as_deref(),
+            enc_rich.as_deref(),
+            rich_nonce.as_deref(),
             message.outgoing,
-            "text",
+            message_kind(message),
             message.timestamp.as_deref(),
         )
         .await?;
     Ok(())
+}
+
+fn message_kind(message: &HostedIncomingMessage) -> &'static str {
+    if let Some(rich) = message.rich.as_ref() {
+        if rich.sticker.is_some() {
+            return "sticker";
+        }
+        if rich.link.is_some() {
+            return "link";
+        }
+        if rich.file.is_some() {
+            return "file";
+        }
+    }
+    "text"
 }
 
 #[cfg(test)]

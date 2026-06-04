@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-message-richness",
+  "featureId": "cloud-message-richness",
+  "decision": "pass",
+  "createdAt": "2026-06-04T02:59:39Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-message-richness-review",
+    "createdBy": "codex",
+    "notes": "Reviewed hosted rich message extraction, encrypted-at-rest payload storage, cloud API hydration, realtime reaction/undo handling, and cloud-only desktop rendering."
+  },
+  "checkedFiles": [
+    "server/migrations/202606040002_message_rich_payload.up.sql",
+    "server/migrations/202606040002_message_rich_payload.down.sql",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src/lib/types.ts",
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/ChatPane.svelte"
+  ],
+  "checkedInvariants": [
+    "rich-message-metadata-is-sealed-before-postgres",
+    "cloud-message-api-never-returns-zalo-credential-plaintext",
+    "hosted-reaction-and-undo-events-rehydrate-cloud-ui",
+    "desktop-cloud-mode-renders-rich-fields-from-api",
+    "no-zalo-secret-logging"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/migrations/202606040002_message_rich_payload.up.sql",
+      "server/migrations/202606040002_message_rich_payload.down.sql",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src/lib/types.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/ChatPane.svelte"
+    ],
+    "reviewedFiles": [
+      "server/migrations/202606040002_message_rich_payload.up.sql",
+      "server/migrations/202606040002_message_rich_payload.down.sql",
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src/lib/types.ts",
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/ChatPane.svelte"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.88,
+  "findings": [],
+  "summary": "Advisor pass: hosted cloud messages now carry sealed quote/link/sticker/file/reaction metadata, list API decrypts it into typed response fields, reaction/undo listener events mutate stored rows and notify realtime subscribers, and the cloud desktop path hydrates those fields into the existing chat renderer."
+}
