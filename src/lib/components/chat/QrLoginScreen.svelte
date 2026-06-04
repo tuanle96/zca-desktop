@@ -56,7 +56,7 @@
   let cloudQrError = $state("");
   let cloudQrPoll: ReturnType<typeof setInterval> | null = null;
 
-  const cloudConnected = $derived(session.cloudMode && session.listening);
+  const cloudConnected = $derived(session.cloudMode && session.realtimeState === "live");
   const cloudShowRetry = $derived(["expired", "declined", "error"].includes(cloudQrPhase));
   const cloudDimQr = $derived(cloudQrPhase === "scanned" || cloudShowRetry);
 

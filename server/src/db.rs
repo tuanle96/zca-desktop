@@ -48,10 +48,12 @@ pub struct FileSecret {
 
 pub struct MessageCiphertextRow {
     pub id: Uuid,
+    pub account_id: Uuid,
     pub conversation_id: Uuid,
     pub msg_id: String,
     pub from_id: Option<String>,
     pub from_name: Option<String>,
+    pub from_avatar: Option<String>,
     pub enc_body: Option<Vec<u8>>,
     pub body_nonce: Option<Vec<u8>>,
     pub outgoing: bool,
@@ -496,6 +498,7 @@ impl Db {
         msg_id: &str,
         from_id: Option<&str>,
         from_name: Option<&str>,
+        from_avatar: Option<&str>,
         enc_body: Option<&[u8]>,
         body_nonce: Option<&[u8]>,
         outgoing: bool,
@@ -505,9 +508,10 @@ impl Db {
         let row = sqlx::query(
             "INSERT INTO messages
                 (user_id, account_id, conversation_id, msg_id, from_id, from_name,
-                 enc_body, body_nonce, outgoing, kind, z_ts)
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+                 from_avatar, enc_body, body_nonce, outgoing, kind, z_ts)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
              ON CONFLICT(account_id, msg_id) DO UPDATE SET
+                from_avatar = COALESCE(excluded.from_avatar, messages.from_avatar),
                 observed_at = messages.observed_at
              RETURNING id",
         )
@@ -517,6 +521,7 @@ impl Db {
         .bind(msg_id)
         .bind(from_id)
         .bind(from_name)
+        .bind(from_avatar)
         .bind(enc_body)
         .bind(body_nonce)
         .bind(outgoing)
@@ -587,7 +592,7 @@ impl Db {
         limit: i64,
     ) -> AppResult<Vec<MessageCiphertextRow>> {
         let rows = sqlx::query(
-            "SELECT id, conversation_id, msg_id, from_id, from_name, enc_body, body_nonce,
+            "SELECT id, account_id, conversation_id, msg_id, from_id, from_name, from_avatar, enc_body, body_nonce,
                     outgoing, kind, observed_at, deleted
              FROM messages WHERE user_id = $1 AND conversation_id = $2
              ORDER BY observed_at DESC LIMIT $3",
@@ -601,10 +606,12 @@ impl Db {
             .into_iter()
             .map(|row| MessageCiphertextRow {
                 id: row.get("id"),
+                account_id: row.get("account_id"),
                 conversation_id: row.get("conversation_id"),
                 msg_id: row.get("msg_id"),
                 from_id: row.get("from_id"),
                 from_name: row.get("from_name"),
+                from_avatar: row.get("from_avatar"),
                 enc_body: row.get("enc_body"),
                 body_nonce: row.get("body_nonce"),
                 outgoing: row.get("outgoing"),
@@ -613,6 +620,27 @@ impl Db {
                 deleted: row.get("deleted"),
             })
             .collect())
+    }
+
+    pub async fn update_message_sender_avatar(
+        &self,
+        user_id: Uuid,
+        account_id: Uuid,
+        msg_id: &str,
+        from_avatar: &str,
+    ) -> AppResult<()> {
+        sqlx::query(
+            "UPDATE messages
+             SET from_avatar = $4
+             WHERE user_id = $1 AND account_id = $2 AND msg_id = $3",
+        )
+        .bind(user_id)
+        .bind(account_id)
+        .bind(msg_id)
+        .bind(from_avatar)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
     }
 
     pub async fn insert_file(

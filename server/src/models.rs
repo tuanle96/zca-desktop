@@ -182,6 +182,7 @@ pub struct MessageView {
     pub msg_id: String,
     pub from_id: Option<String>,
     pub from_name: Option<String>,
+    pub from_avatar: Option<String>,
     #[serde(default)]
     pub body: Option<String>,
     pub outgoing: bool,

@@ -92,7 +92,7 @@
       <div class="text-muted-foreground flex flex-col items-center gap-2 px-6 py-12 text-center text-sm">
         {#if session.conversations.length === 0}
           <span>Chưa có cuộc trò chuyện.</span>
-          <span class="text-xs">Tin nhắn mới sẽ xuất hiện ở đây khi có người nhắn cho bạn, hoặc mở danh bạ để bắt đầu.</span>
+          <span class="text-xs">Tin nhắn mới sẽ xuất hiện ở đây sau khi cloud đồng bộ hội thoại.</span>
         {:else}
           Không tìm thấy kết quả cho "{query}".
         {/if}

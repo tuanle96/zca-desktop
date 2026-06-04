@@ -521,6 +521,21 @@ async fn persist_hosted_message(
     let metadata = crate::zalo_host::thread_metadata(api, &message.thread_id, message.kind)
         .await
         .unwrap_or_default();
+    let sender_metadata = if message.kind == "group" && !message.outgoing {
+        if let Some(from_id) = message
+            .from_id
+            .as_deref()
+            .filter(|id| !id.trim().is_empty())
+        {
+            crate::zalo_host::thread_metadata(api, from_id, "user")
+                .await
+                .unwrap_or_default()
+        } else {
+            crate::zalo_host::HostedThreadMetadata::default()
+        }
+    } else {
+        crate::zalo_host::HostedThreadMetadata::default()
+    };
     let conversation_id = db
         .upsert_conversation(
             user_id,
@@ -539,6 +554,7 @@ async fn persist_hosted_message(
             &message.msg_id,
             message.from_id.as_deref(),
             message.from_name.as_deref(),
+            sender_metadata.avatar.as_deref(),
             enc_body.as_deref(),
             body_nonce.as_deref(),
             message.outgoing,

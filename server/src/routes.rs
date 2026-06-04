@@ -582,12 +582,37 @@ async fn list_messages(
             }
             _ => None,
         };
+        let mut from_avatar = row.from_avatar;
+        if from_avatar.is_none() && !row.outgoing {
+            if let Some(from_id) = row.from_id.as_deref().filter(|id| !id.trim().is_empty()) {
+                if let Ok(metadata) = state
+                    .sessions
+                    .thread_metadata(row.account_id, from_id, "user")
+                    .await
+                {
+                    if let Some(avatar) = metadata.avatar {
+                        state
+                            .db
+                            .update_message_sender_avatar(
+                                auth.user_id,
+                                row.account_id,
+                                &row.msg_id,
+                                &avatar,
+                            )
+                            .await?;
+                        from_avatar = Some(avatar);
+                    }
+                }
+            }
+        }
+
         messages.push(MessageView {
             id: row.id,
             conversation_id: row.conversation_id,
             msg_id: row.msg_id,
             from_id: row.from_id,
             from_name: row.from_name,
+            from_avatar,
             body,
             outgoing: row.outgoing,
             kind: row.kind,
