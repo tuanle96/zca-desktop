@@ -1,4 +1,4 @@
-[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=27 file(s)
+[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=0 file(s)
 [harness] feature: attachments — Phase 4: Image/file upload and rendering
 [harness] project: phase=mvp, open_features=4, open_risks=8
 [harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message
