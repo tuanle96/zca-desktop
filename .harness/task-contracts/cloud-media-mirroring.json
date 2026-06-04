@@ -1,0 +1,77 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-media-mirroring",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Mirror hosted Zalo media URLs into encrypted cloud object storage so desktop cloud downloads do not depend on expiring remote URLs.",
+    "goals": [
+      "Fetch only bounded HTTP(S) media URLs from hosted message rich file metadata",
+      "Encrypt mirrored media bytes with per-file keys before writing S3-compatible object storage",
+      "Persist mirrored file metadata in Postgres and attach the cloud file id to encrypted message rich metadata",
+      "Keep desktop cloud download using the existing cloud file API without returning Zalo credentials or plaintext blobs in logs"
+    ],
+    "nonGoals": [
+      "Full background retry queue with exponential backoff",
+      "Media transcoding or thumbnail generation",
+      "Replacing user-initiated file upload/download endpoints"
+    ],
+    "allowedLayers": [
+      "command",
+      "session",
+      "store",
+      "types",
+      "zalo"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "cloud-media-mirror-encrypted-store",
+      "description": "Hosted message media href bytes can be fetched, encrypted, written to object storage, and downloaded/decrypted through the existing file blob endpoint.",
+      "verification": {
+        "manual": "Attach backend unit or integration evidence proving mirrored bytes roundtrip and object-store bytes do not contain known plaintext."
+      }
+    },
+    {
+      "id": "cloud-media-mirror-rich-hydration",
+      "description": "Mirrored hosted message rich metadata includes a cloud file id so desktop cloud mode downloads via backend instead of opening the remote Zalo URL.",
+      "verification": {
+        "manual": "Attach tests or static evidence for rich metadata mutation plus frontend hydration/download gates."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor",
+    "security"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git add*)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "deny": []
+  },
+  "doneRequires": [
+    "tests",
+    "ui",
+    "security",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-media-mirroring.json"
+}

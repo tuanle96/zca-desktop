@@ -31,7 +31,12 @@ async fn main() -> anyhow_free::Result<()> {
     let state = zca_cloud_server::AppState::new(config.clone(), db);
     let restored = state
         .sessions
-        .restore_active_sessions(state.db.clone(), state.config.clone(), state.events())
+        .restore_active_sessions(
+            state.db.clone(),
+            state.config.clone(),
+            state.objects.clone(),
+            state.events(),
+        )
         .await?;
     tracing::info!(restored, "hosted session restore complete");
     let router = app(Arc::new(state));

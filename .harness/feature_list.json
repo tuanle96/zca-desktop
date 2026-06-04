@@ -990,6 +990,36 @@
       ]
     },
     {
+      "id": "cloud-media-mirroring",
+      "title": "Cloud/SaaS: mirror hosted media blobs into encrypted object storage",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/cloud-media-mirroring.json",
+      "evidencePath": ".harness/evidence/cloud-media-mirroring.json",
+      "steps": [
+        {
+          "id": "fetch-limit",
+          "title": "Hosted backend fetches only bounded HTTP(S) remote media URLs",
+          "done": false
+        },
+        {
+          "id": "encrypt-store",
+          "title": "Mirrored media bytes are encrypted with per-file keys before object-store write",
+          "done": false
+        },
+        {
+          "id": "rich-hydration",
+          "title": "Cloud message rich file metadata points to mirrored cloud file IDs for desktop download",
+          "done": false
+        },
+        {
+          "id": "verify",
+          "title": "Backend/frontend gates and evidence bundle prove media mirroring behavior",
+          "done": false
+        }
+      ]
+    },
+    {
       "id": "app-packaging",
       "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,

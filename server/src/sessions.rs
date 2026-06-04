@@ -2,12 +2,14 @@ use std::collections::HashMap;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 
+use object_store::ObjectStore;
+use sha2::{Digest, Sha256};
 use tokio::sync::Mutex;
 use uuid::Uuid;
 
 use crate::crypto;
 use crate::error::{AppError, AppResult};
-use crate::models::{QrFlowStatus, RealtimeEvent};
+use crate::models::{FileInitRequest, MessageRichPayload, QrFlowStatus, RealtimeEvent, RichFile};
 use crate::zalo_host::{
     HostedCredentials, HostedIncomingMessage, HostedQrEvent, HostedRealtimeEvent,
 };
@@ -61,11 +63,34 @@ pub struct HostedSessionManager {
 struct HostedRealtimeContext<'a> {
     db: &'a crate::Db,
     config: &'a crate::Config,
+    objects: Arc<dyn ObjectStore>,
     api: &'a zca_rust::apis::API,
     events: &'a tokio::sync::broadcast::Sender<RealtimeEvent>,
     user_id: Uuid,
     account_id: Uuid,
     source: &'a str,
+}
+
+struct QrFlowContext {
+    flow_id: Uuid,
+    user_id: Uuid,
+    db: crate::Db,
+    config: crate::Config,
+    objects: Arc<dyn ObjectStore>,
+    events: tokio::sync::broadcast::Sender<RealtimeEvent>,
+    qr_flows: Arc<Mutex<HashMap<Uuid, QrFlowStatus>>>,
+    sessions: HostedSessionTaskHandle,
+}
+
+struct MediaMirrorContext<'a> {
+    db: &'a crate::Db,
+    config: &'a crate::Config,
+    objects: Arc<dyn ObjectStore>,
+    user_id: Uuid,
+    account_id: Uuid,
+    conversation_id: Uuid,
+    message_id: Uuid,
+    data_key: &'a [u8; 32],
 }
 
 impl Default for HostedSessionManager {
@@ -228,6 +253,7 @@ impl HostedSessionManager {
         user_id: Uuid,
         db: crate::Db,
         config: crate::Config,
+        objects: Arc<dyn ObjectStore>,
         events: tokio::sync::broadcast::Sender<RealtimeEvent>,
     ) -> Uuid {
         let flow_id = Uuid::new_v4();
@@ -248,9 +274,17 @@ impl HostedSessionManager {
         let qr_flows = self.qr_flows.clone();
         let sessions = self.clone_for_task();
         tokio::spawn(async move {
-            if let Err(e) =
-                run_qr_flow(flow_id, user_id, db, config, events, qr_flows, sessions).await
-            {
+            let ctx = QrFlowContext {
+                flow_id,
+                user_id,
+                db,
+                config,
+                objects,
+                events,
+                qr_flows,
+                sessions,
+            };
+            if let Err(e) = run_qr_flow(ctx).await {
                 tracing::warn!(flow_id = %flow_id, error = %e, "hosted QR flow failed");
             }
         });
@@ -261,6 +295,7 @@ impl HostedSessionManager {
         &self,
         db: crate::Db,
         config: crate::Config,
+        objects: Arc<dyn ObjectStore>,
         events: tokio::sync::broadcast::Sender<RealtimeEvent>,
     ) -> AppResult<usize> {
         let accounts = db.active_account_credentials().await?;
@@ -271,6 +306,7 @@ impl HostedSessionManager {
                 self.sessions.clone(),
                 db.clone(),
                 config.clone(),
+                objects.clone(),
                 events.clone(),
                 account,
             )
@@ -299,6 +335,7 @@ async fn restore_one_account(
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
     db: crate::Db,
     config: crate::Config,
+    objects: Arc<dyn ObjectStore>,
     events: tokio::sync::broadcast::Sender<RealtimeEvent>,
     account: crate::db::AccountCredential,
 ) -> AppResult<()> {
@@ -339,6 +376,7 @@ async fn restore_one_account(
             let ctx = HostedRealtimeContext {
                 db: &db,
                 config: &config,
+                objects: objects.clone(),
                 api: api.as_ref(),
                 events: &events,
                 user_id: account.user_id,
@@ -355,17 +393,17 @@ struct HostedSessionTaskHandle {
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
 }
 
-async fn run_qr_flow(
-    flow_id: Uuid,
-    user_id: Uuid,
-    db: crate::Db,
-    config: crate::Config,
-    events: tokio::sync::broadcast::Sender<RealtimeEvent>,
-    qr_flows: Arc<Mutex<HashMap<Uuid, QrFlowStatus>>>,
-    sessions: HostedSessionTaskHandle,
-) -> AppResult<()> {
+async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
     let (tx, mut rx) = tokio::sync::mpsc::channel::<HostedQrEvent>(16);
-    let flow_updates = qr_flows.clone();
+    let flow_id = ctx.flow_id;
+    let user_id = ctx.user_id;
+    let flow_updates = ctx.qr_flows.clone();
+    let db = ctx.db;
+    let config = ctx.config;
+    let objects = ctx.objects;
+    let events = ctx.events;
+    let qr_flows = ctx.qr_flows;
+    let sessions = ctx.sessions;
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
             let mut flows = flow_updates.lock().await;
@@ -463,6 +501,7 @@ async fn run_qr_flow(
             let ctx = HostedRealtimeContext {
                 db: &db,
                 config: &config,
+                objects: objects.clone(),
                 api: listener_api.as_ref(),
                 events: &events,
                 user_id,
@@ -482,6 +521,7 @@ async fn handle_hosted_realtime_event(ctx: &HostedRealtimeContext<'_>, event: Ho
             if let Err(e) = persist_hosted_message(
                 ctx.db,
                 ctx.config,
+                ctx.objects.clone(),
                 ctx.api,
                 ctx.user_id,
                 ctx.account_id,
@@ -613,15 +653,126 @@ async fn persist_hosted_reaction(
     let (rich_nonce, enc_rich) = encrypted_rich(&data_key, Some(&rich))?;
     if let (Some(nonce), Some(ciphertext)) = (rich_nonce, enc_rich) {
         let _ = db
-            .apply_message_reaction(user_id, account_id, &reaction.msg_id, &ciphertext, &nonce)
+            .update_message_rich(user_id, account_id, &reaction.msg_id, &ciphertext, &nonce)
             .await?;
     }
     Ok(())
 }
 
+async fn mirror_hosted_media(
+    ctx: &MediaMirrorContext<'_>,
+    rich: &mut MessageRichPayload,
+) -> AppResult<bool> {
+    let Some(file) = rich.file.as_mut() else {
+        return Ok(false);
+    };
+    mirror_rich_file(ctx, file).await
+}
+
+async fn mirror_rich_file(ctx: &MediaMirrorContext<'_>, file: &mut RichFile) -> AppResult<bool> {
+    if file.id.is_some() {
+        return Ok(false);
+    }
+    let Some(href) = file.href.as_deref().filter(|href| !href.trim().is_empty()) else {
+        return Ok(false);
+    };
+    let url = reqwest::Url::parse(href)
+        .map_err(|_| AppError::BadRequest("invalid hosted media url".to_string()))?;
+    if !matches!(url.scheme(), "http" | "https") {
+        return Ok(false);
+    }
+
+    let bytes = fetch_remote_media(&url, ctx.config.media_mirror_max_bytes).await?;
+    let content_sha256 = sha256_hex(&bytes);
+    let file_key = crypto::generate_data_key();
+    let (file_key_nonce, enc_file_key) = crypto::seal(ctx.data_key, &file_key)?;
+    let file_id_for_key = Uuid::new_v4();
+    let object_key = crate::storage::object_key(ctx.user_id, file_id_for_key, &content_sha256);
+    let (blob_nonce, mut ciphertext) = crypto::seal(&file_key, &bytes)?;
+    let mut object_body = blob_nonce;
+    object_body.append(&mut ciphertext);
+    ctx.objects
+        .put(
+            &object_store::path::Path::from(object_key.clone()),
+            object_body.into(),
+        )
+        .await
+        .map_err(|e| AppError::BadRequest(format!("object upload failed: {e}")))?;
+
+    let view = ctx
+        .db
+        .insert_file(
+            ctx.user_id,
+            &FileInitRequest {
+                account_id: Some(ctx.account_id),
+                conversation_id: Some(ctx.conversation_id),
+                message_id: Some(ctx.message_id),
+                filename: file.filename.clone(),
+                mime: file.mime.clone(),
+                size_bytes: bytes.len() as i64,
+                content_sha256,
+            },
+            &object_key,
+            &enc_file_key,
+            &file_key_nonce,
+        )
+        .await?;
+    file.id = Some(view.id.to_string());
+    file.size_bytes = view.size_bytes;
+    Ok(true)
+}
+
+async fn fetch_remote_media(url: &reqwest::Url, max_bytes: usize) -> AppResult<Vec<u8>> {
+    let client = reqwest::Client::builder()
+        .timeout(Duration::from_secs(20))
+        .redirect(reqwest::redirect::Policy::limited(3))
+        .build()
+        .map_err(|e| AppError::BadRequest(format!("media fetch client failed: {e}")))?;
+    let response = client
+        .get(url.clone())
+        .send()
+        .await
+        .map_err(|e| AppError::BadRequest(format!("media fetch failed: {e}")))?;
+    if !response.status().is_success() {
+        return Err(AppError::BadRequest(format!(
+            "media fetch failed with status {}",
+            response.status()
+        )));
+    }
+    if response
+        .content_length()
+        .is_some_and(|len| len > max_bytes as u64)
+    {
+        return Err(AppError::BadRequest(
+            "media exceeds mirror limit".to_string(),
+        ));
+    }
+    let bytes = response
+        .bytes()
+        .await
+        .map_err(|e| AppError::BadRequest(format!("media read failed: {e}")))?;
+    if bytes.len() > max_bytes {
+        return Err(AppError::BadRequest(
+            "media exceeds mirror limit".to_string(),
+        ));
+    }
+    Ok(bytes.to_vec())
+}
+
+fn sha256_hex(bytes: &[u8]) -> String {
+    let mut hasher = Sha256::new();
+    hasher.update(bytes);
+    hasher
+        .finalize()
+        .iter()
+        .map(|b| format!("{b:02x}"))
+        .collect()
+}
+
 async fn persist_hosted_message(
     db: &crate::Db,
     config: &crate::Config,
+    objects: Arc<dyn ObjectStore>,
     api: &zca_rust::apis::API,
     user_id: Uuid,
     account_id: Uuid,
@@ -644,7 +795,8 @@ async fn persist_hosted_message(
         }
         None => (None, None),
     };
-    let (rich_nonce, enc_rich) = encrypted_rich(&data_key, message.rich.as_ref())?;
+    let mut rich = message.rich.clone();
+    let (rich_nonce, enc_rich) = encrypted_rich(&data_key, rich.as_ref())?;
     let metadata = crate::zalo_host::thread_metadata(api, &message.thread_id, message.kind)
         .await
         .unwrap_or_default();
@@ -673,7 +825,7 @@ async fn persist_hosted_message(
             metadata.avatar.as_deref(),
         )
         .await?;
-    let _ = db
+    let stored_message_id = db
         .insert_message_ciphertext(
             user_id,
             account_id,
@@ -691,6 +843,38 @@ async fn persist_hosted_message(
             message.timestamp.as_deref(),
         )
         .await?;
+    if let Some(rich) = rich.as_mut() {
+        let mirror_ctx = MediaMirrorContext {
+            db,
+            config,
+            objects,
+            user_id,
+            account_id,
+            conversation_id,
+            message_id: stored_message_id,
+            data_key: &data_key,
+        };
+        let mirrored = match mirror_hosted_media(&mirror_ctx, rich).await {
+            Ok(changed) => changed,
+            Err(e) => {
+                tracing::warn!(
+                    account_id = %account_id,
+                    msg_id = %message.msg_id,
+                    error = %e,
+                    "hosted media mirror failed; keeping remote media metadata"
+                );
+                false
+            }
+        };
+        if mirrored {
+            let (rich_nonce, enc_rich) = encrypted_rich(&data_key, Some(rich))?;
+            if let (Some(nonce), Some(ciphertext)) = (rich_nonce, enc_rich) {
+                let _ = db
+                    .update_message_rich(user_id, account_id, &message.msg_id, &ciphertext, &nonce)
+                    .await?;
+            }
+        }
+    }
     Ok(())
 }
 

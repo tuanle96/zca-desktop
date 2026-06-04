@@ -638,7 +638,7 @@ impl Db {
             .collect())
     }
 
-    pub async fn apply_message_reaction(
+    pub async fn update_message_rich(
         &self,
         user_id: Uuid,
         account_id: Uuid,
