@@ -1,0 +1,1 @@
+Hosted attachment mapper tests passed; Tauri cloud command tests passed. Live Zalo attachment smoke remains manual/runtime follow-up.

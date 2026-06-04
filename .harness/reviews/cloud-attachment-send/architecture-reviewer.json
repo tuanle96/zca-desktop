@@ -1,0 +1,62 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "cloud-attachment-send",
+  "featureId": "cloud-attachment-send",
+  "decision": "pass",
+  "createdAt": "2026-06-04T06:29:33Z",
+  "provenance": {
+    "source": "manual-review",
+    "trigger": "cloud-attachment-send-architecture-review",
+    "createdBy": "codex",
+    "notes": "Reviewed API route, server session manager, zca host adapter, Tauri command, and Svelte session wiring."
+  },
+  "checkedFiles": [
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/lib.rs",
+    "src/lib/cloud.ts",
+    "src/lib/session.svelte.ts"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "public-api-stays-under-api-v1",
+    "tauri-command-remains-http-forwarding-boundary",
+    "session-manager-owns-hosted-zalo-send",
+    "zalo-host-adapter-owns-zca-rust-shape-mapping",
+    "frontend-remains-cloud-only-for-send-path"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "reviewedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.87,
+  "findings": [],
+  "summary": "Architecture pass: changes follow the existing cloud layering and keep the zca-rust response mapping isolated in the hosted adapter."
+}

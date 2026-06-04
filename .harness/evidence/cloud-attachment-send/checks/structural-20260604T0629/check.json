@@ -1,0 +1,24 @@
+{
+  "name": "structural",
+  "taskId": "cloud-attachment-send",
+  "acceptanceId": "cloud-hosted-file-send",
+  "artifact": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/check.json",
+  "command": "node .harness/scripts/harness-readiness.mjs --strict",
+  "status": "pass",
+  "summary": "Harness structural/readiness pre-pass succeeded before final evidence schema corrections.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T06:29:33Z",
+  "finishedAt": "2026-06-04T06:29:33Z",
+  "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+  "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+  "stdoutHash": "sha256:79c73682176e95b8dc51092985cfe0d1c1cfcdeaf35349412a0408eaf568797f",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/check.json",
+    ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stdout.txt",
+    ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stderr.txt"
+  ]
+}

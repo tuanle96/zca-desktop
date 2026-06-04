@@ -1,0 +1,24 @@
+{
+  "name": "tauri.tests",
+  "taskId": "cloud-attachment-send",
+  "acceptanceId": "cloud-hosted-file-send",
+  "artifact": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/check.json",
+  "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+  "status": "pass",
+  "summary": "Tauri/core tests pass: 43 passed, 14 ignored live/keychain tests.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T06:29:33Z",
+  "finishedAt": "2026-06-04T06:29:33Z",
+  "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+  "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+  "stdoutHash": "sha256:e6050935d511cb92862f7c0b0f1e8d368d8a68274743ce907f43b102f06af0c8",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/check.json",
+    ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stdout.txt",
+    ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stderr.txt"
+  ]
+}

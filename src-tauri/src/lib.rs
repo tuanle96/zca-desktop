@@ -76,6 +76,7 @@ pub fn run() {
             command::cloud_send_text,
             command::cloud_send_sticker,
             command::cloud_send_reaction,
+            command::cloud_send_file,
             command::cloud_init_file,
             command::cloud_upload_file_blob,
             command::cloud_download_file_blob

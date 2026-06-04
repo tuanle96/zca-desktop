@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <title>cloud-attachment-send report</title>
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; margin: 40px; line-height: 1.5; color: #172033; }
+    h1 { margin: 0 0 8px; font-size: 28px; }
+    h2 { margin-top: 28px; font-size: 18px; }
+    code { background: #f2f4f8; padding: 2px 5px; border-radius: 4px; }
+    .ok { color: #0f8f4f; font-weight: 700; }
+    .risk { color: #9a5b00; font-weight: 700; }
+    li { margin: 6px 0; }
+  </style>
+</head>
+<body>
+  <h1>Cloud Attachment Send</h1>
+  <p class="ok">Status: pass</p>
+  <p>Backend now sends uploaded encrypted cloud files through hosted Zalo sessions and persists refresh-safe outgoing file metadata for cloud-only desktop.</p>
+  <h2>Implemented</h2>
+  <ul>
+    <li><code>POST /api/v1/accounts/:account_id/send/file</code> validates device auth, account ownership, and file account ownership.</li>
+    <li>Encrypted object-store blobs are decrypted only in backend memory, verified against stored size/hash, then passed to <code>zca-rust</code> as <code>AttachmentSource::Data</code>.</li>
+    <li>Outgoing file messages are stored with encrypted rich metadata, so refresh keeps the attachment bubble.</li>
+    <li>Tauri and Svelte cloud upload flow now call <code>cloud_send_file</code> after encrypted blob upload.</li>
+  </ul>
+  <h2>Verification</h2>
+  <ul>
+    <li><code>cargo test --manifest-path server/Cargo.toml</code>: 17 passed.</li>
+    <li><code>cargo clippy --manifest-path server/Cargo.toml -- -D warnings</code>: passed.</li>
+    <li><code>bun run check</code>: 0 errors, 0 warnings.</li>
+    <li><code>bun run build</code>: passed.</li>
+    <li><code>cargo test --manifest-path src-tauri/Cargo.toml</code>: 43 passed, 14 ignored live/keychain tests.</li>
+    <li><code>node .harness/scripts/check-architecture-fitness.mjs --strict</code>: passed.</li>
+  </ul>
+  <h2>Remaining Risk</h2>
+  <p class="risk">A live hosted Zalo attachment smoke was not run in this turn. Run one with a real cloud account before production readiness claims for attachment sending.</p>
+</body>
+</html>

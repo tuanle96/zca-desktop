@@ -1023,10 +1023,10 @@
         }
       ]
     },
-    {
-      "id": "cloud-media-mirroring",
-      "title": "Cloud/SaaS: mirror hosted media blobs into encrypted object storage",
-      "passes": true,
+      {
+        "id": "cloud-media-mirroring",
+        "title": "Cloud/SaaS: mirror hosted media blobs into encrypted object storage",
+        "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/cloud-media-mirroring.json",
       "evidencePath": ".harness/evidence/cloud-media-mirroring.json",
@@ -1050,12 +1050,42 @@
           "id": "verify",
           "title": "Backend/frontend gates and evidence bundle prove media mirroring behavior",
           "done": true
-        }
-      ]
-    },
-    {
-      "id": "app-packaging",
-      "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
+          }
+        ]
+      },
+      {
+        "id": "cloud-attachment-send",
+        "title": "Cloud/SaaS: send encrypted uploaded files through hosted Zalo sessions",
+        "passes": true,
+        "domain": "default",
+        "taskContractPath": ".harness/task-contracts/cloud-attachment-send.json",
+        "evidencePath": ".harness/evidence/cloud-attachment-send.json",
+        "steps": [
+          {
+            "id": "backend-api",
+            "title": "Backend exposes a hosted send-file API that validates user/account/file ownership",
+            "done": true
+          },
+          {
+            "id": "hosted-upload",
+            "title": "Backend decrypts encrypted object-store blobs in memory and uploads them via zca-rust hosted sessions",
+            "done": true
+          },
+          {
+            "id": "desktop-flow",
+            "title": "Desktop cloud upload flow sends the uploaded file through the backend and persists refresh-safe message metadata",
+            "done": true
+          },
+          {
+            "id": "verify",
+            "title": "Backend/frontend gates and evidence bundle prove hosted attachment send behavior",
+            "done": true
+          }
+        ]
+      },
+      {
+        "id": "app-packaging",
+        "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/app-packaging.json",

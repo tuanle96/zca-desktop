@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "cloud-attachment-send",
+  "type": "feature",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Send files uploaded to the cloud encrypted file store through the hosted zca-rust session, so cloud-only attachment bubbles represent real Zalo sends and survive refresh.",
+    "goals": [
+      "Expose a backend send-file API for hosted cloud accounts",
+      "Validate device auth plus user/account/file ownership before decrypting any file blob",
+      "Decrypt file blobs only in backend memory and upload via zca-rust AttachmentSource::Data",
+      "Persist encrypted outgoing rich file metadata so desktop refresh keeps the sent attachment bubble",
+      "Wire the desktop cloud upload flow to call hosted send-file after encrypted blob upload"
+    ],
+    "nonGoals": [
+      "True server-blind E2E",
+      "Local SQLite/local mode attachment support",
+      "Background retry queue for failed Zalo attachment uploads",
+      "Production media transcoding or thumbnail generation"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "cloud-hosted-file-send",
+      "description": "A cloud device uploads an encrypted file blob, asks the backend to send it to a hosted Zalo thread, receives a non-secret response, and can refresh the desktop while the outgoing file message remains hydrated from cloud storage.",
+      "verification": {
+        "manual": "Attach backend/frontend gates plus API or unit evidence proving authorization, encrypted storage reuse, no plaintext logs/storage, and refresh-safe rich file metadata."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "deny": []
+  },
+  "doneRequires": [
+    "tests",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/cloud-attachment-send.json"
+}

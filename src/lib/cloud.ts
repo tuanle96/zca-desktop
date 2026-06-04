@@ -169,6 +169,22 @@ export function sendCloudReaction(
     });
 }
 
+export function sendCloudFile(
+    baseUrl: string,
+    deviceToken: string,
+    accountId: string,
+    threadId: string,
+    fileId: string,
+    threadKind: "user" | "group" = "user",
+) {
+    return invoke<Record<string, unknown>>("cloud_send_file", {
+        baseUrl,
+        deviceToken,
+        accountId,
+        payload: { threadId, fileId, threadKind },
+    });
+}
+
 export function initCloudFile(baseUrl: string, deviceToken: string, payload: Record<string, unknown>) {
     return invoke<{
         id: string;

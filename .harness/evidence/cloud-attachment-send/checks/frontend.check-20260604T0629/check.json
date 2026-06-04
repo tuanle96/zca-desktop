@@ -1,0 +1,24 @@
+{
+  "name": "frontend.check",
+  "taskId": "cloud-attachment-send",
+  "acceptanceId": "cloud-hosted-file-send",
+  "artifact": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/check.json",
+  "command": "bun run check",
+  "status": "pass",
+  "summary": "svelte-check found 0 errors and 0 warnings.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T06:29:33Z",
+  "finishedAt": "2026-06-04T06:29:33Z",
+  "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+  "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+  "stdoutHash": "sha256:d3971297afb6166bd2ad569b2ffd243b23f986b4c741cb4daa1359b2c0ee5a11",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/check.json",
+    ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stdout.txt",
+    ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stderr.txt"
+  ]
+}

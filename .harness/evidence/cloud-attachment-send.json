@@ -1,0 +1,272 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-attachment-send",
+  "featureId": "cloud-attachment-send",
+  "status": "pass",
+  "createdAt": "2026-06-04T06:29:33Z",
+  "updatedAt": "2026-06-04T06:29:33Z",
+  "diffSummary": "Cloud uploaded file blobs can now be sent through hosted zca-rust sessions: backend validates account/file ownership, decrypts encrypted object-store bytes only in memory, calls hosted upload_attachment, persists encrypted outgoing rich file metadata, and desktop cloud upload invokes the new send-file command.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-attachment-send.json",
+    ".harness/evidence/cloud-attachment-send.json",
+    ".harness/reviews/cloud-attachment-send/advisor-decision.json",
+    ".harness/reviews/cloud-attachment-send/security-reviewer.json",
+    ".harness/reviews/cloud-attachment-send/architecture-reviewer.json",
+    ".harness/reports/cloud-attachment-send.html",
+    ".harness/state/active-task.txt",
+    ".harness/state/session-start-last-context.txt",
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/lib.rs",
+    "src/lib/cloud.ts",
+    "src/lib/session.svelte.ts"
+  ],
+  "checks": [
+    {
+      "name": "backend.tests",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/check.json",
+      "command": "cargo test --manifest-path server/Cargo.toml",
+      "status": "pass",
+      "summary": "Server unit tests pass: 17 passed, including hosted attachment response mapping for image/file metadata and msg id extraction.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:814e2bed79ca9791092b98c463572c133449dd2400bda091322f38856d1d69bd",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/backend.tests-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "backend.clippy",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/check.json",
+      "command": "cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Server clippy passes with warnings denied.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:836e44b983e7dad36ab4d94cf1166f569990579e03747f719391c80db55c6ef1",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/backend.clippy-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.check",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/check.json",
+      "command": "bun run check",
+      "status": "pass",
+      "summary": "svelte-check found 0 errors and 0 warnings.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:d3971297afb6166bd2ad569b2ffd243b23f986b4c741cb4daa1359b2c0ee5a11",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/frontend.check-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "frontend.build",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/check.json",
+      "command": "bun run build",
+      "status": "pass",
+      "summary": "SvelteKit static build completed and wrote site to build/.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:148276479b01db26ded691ba0e228a0af63a459dedce78c5cf4b0aab9f05f716",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/frontend.build-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "tauri.tests",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/check.json",
+      "command": "cargo test --manifest-path src-tauri/Cargo.toml",
+      "status": "pass",
+      "summary": "Tauri/core tests pass: 43 passed, 14 ignored live/keychain tests.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:e6050935d511cb92862f7c0b0f1e8d368d8a68274743ce907f43b102f06af0c8",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/tauri.tests-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "diff.whitespace",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/check.json",
+      "command": "git diff --check",
+      "status": "pass",
+      "summary": "No whitespace errors in the working tree diff.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/diff.whitespace-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "architecture",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/check.json",
+      "command": "node .harness/scripts/check-architecture-fitness.mjs --strict",
+      "status": "pass",
+      "summary": "architecture fitness: OK (5 rules, 264 scanned files, 10 examples).",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:91fe1fdb8ac1e560634eb83d601aaf06152832cf1b9aa6abeeb630ed002c70ee",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/architecture-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "structural",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/check.json",
+      "command": "node .harness/scripts/harness-readiness.mjs --strict",
+      "status": "pass",
+      "summary": "Harness structural/readiness pre-pass succeeded before final evidence schema corrections.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:79c73682176e95b8dc51092985cfe0d1c1cfcdeaf35349412a0408eaf568797f",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/structural-20260604T0629/stderr.txt"
+      ]
+    },
+    {
+      "name": "smoke",
+      "taskId": "cloud-attachment-send",
+      "acceptanceId": "cloud-hosted-file-send",
+      "artifact": ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/check.json",
+      "command": "cargo test --manifest-path server/Cargo.toml hosted_attachment_response_maps && cargo test --manifest-path src-tauri/Cargo.toml command::cloud::tests",
+      "status": "pass",
+      "summary": "Deterministic smoke covered hosted attachment response hydration and Tauri cloud command boundary compile/tests.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T06:29:33Z",
+      "finishedAt": "2026-06-04T06:29:33Z",
+      "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+      "workingTreeHash": "sha256:7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+      "stdoutHash": "sha256:ea00711bf19be43fc75f94cfe02b36d0502a015e0d2489c80cbf0823d853053b",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/check.json",
+        ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/stdout.txt",
+        ".harness/evidence/cloud-attachment-send/checks/smoke-20260604T0629/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-attachment-send/advisor-decision.json",
+      "summary": "Advisor pass: feature stays within ADR-0006 session-host trust boundary and existing cloud-only flow."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-attachment-send/security-reviewer.json",
+      "summary": "Security pass: device auth, user/account/file ownership checks, encrypted object-store reuse, no credential/file byte logging."
+    },
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-attachment-send/architecture-reviewer.json",
+      "summary": "Architecture pass: public API, Tauri command boundary, session manager, and UI changes follow existing cloud layering."
+    }
+  ],
+  "attestation": {
+    "gitHead": "dd051b316b32223a7a0b0371d05fe1df0c34b8e8",
+    "workingTreeDiffSha256": "7be94214cbbfac4d46292cdba60f2dcbe555b96f6bca8b085b86090f0a46831e",
+    "createdBy": "codex"
+  }
+}

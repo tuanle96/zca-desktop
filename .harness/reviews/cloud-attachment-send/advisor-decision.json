@@ -1,0 +1,68 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-attachment-send",
+  "featureId": "cloud-attachment-send",
+  "decision": "pass",
+  "createdAt": "2026-06-04T06:29:33Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-attachment-send-review",
+    "createdBy": "codex",
+    "notes": "Reviewed cloud attachment send API, hosted session manager call path, encrypted file blob reuse, and desktop cloud upload flow."
+  },
+  "checkedFiles": [
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/lib.rs",
+    "src/lib/cloud.ts",
+    "src/lib/session.svelte.ts"
+  ],
+  "checkedInvariants": [
+    "cloud-mode-remains-session-host-per-adr-0006",
+    "desktop-never-receives-zalo-credentials",
+    "send-throttle-remains-per-account",
+    "outgoing-file-message-is-refresh-safe",
+    "local-mode-is-not-reintroduced"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "reviewedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.86,
+  "resolvedFindings": [],
+  "requiredGates": [
+    "structural",
+    "lint",
+    "tests",
+    "smoke"
+  ],
+  "findings": [],
+  "summary": "Advisor pass: the change completes the cloud hosted attachment send path without changing the ADR-0006 trust boundary; live send proof remains a follow-up runtime smoke."
+}

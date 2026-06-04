@@ -7,9 +7,13 @@ use zca_rust::apis::add_reaction::{AddReactionDestination, ReactionIcon as ZcaRe
 use zca_rust::apis::login_qr::{login_qr, LoginQREvent, LoginQROptions, LoginQRResult};
 use zca_rust::apis::send_message::MessageContent as SendContent;
 use zca_rust::apis::send_sticker::SendStickerPayload;
+use zca_rust::apis::upload_attachment::UploadAttachmentType;
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::{Listener, ListenerEvent};
-use zca_rust::models::{Message, MessageContent as ZcaMessageContent, Reactions, ThreadType};
+use zca_rust::models::{
+    AttachmentMetadata, AttachmentSource, Message, MessageContent as ZcaMessageContent, Reactions,
+    ThreadType,
+};
 use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
 use zca_rust::{Result as ZaloResult, Zalo, ZaloError, API};
 
@@ -127,6 +131,12 @@ pub enum HostedRealtimeEvent {
 pub struct HostedThreadMetadata {
     pub title: Option<String>,
     pub avatar: Option<String>,
+}
+
+#[derive(Debug, Clone)]
+pub struct HostedAttachmentSend {
+    pub msg_id: Option<String>,
+    pub file: RichFile,
 }
 
 fn default_language() -> String {
@@ -619,6 +629,135 @@ pub async fn send_sticker(
     Ok(resp.msg_id)
 }
 
+pub async fn send_file(
+    api: &API,
+    thread_id: &str,
+    filename: &str,
+    mime: Option<&str>,
+    bytes: Vec<u8>,
+    kind: &str,
+) -> ZaloResult<HostedAttachmentSend> {
+    let thread_type = if kind == "group" {
+        ThreadType::Group
+    } else {
+        ThreadType::User
+    };
+    let size_bytes = bytes.len() as i64;
+    let sources = vec![AttachmentSource::Data {
+        metadata: AttachmentMetadata {
+            total_size: bytes.len() as u64,
+            width: None,
+            height: None,
+        },
+        filename: filename.to_string(),
+        data: bytes,
+    }];
+    let mut responses = api
+        .upload_attachment(sources, thread_id, thread_type)
+        .await?;
+    let first = responses
+        .pop()
+        .ok_or_else(|| ZaloError::api("attachment upload returned no response"))?;
+    Ok(attachment_send_from_response(
+        first,
+        filename,
+        mime.map(str::to_string),
+        size_bytes,
+    ))
+}
+
+fn attachment_send_from_response(
+    response: UploadAttachmentType,
+    fallback_filename: &str,
+    mime: Option<String>,
+    fallback_size: i64,
+) -> HostedAttachmentSend {
+    match response {
+        UploadAttachmentType::Image(image) => HostedAttachmentSend {
+            msg_id: msg_id_from_finished(&image.finished),
+            file: RichFile {
+                id: None,
+                filename: Some(fallback_filename.to_string()),
+                mime,
+                size_bytes: image.total_size as i64,
+                href: non_empty(&image.hd_url).or_else(|| non_empty(&image.normal_url)),
+                thumb: non_empty(&image.thumb_url),
+                media_kind: Some("image".to_string()),
+            },
+        },
+        UploadAttachmentType::Video(video) => HostedAttachmentSend {
+            msg_id: msg_id_from_finished(&video.finished),
+            file: RichFile {
+                id: None,
+                filename: non_empty(&video.file_name)
+                    .or_else(|| Some(fallback_filename.to_string())),
+                mime,
+                size_bytes: video.total_size as i64,
+                href: non_empty(&video.file_url),
+                thumb: None,
+                media_kind: Some("video".to_string()),
+            },
+        },
+        UploadAttachmentType::File(file) => HostedAttachmentSend {
+            msg_id: msg_id_from_finished(&file.finished),
+            file: RichFile {
+                id: None,
+                filename: non_empty(&file.file_name)
+                    .or_else(|| Some(fallback_filename.to_string())),
+                mime,
+                size_bytes: file.total_size as i64,
+                href: non_empty(&file.file_url),
+                thumb: None,
+                media_kind: Some("file".to_string()),
+            },
+        },
+    }
+    .with_fallback_size(fallback_size)
+}
+
+fn msg_id_from_finished(value: &serde_json::Value) -> Option<String> {
+    fn find(value: &serde_json::Value) -> Option<String> {
+        match value {
+            serde_json::Value::Object(map) => {
+                for key in ["msgId", "msg_id", "messageId", "message_id"] {
+                    if let Some(id) = map.get(key).and_then(value_to_string) {
+                        return Some(id);
+                    }
+                }
+                for key in ["message", "data", "result"] {
+                    if let Some(id) = map.get(key).and_then(find) {
+                        return Some(id);
+                    }
+                }
+                None
+            }
+            _ => None,
+        }
+    }
+    find(value)
+}
+
+fn value_to_string(value: &serde_json::Value) -> Option<String> {
+    value
+        .as_str()
+        .map(str::to_string)
+        .or_else(|| value.as_i64().map(|n| n.to_string()))
+        .filter(|s| !s.trim().is_empty())
+}
+
+trait RichFileFallback {
+    fn with_fallback_size(self, fallback_size: i64) -> Self;
+}
+
+impl RichFileFallback for HostedAttachmentSend {
+    fn with_fallback_size(mut self, fallback_size: i64) -> Self {
+        if self.file.size_bytes <= 0 {
+            self.file.size_bytes = fallback_size;
+        }
+        self
+    }
+}
+
 pub async fn send_reaction(
     api: &API,
     icon: &str,
@@ -684,6 +823,9 @@ fn non_empty(s: &str) -> Option<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use zca_rust::apis::upload_attachment::{
+        UploadAttachmentFileResponse, UploadAttachmentImageResponse,
+    };
     use zca_rust::models::{AttachmentContent, MessageContent, Quote};
 
     #[test]
@@ -749,5 +891,64 @@ mod tests {
         assert_eq!(reaction_icon(&Reactions::Heart), "❤️");
         assert_eq!(reaction_icon(&Reactions::Like), "👍");
         assert_eq!(reaction_icon(&Reactions::Wow), "😮");
+    }
+
+    #[test]
+    fn hosted_attachment_response_maps_file_metadata_and_msg_id() {
+        let response = UploadAttachmentType::File(UploadAttachmentFileResponse {
+            finished: serde_json::json!({ "message": { "msgId": "m123" } }),
+            client_file_id: 1,
+            chunk_id: 1,
+            file_url: String::new(),
+            file_id: "zalo-file-1".to_string(),
+            checksum: "checksum".to_string(),
+            total_size: 42,
+            file_name: "report.pdf".to_string(),
+        });
+        let sent = attachment_send_from_response(
+            response,
+            "fallback.pdf",
+            Some("application/pdf".to_string()),
+            99,
+        );
+        assert_eq!(sent.msg_id.as_deref(), Some("m123"));
+        assert_eq!(sent.file.filename.as_deref(), Some("report.pdf"));
+        assert_eq!(sent.file.mime.as_deref(), Some("application/pdf"));
+        assert_eq!(sent.file.size_bytes, 42);
+        assert_eq!(sent.file.media_kind.as_deref(), Some("file"));
+        assert!(sent.file.id.is_none());
+    }
+
+    #[test]
+    fn hosted_attachment_response_maps_image_urls() {
+        let response = UploadAttachmentType::Image(UploadAttachmentImageResponse {
+            normal_url: "https://cdn.example.test/normal.jpg".to_string(),
+            photo_id: "photo-1".to_string(),
+            finished: serde_json::json!({ "msg_id": "m456" }),
+            hd_url: "https://cdn.example.test/hd.jpg".to_string(),
+            thumb_url: "https://cdn.example.test/thumb.jpg".to_string(),
+            client_file_id: 1,
+            chunk_id: 1,
+            width: 0,
+            height: 0,
+            total_size: 128,
+            hd_size: 128,
+        });
+        let sent = attachment_send_from_response(
+            response,
+            "photo.jpg",
+            Some("image/jpeg".to_string()),
+            128,
+        );
+        assert_eq!(sent.msg_id.as_deref(), Some("m456"));
+        assert_eq!(
+            sent.file.href.as_deref(),
+            Some("https://cdn.example.test/hd.jpg")
+        );
+        assert_eq!(
+            sent.file.thumb.as_deref(),
+            Some("https://cdn.example.test/thumb.jpg")
+        );
+        assert_eq!(sent.file.media_kind.as_deref(), Some("image"));
     }
 }

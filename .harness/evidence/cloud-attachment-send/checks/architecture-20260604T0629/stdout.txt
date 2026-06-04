@@ -1,0 +1,1 @@
+architecture fitness: OK (5 rule(s), 264 scanned file(s), 10 example(s))

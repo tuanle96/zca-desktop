@@ -1,0 +1,63 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "cloud-attachment-send",
+  "featureId": "cloud-attachment-send",
+  "decision": "pass",
+  "createdAt": "2026-06-04T06:29:33Z",
+  "provenance": {
+    "source": "manual-review",
+    "trigger": "cloud-attachment-send-security-review",
+    "createdBy": "codex",
+    "notes": "Reviewed new request body, bearer device auth boundary, file ownership validation, decrypt-in-memory flow, and log posture."
+  },
+  "checkedFiles": [
+    "server/src/db.rs",
+    "server/src/models.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs",
+    "server/src/zalo_host.rs",
+    "src-tauri/src/command/cloud.rs",
+    "src-tauri/src/lib.rs",
+    "src/lib/cloud.ts",
+    "src/lib/session.svelte.ts"
+  ],
+  "checkedInvariants": [
+    "input-validation",
+    "auth-session-boundary",
+    "device-token-auth-required",
+    "file-row-user-and-account-ownership-checked-before-decrypt",
+    "object-store-blob-remains-encrypted-at-rest",
+    "plaintext-file-bytes-are-not-logged",
+    "zalo-credentials-never-return-to-desktop"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "reviewedFiles": [
+      "server/src/db.rs",
+      "server/src/models.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs",
+      "server/src/zalo_host.rs",
+      "src-tauri/src/command/cloud.rs",
+      "src-tauri/src/lib.rs",
+      "src/lib/cloud.ts",
+      "src/lib/session.svelte.ts"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.84,
+  "findings": [],
+  "summary": "Security pass: send-file validates ownership before decrypting, reuses wrapped per-file keys, keeps plaintext file bytes in process memory only for the hosted upload call, and returns only non-secret metadata."
+}
