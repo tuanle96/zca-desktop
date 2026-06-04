@@ -25,7 +25,11 @@ model + harness control center.
 - Pick the next unit of work with the `/add-feature` skill.
 
 ## Status
-Phase 0 (research + harness bootstrap) complete. Phase 1 (Tauri scaffold) is next.
+MVP vertical slice is implemented and harness-tracked: QR login, multi-account
+session management, keychain credential storage, SQLite history restore,
+contacts/groups, settings, text/sticker/reaction/quote/link/undo messaging.
+Remaining planned work is attachment upload/rendering, deeper device-coexistence
+validation, optional sync relay research, and signed app packaging.
 
 ## Contributing
 Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.

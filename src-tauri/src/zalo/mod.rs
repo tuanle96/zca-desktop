@@ -18,15 +18,18 @@ use tokio::sync::mpsc;
 use reqwest::cookie::{CookieStore, Jar};
 use zca_rust::apis::login_qr::{login_qr, LoginQREvent, LoginQROptions, LoginQRResult};
 use zca_rust::apis::send_message::MessageContent as SendContent;
+use zca_rust::apis::send_sticker::SendStickerPayload;
+use zca_rust::context::Options;
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::ListenerEvent;
-use zca_rust::models::{Message, MessageContent as ZcaMessageContent, ThreadType};
+use zca_rust::models::{Message, MessageContent as ZcaMessageContent, Reactions, ThreadType};
 use zca_rust::zalo::{Cookie as ZcaCookie, Credentials as ZcaCredentials};
-use zca_rust::context::Options;
 use zca_rust::Zalo;
 
 use crate::types::{
-    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, QrLoginEvent, ThreadKind,
+    AccountProfile, Contact, Cookie, Credentials, Group, IncomingMessage, LinkPreview,
+    QrLoginEvent, QuoteInput, QuoteRef, ReactionEvent, ReactionIcon, Sticker, ThreadKind,
+    UndoEvent,
 };
 
 /// Default desktop browser User-Agent for the QR login flow.
@@ -65,7 +68,11 @@ fn to_zca_credentials(credentials: &Credentials) -> ZcaCredentials {
     let cookies: Vec<ZcaCookie> = credentials
         .cookie
         .iter()
-        .filter_map(|c| serde_json::to_value(c).ok().and_then(|v| serde_json::from_value(v).ok()))
+        .filter_map(|c| {
+            serde_json::to_value(c)
+                .ok()
+                .and_then(|v| serde_json::from_value(v).ok())
+        })
         .collect();
     ZcaCredentials {
         imei: credentials.imei.clone(),
@@ -87,8 +94,13 @@ pub async fn login(credentials: Credentials) -> ZaloResult<API> {
 /// listener also surfaces messages this account sends (needed to verify a
 /// round trip without a second account).
 pub async fn login_with(credentials: Credentials, self_listen: bool) -> ZaloResult<API> {
-    let options = Options { self_listen, ..Default::default() };
-    Zalo::new(Some(options)).login(to_zca_credentials(&credentials)).await
+    let options = Options {
+        self_listen,
+        ..Default::default()
+    };
+    Zalo::new(Some(options))
+        .login(to_zca_credentials(&credentials))
+        .await
 }
 
 /// Log in and return the account's public profile (id + best-effort name).
@@ -140,13 +152,14 @@ pub async fn run_qr_login(events: mpsc::Sender<QrLoginEvent>) -> ZaloResult<Cred
 /// — the credential triple is assembled in the core, never surfaced to the UI.
 fn map_qr_event(event: &LoginQREvent) -> Option<QrLoginEvent> {
     match event {
-        LoginQREvent::QRCodeGenerated { image, .. } => {
-            Some(QrLoginEvent::Generated {
-                image: image.clone(),
-                expires_in_secs: QR_VALIDITY_SECS,
-            })
-        }
-        LoginQREvent::QRCodeScanned { avatar, display_name } => Some(QrLoginEvent::Scanned {
+        LoginQREvent::QRCodeGenerated { image, .. } => Some(QrLoginEvent::Generated {
+            image: image.clone(),
+            expires_in_secs: QR_VALIDITY_SECS,
+        }),
+        LoginQREvent::QRCodeScanned {
+            avatar,
+            display_name,
+        } => Some(QrLoginEvent::Scanned {
             display_name: display_name.clone(),
             avatar: avatar.clone(),
         }),
@@ -187,7 +200,9 @@ fn credentials_from_qr(result: &LoginQRResult, user_agent: &str) -> ZaloResult<C
         language: "vi".to_string(),
     };
     // Defensive: reuse the same validation the cookie-import path enforces.
-    credentials.validate().map_err(|e| ZaloError::api(e.to_string()))?;
+    credentials
+        .validate()
+        .map_err(|e| ZaloError::api(e.to_string()))?;
     Ok(credentials)
 }
 
@@ -205,11 +220,17 @@ fn cookies_from_jar(jar: &Arc<Jar>) -> Vec<Cookie> {
             Ok(u) => u,
             Err(_) => continue,
         };
-        let Some(header) = jar.cookies(&url) else { continue };
-        let Ok(header_str) = header.to_str() else { continue };
+        let Some(header) = jar.cookies(&url) else {
+            continue;
+        };
+        let Ok(header_str) = header.to_str() else {
+            continue;
+        };
         for pair in header_str.split(';') {
             let pair = pair.trim();
-            let Some((name, value)) = pair.split_once('=') else { continue };
+            let Some((name, value)) = pair.split_once('=') else {
+                continue;
+            };
             let name = name.trim();
             if name.is_empty() || !seen.insert(name.to_string()) {
                 continue;
@@ -255,7 +276,10 @@ async fn fetch_profile_fields(api: &API) -> (Option<String>, Option<String>) {
     else {
         return (None, None);
     };
-    (non_empty(&info.profile.display_name), non_empty(&info.profile.avatar))
+    (
+        non_empty(&info.profile.display_name),
+        non_empty(&info.profile.avatar),
+    )
 }
 
 /// WebSocket URLs for the realtime listener, taken from the post-login info
@@ -266,7 +290,11 @@ fn listener_urls(api: &API) -> ZaloResult<Vec<String>> {
         .login_info
         .get("zpw_ws")
         .and_then(|v| v.as_array())
-        .map(|arr| arr.iter().filter_map(|v| v.as_str().map(String::from)).collect())
+        .map(|arr| {
+            arr.iter()
+                .filter_map(|v| v.as_str().map(String::from))
+                .collect()
+        })
         .unwrap_or_default();
     if urls.is_empty() {
         return Err(ZaloError::api("login info has no zpw_ws websocket URLs"));
@@ -282,6 +310,82 @@ fn message_text(content: &ZcaMessageContent) -> Option<String> {
     }
 }
 
+/// Zalo emoticon CDN base for rendering a sticker by its id. The `size`
+/// produces a chat-bubble-sized render; this host is allowlisted in the app
+/// CSP (`img-src ... https://zalo-api.zadn.vn`). Centralized so the URL shape
+/// lives in one place (also used by the picker via [`to_sticker`]).
+fn sticker_image_url(sticker_id: i64) -> String {
+    format!("https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid={sticker_id}&size=130")
+}
+
+/// Extract a [`Sticker`] from an incoming message whose `msgType` is
+/// `chat.sticker`. Returns `None` for any other message type.
+///
+/// Sticker messages arrive with a JSON object body (not plain text), so the
+/// untagged [`ZcaMessageContent`] is `Attachment`/`Other`. We re-serialize the
+/// content to a JSON value and read `id`/`catId`/`type` (the same fields Zalo
+/// uses to re-send a sticker), then build the renderable CDN URL. Confined to
+/// the `zalo` layer so higher layers never see `zca-rust` types.
+fn sticker_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<Sticker> {
+    if msg_type != "chat.sticker" {
+        return None;
+    }
+    let value = serde_json::to_value(content).ok()?;
+    // The numeric ids can arrive as JSON numbers or strings; accept both.
+    let as_i64 = |v: &serde_json::Value| -> Option<i64> {
+        v.as_i64()
+            .or_else(|| v.as_str().and_then(|s| s.parse().ok()))
+    };
+    let id = value.get("id").and_then(as_i64)?;
+    let cat_id = value.get("catId").and_then(as_i64).unwrap_or(0);
+    let sticker_type = value.get("type").and_then(as_i64).unwrap_or(0);
+    if id == 0 {
+        return None;
+    }
+    Some(Sticker {
+        id,
+        cat_id,
+        sticker_type,
+        url: sticker_image_url(id),
+    })
+}
+
+/// Extract a [`LinkPreview`] from an attachment-type message content when the
+/// message type is `chat.link`. Returns `None` for non-link messages.
+fn link_from_content(msg_type: &str, content: &ZcaMessageContent) -> Option<LinkPreview> {
+    if msg_type != "chat.link" {
+        return None;
+    }
+    match content {
+        ZcaMessageContent::Attachment(att) => {
+            if att.href.is_empty() {
+                return None;
+            }
+            Some(LinkPreview {
+                href: att.href.clone(),
+                title: non_empty(&att.title),
+                description: non_empty(&att.description),
+                thumb: non_empty(&att.thumb),
+            })
+        }
+        _ => None,
+    }
+}
+
+/// Map a `zca-rust` incoming `Quote` into a core [`QuoteRef`]. Confined to the
+/// `zalo` layer so `types` stays clean.
+fn to_quote_ref(q: &zca_rust::models::Quote) -> QuoteRef {
+    QuoteRef {
+        owner_id: q.owner_id.clone(),
+        from_d: q.from_d.clone(),
+        global_msg_id: q.global_msg_id,
+        cli_msg_id: q.cli_msg_id,
+        msg: q.msg.clone(),
+        cli_msg_type: q.cli_msg_type,
+        ts: q.ts,
+    }
+}
+
 /// Map a `zca-rust` `Message` into the core [`IncomingMessage`] DTO.
 ///
 /// Confined to the `zalo` layer so higher layers never see `zca-rust` types.
@@ -294,6 +398,11 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_id: m.data.uid_from.clone(),
             from_name: non_empty(&m.data.d_name),
             text: message_text(&m.data.content),
+            sticker: sticker_from_content(&m.data.msg_type, &m.data.content),
+            reaction: None,
+            quote: m.data.quote.as_ref().map(to_quote_ref),
+            link: link_from_content(&m.data.msg_type, &m.data.content),
+            undo: None,
             msg_id: m.data.msg_id.clone(),
             timestamp: m.data.ts.clone(),
             is_self: m.is_self,
@@ -305,6 +414,11 @@ fn to_incoming_message(account_id: &str, message: &Message) -> IncomingMessage {
             from_id: m.data.base.uid_from.clone(),
             from_name: non_empty(&m.data.base.d_name),
             text: message_text(&m.data.base.content),
+            sticker: sticker_from_content(&m.data.base.msg_type, &m.data.base.content),
+            reaction: None,
+            quote: m.data.base.quote.as_ref().map(to_quote_ref),
+            link: link_from_content(&m.data.base.msg_type, &m.data.base.content),
+            undo: None,
             msg_id: m.data.base.msg_id.clone(),
             timestamp: m.data.base.ts.clone(),
             is_self: m.is_self,
@@ -340,11 +454,97 @@ pub async fn start_message_listener(
 
     tokio::spawn(async move {
         while let Some(event) = rx.recv().await {
-            if let ListenerEvent::Message(boxed) = event {
-                let incoming = to_incoming_message(&account_id, &boxed);
-                if out.send(incoming).await.is_err() {
-                    break; // receiver dropped — stop bridging
+            match event {
+                ListenerEvent::Message(boxed) => {
+                    let incoming = to_incoming_message(&account_id, &boxed);
+                    if out.send(incoming).await.is_err() {
+                        break; // receiver dropped — stop bridging
+                    }
                 }
+                ListenerEvent::Reaction(reaction) => {
+                    if let Some(icon) = icon_from_zalo(&reaction.data.content.r_icon) {
+                        let thread_id = reaction.thread_id.clone();
+                        let msg_id = reaction.data.msg_id.clone();
+                        let uid_from = reaction.data.uid_from.clone();
+                        let d_name = reaction.data.d_name.clone();
+                        let ts = reaction.data.ts.clone();
+                        let is_group = reaction.is_group;
+                        let is_self = reaction.is_self;
+
+                        let incoming = IncomingMessage {
+                            account_id: account_id.clone(),
+                            thread_id: thread_id.clone(),
+                            thread_kind: if is_group {
+                                ThreadKind::Group
+                            } else {
+                                ThreadKind::User
+                            },
+                            from_id: uid_from.clone(),
+                            from_name: d_name.clone(),
+                            text: None,
+                            sticker: None,
+                            reaction: Some(ReactionEvent {
+                                thread_id,
+                                msg_id,
+                                uid_from,
+                                d_name,
+                                icon: icon.emoji().to_string(),
+                                is_self,
+                                is_group,
+                            }),
+                            quote: None,
+                            link: None,
+                            undo: None,
+                            msg_id: reaction.data.msg_id.clone(),
+                            timestamp: ts,
+                            is_self,
+                        };
+                        if out.send(incoming).await.is_err() {
+                            break;
+                        }
+                    }
+                }
+                ListenerEvent::Undo(undo) => {
+                    let thread_id = undo.thread_id.clone();
+                    let msg_id = undo.data.msg_id.clone();
+                    let cli_msg_id = undo.data.cli_msg_id.clone();
+                    let uid_from = undo.data.uid_from.clone();
+                    let d_name = non_empty(&undo.data.d_name);
+                    let ts = undo.data.ts.clone();
+                    let is_self = undo.is_self;
+                    let is_group = undo.is_group;
+
+                    let incoming = IncomingMessage {
+                        account_id: account_id.clone(),
+                        thread_id: thread_id.clone(),
+                        thread_kind: if is_group {
+                            ThreadKind::Group
+                        } else {
+                            ThreadKind::User
+                        },
+                        from_id: uid_from,
+                        from_name: d_name,
+                        text: None,
+                        sticker: None,
+                        reaction: None,
+                        quote: None,
+                        link: None,
+                        undo: Some(UndoEvent {
+                            thread_id,
+                            msg_id,
+                            cli_msg_id,
+                            is_self,
+                            is_group,
+                        }),
+                        msg_id: undo.data.msg_id,
+                        timestamp: ts,
+                        is_self,
+                    };
+                    if out.send(incoming).await.is_err() {
+                        break;
+                    }
+                }
+                _ => {} // Other events (typing, seen, etc.) ignored for now
             }
         }
     });
@@ -357,16 +557,207 @@ pub async fn start_message_listener(
 /// Thin wrapper over `zca-rust` `send_message`; the `command` layer maps the
 /// core thread-kind DTO to `ThreadType` before calling this.
 pub async fn send_text(api: &API, thread_id: &str, text: &str) -> ZaloResult<String> {
+    send_text_with_quote(api, thread_id, text, None, ThreadKind::User).await
+}
+
+/// Send a plain-text message with an optional quote (reply). Returns the new
+/// message id.
+///
+/// When `quote` is provided, the message is sent as a quoted reply — the
+/// receiver sees the quoted message bubble above the reply text.
+pub async fn send_text_with_quote(
+    api: &API,
+    thread_id: &str,
+    text: &str,
+    quote: Option<&QuoteInput>,
+    kind: ThreadKind,
+) -> ZaloResult<String> {
+    let zca_quote = quote.map(|q| zca_rust::apis::send_message::SendMessageQuote {
+        content: serde_json::Value::String(q.content.clone()),
+        msg_type: q.msg_type.clone(),
+        property_ext: None,
+        uid_from: q.uid_from.clone(),
+        msg_id: q.msg_id.clone(),
+        cli_msg_id: q.cli_msg_id.clone(),
+        ts: q.ts,
+        ttl: q.ttl,
+    });
     let content = SendContent {
         msg: text.to_string(),
         styles: None,
         urgency: None,
-        quote: None,
+        quote: zca_quote,
         mentions: None,
         ttl: None,
     };
-    let resp = api.send_message(&content, thread_id, ThreadType::User).await?;
+    let thread_type = match kind {
+        ThreadKind::Group => ThreadType::Group,
+        ThreadKind::User => ThreadType::User,
+    };
+    let resp = api.send_message(&content, thread_id, thread_type).await?;
     Ok(resp.message.map(|m| m.msg_id).unwrap_or_default())
+}
+
+/// Send a sticker to a thread and return the new message id.
+///
+/// Thin wrapper over `zca-rust` `send_sticker`; the `command`/`session` layers
+/// map the core thread-kind DTO to `ThreadType` before calling this. The three
+/// ids come from a [`Sticker`] the UI picked (search results) or re-sent.
+pub async fn send_sticker(
+    api: &API,
+    thread_id: &str,
+    sticker: &Sticker,
+    kind: ThreadKind,
+) -> ZaloResult<String> {
+    let payload = SendStickerPayload {
+        id: sticker.id,
+        cate_id: sticker.cat_id,
+        sticker_type: sticker.sticker_type,
+    };
+    let thread_type = match kind {
+        ThreadKind::Group => ThreadType::Group,
+        ThreadKind::User => ThreadType::User,
+    };
+    let resp = api.send_sticker(&payload, thread_id, thread_type).await?;
+    Ok(resp.msg_id)
+}
+
+/// Search stickers by keyword and map them into core [`Sticker`] DTOs (each
+/// with a renderable image URL), for the composer's sticker picker.
+///
+/// Uses `zca-rust`'s `search_sticker` (one request) and confines `zca-rust`'s
+/// `StickerBasic` to this layer. `limit` caps the grid size.
+pub async fn search_stickers(api: &API, keyword: &str, limit: u32) -> ZaloResult<Vec<Sticker>> {
+    let results = api.search_sticker(keyword, limit).await?;
+    Ok(results.into_iter().map(to_sticker).collect())
+}
+
+/// Map a `zca-rust` `StickerBasic` (search result) into a core [`Sticker`].
+fn to_sticker(basic: zca_rust::models::StickerBasic) -> Sticker {
+    Sticker {
+        id: basic.sticker_id,
+        cat_id: basic.cate_id,
+        sticker_type: basic.type_,
+        url: sticker_image_url(basic.sticker_id),
+    }
+}
+
+/// Load all stickers in a category (a "pack") and map them into core
+/// [`Sticker`] DTOs, for the picker's per-pack tab.
+///
+/// Uses `zca-rust`'s `get_sticker_category_detail` (confines `StickerDetail` to
+/// this layer). Zalo exposes no "owned packs" listing, so the picker derives
+/// the set of pack ids from recently-used stickers and loads each here.
+pub async fn sticker_category(api: &API, cat_id: i64) -> ZaloResult<Vec<Sticker>> {
+    let details = api.get_sticker_category_detail(cat_id).await?;
+    Ok(details.into_iter().map(to_sticker_detail).collect())
+}
+
+/// Map a `zca-rust` `StickerDetail` (pack/detail result) into a core
+/// [`Sticker`]. Prefers the server-provided webp render URL when present,
+/// otherwise falls back to the emoticon CDN URL built from the id.
+fn to_sticker_detail(detail: zca_rust::models::StickerDetail) -> Sticker {
+    let url = detail
+        .sticker_webp_url
+        .filter(|u| !u.is_empty())
+        .or_else(|| Some(detail.sticker_url.clone()).filter(|u| !u.is_empty()))
+        .unwrap_or_else(|| sticker_image_url(detail.id));
+    Sticker {
+        id: detail.id,
+        cat_id: detail.cate_id,
+        sticker_type: detail.type_,
+        url,
+    }
+}
+
+/// Map a `zca-rust` `Reactions` enum directly to a core [`ReactionIcon`].
+///
+/// Confined to the `zalo` layer so `types` stays free of `zca-rust`. The
+/// listener already deserializes `r_icon` into the typed enum, so no string
+/// parsing is needed.
+fn icon_from_zalo(r: &Reactions) -> Option<ReactionIcon> {
+    match r {
+        Reactions::Heart => Some(ReactionIcon::Heart),
+        Reactions::Like => Some(ReactionIcon::Like),
+        Reactions::Haha => Some(ReactionIcon::Haha),
+        Reactions::Wow => Some(ReactionIcon::Wow),
+        Reactions::Cry => Some(ReactionIcon::Cry),
+        Reactions::Angry => Some(ReactionIcon::Angry),
+        Reactions::Kiss => Some(ReactionIcon::Kiss),
+        Reactions::TearsOfJoy => Some(ReactionIcon::TearsOfJoy),
+        Reactions::Shit => Some(ReactionIcon::Shit),
+        Reactions::Rose => Some(ReactionIcon::Rose),
+        Reactions::BrokenHeart => Some(ReactionIcon::BrokenHeart),
+        Reactions::Dislike => Some(ReactionIcon::Dislike),
+        Reactions::Love => Some(ReactionIcon::Love),
+        Reactions::Confused => Some(ReactionIcon::Confused),
+        Reactions::Wink => Some(ReactionIcon::Wink),
+        Reactions::Fade => Some(ReactionIcon::Fade),
+        Reactions::Sun => Some(ReactionIcon::Sun),
+        Reactions::Birthday => Some(ReactionIcon::Birthday),
+        Reactions::Bomb => Some(ReactionIcon::Bomb),
+        Reactions::Ok => Some(ReactionIcon::Ok),
+        Reactions::Peace => Some(ReactionIcon::Peace),
+        Reactions::Thanks => Some(ReactionIcon::Thanks),
+        Reactions::Punch => Some(ReactionIcon::Punch),
+        _ => None,
+    }
+}
+
+/// Send a reaction to a message. Mirrors zca-rust's `add_reaction`.
+///
+/// The core `ReactionIcon` is mapped to `zca-rust`'s `ReactionIcon`/`Reactions`
+/// enum; `thread_kind` maps to `ThreadType`. Confined to the `zalo` layer.
+pub async fn send_reaction(
+    api: &API,
+    icon: ReactionIcon,
+    msg_id: &str,
+    cli_msg_id: &str,
+    thread_id: &str,
+    kind: ThreadKind,
+) -> ZaloResult<()> {
+    use zca_rust::apis::add_reaction::{AddReactionDestination, ReactionIcon as ZcaReactionIcon};
+    let zca_icon = match icon {
+        ReactionIcon::Heart => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Heart),
+        ReactionIcon::Like => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Like),
+        ReactionIcon::Haha => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Haha),
+        ReactionIcon::Wow => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Wow),
+        ReactionIcon::Cry => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Cry),
+        ReactionIcon::Angry => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Angry),
+        ReactionIcon::Kiss => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Kiss),
+        ReactionIcon::TearsOfJoy => {
+            ZcaReactionIcon::Standard(zca_rust::models::Reactions::TearsOfJoy)
+        }
+        ReactionIcon::Shit => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Shit),
+        ReactionIcon::Rose => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Rose),
+        ReactionIcon::BrokenHeart => {
+            ZcaReactionIcon::Standard(zca_rust::models::Reactions::BrokenHeart)
+        }
+        ReactionIcon::Dislike => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Dislike),
+        ReactionIcon::Love => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Love),
+        ReactionIcon::Confused => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Confused),
+        ReactionIcon::Wink => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Wink),
+        ReactionIcon::Fade => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Fade),
+        ReactionIcon::Sun => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Sun),
+        ReactionIcon::Birthday => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Birthday),
+        ReactionIcon::Bomb => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Bomb),
+        ReactionIcon::Ok => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Ok),
+        ReactionIcon::Peace => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Peace),
+        ReactionIcon::Thanks => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Thanks),
+        ReactionIcon::Punch => ZcaReactionIcon::Standard(zca_rust::models::Reactions::Punch),
+    };
+    let thread_type = match kind {
+        ThreadKind::Group => zca_rust::models::ThreadType::Group,
+        ThreadKind::User => zca_rust::models::ThreadType::User,
+    };
+    let dest = AddReactionDestination {
+        msg_id: msg_id.to_string(),
+        cli_msg_id: cli_msg_id.to_string(),
+        thread_id: thread_id.to_string(),
+        thread_type,
+    };
+    api.add_reaction(zca_icon, &dest).await?;
+    Ok(())
 }
 
 /// Fetch the account's friends and map them into core [`Contact`] DTOs.
@@ -390,7 +781,11 @@ pub async fn list_contacts(api: &API) -> ZaloResult<Vec<Contact>> {
             avatar: non_empty(&u.avatar),
         })
         .collect();
-    contacts.sort_by(|a, b| a.display_name.to_lowercase().cmp(&b.display_name.to_lowercase()));
+    contacts.sort_by(|a, b| {
+        a.display_name
+            .to_lowercase()
+            .cmp(&b.display_name.to_lowercase())
+    });
     Ok(contacts)
 }
 
@@ -412,7 +807,12 @@ pub async fn list_groups(api: &API) -> ZaloResult<Vec<Group>> {
         .into_iter()
         .filter_map(|(group_id, value)| {
             // Each value is a GroupInfo-shaped JSON object; pull name + avatar.
-            let name = value.get("name").and_then(|v| v.as_str()).unwrap_or("").trim().to_string();
+            let name = value
+                .get("name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("")
+                .trim()
+                .to_string();
             let avatar = value
                 .get("fullAvt")
                 .and_then(|v| v.as_str())
@@ -423,7 +823,11 @@ pub async fn list_groups(api: &API) -> ZaloResult<Vec<Group>> {
             if name.is_empty() {
                 None
             } else {
-                Some(Group { group_id, name, avatar })
+                Some(Group {
+                    group_id,
+                    name,
+                    avatar,
+                })
             }
         })
         .collect();
@@ -462,15 +866,23 @@ mod tests {
         // `API` does not implement `Debug`, so match instead of `expect_err`.
         match login(blank_credentials()).await {
             Ok(_) => panic!("empty credentials must not produce a session"),
-            Err(err) => assert!(matches!(err, ZaloError::Api { .. }), "expected API error, got {err}"),
+            Err(err) => assert!(
+                matches!(err, ZaloError::Api { .. }),
+                "expected API error, got {err}"
+            ),
         }
     }
 
     /// Same guard for the profile path.
     #[tokio::test]
     async fn login_profile_rejects_empty_credentials() {
-        let err = login_profile(blank_credentials()).await.expect_err("empty creds must error");
-        assert!(matches!(err, ZaloError::Api { .. }), "expected API error, got {err}");
+        let err = login_profile(blank_credentials())
+            .await
+            .expect_err("empty creds must error");
+        assert!(
+            matches!(err, ZaloError::Api { .. }),
+            "expected API error, got {err}"
+        );
     }
 
     /// The QR display mapping forwards the renderable image, the scanned
@@ -504,10 +916,15 @@ mod tests {
         );
 
         assert_eq!(
-            map_qr_event(&LoginQREvent::QRCodeDeclined { code: "c".to_string() }),
+            map_qr_event(&LoginQREvent::QRCodeDeclined {
+                code: "c".to_string()
+            }),
             Some(QrLoginEvent::Declined)
         );
-        assert_eq!(map_qr_event(&LoginQREvent::QRCodeExpired), Some(QrLoginEvent::Expired));
+        assert_eq!(
+            map_qr_event(&LoginQREvent::QRCodeExpired),
+            Some(QrLoginEvent::Expired)
+        );
 
         // Token-bearing event must be dropped, never surfaced to the UI.
         let leaked = map_qr_event(&LoginQREvent::GotLoginInfo {
@@ -525,7 +942,11 @@ mod tests {
     fn generated_imei_has_expected_shape() {
         let imei = generate_zalo_uuid(DEFAULT_QR_USER_AGENT);
         // uuid (36 chars: 8-4-4-4-12) + '-' + md5 hex (32 chars)
-        assert_eq!(imei.len(), 36 + 1 + 32, "imei = uuid + '-' + md5 hex, got: {imei}");
+        assert_eq!(
+            imei.len(),
+            36 + 1 + 32,
+            "imei = uuid + '-' + md5 hex, got: {imei}"
+        );
         let md5_part = &imei[imei.len() - 32..];
         assert!(
             md5_part.chars().all(|c| c.is_ascii_hexdigit()),
@@ -554,6 +975,98 @@ mod tests {
         }
     }
 
+    /// An incoming `chat.sticker` message yields a Sticker with the right ids
+    /// and a renderable CDN URL; a plain `webchat` message yields no sticker.
+    /// Numeric ids are accepted whether they arrive as JSON numbers or strings.
+    #[test]
+    fn sticker_from_content_maps_chat_sticker_only() {
+        // Non-sticker content is never treated as a sticker.
+        let text = ZcaMessageContent::Text("hello".to_string());
+        assert_eq!(sticker_from_content("webchat", &text), None);
+        // A chat.sticker msgType but text content (no ids) -> None, not a panic.
+        assert_eq!(sticker_from_content("chat.sticker", &text), None);
+
+        // A realistic sticker content object (numbers).
+        let content: ZcaMessageContent =
+            serde_json::from_value(serde_json::json!({ "id": 6699, "catId": 16, "type": 7 }))
+                .expect("sticker content parses");
+        let sticker = sticker_from_content("chat.sticker", &content).expect("maps to sticker");
+        assert_eq!(sticker.id, 6699);
+        assert_eq!(sticker.cat_id, 16);
+        assert_eq!(sticker.sticker_type, 7);
+        assert!(
+            sticker.url.contains("eid=6699"),
+            "url renders the sticker id: {}",
+            sticker.url
+        );
+        assert!(
+            sticker.url.starts_with("https://zalo-api.zadn.vn/"),
+            "url uses the allowlisted CDN"
+        );
+
+        // Real Zalo sticker payloads carry numeric id/catId/type, so the
+        // untagged zca-rust `MessageContent` routes them to `Other(Value)` and
+        // the ids are preserved (the case asserted above). The `as_i64` helper
+        // additionally tolerates stringized ids defensively.
+    }
+
+    /// The sticker CDN URL is well-formed and points at the allowlisted host.
+    #[test]
+    fn sticker_image_url_shape() {
+        let url = sticker_image_url(123);
+        assert_eq!(
+            url,
+            "https://zalo-api.zadn.vn/api/emoticon/sticker/webpc?eid=123&size=130"
+        );
+    }
+
+    /// Search results map into core Sticker DTOs with a render URL per id.
+    #[test]
+    fn to_sticker_maps_basic() {
+        let basic = zca_rust::models::StickerBasic {
+            type_: 7,
+            cate_id: 16,
+            sticker_id: 555,
+        };
+        let s = to_sticker(basic);
+        assert_eq!((s.id, s.cat_id, s.sticker_type), (555, 16, 7));
+        assert!(s.url.contains("eid=555"));
+    }
+
+    /// Pack/detail results prefer the server webp url, then stickerUrl, else the
+    /// CDN fallback built from the id.
+    #[test]
+    fn to_sticker_detail_prefers_webp_then_falls_back() {
+        use zca_rust::models::StickerDetail;
+        // webp present -> used as-is.
+        let d = StickerDetail {
+            id: 42,
+            cate_id: 7,
+            type_: 7,
+            sticker_webp_url: Some("https://cdn/webp/42.webp".to_string()),
+            sticker_url: "https://cdn/png/42.png".to_string(),
+            ..Default::default()
+        };
+        let s = to_sticker_detail(d);
+        assert_eq!(s.url, "https://cdn/webp/42.webp");
+        assert_eq!((s.id, s.cat_id, s.sticker_type), (42, 7, 7));
+
+        // No webp, has stickerUrl -> stickerUrl.
+        let d2 = StickerDetail {
+            id: 9,
+            sticker_url: "https://cdn/png/9.png".to_string(),
+            ..Default::default()
+        };
+        assert_eq!(to_sticker_detail(d2).url, "https://cdn/png/9.png");
+
+        // Neither -> CDN fallback by id.
+        let d3 = StickerDetail {
+            id: 123,
+            ..Default::default()
+        };
+        assert!(to_sticker_detail(d3).url.contains("eid=123"));
+    }
+
     /// Cookies set on a Zalo host are read back into core DTOs with a non-empty
     /// name/value and a Zalo domain, de-duplicated by name across hosts.
     #[test]
@@ -564,10 +1077,16 @@ mod tests {
         jar.add_cookie_str("zpw_sek=def456; Domain=chat.zalo.me; Path=/", &url);
 
         let cookies = cookies_from_jar(&jar);
-        assert!(cookies.iter().any(|c| c.name == "zpsid" && c.value == "abc123"));
-        assert!(cookies.iter().any(|c| c.name == "zpw_sek" && c.value == "def456"));
+        assert!(cookies
+            .iter()
+            .any(|c| c.name == "zpsid" && c.value == "abc123"));
+        assert!(cookies
+            .iter()
+            .any(|c| c.name == "zpw_sek" && c.value == "def456"));
         assert!(
-            cookies.iter().all(|c| c.domain.contains("zalo.me") && !c.value.is_empty()),
+            cookies
+                .iter()
+                .all(|c| c.domain.contains("zalo.me") && !c.value.is_empty()),
             "every cookie must carry a zalo.me domain and a value"
         );
     }
@@ -584,7 +1103,10 @@ mod tests {
         let printer = tokio::spawn(async move {
             while let Some(event) = rx.recv().await {
                 match event {
-                    QrLoginEvent::Generated { image, expires_in_secs } => {
+                    QrLoginEvent::Generated {
+                        image,
+                        expires_in_secs,
+                    } => {
                         println!(
                             "qr_login_live: QR generated (base64 png len={}, expires_in={}s)",
                             image.len(),
@@ -602,19 +1124,25 @@ mod tests {
         });
 
         let credentials = run_qr_login(tx).await.expect("QR login flow failed");
-        credentials.validate().expect("QR credentials must be valid");
+        credentials
+            .validate()
+            .expect("QR credentials must be valid");
         let _ = printer.await;
 
         // Prove the issued triple is a usable session.
-        let profile = login_profile(credentials).await.expect("login with QR credentials failed");
-        assert!(!profile.account_id.is_empty(), "account_id must be non-empty after QR login");
+        let profile = login_profile(credentials)
+            .await
+            .expect("login with QR credentials failed");
+        assert!(
+            !profile.account_id.is_empty(),
+            "account_id must be non-empty after QR login"
+        );
         println!(
             "qr_login_live OK: uid_len={} has_display_name={}",
             profile.account_id.len(),
             profile.display_name.is_some()
         );
     }
-
 
     /// Live single-login smoke. Ignored by default: it performs a REAL network
     /// login and requires a populated `.zalo-cred.json` (gitignored) at the repo
@@ -629,11 +1157,16 @@ mod tests {
             .expect("create .zalo-cred.json at repo root from .zalo-cred.example.json");
         let credentials: Credentials =
             serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
-        credentials.validate().expect(".zalo-cred.json is missing required fields");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
 
         let profile = login_profile(credentials).await.expect("live login failed");
 
-        assert!(!profile.account_id.is_empty(), "account_id must be non-empty after login");
+        assert!(
+            !profile.account_id.is_empty(),
+            "account_id must be non-empty after login"
+        );
         // Non-secret diagnostics only.
         println!(
             "single_login_live OK: uid_len={} has_display_name={}",
@@ -656,10 +1189,16 @@ mod tests {
             .expect("create .zalo-cred.json at repo root");
         let credentials: Credentials =
             serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
-        credentials.validate().expect(".zalo-cred.json is missing required fields");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
 
         // self_listen so our own outgoing message is surfaced by the listener.
-        let api = Arc::new(login_with(credentials, true).await.expect("live login failed"));
+        let api = Arc::new(
+            login_with(credentials, true)
+                .await
+                .expect("live login failed"),
+        );
         let own_id = api.get_own_id().to_string();
 
         // Resolve the test recipient by phone (Lê Anh Tuấn, authorized by the
@@ -681,9 +1220,14 @@ mod tests {
 
         let marker = format!(
             "zca-desktop listener test {}",
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
         );
-        send_text(&api, &thread_id, &marker).await.expect("send marker failed");
+        send_text(&api, &thread_id, &marker)
+            .await
+            .expect("send marker failed");
 
         let captured = tokio::time::timeout(Duration::from_secs(20), async {
             while let Some(msg) = rx.recv().await {
@@ -698,7 +1242,10 @@ mod tests {
         .flatten();
 
         let msg = captured.expect("listener did not surface the sent marker within 20s");
-        assert!(!msg.msg_id.is_empty(), "captured message must have a msg_id");
+        assert!(
+            !msg.msg_id.is_empty(),
+            "captured message must have a msg_id"
+        );
         assert_eq!(msg.account_id, own_id, "event tagged with wrong account");
         println!(
             "listener_receives_live OK: matched marker, thread_kind={:?} msg_id_len={} is_self={}",
@@ -721,7 +1268,9 @@ mod tests {
             .expect("create .zalo-cred.json at repo root");
         let credentials: Credentials =
             serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
-        credentials.validate().expect(".zalo-cred.json is missing required fields");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
 
         let api = login(credentials).await.expect("live login failed");
 
@@ -733,12 +1282,65 @@ mod tests {
 
         let marker = format!(
             "zca-desktop send-text test {}",
-            SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_millis()
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
         );
-        let msg_id = send_text(&api, &thread_id, &marker).await.expect("send_text failed");
+        let msg_id = send_text(&api, &thread_id, &marker)
+            .await
+            .expect("send_text failed");
 
         assert!(!msg_id.is_empty(), "send_text must return a message id");
         println!("send_text_live OK: delivered, msg_id_len={}", msg_id.len());
+    }
+
+    /// Live send-sticker smoke. Ignored by default. Logs in, searches for a
+    /// sticker, and sends ONE real sticker to the authorized recipient (Lê Anh
+    /// Tuấn, resolved by phone), asserting search returns results and Zalo
+    /// returns a non-empty message id. Run explicitly:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; sends ONE real sticker to the authorized recipient"]
+    async fn send_sticker_live() {
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+
+        // Pull a real sticker from search (one request, maps to core DTOs).
+        let stickers = search_stickers(&api, "hi", 24)
+            .await
+            .expect("search_stickers failed");
+        assert!(!stickers.is_empty(), "search returned no stickers");
+        assert!(
+            stickers.iter().all(|s| s.id != 0 && s.url.contains("eid=")),
+            "every sticker must have an id and a render url"
+        );
+        let picked = &stickers[0];
+
+        let recipient_phone =
+            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let thread_id = find_user_uid(&api, &recipient_phone)
+            .await
+            .expect("could not resolve recipient by phone");
+
+        let msg_id = send_sticker(&api, &thread_id, picked, ThreadKind::User)
+            .await
+            .expect("send_sticker failed");
+        assert!(!msg_id.is_empty(), "send_sticker must return a message id");
+        // Non-secret diagnostics only: counts + lengths, never recipient/token.
+        println!(
+            "send_sticker_live OK: {} stickers found, delivered sticker (sticker_id_present={}, msg_id_len={})",
+            stickers.len(),
+            picked.id != 0,
+            msg_id.len()
+        );
     }
 
     /// Live: list_contacts loads the real friend list. Ignored by default.
@@ -750,16 +1352,73 @@ mod tests {
             .expect("create .zalo-cred.json at repo root");
         let credentials: Credentials =
             serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
-        credentials.validate().expect(".zalo-cred.json is missing required fields");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
 
         let api = login(credentials).await.expect("live login failed");
         let contacts = list_contacts(&api).await.expect("list_contacts failed");
 
         // Non-secret diagnostics only: count + whether entries are well-formed.
         assert!(
-            contacts.iter().all(|c| !c.user_id.is_empty() && !c.display_name.is_empty()),
+            contacts
+                .iter()
+                .all(|c| !c.user_id.is_empty() && !c.display_name.is_empty()),
             "every contact must have a uid and a display name"
         );
-        println!("list_contacts_live OK: {} contact(s) loaded", contacts.len());
+        println!(
+            "list_contacts_live OK: {} contact(s) loaded",
+            contacts.len()
+        );
+    }
+
+    /// Live send-reaction smoke. Ignored by default. Logs in, sends a message,
+    /// and then reacts to that message with a Heart. Run explicitly:
+    ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored reaction_live --nocapture
+    #[tokio::test]
+    #[ignore = "requires real .zalo-cred.json; sends ONE real message and reacts to it"]
+    async fn reaction_live() {
+        use std::time::{SystemTime, UNIX_EPOCH};
+
+        let raw = std::fs::read_to_string("../.zalo-cred.json")
+            .expect("create .zalo-cred.json at repo root");
+        let credentials: Credentials =
+            serde_json::from_str(&raw).expect(".zalo-cred.json must be valid Credentials JSON");
+        credentials
+            .validate()
+            .expect(".zalo-cred.json is missing required fields");
+
+        let api = login(credentials).await.expect("live login failed");
+
+        let recipient_phone =
+            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let thread_id = find_user_uid(&api, &recipient_phone)
+            .await
+            .expect("could not resolve recipient by phone");
+
+        let marker = format!(
+            "zca-desktop reaction test {}",
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_millis()
+        );
+        let msg_id = send_text(&api, &thread_id, &marker)
+            .await
+            .expect("send_text failed");
+        assert!(!msg_id.is_empty(), "send_text must return a message id");
+
+        let cli_msg_id = format!("{}_cli", msg_id);
+        send_reaction(
+            &api,
+            ReactionIcon::Heart,
+            &msg_id,
+            &cli_msg_id,
+            &thread_id,
+            ThreadKind::User,
+        )
+        .await
+        .expect("send_reaction failed");
+        println!("reaction_live OK: reacted Heart to msg_id={}", msg_id);
     }
 }

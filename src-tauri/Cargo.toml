@@ -44,7 +44,8 @@ tracing-appender = "0.2"
 # cookie jar (reqwest::cookie::{Jar, CookieStore}) when assembling Credentials.
 # Pinned to the same version + rustls TLS that zca-rust already resolves, so no
 # new native binding and no new ADR (ADR-0004).
-reqwest = { version = "0.12", default-features = false, features = ["cookies", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "json", "rustls-tls", "stream"] }
+futures-util = "0.3"
 # Local persistence (store layer, ADR-0005). rusqlite `bundled` compiles a
 # pinned SQLite in-tree (no system lib). keyring holds the single master key in
 # the OS keychain; aes-gcm encrypts the credential blob at rest (pure Rust).
@@ -61,4 +62,3 @@ keyring = { version = "3", features = ["windows-native"] }
 
 [target.'cfg(target_os = "linux")'.dependencies]
 keyring = { version = "3", features = ["sync-secret-service"] }
-

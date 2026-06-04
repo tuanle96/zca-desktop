@@ -5882,6 +5882,7 @@ name = "zca-desktop"
 version = "0.1.0"
 dependencies = [
  "aes-gcm",
+ "futures-util",
  "keyring",
  "rand 0.8.6",
  "reqwest 0.12.28",

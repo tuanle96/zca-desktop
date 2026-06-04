@@ -3,6 +3,7 @@
 // Rust core layers (ADR-0003): types → config → store → zalo → session → command.
 pub mod command;
 pub mod config;
+pub mod session;
 pub mod store;
 pub mod types;
 pub mod zalo;
@@ -27,7 +28,7 @@ pub fn run() {
 
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
-        .manage(command::ListenerState::default())
+        .manage(command::SessionState::default())
         .manage(store_state)
         .setup(move |_app| {
             // Keep the file-logging guard alive for the whole app lifetime.
@@ -42,6 +43,12 @@ pub fn run() {
             command::start_qr_login,
             command::restore_sessions,
             command::send_message,
+            command::send_reaction,
+            command::send_sticker,
+            command::search_stickers,
+            command::recent_stickers,
+            command::sticker_categories,
+            command::sticker_category,
             command::list_contacts,
             command::list_groups,
             command::load_history,
@@ -50,7 +57,29 @@ pub fn run() {
             command::cred_file_summary,
             command::login_from_file,
             command::start_listening_from_file,
-            command::log_from_ui
+            command::logout_account,
+            command::log_from_ui,
+            command::cloud_load_device_session,
+            command::cloud_clear_device_session,
+            command::cloud_request_magic_link,
+            command::cloud_verify_magic_link,
+            command::cloud_start_realtime,
+            command::cloud_register_device,
+            command::cloud_list_devices,
+            command::cloud_revoke_device,
+            command::cloud_list_accounts,
+            command::cloud_start_account_qr,
+            command::cloud_get_qr_status,
+            command::cloud_delete_account,
+            command::cloud_list_conversations,
+            command::cloud_list_messages,
+            command::cloud_send_text,
+            command::cloud_send_sticker,
+            command::cloud_send_reaction,
+            command::cloud_send_file,
+            command::cloud_init_file,
+            command::cloud_upload_file_blob,
+            command::cloud_download_file_blob
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
@@ -89,8 +118,11 @@ fn default_log_dir() -> std::path::PathBuf {
 fn dirs_app_data() -> Option<std::path::PathBuf> {
     #[cfg(target_os = "macos")]
     {
-        std::env::var_os("HOME")
-            .map(|h| std::path::PathBuf::from(h).join("Library").join("Application Support"))
+        std::env::var_os("HOME").map(|h| {
+            std::path::PathBuf::from(h)
+                .join("Library")
+                .join("Application Support")
+        })
     }
     #[cfg(target_os = "windows")]
     {
@@ -100,6 +132,9 @@ fn dirs_app_data() -> Option<std::path::PathBuf> {
     {
         std::env::var_os("XDG_DATA_HOME")
             .map(std::path::PathBuf::from)
-            .or_else(|| std::env::var_os("HOME").map(|h| std::path::PathBuf::from(h).join(".local").join("share")))
+            .or_else(|| {
+                std::env::var_os("HOME")
+                    .map(|h| std::path::PathBuf::from(h).join(".local").join("share"))
+            })
     }
 }

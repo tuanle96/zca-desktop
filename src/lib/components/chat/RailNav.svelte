@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { MessageCircle, Users, Cloud, Settings, Plus } from "@lucide/svelte";
+  import { MessageCircle, Cloud, Settings, Plus } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { session } from "$lib/session.svelte";
 
@@ -15,15 +15,23 @@
     session.view = "chats";
   }
 
-  function showContacts() {
-    session.view = "contacts";
-    if (!session.contactsLoaded && session.profile) session.loadContacts();
-  }
+  // Total unread messages for the active account (sum of per-conversation
+  // unread counts). Drives the badge on the "Tin nhắn" rail icon.
+  const chatsUnread = $derived(
+    session.conversations.reduce((sum, c) => sum + c.unread, 0),
+  );
 
   const navItems = [
     { id: "chats" as const, icon: MessageCircle, label: "Tin nhắn", onClick: showChats },
-    { id: "contacts" as const, icon: Users, label: "Danh bạ", onClick: showContacts },
   ];
+
+  const cloudDotClass = $derived(
+    session.cloudMode && session.realtimeState === "live"
+      ? "bg-green-300"
+      : session.cloudMode && (session.realtimeState === "connecting" || session.realtimeState === "reconnecting")
+        ? "bg-amber-300"
+        : "bg-white/35",
+  );
 </script>
 
 <nav class="bg-brand text-brand-foreground flex w-16 shrink-0 flex-col items-center gap-1 py-3">
@@ -83,23 +91,37 @@
         : 'hover:bg-white/10'}"
     >
       <item.icon class="size-6" />
+      {#if item.id === "chats" && chatsUnread > 0}
+        <span
+          class="border-brand absolute right-1.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full border-2 bg-red-500 px-1 text-[10px] font-medium text-white"
+        >
+          {chatsUnread > 9 ? "9+" : chatsUnread}
+        </span>
+      {/if}
     </button>
   {/each}
 
   <button
     type="button"
-    title="Cloud"
-    aria-label="Cloud"
-    class="flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
+    onclick={() => (session.settingsOpen = true)}
+    title={session.cloudMode ? session.realtimeLabel : "Cloud mode"}
+    aria-label={session.cloudMode ? session.realtimeLabel : "Cloud mode"}
+    class="relative flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
   >
     <Cloud class="size-6" />
+    <span
+      class="absolute right-2 top-2 size-2 rounded-full {cloudDotClass}"
+    ></span>
   </button>
 
   <button
     type="button"
+    onclick={() => (session.settingsOpen = true)}
     title="Cài đặt"
     aria-label="Cài đặt"
-    class="mt-auto flex size-12 items-center justify-center rounded-xl transition-colors hover:bg-white/10"
+    class="mt-auto flex size-12 items-center justify-center rounded-xl transition-colors {session.settingsOpen
+      ? 'bg-white/20'
+      : 'hover:bg-white/10'}"
   >
     <Settings class="size-6" />
   </button>

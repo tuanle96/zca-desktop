@@ -6,7 +6,7 @@
 
 use serde::{Deserialize, Serialize};
 
-use crate::types::AccountId;
+use crate::types::{AccountId, LinkPreview, QuoteRef, ReactionEvent, Sticker, UndoEvent};
 
 /// Which kind of thread a message belongs to.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
@@ -35,6 +35,18 @@ pub struct IncomingMessage {
     /// Plain-text body when the message is text; `None` for non-text content.
     #[serde(default)]
     pub text: Option<String>,
+    /// Sticker payload when this is a `chat.sticker` message; `None` otherwise.
+    /// When set, the UI renders the sticker image instead of the text body.
+    #[serde(default)]
+    pub sticker: Option<Sticker>,
+    /// Reaction on this message, when the event is a reaction (text == None).
+    pub reaction: Option<ReactionEvent>,
+    /// Quoted (replied-to) message, when present.
+    pub quote: Option<QuoteRef>,
+    /// Link preview, when the message is a link.
+    pub link: Option<LinkPreview>,
+    /// Undo event — the UI removes this message from the thread.
+    pub undo: Option<UndoEvent>,
     pub msg_id: String,
     /// Server timestamp string as provided by Zalo.
     pub timestamp: String,

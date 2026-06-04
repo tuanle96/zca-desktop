@@ -37,12 +37,15 @@ pub enum CryptoError {
 /// Load the master key from the OS keychain, generating + storing one on first
 /// use. The key is the only secret kept in the keychain.
 fn master_key() -> Result<[u8; KEY_LEN], CryptoError> {
-    let entry = keyring::Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT)
-        .map_err(|_| CryptoError::Keychain)?;
+    let entry =
+        keyring::Entry::new(KEYRING_SERVICE, KEYRING_ACCOUNT).map_err(|_| CryptoError::Keychain)?;
 
     match entry.get_secret() {
         Ok(bytes) => {
-            let arr: [u8; KEY_LEN] = bytes.as_slice().try_into().map_err(|_| CryptoError::BadKey)?;
+            let arr: [u8; KEY_LEN] = bytes
+                .as_slice()
+                .try_into()
+                .map_err(|_| CryptoError::BadKey)?;
             Ok(arr)
         }
         Err(keyring::Error::NoEntry) => {
@@ -59,7 +62,8 @@ fn master_key() -> Result<[u8; KEY_LEN], CryptoError> {
 /// Encrypt the credential triple into a `nonce || ciphertext` blob for storage.
 pub fn encrypt_credentials(credentials: &Credentials) -> Result<Vec<u8>, CryptoError> {
     let key = master_key()?;
-    let plaintext = serde_json::to_vec(credentials).map_err(|e| CryptoError::Serde(e.to_string()))?;
+    let plaintext =
+        serde_json::to_vec(credentials).map_err(|e| CryptoError::Serde(e.to_string()))?;
     seal(&key, &plaintext)
 }
 
@@ -76,7 +80,9 @@ fn seal(key: &[u8; KEY_LEN], plaintext: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let mut nonce_bytes = [0u8; NONCE_LEN];
     OsRng.fill_bytes(&mut nonce_bytes);
     let nonce = Nonce::from_slice(&nonce_bytes);
-    let ciphertext = cipher.encrypt(nonce, plaintext).map_err(|_| CryptoError::Encrypt)?;
+    let ciphertext = cipher
+        .encrypt(nonce, plaintext)
+        .map_err(|_| CryptoError::Encrypt)?;
     let mut out = Vec::with_capacity(NONCE_LEN + ciphertext.len());
     out.extend_from_slice(&nonce_bytes);
     out.extend_from_slice(&ciphertext);
@@ -91,7 +97,9 @@ fn open(key: &[u8; KEY_LEN], blob: &[u8]) -> Result<Vec<u8>, CryptoError> {
     let (nonce_bytes, ciphertext) = blob.split_at(NONCE_LEN);
     let cipher = Aes256Gcm::new(key.into());
     let nonce = Nonce::from_slice(nonce_bytes);
-    cipher.decrypt(nonce, ciphertext).map_err(|_| CryptoError::Decrypt)
+    cipher
+        .decrypt(nonce, ciphertext)
+        .map_err(|_| CryptoError::Decrypt)
 }
 
 #[cfg(test)]
@@ -130,7 +138,9 @@ mod tests {
         assert!(blob.len() > NONCE_LEN, "blob carries nonce + ciphertext");
         // Ciphertext must not leak the plaintext.
         assert!(
-            !blob.windows(b"supersecret".len()).any(|w| w == b"supersecret"),
+            !blob
+                .windows(b"supersecret".len())
+                .any(|w| w == b"supersecret"),
             "plaintext leaked into ciphertext"
         );
         let opened = open(&key, &blob).expect("open with correct key");
