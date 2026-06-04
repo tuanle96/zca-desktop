@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "advisor",
+  "taskId": "cloud-media-mirroring",
+  "featureId": "cloud-media-mirroring",
+  "decision": "pass",
+  "createdAt": "2026-06-04T03:55:00Z",
+  "provenance": {
+    "source": "advisor-agent",
+    "trigger": "cloud-media-mirroring-review",
+    "createdBy": "codex",
+    "notes": "Reviewed hosted media mirror flow, object storage reuse, rich metadata mutation, and desktop cloud download compatibility."
+  },
+  "checkedFiles": [
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/mailer.rs",
+    "server/src/main.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "hosted-media-fetch-is-bounded",
+    "object-store-bytes-are-encrypted-before-write",
+    "rich-file-id-hydrates-existing-cloud-download-path",
+    "existing-user-upload-download-endpoints-remain-compatible",
+    "no-zalo-secret-logging"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/mailer.rs",
+      "server/src/main.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/mailer.rs",
+      "server/src/main.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.88,
+  "findings": [],
+  "summary": "Advisor pass: hosted rich file hrefs are mirrored through the existing encrypted file store, successful mirrors attach a cloud file id to encrypted rich metadata, and desktop cloud downloads continue through the existing backend blob API."
+}

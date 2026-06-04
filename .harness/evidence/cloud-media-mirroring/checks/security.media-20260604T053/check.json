@@ -1,0 +1,24 @@
+{
+  "name": "security.media",
+  "taskId": "cloud-media-mirroring",
+  "acceptanceId": "cloud-media-mirror-encrypted-store",
+  "artifact": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/check.json",
+  "command": "cargo test --manifest-path server/Cargo.toml hosted_media_mirror_only_accepts_http_urls && cargo test --manifest-path server/Cargo.toml mirrored_object_body_hides_plaintext_and_roundtrips",
+  "status": "pass",
+  "summary": "Focused security tests prove only HTTP(S) media URLs are mirrorable and sealed object bodies do not contain known plaintext while roundtripping.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T05:34:38Z",
+  "finishedAt": "2026-06-04T05:34:38Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+  "stdoutHash": "sha256:68e052825bb25e2de775926057e4e1458026430af31633875ced66e678031967",
+  "stderrHash": "sha256:f197bb2aa19a4af7194e3fca8936834ca5d49f69e3f8cfa594d588848ab6b5cd",
+  "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/check.json",
+    ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stdout.txt",
+    ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stderr.txt"
+  ]
+}

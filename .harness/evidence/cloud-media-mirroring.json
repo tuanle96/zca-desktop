@@ -1,0 +1,146 @@
+{
+  "schemaVersion": 1,
+  "taskId": "cloud-media-mirroring",
+  "featureId": "cloud-media-mirroring",
+  "status": "pass",
+  "createdAt": "2026-06-04T05:34:38Z",
+  "updatedAt": "2026-06-04T05:34:38Z",
+  "diffSummary": "Hosted Zalo media hrefs are mirrored into encrypted object storage with per-file keys, persisted as cloud files, and attached back to encrypted rich message metadata so desktop cloud downloads use backend file ids.",
+  "changedFiles": [
+    ".harness/feature_list.json",
+    ".harness/task-contracts/cloud-media-mirroring.json",
+    ".harness/evidence/cloud-media-mirroring.json",
+    ".harness/reviews/cloud-media-mirroring/advisor-decision.json",
+    ".harness/reviews/cloud-media-mirroring/security-reviewer.json",
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/mailer.rs",
+    "server/src/main.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checks": [
+    {
+      "name": "ui",
+      "taskId": "cloud-media-mirroring",
+      "acceptanceId": "cloud-media-mirror-rich-hydration",
+      "artifact": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/check.json",
+      "command": "bun run check && bun run build",
+      "status": "pass",
+      "summary": "Svelte diagnostics and production build passed; existing cloud hydration/download path accepts mirrored file ids.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T05:34:24Z",
+      "finishedAt": "2026-06-04T05:34:36Z",
+      "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+      "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+      "stdoutHash": "sha256:3eb85b8438283702fe7e733050606e8a4f1507d397ff0ec0355801be1f6a9dd5",
+      "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+      "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/check.json",
+        ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stdout.txt",
+        ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stderr.txt"
+      ]
+    },
+    {
+      "name": "tests",
+      "taskId": "cloud-media-mirroring",
+      "acceptanceId": "cloud-media-mirror-encrypted-store",
+      "artifact": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/check.json",
+      "command": "cargo test --manifest-path server/Cargo.toml && cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+      "status": "pass",
+      "summary": "Backend tests and clippy passed, including media URL filtering and encrypted object-body plaintext-hiding roundtrip tests.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T05:34:36Z",
+      "finishedAt": "2026-06-04T05:34:38Z",
+      "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+      "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+      "stdoutHash": "sha256:4ac40d634302d6ad52da8d2e87627280adac934f5064e30e7ea7e94bb05f7812",
+      "stderrHash": "sha256:b20817d6839a3f0ab24846931caa1e15a84cedd43b436bc0011c3a13a6e1fcd5",
+      "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/check.json",
+        ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stdout.txt",
+        ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stderr.txt"
+      ]
+    },
+    {
+      "name": "security.media",
+      "taskId": "cloud-media-mirroring",
+      "acceptanceId": "cloud-media-mirror-encrypted-store",
+      "artifact": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/check.json",
+      "command": "cargo test --manifest-path server/Cargo.toml hosted_media_mirror_only_accepts_http_urls && cargo test --manifest-path server/Cargo.toml mirrored_object_body_hides_plaintext_and_roundtrips",
+      "status": "pass",
+      "summary": "Focused security tests prove only HTTP(S) media URLs are mirrorable and sealed object bodies do not contain known plaintext while roundtripping.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T05:34:38Z",
+      "finishedAt": "2026-06-04T05:34:38Z",
+      "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+      "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+      "stdoutHash": "sha256:68e052825bb25e2de775926057e4e1458026430af31633875ced66e678031967",
+      "stderrHash": "sha256:f197bb2aa19a4af7194e3fca8936834ca5d49f69e3f8cfa594d588848ab6b5cd",
+      "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/check.json",
+        ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stdout.txt",
+        ".harness/evidence/cloud-media-mirroring/checks/security.media-20260604T053/stderr.txt"
+      ]
+    },
+    {
+      "name": "diff.whitespace",
+      "taskId": "cloud-media-mirroring",
+      "acceptanceId": "cloud-media-mirror-rich-hydration",
+      "artifact": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/check.json",
+      "command": "git diff --check",
+      "status": "pass",
+      "summary": "No whitespace errors in the media-mirroring diff.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T05:34:38Z",
+      "finishedAt": "2026-06-04T05:34:38Z",
+      "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+      "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+      "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stdout.txt",
+      "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/check.json",
+        ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stdout.txt",
+        ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "advisor",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-media-mirroring/advisor-decision.json",
+      "summary": "Advisor pass: media mirror reuses encrypted file store and rich metadata id hydration."
+    },
+    {
+      "name": "security",
+      "decision": "pass",
+      "artifact": ".harness/reviews/cloud-media-mirroring/security-reviewer.json",
+      "summary": "Security pass: URL scheme/size boundaries and sealed object-body behavior are covered."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "mirror-no-background-retry",
+      "severity": "medium",
+      "description": "If a remote Zalo media fetch fails at message ingest time, the message remains stored with remote metadata and no background retry queue retries the mirror yet.",
+      "disposition": "accepted",
+      "acceptedBy": "codex",
+      "acceptanceReason": "The task contract explicitly scoped out a full background retry queue; ingest preserves the message and logs a warning without dropping user data.",
+      "mitigation": "Add a retry queue and mirror status fields if long-term retention must survive transient CDN failures.",
+      "owner": "codex"
+    }
+  ]
+}

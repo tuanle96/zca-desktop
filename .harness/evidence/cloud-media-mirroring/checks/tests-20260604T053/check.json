@@ -1,0 +1,24 @@
+{
+  "name": "tests",
+  "taskId": "cloud-media-mirroring",
+  "acceptanceId": "cloud-media-mirror-encrypted-store",
+  "artifact": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/check.json",
+  "command": "cargo test --manifest-path server/Cargo.toml && cargo clippy --manifest-path server/Cargo.toml -- -D warnings",
+  "status": "pass",
+  "summary": "Backend tests and clippy passed, including media URL filtering and encrypted object-body plaintext-hiding roundtrip tests.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T05:34:36Z",
+  "finishedAt": "2026-06-04T05:34:38Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+  "stdoutHash": "sha256:4ac40d634302d6ad52da8d2e87627280adac934f5064e30e7ea7e94bb05f7812",
+  "stderrHash": "sha256:b20817d6839a3f0ab24846931caa1e15a84cedd43b436bc0011c3a13a6e1fcd5",
+  "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/check.json",
+    ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stdout.txt",
+    ".harness/evidence/cloud-media-mirroring/checks/tests-20260604T053/stderr.txt"
+  ]
+}

@@ -1,0 +1,2 @@
+$ svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+$ vite build

@@ -676,11 +676,9 @@ async fn mirror_rich_file(ctx: &MediaMirrorContext<'_>, file: &mut RichFile) -> 
     let Some(href) = file.href.as_deref().filter(|href| !href.trim().is_empty()) else {
         return Ok(false);
     };
-    let url = reqwest::Url::parse(href)
-        .map_err(|_| AppError::BadRequest("invalid hosted media url".to_string()))?;
-    if !matches!(url.scheme(), "http" | "https") {
+    let Some(url) = mirrorable_media_url(href) else {
         return Ok(false);
-    }
+    };
 
     let bytes = fetch_remote_media(&url, ctx.config.media_mirror_max_bytes).await?;
     let content_sha256 = sha256_hex(&bytes);
@@ -688,9 +686,7 @@ async fn mirror_rich_file(ctx: &MediaMirrorContext<'_>, file: &mut RichFile) -> 
     let (file_key_nonce, enc_file_key) = crypto::seal(ctx.data_key, &file_key)?;
     let file_id_for_key = Uuid::new_v4();
     let object_key = crate::storage::object_key(ctx.user_id, file_id_for_key, &content_sha256);
-    let (blob_nonce, mut ciphertext) = crypto::seal(&file_key, &bytes)?;
-    let mut object_body = blob_nonce;
-    object_body.append(&mut ciphertext);
+    let object_body = encrypted_object_body(&file_key, &bytes)?;
     ctx.objects
         .put(
             &object_store::path::Path::from(object_key.clone()),
@@ -757,6 +753,18 @@ async fn fetch_remote_media(url: &reqwest::Url, max_bytes: usize) -> AppResult<V
         ));
     }
     Ok(bytes.to_vec())
+}
+
+fn mirrorable_media_url(href: &str) -> Option<reqwest::Url> {
+    let url = reqwest::Url::parse(href).ok()?;
+    matches!(url.scheme(), "http" | "https").then_some(url)
+}
+
+fn encrypted_object_body(file_key: &[u8; 32], bytes: &[u8]) -> AppResult<Vec<u8>> {
+    let (nonce, mut ciphertext) = crypto::seal(file_key, bytes)?;
+    let mut object_body = nonce;
+    object_body.append(&mut ciphertext);
+    Ok(object_body)
 }
 
 fn sha256_hex(bytes: &[u8]) -> String {
@@ -906,5 +914,35 @@ mod tests {
         assert_eq!(throttle.reserve(a, now).await, Duration::ZERO);
         assert_eq!(throttle.reserve(a, now).await, Duration::from_millis(800));
         assert_eq!(throttle.reserve(b, now).await, Duration::ZERO);
+    }
+
+    #[test]
+    fn hosted_media_mirror_only_accepts_http_urls() {
+        assert_eq!(
+            mirrorable_media_url("https://cdn.example.test/photo.jpg")
+                .map(|url| url.scheme().to_string()),
+            Some("https".to_string())
+        );
+        assert_eq!(
+            mirrorable_media_url("http://cdn.example.test/photo.jpg")
+                .map(|url| url.scheme().to_string()),
+            Some("http".to_string())
+        );
+        assert!(mirrorable_media_url("file:///tmp/plain.txt").is_none());
+        assert!(mirrorable_media_url("not a url").is_none());
+    }
+
+    #[test]
+    fn mirrored_object_body_hides_plaintext_and_roundtrips() {
+        let file_key = crypto::generate_data_key();
+        let plaintext = b"known hosted media bytes";
+        let object_body = encrypted_object_body(&file_key, plaintext).expect("seal media");
+        assert!(!object_body
+            .windows(plaintext.len())
+            .any(|window| window == plaintext));
+
+        let (nonce, ciphertext) = object_body.split_at(12);
+        let roundtrip = crypto::open(&file_key, nonce, ciphertext).expect("open media");
+        assert_eq!(roundtrip, plaintext);
     }
 }

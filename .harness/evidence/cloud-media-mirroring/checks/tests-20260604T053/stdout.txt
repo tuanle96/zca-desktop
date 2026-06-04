@@ -1,0 +1,29 @@
+
+running 15 tests
+test routes::tests::file_sha256_validation_requires_lower_hex ... ok
+test auth::tests::normalizes_email ... ok
+test mailer::tests::extracts_mailbox_from_display_from ... ok
+test zalo_host::tests::hosted_credentials_do_not_debug_print ... ok
+test mailer::tests::magic_link_url_encodes_email_and_token ... ok
+test zalo_host::tests::reaction_icons_are_ui_ready_emoji ... ok
+test crypto::tests::token_hash_is_stable_and_not_plaintext ... ok
+test mailer::tests::production_mode_requires_delivery_configuration ... ok
+test routes::tests::realtime_payload_is_user_scoped ... ok
+test zalo_host::tests::rich_payload_maps_quote_link_file_and_sticker ... ok
+test sessions::tests::hosted_media_mirror_only_accepts_http_urls ... ok
+test sessions::tests::mirrored_object_body_hides_plaintext_and_roundtrips ... ok
+test crypto::tests::seal_open_roundtrip_hides_plaintext ... ok
+test sessions::tests::throttle_is_per_account ... ok
+test crypto::tests::recovery_key_hash_and_wrap_roundtrip ... ok
+
+test result: ok. 15 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.74s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s

@@ -1,0 +1,24 @@
+{
+  "name": "ui",
+  "taskId": "cloud-media-mirroring",
+  "acceptanceId": "cloud-media-mirror-rich-hydration",
+  "artifact": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/check.json",
+  "command": "bun run check && bun run build",
+  "status": "pass",
+  "summary": "Svelte diagnostics and production build passed; existing cloud hydration/download path accepts mirrored file ids.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T05:34:24Z",
+  "finishedAt": "2026-06-04T05:34:36Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+  "stdoutHash": "sha256:3eb85b8438283702fe7e733050606e8a4f1507d397ff0ec0355801be1f6a9dd5",
+  "stderrHash": "sha256:3e5318d2029e51b10b5d5e9f5bd6658319ac7772ad8c7ea4fa93efe483ba98ac",
+  "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/check.json",
+    ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stdout.txt",
+    ".harness/evidence/cloud-media-mirroring/checks/ui-20260604T053/stderr.txt"
+  ]
+}

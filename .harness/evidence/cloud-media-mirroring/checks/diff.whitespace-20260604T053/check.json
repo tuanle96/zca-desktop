@@ -1,0 +1,24 @@
+{
+  "name": "diff.whitespace",
+  "taskId": "cloud-media-mirroring",
+  "acceptanceId": "cloud-media-mirror-rich-hydration",
+  "artifact": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/check.json",
+  "command": "git diff --check",
+  "status": "pass",
+  "summary": "No whitespace errors in the media-mirroring diff.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T05:34:38Z",
+  "finishedAt": "2026-06-04T05:34:38Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:a143f40d0a17ee20af350f2f0135daaa0c373ae8013b399e628fe3b069461ddf",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stdout.txt",
+  "stderrPath": ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/check.json",
+    ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stdout.txt",
+    ".harness/evidence/cloud-media-mirroring/checks/diff.whitespace-20260604T053/stderr.txt"
+  ]
+}

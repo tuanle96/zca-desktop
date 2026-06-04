@@ -1,0 +1,52 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security",
+  "taskId": "cloud-media-mirroring",
+  "featureId": "cloud-media-mirroring",
+  "decision": "pass",
+  "createdAt": "2026-06-04T03:55:00Z",
+  "provenance": {
+    "source": "manual-review",
+    "trigger": "cloud-media-mirroring-security-review",
+    "createdBy": "codex",
+    "notes": "Reviewed remote media fetch boundary, encryption-at-rest behavior, object-store write path, and logging posture."
+  },
+  "checkedFiles": [
+    "server/src/config.rs",
+    "server/src/db.rs",
+    "server/src/mailer.rs",
+    "server/src/main.rs",
+    "server/src/routes.rs",
+    "server/src/sessions.rs"
+  ],
+  "checkedInvariants": [
+    "only-http-and-https-media-urls-are-fetchable",
+    "media-fetch-has-byte-limit",
+    "object-store-body-does-not-contain-known-plaintext",
+    "per-file-key-is-wrapped-by-user-data-key",
+    "logs-do-not-emit-zalo-credentials-or-media-bytes"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/mailer.rs",
+      "server/src/main.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "reviewedFiles": [
+      "server/src/config.rs",
+      "server/src/db.rs",
+      "server/src/mailer.rs",
+      "server/src/main.rs",
+      "server/src/routes.rs",
+      "server/src/sessions.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1
+  },
+  "confidence": 0.86,
+  "findings": [],
+  "summary": "Security pass: media mirroring rejects non-HTTP(S) hrefs, enforces a configurable byte limit, seals object bodies with per-file keys before object-store writes, and stores only wrapped file keys plus encrypted rich metadata in Postgres."
+}

@@ -69,7 +69,6 @@
   "doneRequires": [
     "tests",
     "ui",
-    "security",
     "review",
     "evidence-bundle"
   ],
