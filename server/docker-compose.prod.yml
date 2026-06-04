@@ -1,0 +1,65 @@
+# Production deployment — runs ONLY the compiled server (`runtime` image).
+# Postgres and S3-compatible object storage are EXTERNAL (managed services);
+# configure them through environment variables (see .env.prod.example).
+#
+#   cp .env.prod.example .env     # then fill in real values (do NOT commit .env)
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+services:
+  server:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runtime
+    image: zca-cloud-server:latest
+    restart: always
+    ports:
+      - "${ZCA_CLOUD_PORT:-37880}:37880"
+    environment:
+      ZCA_CLOUD_BIND: 0.0.0.0:37880
+
+      # ── Required ───────────────────────────────────────────────────────────
+      # External Postgres (the server runs migrations on boot).
+      DATABASE_URL: ${DATABASE_URL:?set DATABASE_URL to your external Postgres}
+      # Public URL clients + login-code emails use to reach this server.
+      ZCA_CLOUD_PUBLIC_BASE_URL: ${ZCA_CLOUD_PUBLIC_BASE_URL:?set ZCA_CLOUD_PUBLIC_BASE_URL}
+      # Encryption seed — strong, unique secret. Changing it makes existing data unreadable.
+      ZCA_CLOUD_MASTER_KEY: ${ZCA_CLOUD_MASTER_KEY:?set ZCA_CLOUD_MASTER_KEY to a strong secret}
+
+      # External S3-compatible object storage.
+      ZCA_CLOUD_OBJECT_STORE: s3
+      ZCA_CLOUD_S3_BUCKET: ${ZCA_CLOUD_S3_BUCKET:?set ZCA_CLOUD_S3_BUCKET}
+      # Endpoint carries the region (no separate region var):
+      #   AWS  -> https://s3.<region>.amazonaws.com
+      #   R2   -> https://<account>.r2.cloudflarestorage.com
+      ZCA_CLOUD_S3_ENDPOINT: ${ZCA_CLOUD_S3_ENDPOINT:?set ZCA_CLOUD_S3_ENDPOINT}
+      AWS_ACCESS_KEY_ID: ${AWS_ACCESS_KEY_ID:?set AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${AWS_SECRET_ACCESS_KEY:?set AWS_SECRET_ACCESS_KEY}
+      ZCA_CLOUD_S3_ALLOW_HTTP: ${ZCA_CLOUD_S3_ALLOW_HTTP:-0}
+
+      # ── Production hardening ────────────────────────────────────────────────
+      # Never echo login codes back in API responses outside dev.
+      ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS: "0"
+
+      # ── Email delivery of login codes (recommended) ─────────────────────────
+      # Without SMTP (or a webhook) users cannot receive their login code.
+      ZCA_CLOUD_SMTP_ADDR: ${ZCA_CLOUD_SMTP_ADDR:-}
+      ZCA_CLOUD_MAGIC_LINK_FROM: ${ZCA_CLOUD_MAGIC_LINK_FROM:-ZCA Cloud <no-reply@zca.local>}
+      ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL: ${ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL:-}
+
+      # ── Optional tunables (defaults shown) ──────────────────────────────────
+      ZCA_CLOUD_MAGIC_LINK_TTL_SECS: ${ZCA_CLOUD_MAGIC_LINK_TTL_SECS:-600}
+      ZCA_CLOUD_MAGIC_LINK_RATE_LIMIT: ${ZCA_CLOUD_MAGIC_LINK_RATE_LIMIT:-5}
+      ZCA_CLOUD_MAGIC_LINK_RATE_WINDOW_SECS: ${ZCA_CLOUD_MAGIC_LINK_RATE_WINDOW_SECS:-900}
+      ZCA_CLOUD_MEDIA_MIRROR_MAX_BYTES: ${ZCA_CLOUD_MEDIA_MIRROR_MAX_BYTES:-26214400}
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:37880/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"

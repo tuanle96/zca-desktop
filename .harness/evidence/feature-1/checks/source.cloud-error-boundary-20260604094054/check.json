@@ -1,0 +1,20 @@
+{
+  "name": "source.cloud-error-boundary",
+  "command": "srcwalk show src-tauri/src/command/cloud.rs:164-185 --scope . --budget 6000",
+  "status": "pass",
+  "summary": "srcwalk show src-tauri/src/command/cloud.rs:164-185 --scope . --budget 6000 exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T09:40:54.515Z",
+  "finishedAt": "2026-06-04T09:40:54.583Z",
+  "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+  "workingTreeHash": "sha256:6e79a670edadcf4683a7c4bff2968a3081cb937dcb6918d3fe1efb012f5c09d9",
+  "stdoutHash": "sha256:e177bee2e3bd62e589647da965a8fd5f8908a9658f849b71fb37ab0e88159f16",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stdout.txt",
+  "stderrPath": ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stdout.txt",
+    ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stderr.txt"
+  ]
+}

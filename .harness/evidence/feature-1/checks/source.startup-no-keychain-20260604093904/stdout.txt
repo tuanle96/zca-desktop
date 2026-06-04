@@ -1,0 +1,77 @@
+# Show: 3 locations
+
+# src/lib/session.svelte.ts (34 lines, ~377 tokens) [section]
+
+289  
+290        /** On app start, do not touch the OS keychain before user intent is clear. */
+291        async restore(): Promise<boolean> {
+292            this.restoring = false;
+293            return false;
+294        }
+295  
+296        async restoreCloudDevice(baseUrl?: string): Promise<boolean> {
+297            if (typeof localStorage === "undefined") return false;
+298            const targetBaseUrl = baseUrl || localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
+299            const saved = await loadCloudDeviceSession(targetBaseUrl).catch((e) => {
+300                log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
+301                return null;
+302            });
+303            if (!saved?.hasDeviceToken) return false;
+304  
+305            const connected = await this.connectCloud(targetBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN).catch((e) => {
+306                this.cloudMode = false;
+307                this.cloudBaseUrl = null;
+308                this.cloudDeviceToken = null;
+309              log.error(`cloud-restore: connect failed: ${String(e)}`);
+310              return false;
+311            });
+312            if (connected) {
+313                localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
+314                localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+315                log.info("cloud-restore: connected cloud device session");
+316            }
+317            return connected;
+318        }
+319  
+320      async connectCloud(baseUrl: string, deviceToken: string): Promise<boolean> {
+321          let connected = false;
+322          await this.run(async () => {
+
+
+---
+
+# src/lib/components/chat/QrLoginScreen.svelte (21 lines, ~234 tokens) [section]
+
+ 80    async function loadCloudSettings() {
+ 81      if (typeof localStorage === "undefined") return;
+ 82      cloudBaseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || cloudBaseUrl;
+ 83      cloudDeviceLinked = localStorage.getItem(CLOUD_DEVICE_LINKED_STORAGE_KEY) === "1";
+ 84      if (cloudDeviceLinked) cloudStatus = "Thiết bị này đã từng liên kết cloud.";
+ 85    }
+ 86  
+ 87    async function continueLinkedCloudDevice() {
+ 88      cloudBusy = true;
+ 89      cloudError = "";
+ 90      try {
+ 91        localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+ 92        const connected = await session.restoreCloudDevice(cloudBaseUrl);
+ 93        if (!connected) {
+ 94          cloudDeviceLinked = false;
+ 95          localStorage.removeItem(CLOUD_DEVICE_LINKED_STORAGE_KEY);
+ 96          cloudStatus = "Không tìm thấy phiên cloud đã liên kết trên Keychain.";
+ 97          return;
+ 98        }
+ 99        cloudDeviceLinked = true;
+100        cloudStatus = "Đã kết nối thiết bị cloud.";
+
+
+---
+
+# src/routes/+page.svelte (5 lines, ~73 tokens) [section]
+
+32  {:else if session.restoring}
+33    <div class="bg-background flex h-screen w-screen flex-col items-center justify-center gap-3">
+34      <Loader2 class="text-brand size-9 animate-spin" />
+35      <p class="text-muted-foreground text-sm">Đang kiểm tra trạng thái thiết bị cloud…</p>
+36    </div>
+

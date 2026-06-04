@@ -1,0 +1,25 @@
+# src-tauri/src/command/cloud.rs (22 lines, ~219 tokens) [section]
+
+164  async fn parse_response<T: for<'de> Deserialize<'de>>(res: reqwest::Response) -> Result<T, String> {
+165      let status = res.status();
+166      if !status.is_success() {
+167          let body = res.text().await.unwrap_or_default();
+168          let message = serde_json::from_str::<serde_json::Value>(&body)
+169              .ok()
+170              .and_then(|v| {
+171                  v.get("message")
+172                      .and_then(|m| m.as_str())
+173                      .or_else(|| v.get("error").and_then(|m| m.as_str()))
+174                      .map(str::to_string)
+175              })
+176              .filter(|m| !m.trim().is_empty())
+177              .unwrap_or_else(|| format!("body_len={}", body.len()));
+178          return Err(format!(
+179              "cloud request failed: status={status}, message={message}"
+180          ));
+181      }
+182      res.json::<T>()
+183          .await
+184          .map_err(|e| format!("invalid cloud response: {e}"))
+185  }
+

@@ -1,0 +1,9 @@
+{
+  "compacted_at": "2026-06-04T09:14:50Z",
+  "branch": "codex/audit-fix-evidence-and-reviews",
+  "sha": "3951677",
+  "uncommitted": 11,
+  "feature": "attachments — Phase 4: Image/file upload and rendering",
+  "trigger": "auto",
+  "estimated_tokens_removed": 0
+}

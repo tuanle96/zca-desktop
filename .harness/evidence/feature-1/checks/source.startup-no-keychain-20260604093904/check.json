@@ -1,0 +1,20 @@
+{
+  "name": "source.startup-no-keychain",
+  "command": "srcwalk show src/lib/session.svelte.ts:289-322,src/lib/components/chat/QrLoginScreen.svelte:80-100,src/routes/+page.svelte:32-36 --scope . --budget 9000",
+  "status": "pass",
+  "summary": "srcwalk show src/lib/session.svelte.ts:289-322,src/lib/components/chat/QrLoginScreen.svelte:80-100,src/routes/+page.svelte:32-36 --scope . --budget 9000 exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T09:39:04.477Z",
+  "finishedAt": "2026-06-04T09:39:04.549Z",
+  "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+  "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+  "stdoutHash": "sha256:01c5c82391a1ecd0bcdd75ed5f7f1e1520cc381c9f6cd7244d7e8d9229014fe1",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stdout.txt",
+  "stderrPath": ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stdout.txt",
+    ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stderr.txt"
+  ]
+}

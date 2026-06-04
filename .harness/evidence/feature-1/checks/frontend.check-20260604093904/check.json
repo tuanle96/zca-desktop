@@ -1,0 +1,20 @@
+{
+  "name": "frontend.check",
+  "command": "bun run check",
+  "status": "pass",
+  "summary": "bun run check exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T09:39:04.812Z",
+  "finishedAt": "2026-06-04T09:39:09.808Z",
+  "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+  "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+  "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+  "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+  "stdoutPath": ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stdout.txt",
+  "stderrPath": ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stdout.txt",
+    ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stderr.txt"
+  ]
+}

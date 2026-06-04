@@ -1,0 +1,59 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "security-reviewer",
+  "taskId": "feature-1",
+  "featureId": "feature-1",
+  "decision": "pass",
+  "createdAt": "2026-06-04T09:32:45Z",
+  "checkedFiles": [
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/app.css",
+    "package.json",
+    ".harness/docs/adr/0007-cloud-device-restore-consent.md",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checkedInvariants": [
+    "secret-handling",
+    "auth-session-boundary",
+    "keychain-consent"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/routes/+page.svelte",
+      "src/app.css",
+      "package.json",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "reviewedFiles": [
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/routes/+page.svelte",
+      "src/app.css",
+      "package.json",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1,
+    "notes": "Reviewed the webview-visible state, cloud helper sentinel, Tauri cloud command token storage boundary, and the package/style font-only presentation diff. The new localStorage value is a non-secret linked-device marker only. Also reviewed src-tauri/src/command/cloud.rs because it is part of the current command-layer diff covered by the completion gate."
+  },
+  "confidence": 0.87,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "tests",
+    "structural"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "rule": "secret-handling",
+      "file": "src/lib/components/chat/QrLoginScreen.svelte",
+      "evidence": "The UI stores only zca.cloud.deviceLinked=1 plus the cloud base URL. It never stores the SaaS device token; fresh verify still receives the __keychain__ sentinel after Tauri stores the real token in Keychain.",
+      "fix": "None required."
+    }
+  ],
+  "summary": "Security pass: automatic keychain access was removed from startup/login-gate initialization, token storage remains keychain-backed, the webview gains only a non-secret linked-device marker, and the package/style diff is font-only UI presentation."
+}

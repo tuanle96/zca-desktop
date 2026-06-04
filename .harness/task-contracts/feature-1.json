@@ -1,0 +1,81 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-1",
+  "type": "feature",
+  "riskTier": "high-risk",
+  "scope": {
+    "summary": "Require explicit user intent before reading the keychain-backed SaaS cloud device token, and update startup/login copy so cloud device reconnect is not confused with local Zalo credential restore.",
+    "goals": [
+      "Startup does not read the cloud device token from Keychain automatically",
+      "The login gate exposes an explicit continue action for previously linked cloud devices",
+      "Fresh magic-link verification still stores the SaaS device token in Keychain and connects"
+    ],
+    "nonGoals": [
+      "Changing hosted Zalo credential storage",
+      "Moving the SaaS device token out of OS keychain",
+      "Adding a local Zalo credential restore path"
+    ],
+    "allowedLayers": [
+      "command"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "startup-no-keychain",
+      "description": "App startup and QR login gate initialization do not automatically call the cloud keychain lookup; startup copy says cloud device state instead of session restore.",
+      "verification": {
+        "command": "srcwalk show src/lib/session.svelte.ts:289-322,src/lib/components/chat/QrLoginScreen.svelte:80-100,src/routes/+page.svelte:32-36 --scope . --budget 9000"
+      }
+    },
+    {
+      "id": "explicit-continue",
+      "description": "A previously linked cloud device is represented by a non-secret marker and reconnects only through an explicit continue action.",
+      "verification": {
+        "command": "srcwalk show src/lib/components/chat/QrLoginScreen.svelte:80-150,src/lib/session.svelte.ts:296-325 --scope . --budget 10000"
+      }
+    },
+    {
+      "id": "fresh-link-regression",
+      "description": "Fresh magic-link verification still stores the SaaS device token through the existing Tauri command boundary, sets the non-secret linked-device marker, refreshes accounts, and connects cloud mode.",
+      "verification": {
+        "command": "bun run check"
+      }
+    }
+  ],
+  "requiresAdr": true,
+  "requiredReviewers": [
+    "architecture-reviewer",
+    "security-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Edit",
+      "Write",
+      "Bash(npm run*)",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(go test*)",
+      "Bash(cargo test*)",
+      "Bash(swift test*)",
+      "Bash(./gradlew test*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)"
+    ],
+    "deny": [
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ]
+  },
+  "doneRequires": [
+    "structural",
+    "tests",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/feature-1.json"
+}

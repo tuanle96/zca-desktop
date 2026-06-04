@@ -1,13 +1,20 @@
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use reqwest::cookie::{CookieStore, Jar};
-use serde::{Deserialize, Serialize};
-use tokio::sync::mpsc;
+use reqwest::Method;
+use serde::de::Error as DeError;
+use serde::{Deserialize, Deserializer, Serialize};
+use serde_json::json;
+use tokio::sync::{mpsc, Mutex};
 use zca_rust::apis::add_reaction::{AddReactionDestination, ReactionIcon as ZcaReactionIcon};
 use zca_rust::apis::login_qr::{login_qr, LoginQREvent, LoginQROptions, LoginQRResult};
 use zca_rust::apis::send_message::MessageContent as SendContent;
 use zca_rust::apis::send_sticker::SendStickerPayload;
-use zca_rust::apis::upload_attachment::UploadAttachmentType;
+use zca_rust::apis::upload_attachment::{
+    UploadAttachmentFileResponse, UploadAttachmentImageResponse, UploadAttachmentType,
+    UploadAttachmentVideoResponse,
+};
 use zca_rust::crypto::generate_zalo_uuid;
 use zca_rust::listen::{Listener, ListenerEvent};
 use zca_rust::models::{
@@ -121,10 +128,17 @@ pub struct HostedUndoEvent {
 }
 
 #[derive(Debug, Clone)]
+pub struct HostedUploadEvent {
+    pub file_id: String,
+    pub file_url: String,
+}
+
+#[derive(Debug, Clone)]
 pub enum HostedRealtimeEvent {
     Message(Box<HostedIncomingMessage>),
     Reaction(HostedReactionEvent),
     Undo(HostedUndoEvent),
+    Upload(HostedUploadEvent),
 }
 
 #[derive(Debug, Clone, Default)]
@@ -138,6 +152,24 @@ pub struct HostedAttachmentSend {
     pub msg_id: Option<String>,
     pub file: RichFile,
 }
+
+#[derive(Debug, Clone, Deserialize)]
+struct HostedZaloSendResult {
+    #[serde(
+        default,
+        rename = "msgId",
+        deserialize_with = "deserialize_optional_string_like"
+    )]
+    msg_id: String,
+}
+
+#[derive(Clone)]
+pub struct HostedUploadCallbacks {
+    pub file_urls: Arc<Mutex<HashMap<String, String>>>,
+    pub key_prefix: String,
+}
+
+const UNKNOWN_UPLOAD_FILE_ID_KEY: &str = "__unknown_file_id__";
 
 fn default_language() -> String {
     "vi".to_string()
@@ -320,6 +352,17 @@ pub async fn start_message_listener(
                     Some(HostedRealtimeEvent::Reaction(to_reaction_event(&reaction)))
                 }
                 ListenerEvent::Undo(undo) => Some(HostedRealtimeEvent::Undo(to_undo_event(&undo))),
+                ListenerEvent::UploadAttachment(upload) => {
+                    tracing::info!(
+                        file_id = %upload.file_id,
+                        has_file_url = !upload.file_url.trim().is_empty(),
+                        "hosted upload callback received"
+                    );
+                    Some(HostedRealtimeEvent::Upload(HostedUploadEvent {
+                        file_id: upload.file_id,
+                        file_url: upload.file_url,
+                    }))
+                }
                 _ => None,
             };
             if let Some(message) = incoming {
@@ -636,6 +679,7 @@ pub async fn send_file(
     mime: Option<&str>,
     bytes: Vec<u8>,
     kind: &str,
+    upload_callbacks: Option<HostedUploadCallbacks>,
 ) -> ZaloResult<HostedAttachmentSend> {
     let thread_type = if kind == "group" {
         ThreadType::Group
@@ -658,12 +702,275 @@ pub async fn send_file(
     let first = responses
         .pop()
         .ok_or_else(|| ZaloError::api("attachment upload returned no response"))?;
-    Ok(attachment_send_from_response(
-        first,
-        filename,
-        mime.map(str::to_string),
-        size_bytes,
+    match first {
+        UploadAttachmentType::Image(image) => {
+            let delivered = send_uploaded_image(api, thread_id, kind, &image).await?;
+            Ok(attachment_send_from_response(
+                UploadAttachmentType::Image(image),
+                filename,
+                mime.map(str::to_string),
+                size_bytes,
+            )
+            .with_msg_id(delivered.msg_id))
+        }
+        UploadAttachmentType::Video(mut video) => {
+            if video.file_url.trim().is_empty() {
+                video.file_url =
+                    wait_for_upload_file_url(upload_callbacks.as_ref(), &video.file_id).await?;
+            }
+            let delivered = send_uploaded_async_file(api, thread_id, kind, &video).await?;
+            Ok(attachment_send_from_response(
+                UploadAttachmentType::Video(video),
+                filename,
+                mime.map(str::to_string),
+                size_bytes,
+            )
+            .with_msg_id(delivered.msg_id))
+        }
+        UploadAttachmentType::File(mut file) => {
+            if file.file_url.trim().is_empty() {
+                file.file_url =
+                    wait_for_upload_file_url(upload_callbacks.as_ref(), &file.file_id).await?;
+            }
+            let delivered = send_uploaded_async_file(api, thread_id, kind, &file).await?;
+            Ok(attachment_send_from_response(
+                UploadAttachmentType::File(file),
+                filename,
+                mime.map(str::to_string),
+                size_bytes,
+            )
+            .with_msg_id(delivered.msg_id))
+        }
+    }
+}
+
+async fn wait_for_upload_file_url(
+    upload_callbacks: Option<&HostedUploadCallbacks>,
+    file_id: &str,
+) -> ZaloResult<String> {
+    if file_id.trim().is_empty() {
+        return Err(ZaloError::api("attachment upload returned empty file_id"));
+    }
+    let Some(upload_callbacks) = upload_callbacks else {
+        return Err(ZaloError::api(
+            "attachment upload file_url callback store is unavailable",
+        ));
+    };
+    let key = format!("{}:{file_id}", upload_callbacks.key_prefix);
+    let unknown_key = format!(
+        "{}:{UNKNOWN_UPLOAD_FILE_ID_KEY}",
+        upload_callbacks.key_prefix
+    );
+    tracing::info!(
+        file_id = %file_id,
+        key_prefix = %upload_callbacks.key_prefix,
+        "waiting for hosted upload file_url callback"
+    );
+    for _ in 0..150 {
+        let mut file_urls = upload_callbacks.file_urls.lock().await;
+        if let Some(url) = file_urls.remove(&key) {
+            if !url.trim().is_empty() {
+                tracing::info!(
+                    file_id = %file_id,
+                    key_prefix = %upload_callbacks.key_prefix,
+                    "hosted upload file_url callback matched"
+                );
+                return Ok(url);
+            }
+        }
+        if let Some(url) = file_urls.remove(&unknown_key) {
+            if !url.trim().is_empty() {
+                tracing::info!(
+                    file_id = %file_id,
+                    key_prefix = %upload_callbacks.key_prefix,
+                    "hosted upload file_url callback matched without callback file_id"
+                );
+                return Ok(url);
+            }
+        }
+        drop(file_urls);
+        tokio::time::sleep(std::time::Duration::from_millis(100)).await;
+    }
+    Err(ZaloError::api(
+        "timed out waiting for attachment upload file_url callback",
     ))
+}
+
+async fn send_uploaded_image(
+    api: &API,
+    thread_id: &str,
+    kind: &str,
+    image: &UploadAttachmentImageResponse,
+) -> ZaloResult<HostedZaloSendResult> {
+    let ctx = api.get_context();
+    let is_group = kind == "group";
+    let mut params = json!({
+        "photoId": image.photo_id,
+        "clientId": now_millis().to_string(),
+        "desc": "",
+        "width": image.width,
+        "height": image.height,
+        "rawUrl": image.normal_url,
+        "hdUrl": image.hd_url,
+        "thumbUrl": image.thumb_url,
+        "hdSize": image.total_size.to_string(),
+        "zsource": -1,
+        "ttl": 0,
+        "jcp": "{\"convertible\":\"jxl\"}",
+    });
+    if is_group {
+        params["grid"] = json!(thread_id);
+        params["oriUrl"] = json!(image.normal_url);
+    } else {
+        params["toid"] = json!(thread_id);
+        params["normalUrl"] = json!(image.normal_url);
+    }
+
+    let params_json = serde_json::to_string(&params)?;
+    let encrypted = ctx
+        .encode_aes(&params_json)
+        .ok_or_else(|| ZaloError::api("Failed to encrypt hosted image send params"))?;
+    let service = format!(
+        "{}/api/{}/photo_original/send",
+        ctx.service("file")?,
+        if is_group { "group" } else { "message" }
+    );
+    let url = ctx.make_url(&service, &[("nretry", "0".to_string())], true)?;
+    let body = format!("params={}", urlencoding::encode(&encrypted));
+    let resp = ctx
+        .request(Method::POST, &url, Some(reqwest::Body::from(body)))
+        .await?;
+    ctx.resolve(resp, true).await
+}
+
+trait UploadedAsyncFile {
+    fn file_id(&self) -> &str;
+    fn checksum(&self) -> &str;
+    fn file_url(&self) -> &str;
+    fn file_name(&self) -> &str;
+    fn total_size(&self) -> u64;
+    fn client_file_id(&self) -> i64;
+}
+
+impl UploadedAsyncFile for UploadAttachmentFileResponse {
+    fn file_id(&self) -> &str {
+        &self.file_id
+    }
+
+    fn checksum(&self) -> &str {
+        &self.checksum
+    }
+
+    fn file_url(&self) -> &str {
+        &self.file_url
+    }
+
+    fn file_name(&self) -> &str {
+        &self.file_name
+    }
+
+    fn total_size(&self) -> u64 {
+        self.total_size
+    }
+
+    fn client_file_id(&self) -> i64 {
+        self.client_file_id
+    }
+}
+
+impl UploadedAsyncFile for UploadAttachmentVideoResponse {
+    fn file_id(&self) -> &str {
+        &self.file_id
+    }
+
+    fn checksum(&self) -> &str {
+        &self.checksum
+    }
+
+    fn file_url(&self) -> &str {
+        &self.file_url
+    }
+
+    fn file_name(&self) -> &str {
+        &self.file_name
+    }
+
+    fn total_size(&self) -> u64 {
+        self.total_size
+    }
+
+    fn client_file_id(&self) -> i64 {
+        self.client_file_id
+    }
+}
+
+async fn send_uploaded_async_file<T: UploadedAsyncFile>(
+    api: &API,
+    thread_id: &str,
+    kind: &str,
+    file: &T,
+) -> ZaloResult<HostedZaloSendResult> {
+    let ctx = api.get_context();
+    let is_group = kind == "group";
+    let mut params = json!({
+        "fileId": file.file_id(),
+        "checksum": file.checksum(),
+        "checksumSha": "",
+        "extention": file_extension(file.file_name()),
+        "totalSize": file.total_size(),
+        "fileName": file.file_name(),
+        "clientId": file.client_file_id(),
+        "fType": 1,
+        "fileCount": 0,
+        "fdata": "{}",
+        "fileUrl": file.file_url(),
+        "zsource": -1,
+        "ttl": 0,
+    });
+    if is_group {
+        params["grid"] = json!(thread_id);
+    } else {
+        params["toid"] = json!(thread_id);
+    }
+
+    let params_json = serde_json::to_string(&params)?;
+    let encrypted = ctx
+        .encode_aes(&params_json)
+        .ok_or_else(|| ZaloError::api("Failed to encrypt hosted async file send params"))?;
+    let service = format!(
+        "{}/api/{}/asyncfile/msg",
+        ctx.service("file")?,
+        if is_group { "group" } else { "message" }
+    );
+    let url = ctx.make_url(&service, &[("nretry", "0".to_string())], true)?;
+    let body = format!("params={}", urlencoding::encode(&encrypted));
+    let resp = ctx
+        .request(Method::POST, &url, Some(reqwest::Body::from(body)))
+        .await?;
+    ctx.resolve(resp, true).await
+}
+
+fn deserialize_optional_string_like<'de, D>(deserializer: D) -> Result<String, D::Error>
+where
+    D: Deserializer<'de>,
+{
+    let value = serde_json::Value::deserialize(deserializer)?;
+    match value {
+        serde_json::Value::String(s) => Ok(s),
+        serde_json::Value::Number(n) => Ok(n.to_string()),
+        serde_json::Value::Null => Ok(String::new()),
+        other => Err(D::Error::custom(format!(
+            "expected string-like msgId, got {other}"
+        ))),
+    }
+}
+
+fn file_extension(filename: &str) -> String {
+    filename
+        .rsplit_once('.')
+        .map(|(_, ext)| ext.to_ascii_lowercase())
+        .filter(|ext| !ext.trim().is_empty())
+        .unwrap_or_default()
 }
 
 fn attachment_send_from_response(
@@ -715,6 +1022,13 @@ fn attachment_send_from_response(
     .with_fallback_size(fallback_size)
 }
 
+fn now_millis() -> i64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .unwrap_or_default()
+        .as_millis() as i64
+}
+
 fn msg_id_from_finished(value: &serde_json::Value) -> Option<String> {
     fn find(value: &serde_json::Value) -> Option<String> {
         match value {
@@ -747,6 +1061,7 @@ fn value_to_string(value: &serde_json::Value) -> Option<String> {
 
 trait RichFileFallback {
     fn with_fallback_size(self, fallback_size: i64) -> Self;
+    fn with_msg_id(self, msg_id: String) -> Self;
 }
 
 impl RichFileFallback for HostedAttachmentSend {
@@ -754,6 +1069,11 @@ impl RichFileFallback for HostedAttachmentSend {
         if self.file.size_bytes <= 0 {
             self.file.size_bytes = fallback_size;
         }
+        self
+    }
+
+    fn with_msg_id(mut self, msg_id: String) -> Self {
+        self.msg_id = non_empty(&msg_id);
         self
     }
 }
@@ -917,6 +1237,12 @@ mod tests {
         assert_eq!(sent.file.size_bytes, 42);
         assert_eq!(sent.file.media_kind.as_deref(), Some("file"));
         assert!(sent.file.id.is_none());
+    }
+
+    #[test]
+    fn hosted_async_file_extension_is_lowercase_and_optional() {
+        assert_eq!(file_extension("CLAUDE.MD"), "md");
+        assert_eq!(file_extension("README"), "");
     }
 
     #[test]

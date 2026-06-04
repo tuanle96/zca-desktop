@@ -12,6 +12,7 @@ use crate::error::{AppError, AppResult};
 use crate::models::{FileInitRequest, MessageRichPayload, QrFlowStatus, RealtimeEvent, RichFile};
 use crate::zalo_host::{
     HostedCredentials, HostedIncomingMessage, HostedQrEvent, HostedRealtimeEvent,
+    HostedUploadCallbacks,
 };
 
 type RichCiphertext = (Option<Vec<u8>>, Option<Vec<u8>>);
@@ -57,6 +58,7 @@ impl SendThrottle {
 pub struct HostedSessionManager {
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
     qr_flows: Arc<Mutex<HashMap<Uuid, QrFlowStatus>>>,
+    upload_file_urls: Arc<Mutex<HashMap<String, String>>>,
     throttle: SendThrottle,
 }
 
@@ -69,6 +71,7 @@ struct HostedRealtimeContext<'a> {
     user_id: Uuid,
     account_id: Uuid,
     source: &'a str,
+    upload_file_urls: Arc<Mutex<HashMap<String, String>>>,
 }
 
 struct QrFlowContext {
@@ -98,6 +101,7 @@ impl Default for HostedSessionManager {
         Self {
             sessions: Arc::new(Mutex::new(HashMap::new())),
             qr_flows: Arc::new(Mutex::new(HashMap::new())),
+            upload_file_urls: Arc::new(Mutex::new(HashMap::new())),
             throttle: SendThrottle::new(Duration::from_millis(800)),
         }
     }
@@ -233,9 +237,20 @@ impl HostedSessionManager {
         if !wait.is_zero() {
             tokio::time::sleep(wait).await;
         }
-        crate::zalo_host::send_file(&api, thread_id, filename, mime, bytes, kind)
-            .await
-            .map_err(|e| AppError::BadRequest(format!("hosted file send failed: {e}")))
+        crate::zalo_host::send_file(
+            &api,
+            thread_id,
+            filename,
+            mime,
+            bytes,
+            kind,
+            Some(HostedUploadCallbacks {
+                file_urls: self.upload_file_urls.clone(),
+                key_prefix: account_id.to_string(),
+            }),
+        )
+        .await
+        .map_err(|e| AppError::BadRequest(format!("hosted file send failed: {e}")))
     }
 
     pub async fn send_reaction(
@@ -329,6 +344,7 @@ impl HostedSessionManager {
             let account_id = account.id;
             match restore_one_account(
                 self.sessions.clone(),
+                self.upload_file_urls.clone(),
                 db.clone(),
                 config.clone(),
                 objects.clone(),
@@ -352,12 +368,14 @@ impl HostedSessionManager {
     fn clone_for_task(&self) -> HostedSessionTaskHandle {
         HostedSessionTaskHandle {
             sessions: self.sessions.clone(),
+            upload_file_urls: self.upload_file_urls.clone(),
         }
     }
 }
 
 async fn restore_one_account(
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
+    upload_file_urls: Arc<Mutex<HashMap<String, String>>>,
     db: crate::Db,
     config: crate::Config,
     objects: Arc<dyn ObjectStore>,
@@ -407,6 +425,7 @@ async fn restore_one_account(
                 user_id: account.user_id,
                 account_id: account.id,
                 source: "restored",
+                upload_file_urls: upload_file_urls.clone(),
             };
             handle_hosted_realtime_event(&ctx, event).await;
         }
@@ -416,6 +435,7 @@ async fn restore_one_account(
 
 struct HostedSessionTaskHandle {
     sessions: Arc<Mutex<HashMap<Uuid, HostedSession>>>,
+    upload_file_urls: Arc<Mutex<HashMap<String, String>>>,
 }
 
 async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
@@ -497,19 +517,12 @@ async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
         .await
         .map_err(|e| AppError::BadRequest(format!("listener failed: {e}")))?;
 
-    // Re-login once to keep an API handle paired with the listener handle in the
-    // manager. This avoids sharing the API value consumed above by Arc::new.
-    let api = Arc::new(
-        crate::zalo_host::login(credentials, true)
-            .await
-            .map_err(|e| AppError::BadRequest(format!("session login failed: {e}")))?,
-    );
     sessions.sessions.lock().await.insert(
         account.id,
         HostedSession {
             account_id: account.id,
             state: HostedSessionState::Online,
-            api,
+            api: listener_api.clone(),
             listener: Arc::new(Mutex::new(listener)),
         },
     );
@@ -532,6 +545,7 @@ async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
                 user_id,
                 account_id: account.id,
                 source: "qr",
+                upload_file_urls: sessions.upload_file_urls.clone(),
             };
             handle_hosted_realtime_event(&ctx, event).await;
         }
@@ -600,6 +614,34 @@ async fn handle_hosted_realtime_event(ctx: &HostedRealtimeContext<'_>, event: Ho
                 &undo.msg_id,
                 undo.outgoing,
             );
+        }
+        HostedRealtimeEvent::Upload(upload) => {
+            if !upload.file_url.trim().is_empty() {
+                let file_id = if upload.file_id.trim().is_empty() {
+                    "__unknown_file_id__"
+                } else {
+                    upload.file_id.as_str()
+                };
+                let key = format!("{}:{file_id}", ctx.account_id);
+                ctx.upload_file_urls
+                    .lock()
+                    .await
+                    .insert(key, upload.file_url);
+                tracing::info!(
+                    account_id = %ctx.account_id,
+                    source = ctx.source,
+                    has_file_id = !upload.file_id.trim().is_empty(),
+                    "stored hosted upload callback"
+                );
+            } else {
+                tracing::warn!(
+                    account_id = %ctx.account_id,
+                    source = ctx.source,
+                    has_file_id = !upload.file_id.trim().is_empty(),
+                    has_file_url = !upload.file_url.trim().is_empty(),
+                    "ignored incomplete hosted upload callback"
+                );
+            }
         }
     }
 }

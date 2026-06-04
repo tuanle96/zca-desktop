@@ -165,9 +165,18 @@ async fn parse_response<T: for<'de> Deserialize<'de>>(res: reqwest::Response) ->
     let status = res.status();
     if !status.is_success() {
         let body = res.text().await.unwrap_or_default();
+        let message = serde_json::from_str::<serde_json::Value>(&body)
+            .ok()
+            .and_then(|v| {
+                v.get("message")
+                    .and_then(|m| m.as_str())
+                    .or_else(|| v.get("error").and_then(|m| m.as_str()))
+                    .map(str::to_string)
+            })
+            .filter(|m| !m.trim().is_empty())
+            .unwrap_or_else(|| format!("body_len={}", body.len()));
         return Err(format!(
-            "cloud request failed: status={status}, body_len={}",
-            body.len()
+            "cloud request failed: status={status}, message={message}"
         ));
     }
     res.json::<T>()

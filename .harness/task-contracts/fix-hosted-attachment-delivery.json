@@ -1,0 +1,71 @@
+{
+  "schemaVersion": 1,
+  "id": "fix-hosted-attachment-delivery",
+  "type": "bugfix",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Fix cloud hosted attachment sends that uploaded the blob and rendered a local outgoing bubble but did not deliver a Zalo attachment message to the recipient.",
+    "goals": [
+      "After uploading an image via zca-rust, call Zalo's photo_original/send endpoint so the recipient receives the attachment",
+      "Persist an outgoing cloud file message only after Zalo accepts the actual attachment-send request",
+      "Attempt generic/video delivery through Zalo asyncfile/msg after upload and fail the request if Zalo rejects the send",
+      "Keep encrypted object-store handling unchanged: decrypt only in backend memory and never log plaintext file content"
+    ],
+    "nonGoals": [
+      "Guaranteeing all generic/video file types work before live Zalo evidence confirms asyncfile/msg accepts the uploaded metadata",
+      "Changing desktop local mode",
+      "Changing cloud storage encryption or object-store schemas",
+      "Adding retry queues for failed attachment sends"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "image-delivery",
+      "description": "Hosted cloud image sends call Zalo's attachment message endpoint after upload and return the Zalo msgId instead of a synthetic local id.",
+      "verification": {
+        "manual": "Run backend tests plus live cloud image-send smoke; inspect server/Tauri logs for successful send and no plaintext file leakage."
+      }
+    },
+    {
+      "id": "unsupported-file-guard",
+      "description": "Hosted generic/video file uploads call asyncfile/msg after upload and no longer render as successfully sent unless Zalo accepts the send request.",
+      "verification": {
+        "manual": "Run backend tests covering unsupported uploaded file responses and verify the API returns a bad_request rather than persisting a fake message."
+      }
+    }
+  ],
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor",
+    "security-reviewer",
+    "architecture-reviewer"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Write",
+      "Edit",
+      "Bash(bun run check*)",
+      "Bash(bun run build*)",
+      "Bash(cargo test*)",
+      "Bash(cargo clippy*)",
+      "Bash(cargo fmt*)",
+      "Bash(node .harness/scripts/*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git commit*)",
+      "Bash(git push*)"
+    ],
+    "deny": []
+  },
+  "doneRequires": [
+    "tests",
+    "smoke",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/fix-hosted-attachment-delivery.json"
+}

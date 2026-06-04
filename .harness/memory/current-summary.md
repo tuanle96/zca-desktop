@@ -1,10 +1,9 @@
-[harness] project: phase=mvp, open_features=11, open_risks=6
+[harness] project: phase=mvp, open_features=6, open_risks=8
 [harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message
 [harness] scope-out: Persistence/cache (Phase 3), Rich media/attachments (Phase 4), Cross-install sync relay (Phase 5 stretch), Signed packaging (Phase 6)
-[harness] latest decision: Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.
 [harness] recent project memory:
+  - feature_created: Feature created: Cloud device restore consent
   - handoff: Phase 1 vertical slice is done end-to-end and live-verified: scaffold, zca-rust wiring, credential import, single login, realtime listener (zalo://message), send text, file-backed dev session, Zalo-style chat UI, and contacts (get_all_friends, 85 loaded). Next: secure-cred-store (keychain, offline-provable) then session-manager (multi-account + send throttle).
   - risk: Dev affordances pending replacement: .zalo-cred.json file loader (-> secure-cred-store OS keychain), no per-account send throttle (ban risk r1), in-command session store (-> session/ layer), UI placeholder tabs/icons, and a stale bun.lock for bits-ui/@types/node since bun is not installed.
   - decision: Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.
   - decision: Live Zalo features are verified with #[ignore] cargo tests that read .zalo-cred.json, run locally (bash tool runs on the user's Mac, normal IP); evidence captures only non-secret diagnostics and every smoke sidecar is scanned for token/PII leakage before commit.
-  - decision: Credentials are read by the Rust core from .zalo-cred.json (dev) / OS keychain (planned); they MUST never enter the webview/UI. UI uses file-backed commands + non-secret DTOs only.

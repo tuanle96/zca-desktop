@@ -23,6 +23,22 @@ Existing violations may be grandfathered in
 Run `node .harness/scripts/check-structural-baseline.mjs` to verify the
 baseline is well-formed and has not grown versus `HEAD`.
 
+## Cloud backend (`server/`)
+
+`server/` is a **separate deployable unit** — the Zalo Cloud SaaS host (Rust
+**axum + sqlx**, Postgres + S3) the desktop app reaches over HTTP at
+`http://127.0.0.1:37880`. It sits outside the `src-tauri/` layer order above and
+has its own lifecycle (`cargo run`, or Docker).
+
+- **Dev stack (hot-reload):** `docker compose -f server/docker-compose.dev.yml up -d --build`
+  starts Postgres + MinIO + MailHog + the server, auto-rebuilding on `server/src`
+  edits via `cargo-watch`. In dev the login code is returned inline
+  (`ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS=1`); outgoing mail lands in MailHog
+  (<http://localhost:37885>).
+- **Deploy:** `server/docker-compose.prod.yml` runs only the compiled `runtime`
+  image against an external Postgres + S3.
+- Full run/deploy/env reference → `server/README.md`.
+
 ## Layer responsibilities
 
 | Layer       | Responsibility                                                              |
@@ -67,4 +83,5 @@ For TypeScript projects, the structural test also enforces selected
 
 (Most recent first. Created automatically by `/add-adr`.)
 
+- `0007-cloud-device-restore-consent.md` — Cloud device token restore requires explicit user intent before keychain access.
 - `0001-use-agent-harness-kit.md` — Adopt agent-harness-kit as the harness layer.

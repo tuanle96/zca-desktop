@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "reviewer": "architecture-reviewer",
+  "taskId": "feature-1",
+  "featureId": "feature-1",
+  "decision": "pass",
+  "createdAt": "2026-06-04T09:32:30Z",
+  "checkedFiles": [
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/routes/+page.svelte",
+    "src/app.css",
+    "package.json",
+    ".harness/docs/adr/0007-cloud-device-restore-consent.md",
+    ".harness/task-contracts/feature-1.json",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checkedInvariants": [
+    "layering",
+    "ui-core-boundary",
+    "cloud-session-boundary",
+    "explicit-user-intent"
+  ],
+  "diffCoverage": {
+    "changedFiles": [
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/routes/+page.svelte",
+      "src/app.css",
+      "package.json",
+      ".harness/docs/adr/0007-cloud-device-restore-consent.md",
+      ".harness/task-contracts/feature-1.json",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "reviewedFiles": [
+      "src/lib/session.svelte.ts",
+      "src/lib/components/chat/QrLoginScreen.svelte",
+      "src/routes/+page.svelte",
+      "src/app.css",
+      "package.json",
+      ".harness/docs/adr/0007-cloud-device-restore-consent.md",
+      ".harness/task-contracts/feature-1.json",
+      "src-tauri/src/command/cloud.rs"
+    ],
+    "uncoveredFiles": [],
+    "coverage": 1,
+    "notes": "The change is UI orchestration and presentation only: startup stops before keychain lookup, QR login gate tracks a non-secret marker, explicit continue calls the existing command boundary through the session store, and the package/style diff adds a display font used by the login gate. Also reviewed src-tauri/src/command/cloud.rs because it is part of the current command-layer diff covered by the completion gate."
+  },
+  "confidence": 0.88,
+  "unreviewedRiskAreas": [],
+  "resolvedFindings": [],
+  "requiredGates": [
+    "structural",
+    "tests"
+  ],
+  "findings": [
+    {
+      "severity": "info",
+      "rule": "ui-core-boundary",
+      "file": "src/lib/session.svelte.ts",
+      "evidence": "restore() no longer invokes loadCloudDeviceSession at startup. Keychain-backed device-token loading is isolated to restoreCloudDevice(), which is called from the explicit QR-login continue action.",
+      "fix": "None required."
+    }
+  ],
+  "summary": "Architecture pass: cloud device reconnect is now explicit UI intent over the existing Tauri command boundary; the package/style diff is UI presentation only and no new Rust layer or backend API was introduced."
+}

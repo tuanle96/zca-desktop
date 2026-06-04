@@ -1023,10 +1023,10 @@
         }
       ]
     },
-      {
-        "id": "cloud-media-mirroring",
-        "title": "Cloud/SaaS: mirror hosted media blobs into encrypted object storage",
-        "passes": true,
+    {
+      "id": "cloud-media-mirroring",
+      "title": "Cloud/SaaS: mirror hosted media blobs into encrypted object storage",
+      "passes": true,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/cloud-media-mirroring.json",
       "evidencePath": ".harness/evidence/cloud-media-mirroring.json",
@@ -1050,42 +1050,67 @@
           "id": "verify",
           "title": "Backend/frontend gates and evidence bundle prove media mirroring behavior",
           "done": true
-          }
-        ]
-      },
-      {
-        "id": "cloud-attachment-send",
-        "title": "Cloud/SaaS: send encrypted uploaded files through hosted Zalo sessions",
-        "passes": true,
-        "domain": "default",
-        "taskContractPath": ".harness/task-contracts/cloud-attachment-send.json",
-        "evidencePath": ".harness/evidence/cloud-attachment-send.json",
-        "steps": [
-          {
-            "id": "backend-api",
-            "title": "Backend exposes a hosted send-file API that validates user/account/file ownership",
-            "done": true
-          },
-          {
-            "id": "hosted-upload",
-            "title": "Backend decrypts encrypted object-store blobs in memory and uploads them via zca-rust hosted sessions",
-            "done": true
-          },
-          {
-            "id": "desktop-flow",
-            "title": "Desktop cloud upload flow sends the uploaded file through the backend and persists refresh-safe message metadata",
-            "done": true
-          },
-          {
-            "id": "verify",
-            "title": "Backend/frontend gates and evidence bundle prove hosted attachment send behavior",
-            "done": true
-          }
-        ]
-      },
-      {
-        "id": "app-packaging",
-        "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
+        }
+      ]
+    },
+    {
+      "id": "cloud-attachment-send",
+      "title": "Cloud/SaaS: send encrypted uploaded files through hosted Zalo sessions",
+      "passes": true,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/cloud-attachment-send.json",
+      "evidencePath": ".harness/evidence/cloud-attachment-send.json",
+      "steps": [
+        {
+          "id": "backend-api",
+          "title": "Backend exposes a hosted send-file API that validates user/account/file ownership",
+          "done": true
+        },
+        {
+          "id": "hosted-upload",
+          "title": "Backend decrypts encrypted object-store blobs in memory and uploads them via zca-rust hosted sessions",
+          "done": true
+        },
+        {
+          "id": "desktop-flow",
+          "title": "Desktop cloud upload flow sends the uploaded file through the backend and persists refresh-safe message metadata",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Backend/frontend gates and evidence bundle prove hosted attachment send behavior",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "fix-hosted-attachment-delivery",
+      "title": "Cloud/SaaS: hosted attachment sends deliver to recipient instead of local-only bubble",
+      "passes": false,
+      "domain": "default",
+      "taskContractPath": ".harness/task-contracts/fix-hosted-attachment-delivery.json",
+      "evidencePath": ".harness/evidence/fix-hosted-attachment-delivery.json",
+      "steps": [
+        {
+          "id": "image-delivery",
+          "title": "After upload, backend sends image attachments through Zalo photo_original/send and uses the real msgId",
+          "done": false
+        },
+        {
+          "id": "unsupported-file-guard",
+          "title": "Generic/video files call Zalo asyncfile/msg and do not persist if Zalo rejects delivery",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Backend gates, live logs, and evidence prove hosted attachment delivery semantics",
+          "done": true
+        }
+      ]
+    },
+    {
+      "id": "app-packaging",
+      "title": "Phase 6: Signed bundles for macOS/Windows/Linux via Tauri bundler",
       "passes": false,
       "domain": "default",
       "taskContractPath": ".harness/task-contracts/app-packaging.json",
@@ -1102,6 +1127,43 @@
           "done": false
         }
       ]
+    },
+    {
+      "id": "feature-1",
+      "title": "Cloud device restore consent",
+      "passes": true,
+      "classification": "high-risk",
+      "estimatedHours": 3.1,
+      "storyPath": ".harness/docs/stories/feature-1-cloud-device-restore-consent.md",
+      "taskContractPath": ".harness/task-contracts/feature-1.json",
+      "evidencePath": ".harness/evidence/feature-1.json",
+      "allowedLayers": [
+        "command"
+      ],
+      "requiresAdr": true,
+      "requiredReviewers": [
+        "architecture-reviewer",
+        "security-reviewer"
+      ],
+      "status": "done",
+      "steps": [
+        {
+          "id": "startup-no-keychain",
+          "title": "Startup and login gate initialization do not automatically read the cloud device token from Keychain",
+          "done": true
+        },
+        {
+          "id": "explicit-continue",
+          "title": "Previously linked cloud devices reconnect only after the user presses an explicit continue action",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "Frontend gates, structural check, evidence bundle, and reviews prove the consent behavior",
+          "done": true
+        }
+      ],
+      "updatedAt": "2026-06-04T09:28:24.132Z"
     }
   ]
 }

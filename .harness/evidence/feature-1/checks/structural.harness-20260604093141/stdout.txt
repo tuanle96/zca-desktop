@@ -1,0 +1,5 @@
+
+> zca-desktop@0.1.0 harness:check
+> node .harness/scripts/harness-check.mjs
+
+harness:check: structural test disabled (structuralTest.engine=none) — no-op pass until the adapter is wired (see ADR-0003).

@@ -1,0 +1,20 @@
+{
+  "name": "source.explicit-continue",
+  "command": "srcwalk show src/lib/components/chat/QrLoginScreen.svelte:80-150,src/lib/session.svelte.ts:296-325 --scope . --budget 10000",
+  "status": "pass",
+  "summary": "srcwalk show src/lib/components/chat/QrLoginScreen.svelte:80-150,src/lib/session.svelte.ts:296-325 --scope . --budget 10000 exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T09:31:41.685Z",
+  "finishedAt": "2026-06-04T09:31:41.781Z",
+  "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+  "workingTreeHash": "sha256:a894b7283dc14c879f78fb398389339f7253bb57654e4776081016f32d0b6747",
+  "stdoutHash": "sha256:9b10d310c9c47f93e4fc67d6499b61ccfcdb462c5281f842ade5546c45452adf",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093141/stdout.txt",
+  "stderrPath": ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093141/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093141/stdout.txt",
+    ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093141/stderr.txt"
+  ]
+}

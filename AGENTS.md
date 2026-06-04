@@ -8,12 +8,14 @@ always-on rules live in `.kiro/steering/harness.md`; read the `.harness/*` files
 
 ## Stack & layout
 - Rust core: `src-tauri/src/` — layers `types → config → store → zalo → session → command` (forward-only; ADR-0003).
+- Cloud backend: `server/` — Rust **axum + sqlx** SaaS host (Postgres + S3) for sessions/sync/media; the app talks to it over HTTP at `http://127.0.0.1:37880`. Runs native (`cargo run`) or via Docker — details → `server/README.md`.
 - Frontend (`ui`): `src/` (SvelteKit SPA, `ssr=false`) → calls core via Tauri `invoke`/`listen`.
 - shadcn-svelte components in `src/lib/components/ui/`; `cn` in `src/lib/utils.ts`; theme in `src/app.css`.
 
 ## Commands
 - Dev: `bun run tauri dev`  ·  Frontend build: `bun run build`  ·  Type-check: `bun run check`
-- Rust build/test/lint: `cargo build|test|clippy --manifest-path src-tauri/Cargo.toml -- -D warnings`
+- Cloud backend (dev, hot-reload): `docker compose -f server/docker-compose.dev.yml up -d --build` — brings up Postgres+MinIO+MailHog + the server at `:37880` and auto-rebuilds on `server/src` edits (`cargo-watch`). Logs: `… logs -f server`; stop: `… down`. Deploy/prod → `server/docker-compose.prod.yml`.
+- Rust build/test/lint: `cargo build|test|clippy --manifest-path src-tauri/Cargo.toml -- -D warnings` (cloud backend: same with `--manifest-path server/Cargo.toml`)
 - Readiness gate: `node .harness/scripts/harness-readiness.mjs --strict`
 - Add shadcn component: `bunx shadcn-svelte@latest add <name>`
 
@@ -40,5 +42,6 @@ always-on rules live in `.kiro/steering/harness.md`; read the `.harness/*` files
 ## Pointers
 - Roadmap/backlog → `.harness/feature_list.json`  ·  Phases/risks/decisions → `.harness/project/state.json`
 - Architecture → `.harness/docs/architecture.md`  ·  Invariants → `.harness/docs/golden-principles.md`
+- Cloud backend (run · deploy · env vars) → `server/README.md`
 - Model routing (Opus=impl, Sonnet=review, Haiku=explore) → `.harness/config.json#models`
 - Session memory → `.harness/memory/current-summary.md`  ·  Progress log → `.harness/PROGRESS.md`

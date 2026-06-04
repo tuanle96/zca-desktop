@@ -8,7 +8,7 @@
   import SettingsDialog from "$lib/components/chat/SettingsDialog.svelte";
   import { session } from "$lib/session.svelte";
 
-  // Try to restore a saved session before showing the QR gate.
+  // Check startup cloud-device state without touching the OS keychain.
   onMount(() => session.restore());
   onDestroy(() => session.dispose());
 </script>
@@ -32,7 +32,7 @@
 {:else if session.restoring}
   <div class="bg-background flex h-screen w-screen flex-col items-center justify-center gap-3">
     <Loader2 class="text-brand size-9 animate-spin" />
-    <p class="text-muted-foreground text-sm">Đang khôi phục phiên đăng nhập…</p>
+    <p class="text-muted-foreground text-sm">Đang kiểm tra trạng thái thiết bị cloud…</p>
   </div>
 {:else}
   <QrLoginScreen />

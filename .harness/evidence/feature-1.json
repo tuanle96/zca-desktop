@@ -1,0 +1,184 @@
+{
+  "schemaVersion": 1,
+  "taskId": "feature-1",
+  "featureId": "feature-1",
+  "status": "pass",
+  "createdAt": "2026-06-04T09:33:00Z",
+  "updatedAt": "2026-06-04T09:41:12Z",
+  "diffSummary": "Cloud device restore consent: Tauri startup no longer reads the keychain-backed SaaS device token automatically. The login gate remembers only a non-secret linked-device marker, shows an explicit continue action for a linked cloud device, and fresh magic-link verification still stores the real device token in Keychain while returning the __keychain__ sentinel to the UI. Startup copy now says cloud device state rather than local session restore.",
+  "changedFiles": [
+    ".harness/PLAN.md",
+    ".harness/docs/adr/0007-cloud-device-restore-consent.md",
+    ".harness/docs/architecture.md",
+    ".harness/docs/stories/feature-1-cloud-device-restore-consent.md",
+    ".harness/task-contracts/feature-1.json",
+    ".harness/feature_list.json",
+    ".harness/reviews/feature-1/architecture-reviewer.json",
+    ".harness/reviews/feature-1/security-reviewer.json",
+    "package.json",
+    "src/app.css",
+    "src/lib/session.svelte.ts",
+    "src/lib/components/chat/QrLoginScreen.svelte",
+    "src/routes/+page.svelte",
+    "src-tauri/src/command/cloud.rs"
+  ],
+  "checks": [
+    {
+      "name": "source.startup-no-keychain",
+      "command": "srcwalk show src/lib/session.svelte.ts:289-322,src/lib/components/chat/QrLoginScreen.svelte:80-100,src/routes/+page.svelte:32-36 --scope . --budget 9000",
+      "status": "pass",
+      "summary": "Source evidence proves startup restore stops without keychain lookup, QR login gate only reads the non-secret linked-device marker during initialization, and startup copy says cloud device state.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:39:04.477Z",
+      "finishedAt": "2026-06-04T09:39:04.549Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+      "stdoutHash": "sha256:01c5c82391a1ecd0bcdd75ed5f7f1e1520cc381c9f6cd7244d7e8d9229014fe1",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/check.json",
+        ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stdout.txt",
+        ".harness/evidence/feature-1/checks/source.startup-no-keychain-20260604093904/stderr.txt"
+      ],
+      "acceptanceId": "startup-no-keychain"
+    },
+    {
+      "name": "source.explicit-continue",
+      "command": "srcwalk show src/lib/components/chat/QrLoginScreen.svelte:80-150,src/lib/session.svelte.ts:296-325 --scope . --budget 10000",
+      "status": "pass",
+      "summary": "Source evidence proves the linked-device continue button calls session.restoreCloudDevice(), and that function is the path that reads loadCloudDeviceSession and connects with the __keychain__ sentinel.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:39:04.804Z",
+      "finishedAt": "2026-06-04T09:39:04.856Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+      "stdoutHash": "sha256:0d6bb815c974199c9af2d7736e9648e8634eaac60916aaa89cfb3c8b0bf38b79",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093904/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093904/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093904/check.json",
+        ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093904/stdout.txt",
+        ".harness/evidence/feature-1/checks/source.explicit-continue-20260604093904/stderr.txt"
+      ],
+      "acceptanceId": "explicit-continue"
+    },
+    {
+      "name": "tests.frontend-check",
+      "command": "bun run check",
+      "status": "pass",
+      "summary": "Frontend tests/type-check gate completed with 0 Svelte errors and 0 warnings after the cloud device restore consent changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:39:04.812Z",
+      "finishedAt": "2026-06-04T09:39:09.808Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+      "stdoutHash": "sha256:eec5edf349cec958d7fb529d7e0a16e48cfd0b1d440cba5df4bbdc9602c4572f",
+      "stderrHash": "sha256:3644a4d9689081b95f3d7aac697f105d1265177ad27fd8f6483bd8765fbb07d3",
+      "stdoutPath": ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/frontend.check-20260604093904/check.json",
+        ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stdout.txt",
+        ".harness/evidence/feature-1/checks/frontend.check-20260604093904/stderr.txt"
+      ],
+      "acceptanceId": "fresh-link-regression"
+    },
+    {
+      "name": "frontend.build",
+      "command": "bun run build",
+      "status": "pass",
+      "summary": "Vite/SvelteKit production build completed after the cloud device restore consent changes.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:39:04.804Z",
+      "finishedAt": "2026-06-04T09:39:16.412Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+      "stdoutHash": "sha256:1b3f14ced1dda362b7c6e99868ec14791328d94f1c79838c1dddf7a69b14aa87",
+      "stderrHash": "sha256:72be555ea34323ca7936bb2b92f1d20f5f8ddad77678aa602b8547de262997d8",
+      "stdoutPath": ".harness/evidence/feature-1/checks/frontend.build-20260604093904/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/frontend.build-20260604093904/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/frontend.build-20260604093904/check.json",
+        ".harness/evidence/feature-1/checks/frontend.build-20260604093904/stdout.txt",
+        ".harness/evidence/feature-1/checks/frontend.build-20260604093904/stderr.txt"
+      ],
+      "acceptanceId": "fresh-link-regression"
+    },
+    {
+      "name": "structural.harness",
+      "command": "npm run harness:check",
+      "status": "pass",
+      "summary": "Harness structural check completed; this repo currently reports structuralTest.engine=none no-op pass.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:39:04.808Z",
+      "finishedAt": "2026-06-04T09:39:05.520Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:f4b9e2d7ab735053f6108b602bc89ecc25476d1550fd86d07a5378b407778779",
+      "stdoutHash": "sha256:f92d6e63a0ca26a8c79d786ba02f409a2add69c99fca7820267c14aa487522a0",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/feature-1/checks/structural.harness-20260604093904/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/structural.harness-20260604093904/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/structural.harness-20260604093904/check.json",
+        ".harness/evidence/feature-1/checks/structural.harness-20260604093904/stdout.txt",
+        ".harness/evidence/feature-1/checks/structural.harness-20260604093904/stderr.txt"
+      ],
+      "acceptanceId": "startup-no-keychain"
+    },
+    {
+      "name": "source.cloud-error-boundary",
+      "command": "srcwalk show src-tauri/src/command/cloud.rs:164-185 --scope . --budget 6000",
+      "status": "pass",
+      "summary": "Source evidence covers the existing cloud command parse_response diff: non-success cloud responses now surface a sanitized message/error field or body length fallback without exposing token values.",
+      "exitCode": 0,
+      "cwd": ".",
+      "startedAt": "2026-06-04T09:40:54.515Z",
+      "finishedAt": "2026-06-04T09:40:54.583Z",
+      "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+      "workingTreeHash": "sha256:6e79a670edadcf4683a7c4bff2968a3081cb937dcb6918d3fe1efb012f5c09d9",
+      "stdoutHash": "sha256:e177bee2e3bd62e589647da965a8fd5f8908a9658f849b71fb37ab0e88159f16",
+      "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stdoutPath": ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stdout.txt",
+      "stderrPath": ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stderr.txt",
+      "artifactPaths": [
+        ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/check.json",
+        ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stdout.txt",
+        ".harness/evidence/feature-1/checks/source.cloud-error-boundary-20260604094054/stderr.txt"
+      ]
+    }
+  ],
+  "reviewers": [
+    {
+      "name": "architecture-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/feature-1/architecture-reviewer.json",
+      "summary": "Architecture pass: explicit cloud device reconnect keeps the existing UI-to-command boundary and adds no new backend API."
+    },
+    {
+      "name": "security-reviewer",
+      "decision": "pass",
+      "artifact": ".harness/reviews/feature-1/security-reviewer.json",
+      "summary": "Security pass: the webview stores only a non-secret linked-device marker and token storage remains keychain-backed."
+    }
+  ],
+  "knownRisks": [
+    {
+      "id": "manual-keychain-prompt-not-clicked",
+      "severity": "low",
+      "description": "This evidence proves source behavior and frontend gates, but does not click through a real macOS keychain prompt in a GUI run.",
+      "disposition": "accepted",
+      "acceptedBy": "project-owner",
+      "acceptanceReason": "The user-requested change is to prevent automatic keychain access; source evidence plus Svelte/build gates prove the keychain lookup now requires an explicit continue action. A real macOS prompt click would require interactive GUI credentials and is not needed for this code-level behavior proof.",
+      "mitigation": "The source evidence shows keychain lookup is reachable only through the explicit continue action; fresh link behavior remains type/build verified.",
+      "owner": "codex"
+    }
+  ]
+}

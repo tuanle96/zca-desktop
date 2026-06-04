@@ -1,0 +1,112 @@
+# Show: 2 locations
+
+# src/lib/components/chat/QrLoginScreen.svelte (71 lines, ~642 tokens) [section]
+
+ 80      async function loadCloudSettings() {
+ 81        if (typeof localStorage === "undefined") return;
+ 82        cloudBaseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || cloudBaseUrl;
+ 83        cloudDeviceLinked = localStorage.getItem(CLOUD_DEVICE_LINKED_STORAGE_KEY) === "1";
+ 84        if (cloudDeviceLinked) cloudStatus = "Thiết bị này đã từng liên kết cloud.";
+ 85      }
+ 86  
+ 87      async function continueLinkedCloudDevice() {
+ 88        cloudBusy = true;
+ 89        cloudError = "";
+ 90        try {
+ 91          localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+ 92          const connected = await session.restoreCloudDevice(cloudBaseUrl);
+ 93          if (!connected) {
+ 94            cloudDeviceLinked = false;
+ 95            localStorage.removeItem(CLOUD_DEVICE_LINKED_STORAGE_KEY);
+ 96            cloudStatus = "Không tìm thấy phiên cloud đã liên kết trên Keychain.";
+ 97            return;
+ 98          }
+ 99          cloudDeviceLinked = true;
+100          cloudStatus = "Đã kết nối thiết bị cloud.";
+101          await refreshCloudAccounts(CLOUD_DEVICE_TOKEN_KEYCHAIN);
+102        } catch (e) {
+103          cloudError = String(e);
+104        } finally {
+105          cloudBusy = false;
+106        }
+107      }
+108  
+109    async function requestCloudLink() {
+110      cloudBusy = true;
+111      cloudError = "";
+112      try {
+113        const res = await requestCloudMagicLink(cloudBaseUrl, cloudEmail);
+114        cloudStatus = res.devMagicToken
+115          ? "Dev token đã được trả về từ backend."
+116          : "Đã gửi magic link qua email.";
+117        if (res.devMagicToken) cloudToken = res.devMagicToken;
+118          localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+119      } catch (e) {
+120        cloudError = String(e);
+121      } finally {
+122        cloudBusy = false;
+123      }
+124    }
+125  
+126    async function verifyCloudLink() {
+127      cloudBusy = true;
+128      cloudError = "";
+129      try {
+130        const res = await verifyCloudMagicLink(
+131          cloudBaseUrl,
+132          cloudEmail,
+133          cloudToken,
+134          cloudDeviceName,
+135          cloudRecoveryKey || undefined,
+136        );
+137          localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+138          localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+139          cloudDeviceLinked = true;
+140        cloudStatus = res.recoveryKey
+141          ? "Cloud đã liên kết. Lưu recovery key ở nơi an toàn."
+142          : "Cloud đã liên kết thiết bị này.";
+143        cloudIssuedRecoveryKey = res.recoveryKey ?? "";
+144        await refreshCloudAccounts(res.deviceToken);
+145        await session.connectCloud(cloudBaseUrl, res.deviceToken);
+146      } catch (e) {
+147        cloudError = String(e);
+148      } finally {
+149        cloudBusy = false;
+150      }
+
+
+---
+
+# src/lib/session.svelte.ts (30 lines, ~359 tokens) [section]
+
+296        async restoreCloudDevice(baseUrl?: string): Promise<boolean> {
+297            if (typeof localStorage === "undefined") return false;
+298            const targetBaseUrl = baseUrl || localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
+299            const saved = await loadCloudDeviceSession(targetBaseUrl).catch((e) => {
+300                log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
+301                return null;
+302            });
+303            if (!saved?.hasDeviceToken) return false;
+304  
+305            const connected = await this.connectCloud(targetBaseUrl, CLOUD_DEVICE_TOKEN_KEYCHAIN).catch((e) => {
+306                this.cloudMode = false;
+307                this.cloudBaseUrl = null;
+308                this.cloudDeviceToken = null;
+309              log.error(`cloud-restore: connect failed: ${String(e)}`);
+310              return false;
+311            });
+312            if (connected) {
+313                localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
+314                localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+315                log.info("cloud-restore: connected cloud device session");
+316            }
+317            return connected;
+318        }
+319  
+320      async connectCloud(baseUrl: string, deviceToken: string): Promise<boolean> {
+321          let connected = false;
+322          await this.run(async () => {
+323              this.cloudMode = true;
+324              this.cloudBaseUrl = baseUrl;
+325              this.cloudDeviceToken = deviceToken;
+

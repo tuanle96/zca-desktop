@@ -1,0 +1,20 @@
+{
+  "name": "structural.harness",
+  "command": "npm run harness:check",
+  "status": "pass",
+  "summary": "npm run harness:check exited 0",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T09:31:41.898Z",
+  "finishedAt": "2026-06-04T09:31:42.519Z",
+  "gitHead": "3951677e040d08f3e3a71ecb2b1e28b829af6767",
+  "workingTreeHash": "sha256:a894b7283dc14c879f78fb398389339f7253bb57654e4776081016f32d0b6747",
+  "stdoutHash": "sha256:f92d6e63a0ca26a8c79d786ba02f409a2add69c99fca7820267c14aa487522a0",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/feature-1/checks/structural.harness-20260604093141/stdout.txt",
+  "stderrPath": ".harness/evidence/feature-1/checks/structural.harness-20260604093141/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/feature-1/checks/structural.harness-20260604093141/stdout.txt",
+    ".harness/evidence/feature-1/checks/structural.harness-20260604093141/stderr.txt"
+  ]
+}

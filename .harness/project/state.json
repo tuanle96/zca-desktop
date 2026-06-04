@@ -123,7 +123,18 @@
       ]
     }
   ],
-  "features": [],
+  "features": [
+    {
+      "id": "feature-1",
+      "title": "Cloud device restore consent",
+      "status": "story-draft",
+      "passes": false,
+      "classification": "high-risk",
+      "storyPath": ".harness/docs/stories/feature-1-cloud-device-restore-consent.md",
+      "assignedReviewer": "architecture-reviewer",
+      "updatedAt": "2026-06-04T09:28:24.165Z"
+    }
+  ],
   "risks": [
     {
       "id": "r1",
@@ -190,6 +201,11 @@
     {
       "id": "d13",
       "title": "Desktop cloud mode owns only device-token backed account orchestration: hosted QR start/status and account deletion go through the backend API; local mode keeps local QR/session/logout commands.",
+      "status": "accepted"
+    },
+    {
+      "id": "d14",
+      "title": "Hosted attachment send must distinguish upload from delivery: cloud image sends require a post-upload Zalo photo_original/send call, while generic/video files remain guarded until asyncfile/msg has the upload fileUrl callback.",
       "status": "accepted"
     },
     {
@@ -267,6 +283,6 @@
       "status": "accepted"
     }
   ],
-  "updatedAt": "2026-06-03T14:21:56.000Z",
-  "lastMemoryEventAt": "2026-06-03T01:30:00.000Z"
+  "updatedAt": "2026-06-04T09:28:24.165Z",
+  "lastMemoryEventAt": "2026-06-04T09:28:24.165Z"
 }

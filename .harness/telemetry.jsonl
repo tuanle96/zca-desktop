@@ -1,0 +1,9 @@
+{"schemaVersion":1,"ts":"2026-06-04T09:40:02.629Z","event":"precompletion_block","rule":"precompletion-checklist","hook":"Stop","failures":["task-evidence"]}
+{"schemaVersion":1,"ts":"2026-06-04T09:40:37.859Z","event":"precompletion_block","rule":"precompletion-checklist","hook":"Stop","failures":["task-evidence"]}
+{"schemaVersion":1,"ts":"2026-06-04T09:41:49.025Z","event":"precompletion_loop_guard","rule":"stop_hook_active","hook":"Stop"}
+{"schemaVersion":1,"ts":"2026-06-04T09:55:43.023Z","event":"precompletion_block","rule":"precompletion-checklist","hook":"Stop","failures":["task-evidence"]}
+{"schemaVersion":1,"ts":"2026-06-04T09:57:38.973Z","event":"permission_denied","rule":"skill-permission-guard","hook":"PreToolUse","skill":"","task_id":"","tool":"apply_patch","reason":"Mutation of \"package-lock.json\" requires an active task contract. Create or activate .harness/task-contracts/<task-id>.json before editing source or technical config files."}
+{"schemaVersion":1,"ts":"2026-06-04T10:00:08.451Z","event":"permission_denied","rule":"skill-permission-guard","hook":"PreToolUse","skill":"","task_id":"feature-1","tool":"Bash","reason":"Task \"feature-1\" is not allowed to use Bash by its allow list."}
+{"schemaVersion":1,"ts":"2026-06-04T10:02:13.135Z","event":"permission_denied","rule":"skill-permission-guard","hook":"PreToolUse","skill":"","task_id":"feature-1","tool":"Bash","reason":"Task \"feature-1\" is not allowed to use Bash by its allow list."}
+{"schemaVersion":1,"ts":"2026-06-04T10:02:51.421Z","event":"permission_denied","rule":"skill-permission-guard","hook":"PreToolUse","skill":"","task_id":"feature-1","tool":"Bash","reason":"Task \"feature-1\" is not allowed to use Bash by its allow list."}
+{"schemaVersion":1,"ts":"2026-06-04T10:04:22.953Z","event":"precompletion_loop_guard","rule":"stop_hook_active","hook":"Stop"}
