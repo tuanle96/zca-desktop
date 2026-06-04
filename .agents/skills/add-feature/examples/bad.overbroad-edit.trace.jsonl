@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.addfeature-sample"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"add-feature attempted to edit .harness/config.json, outside its declared permission scope"}

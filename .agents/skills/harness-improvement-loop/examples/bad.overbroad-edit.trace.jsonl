@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.overbroad","case":"bad-overbroad-edit","event":"skill_invoked","taskId":"task.harnessloop-sample"}
+{"schemaVersion":1,"skill":"harness-improvement-loop","traceId":"harness-improvement-loop.overbroad","case":"bad-overbroad-edit","event":"edit_outside_allowed_scope","failureClass":"permission-gap","expectedBlock":"harness-improvement-loop attempted to edit .harness/installed.json, outside its declared permission scope"}

@@ -1,0 +1,29 @@
+{
+  "schemaVersion": 1,
+  "id": "orchestrate",
+  "name": "orchestrate",
+  "version": "1.0.0",
+  "description": "Select and run a multi-agent workflow pattern for work that exceeds one agent's reliable scope. Use for parallel research, independent reviews, cross-domain changes, or high-risk implementation planning.",
+  "capabilities": [
+    "orchestration",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(node .kiro/skills/orchestrate/orchestrate.mjs*)",
+      "Bash(node .harness/scripts/orchestration-contract-from-task.mjs*)",
+      "Bash(node .harness/scripts/session-replay.mjs*)",
+      "Bash(node .harness/scripts/cost-tracker.mjs*)",
+      "Bash(node .harness/scripts/orchestration-schema-check.mjs*)"
+    ],
+    "deny": [
+      "Write",
+      "Edit",
+      "MultiEdit"
+    ]
+  }
+}

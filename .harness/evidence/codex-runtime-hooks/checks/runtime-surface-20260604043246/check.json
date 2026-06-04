@@ -1,0 +1,20 @@
+{
+  "name": "runtime-surface",
+  "command": "node .harness/scripts/check-runtime-surface.mjs --runtime=codex --json",
+  "status": "pass",
+  "summary": "Codex runtime surface exists: AGENTS.md, .agents/skills/inspect-module/SKILL.md, and .codex/hooks.json are present; hook integrity passes for Codex.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:32:46.475Z",
+  "finishedAt": "2026-06-04T04:32:47.871Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:328bf01c34c5cabc5a4a45b7beb5178ece08f38961ba9a465949c46cd2e1f8b3",
+  "stdoutHash": "sha256:b0b9c773bad3197d827aa7cb56b94844d7e1621bddfd52080a210743ea94e6d8",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/runtime-surface-20260604043246/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/runtime-surface-20260604043246/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/runtime-surface-20260604043246/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/runtime-surface-20260604043246/stderr.txt"
+  ]
+}

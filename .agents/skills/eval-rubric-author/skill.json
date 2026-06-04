@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "id": "eval-rubric-author",
+  "name": "eval-rubric-author",
+  "version": "1.0.0",
+  "description": "Use this skill when adding or changing harness eval tasks. Writes deterministic checks first, then optional rubric dimensions with JSON output, so evals grade outcome, process, style, and efficiency without becoming vague prompt feedback.",
+  "capabilities": [
+    "evaluation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Grep",
+      "Glob",
+      "Bash(npm run harness:eval*)",
+      "Bash(npm run check:eval-tasks*)",
+      "Bash(node .harness/scripts/eval-runner-v2.mjs*)",
+      "Bash(node .harness/scripts/check-eval-tasks.mjs*)"
+    ],
+    "deny": []
+  }
+}

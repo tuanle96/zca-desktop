@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "regression-benchmark",
+  "name": "regression-benchmark",
+  "version": "1.0.0",
+  "description": "Run Tier 2 real-world-style regression benchmarks with isolated workspaces, hidden checks, A/B comparison, cost/time metrics, and HTML dashboard reporting.",
+  "capabilities": [
+    "evaluation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "LS",
+      "Bash(node .harness/scripts/regression-runner.mjs*)",
+      "Bash(node .harness/scripts/regression-compare.mjs*)",
+      "Bash(node .harness/scripts/regression-report.mjs*)"
+    ],
+    "deny": []
+  }
+}

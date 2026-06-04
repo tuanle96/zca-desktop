@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "id": "propose-harness-improvement",
+  "name": "propose-harness-improvement",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the agent makes a mistake, the user observes an avoidable failure, a pattern recurs, or someone says \"the agent keeps doing X\". Files an \"Engineer the Harness\" entry — Mitchell Hashimoto's discipline: every failure becomes a permanent prevention mechanism. Always invoke this instead of just fixing the immediate symptom.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(git diff*)",
+      "Bash(node .harness/scripts/improvement-bundle.mjs*)",
+      "Bash(node .harness/scripts/record-failure.mjs*)",
+      "Bash(node .harness/scripts/check-failure-records.mjs*)"
+    ],
+    "deny": []
+  }
+}

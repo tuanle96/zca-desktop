@@ -1,0 +1,51 @@
+{
+  "status": "pass",
+  "surfaces": [
+    {
+      "runtime": "claude",
+      "enabled": false,
+      "hooksPath": ".claude/hooks/hooks.json",
+      "status": "pass",
+      "errors": [],
+      "warnings": [],
+      "registeredEvents": []
+    },
+    {
+      "runtime": "codex",
+      "enabled": true,
+      "hooksPath": ".codex/hooks.json",
+      "status": "pass",
+      "errors": [],
+      "warnings": [],
+      "registeredEvents": [
+        "Notification",
+        "PostToolUse",
+        "PreCompact",
+        "PreToolUse",
+        "SessionEnd",
+        "SessionStart",
+        "Stop",
+        "SubagentStop",
+        "UserPromptSubmit"
+      ]
+    },
+    {
+      "runtime": "kiro",
+      "enabled": true,
+      "hooksPath": ".kiro/agents/harness.json",
+      "status": "pass",
+      "errors": [],
+      "warnings": [],
+      "registeredEvents": [
+        "agentSpawn",
+        "postToolUse",
+        "preToolUse",
+        "stop",
+        "userPromptSubmit"
+      ]
+    }
+  ],
+  "errors": [],
+  "warnings": [],
+  "reasons": []
+}

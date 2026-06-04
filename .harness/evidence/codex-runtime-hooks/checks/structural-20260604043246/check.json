@@ -1,0 +1,20 @@
+{
+  "name": "structural",
+  "command": "npm run --silent harness:check",
+  "status": "pass",
+  "summary": "Project structural gate remains green; this repo's harness:check is the ADR-0003 structural no-op wrapper.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:32:46.764Z",
+  "finishedAt": "2026-06-04T04:32:48.771Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:328bf01c34c5cabc5a4a45b7beb5178ece08f38961ba9a465949c46cd2e1f8b3",
+  "stdoutHash": "sha256:c99d07e9507d0fa5f906ae22bc6d6a45aabcd3408ff617e7e921fc1d8b8660fd",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/structural-20260604043246/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/structural-20260604043246/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/structural-20260604043246/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/structural-20260604043246/stderr.txt"
+  ]
+}

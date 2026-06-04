@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.verifyui-sample"}
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"verify-ui claimed the screen passed without running any acceptance check"}

@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 1,
+  "id": "codex-runtime-hooks",
+  "type": "harness",
+  "riskTier": "normal",
+  "scope": {
+    "summary": "Enable Codex runtime hooks and skills alongside the existing Kiro harness surface without changing application behavior.",
+    "goals": [
+      "Keep Kiro as the primary runtime surface.",
+      "Enable Codex hooks, skills, and agents in .harness/config.json.",
+      "Materialize .codex/hooks.json and .agents/skills from the installed harness surface.",
+      "Verify Codex runtime surface and hook integrity with machine-readable checks.",
+      "Publish an HTML completion report for this harness feature."
+    ],
+    "nonGoals": [
+      "Changing app source behavior.",
+      "Upgrading the full harness lockfile to a new major surface.",
+      "Weakening readiness, hook, evidence, or structural checks."
+    ],
+    "allowedLayers": [
+      "config"
+    ]
+  },
+  "acceptance": [
+    {
+      "id": "config",
+      "description": "agentRuntime.targets includes codex, while primary remains kiro.",
+      "verification": {
+        "command": "jq -e '.agentRuntime.primary == \"kiro\" and (.agentRuntime.targets | index(\"codex\")) and .agentRuntime.codex.hooks and .agentRuntime.codex.skills and .agentRuntime.codex.agents' .harness/config.json"
+      }
+    },
+    {
+      "id": "hooks",
+      "description": ".codex/hooks.json exists and registers the Codex hook events with AHK_RUNTIME=codex.",
+      "verification": {
+        "command": "node .harness/scripts/check-hook-integrity.mjs --json"
+      }
+    },
+    {
+      "id": "skills",
+      "description": ".agents/skills/inspect-module/SKILL.md exists for Codex runtime-surface checks.",
+      "verification": {
+        "command": "node .harness/scripts/check-runtime-surface.mjs --runtime=codex --json"
+      }
+    },
+    {
+      "id": "verify",
+      "description": "Codex runtime-surface and hook-integrity checks pass.",
+      "verification": {
+        "command": "node .harness/scripts/check-skill-contracts.mjs"
+      }
+    },
+    {
+      "id": "report",
+      "description": "HTML completion report is written under .harness/reports/.",
+      "verification": {
+        "command": "test -s .harness/reports/codex-runtime-hooks.html"
+      }
+    }
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Grep",
+      "Glob",
+      "Write",
+      "Edit",
+      "Bash(node:*)",
+      "Bash(npm:*)",
+      "Bash(bun:*)",
+      "Bash(git:*)"
+    ],
+    "deny": []
+  },
+  "requiresAdr": false,
+  "requiredReviewers": [
+    "advisor"
+  ],
+  "doneRequires": [
+    "structural",
+    "review",
+    "evidence-bundle"
+  ],
+  "evidencePath": ".harness/evidence/codex-runtime-hooks.json"
+}

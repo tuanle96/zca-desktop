@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.orchestrate-sample"}
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"orchestrate marked the workflow complete while subtasks were still unverified"}

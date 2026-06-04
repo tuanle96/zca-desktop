@@ -1,0 +1,4 @@
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.good","case":"good","event":"skill_invoked","taskId":"task.verifyui-sample"}
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.good","case":"good","event":"criteria_loaded"}
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.good","case":"good","event":"checks_run"}
+{"schemaVersion":1,"skill":"verify-ui","traceId":"verify-ui.good","case":"good","event":"ui_verified","expectedOutcome":"pass"}

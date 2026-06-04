@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.addfeature-sample"}
+{"schemaVersion":1,"skill":"add-feature","traceId":"add-feature.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"add-feature set the feature status to done without running harness:check or producing evidence"}

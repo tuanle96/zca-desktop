@@ -1,0 +1,4 @@
+skill contracts: passed (33 skills, registry 33)
+  agents: 33 skills at .agents/skills
+  kiro: 33 skills at .kiro/skills
+skill surfaces: passed

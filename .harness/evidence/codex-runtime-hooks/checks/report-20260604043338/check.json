@@ -1,0 +1,20 @@
+{
+  "name": "report",
+  "command": "test -s .harness/reports/codex-runtime-hooks.html",
+  "status": "pass",
+  "summary": "HTML completion report exists at .harness/reports/codex-runtime-hooks.html for the Codex runtime hook feature.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:33:38.669Z",
+  "finishedAt": "2026-06-04T04:33:38.682Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:1f95b72d66b5e955b817e53860b0380cd9184cb4d05acbe914c1644a630f1ff4",
+  "stdoutHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/report-20260604043338/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/report-20260604043338/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/report-20260604043338/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/report-20260604043338/stderr.txt"
+  ]
+}

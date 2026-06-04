@@ -1,0 +1,20 @@
+{
+  "name": "permissions-drift",
+  "command": "node .harness/scripts/check-permissions-drift.mjs",
+  "status": "pass",
+  "summary": "Permission policy drift check passes after enabling Codex surface; runtime expectations remain satisfied.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:32:46.757Z",
+  "finishedAt": "2026-06-04T04:32:47.422Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:7235c934680f95d3dfc3d0e5bb754d82e344b44c4f1bfb648e11849a563f02ed",
+  "stdoutHash": "sha256:54196dc353e9513821e5d5d4a1eee8803fb34b6ddce61fe161e6c2ad410ce032",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/permissions-drift-20260604043246/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/permissions-drift-20260604043246/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/permissions-drift-20260604043246/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/permissions-drift-20260604043246/stderr.txt"
+  ]
+}

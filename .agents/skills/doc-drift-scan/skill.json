@@ -1,0 +1,22 @@
+{
+  "schemaVersion": 1,
+  "id": "doc-drift-scan",
+  "name": "doc-drift-scan",
+  "version": "1.0.0",
+  "description": "Use this skill weekly, before releases, or when the user mentions \"stale docs\", \"doc drift\", \"docs are wrong\", or \"the README is out of date\". Cross-checks every code path, file path, and command referenced in `.harness/docs/` and `CLAUDE.md` against the current repo state and produces a list of stale references — the doc-gardening agent pattern.",
+  "capabilities": [
+    "analysis",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Glob",
+      "Grep",
+      "Bash(test -e*)",
+      "Bash(command -v*)",
+      "Bash(node .kiro/skills/doc-drift-scan/scripts/scan-paths.mjs*)"
+    ],
+    "deny": []
+  }
+}

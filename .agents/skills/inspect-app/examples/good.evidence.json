@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "inspect-app",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.inspect-sample",
+  "featureId": "feat.inspect-sample",
+  "diffSummary": "Produce a read-only inspection summary of the app structure",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "git status --porcelain",
+      "summary": "No files modified during inspection"
+    },
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/harness-readiness.mjs --list",
+      "summary": "Inspection reflects the configured gate plan"
+    }
+  ]
+}

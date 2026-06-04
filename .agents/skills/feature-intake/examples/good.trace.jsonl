@@ -1,0 +1,4 @@
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.good","case":"good","event":"skill_invoked","taskId":"task.intake-sample"}
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.good","case":"good","event":"feature_list_read"}
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.good","case":"good","event":"feature_appended"}
+{"schemaVersion":1,"skill":"feature-intake","traceId":"feature-intake.good","case":"good","event":"intake_complete","expectedOutcome":"pass"}

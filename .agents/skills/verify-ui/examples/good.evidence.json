@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "verify-ui",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.verifyui-sample",
+  "featureId": "feat.verifyui-sample",
+  "diffSummary": "Verify a UI surface against its acceptance criteria",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "npm run --silent check",
+      "summary": "svelte-check passes for the verified surface"
+    },
+    {
+      "status": "pass",
+      "command": "git status --porcelain",
+      "summary": "Verification produced no unintended edits"
+    }
+  ]
+}

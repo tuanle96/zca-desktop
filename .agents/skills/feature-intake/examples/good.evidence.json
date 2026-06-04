@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "feature-intake",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.intake-sample",
+  "featureId": "feat.intake-sample",
+  "diffSummary": "Append one structured feature entry to .harness/feature_list.json",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/check-eval-tasks.mjs",
+      "summary": "Feature entry validates against schema"
+    },
+    {
+      "status": "pass",
+      "command": "git diff --stat .harness/feature_list.json",
+      "summary": "Exactly one feature added, no other files touched"
+    }
+  ]
+}

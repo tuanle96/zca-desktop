@@ -1,0 +1,145 @@
+{
+  "$schema": "../.harness/schemas/hooks.schema.json",
+  "version": "1.0.0",
+  "runtime": "codex",
+  "hooks": {
+    "SessionStart": [
+      {
+        "matcher": "startup|resume|compact",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/session-start.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "UserPromptSubmit": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/userprompt-guard.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/pretooluse-skill-permission-guard.mjs\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec node \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/pretooluse-bash-guard.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      },
+      {
+        "matcher": "Edit|Write|MultiEdit|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/pretooluse-edit-guard.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Notification": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/notify-on-block.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit|apply_patch",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/structural-test-on-edit.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 30
+          }
+        ]
+      },
+      {
+        "matcher": "Skill",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/telemetry-on-skill.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "PreCompact": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/pre-compact.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ],
+    "Stop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/precompletion-checklist.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 20
+          }
+        ]
+      }
+    ],
+    "SubagentStop": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/subagent-stop.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 30
+          }
+        ]
+      }
+    ],
+    "SessionEnd": [
+      {
+        "matcher": "",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bash -lc 'export AHK_RUNTIME=codex; AHK_SCRIPT=\".harness/scripts/session-end.sh\"; AHK_ROOT=\"${CODEX_PROJECT_DIR:-}\"; if [ -z \"$AHK_ROOT\" ]; then AHK_ROOT=$(git rev-parse --show-toplevel 2>/dev/null || pwd); fi; while [ ! -f \"$AHK_ROOT/$AHK_SCRIPT\" ] && [ \"$AHK_ROOT\" != \"/\" ]; do AHK_ROOT=$(dirname \"$AHK_ROOT\"); done; cd \"$AHK_ROOT\" || exit 1; exec bash \"$AHK_SCRIPT\"'",
+            "timeout": 5
+          }
+        ]
+      }
+    ]
+  }
+}

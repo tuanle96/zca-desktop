@@ -1,0 +1,27 @@
+{
+  "schemaVersion": 1,
+  "id": "add-feature",
+  "name": "add-feature",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user asks to add, implement, or build a new feature, capability, endpoint, page, command, or anything user-visible. Enforces the Anthropic two-fold harness pattern — read .harness/feature_list.json, pick exactly one feature, implement incrementally, run the structural test on every save, and never declare \"done\" without updating the JSON. Always invoke this skill instead of writing new feature code freehand.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Write",
+      "Bash(npm run*)",
+      "Bash(pytest*)",
+      "Bash(ruff*)",
+      "Bash(git status*)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Glob",
+      "Grep"
+    ],
+    "deny": []
+  }
+}

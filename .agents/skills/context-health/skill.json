@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "context-health",
+  "name": "context-health",
+  "version": "1.0.0",
+  "description": "Inspect context usage, token budget, compaction history, and overflow risk. Use when sessions get long, before large changes, after compaction, or when cost/context drift is suspected.",
+  "capabilities": [
+    "observability",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .kiro/skills/context-health/context-health.mjs*)"
+    ],
+    "deny": []
+  }
+}

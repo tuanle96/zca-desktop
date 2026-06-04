@@ -1,0 +1,20 @@
+{
+  "name": "config",
+  "command": "jq -e '.agentRuntime.primary == \"kiro\" and (.agentRuntime.targets | index(\"codex\")) and .agentRuntime.codex.hooks and .agentRuntime.codex.skills and .agentRuntime.codex.agents' .harness/config.json",
+  "status": "pass",
+  "summary": "agentRuntime targets include codex, Codex hooks/skills/agents are enabled, and Kiro remains primary.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:37:04.740Z",
+  "finishedAt": "2026-06-04T04:37:04.750Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:572ab2601eb2797397cca255ede4b28abfca2dc811d6832e27e563e095764a1c",
+  "stdoutHash": "sha256:a17fcf0a2f50e2d495e4f90ce263410edc183add6c62699a2facbccf60410f74",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/config-20260604043704/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/config-20260604043704/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/config-20260604043704/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/config-20260604043704/stderr.txt"
+  ]
+}

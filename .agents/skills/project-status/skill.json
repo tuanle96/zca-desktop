@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "project-status",
+  "name": "project-status",
+  "version": "1.0.0",
+  "description": "Render project phases, risks, features, recent memory, orchestration health, and session isolation into a self-contained HTML status report.",
+  "capabilities": [
+    "project-management",
+    "reporting",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .harness/scripts/project-status-report.mjs*)",
+      "Bash(node .harness/scripts/project-memory.mjs*)"
+    ],
+    "deny": []
+  }
+}

@@ -1,0 +1,95 @@
+{
+  "status": "pass",
+  "runtimes": [
+    "codex"
+  ],
+  "lockfile": {
+    "status": "pass",
+    "version": "0.20.0",
+    "managedFiles": 333,
+    "missingManagedFiles": [],
+    "errors": []
+  },
+  "memory": {
+    "status": "pass",
+    "requiredFiles": [
+      ".harness/project/state.json",
+      ".harness/memory/ledger.jsonl",
+      ".harness/memory/current-summary.md",
+      ".harness/scripts/project-memory.mjs",
+      ".harness/scripts/session-start.sh",
+      ".harness/scripts/session-end.sh"
+    ],
+    "missing": []
+  },
+  "sessionStart": {
+    "status": "pass",
+    "output": "{\"hookSpecificOutput\":{\"hookEventName\":\"SessionStart\",\"additionalContext\":\"[harness] git: branch=codex/audit-fix-evidence-and-reviews, uncommitted=7 file(s)\\n[harness] feature: attachments — Phase 4: Image/file upload and rendering\\n[harness] project: phase=mvp, open_features=5, open_risks=8\\n[harness] scope-in: Tauri v2 shell + zca-rust integration, Credential import (ZaloDataExtractor JSON), Single-account login + own profile, Realtime listener -> Tauri events, Send text message\\n[harness] scope-out: Persistence/cache (Phase 3), Rich media/attachments (Phase 4), Cross-install sync relay (Phase 5 stretch), Signed packaging (Phase 6)\\n[harness] recent project memory:\\n  - handoff: Phase 1 vertical slice is done end-to-end and live-verified: scaffold, zca-rust wiring, credential import, single login, realtime listener (zalo://message), send text, file-backed dev session, Zalo-style chat UI, and contacts (get_all_friends, 85 loaded). Next: secure-cred-store (keychain, offline-provable) then session-manager (multi-account + send throttle).\\n  - risk: Dev affordances pending replacement: .zalo-cred.json file loader (-> secure-cred-store OS keychain), no per-account send throttle (ban risk r1), in-command session store (-> session/ layer), UI placeholder tabs/icons, and a stale bun.lock for bits-ui/@types/node since bun is not installed.\\n  - decision: Frontend chat UI (shadcn-svelte 3-pane) reaches the Rust core ONLY via Tauri invoke/listen against command/; conversations + contacts are derived from live IPC (zalo://message, list_contacts) with no mock/sample data.\\n  - decision: Live Zalo features are verified with #[ignore] cargo tests that read .zalo-cred.json, run locally (bash tool runs on the user's Mac, normal IP); evidence captures only non-secret diagnostics and every smoke sidecar is scanned for token/PII leakage before commit.\\n  - decision: Credentials are read by the Rust core from .zalo-cred.json (dev) / OS keychain (planned); they MUST never enter the webview/UI. UI uses file-backed commands + non-secret DTOs only.\\n[harness] layer rule (forward-only): types → config → store → zalo → session → command\\n\"}}",
+    "errors": []
+  },
+  "runtimeSurfaces": [
+    {
+      "runtime": "codex",
+      "status": "pass",
+      "requiredFiles": [
+        "AGENTS.md",
+        ".agents/skills/inspect-module/SKILL.md",
+        ".codex/hooks.json"
+      ],
+      "missing": []
+    }
+  ],
+  "hookIntegrity": {
+    "status": "pass",
+    "surfaces": [
+      {
+        "runtime": "claude",
+        "enabled": false,
+        "hooksPath": ".claude/hooks/hooks.json",
+        "status": "pass",
+        "errors": [],
+        "warnings": [],
+        "registeredEvents": []
+      },
+      {
+        "runtime": "codex",
+        "enabled": true,
+        "hooksPath": ".codex/hooks.json",
+        "status": "pass",
+        "errors": [],
+        "warnings": [],
+        "registeredEvents": [
+          "Notification",
+          "PostToolUse",
+          "PreCompact",
+          "PreToolUse",
+          "SessionEnd",
+          "SessionStart",
+          "Stop",
+          "SubagentStop",
+          "UserPromptSubmit"
+        ]
+      },
+      {
+        "runtime": "kiro",
+        "enabled": true,
+        "hooksPath": ".kiro/agents/harness.json",
+        "status": "pass",
+        "errors": [],
+        "warnings": [],
+        "registeredEvents": [
+          "agentSpawn",
+          "postToolUse",
+          "preToolUse",
+          "stop",
+          "userPromptSubmit"
+        ]
+      }
+    ],
+    "errors": [],
+    "warnings": [],
+    "reasons": []
+  },
+  "errors": [],
+  "warnings": []
+}

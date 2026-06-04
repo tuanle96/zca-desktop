@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "id": "context-query",
+  "name": "context-query",
+  "version": "1.0.0",
+  "description": "Build a compact read-only context packet for a natural-language codebase question. Use before editing unfamiliar code, when tracing task evidence, contracts, validation, or proof paths, or when the relevant files are not obvious.",
+  "capabilities": [
+    "registry",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .harness/scripts/context-query.mjs*)"
+    ],
+    "deny": []
+  }
+}

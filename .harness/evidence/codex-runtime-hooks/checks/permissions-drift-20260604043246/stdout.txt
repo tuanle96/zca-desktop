@@ -1,0 +1,6 @@
+permissions diff: passed
+runtime: kiro
+skills: 33
+policy: .harness/permissions.json
+runtime expectations: passed
+permission hints: 0

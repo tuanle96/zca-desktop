@@ -1,0 +1,4 @@
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.good","case":"good","event":"skill_invoked","taskId":"task.orchestrate-sample"}
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.good","case":"good","event":"plan_built"}
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.good","case":"good","event":"subtasks_dispatched"}
+{"schemaVersion":1,"skill":"orchestrate","traceId":"orchestrate.good","case":"good","event":"orchestration_complete","expectedOutcome":"pass"}

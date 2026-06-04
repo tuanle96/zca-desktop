@@ -1,0 +1,19 @@
+{
+  "schemaVersion": 1,
+  "id": "skill-discovery",
+  "name": "skill-discovery",
+  "version": "1.0.0",
+  "description": "Build a lightweight skill index and load full skill instructions only on demand to reduce startup context pressure.",
+  "capabilities": [
+    "registry",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Bash(node .harness/scripts/skill-discovery.mjs*)",
+      "Bash(node .harness/scripts/skill-load.mjs*)"
+    ],
+    "deny": []
+  }
+}

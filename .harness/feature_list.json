@@ -54,6 +54,40 @@
       ]
     },
     {
+      "id": "codex-runtime-hooks",
+      "title": "Harness: enable Codex runtime hooks alongside Kiro",
+      "passes": true,
+      "taskContractPath": ".harness/task-contracts/codex-runtime-hooks.json",
+      "evidencePath": ".harness/evidence/codex-runtime-hooks.json",
+      "steps": [
+        {
+          "id": "config",
+          "title": "agentRuntime targets include codex while primary remains kiro",
+          "done": true
+        },
+        {
+          "id": "hooks",
+          "title": ".codex/hooks.json registers Codex lifecycle hooks",
+          "done": true
+        },
+        {
+          "id": "skills",
+          "title": ".agents/skills exposes the Codex skill surface",
+          "done": true
+        },
+        {
+          "id": "verify",
+          "title": "runtime-surface, hook-integrity, skill-contracts, permissions, and structural checks pass",
+          "done": true
+        },
+        {
+          "id": "report",
+          "title": "HTML completion report written",
+          "done": true
+        }
+      ]
+    },
+    {
       "id": "app-csp-hardening",
       "title": "Harness: pre-credential hardening — baseline CSP, product title, clean type-check",
       "passes": true,

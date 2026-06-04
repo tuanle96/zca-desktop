@@ -1,0 +1,66 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Codex Runtime Hooks Report</title>
+  <style>
+    :root { color-scheme: light; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: #f6f7f9; color: #15171a; }
+    body { margin: 0; padding: 32px; }
+    main { max-width: 980px; margin: 0 auto; }
+    h1 { font-size: 32px; line-height: 1.15; margin: 0 0 8px; letter-spacing: 0; }
+    h2 { font-size: 18px; margin: 28px 0 10px; }
+    p { line-height: 1.6; }
+    .meta { color: #5b626e; margin-bottom: 24px; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .card { background: #fff; border: 1px solid #dfe3e8; border-radius: 8px; padding: 16px; }
+    .label { font-size: 12px; color: #69717d; text-transform: uppercase; font-weight: 700; letter-spacing: .04em; }
+    .value { margin-top: 8px; font-size: 18px; font-weight: 700; }
+    .pass { color: #0f7b47; }
+    code { background: #eef1f5; border-radius: 6px; padding: 2px 6px; }
+    ul { padding-left: 20px; }
+    li { margin: 8px 0; }
+    table { width: 100%; border-collapse: collapse; background: #fff; border: 1px solid #dfe3e8; border-radius: 8px; overflow: hidden; }
+    th, td { text-align: left; padding: 10px 12px; border-bottom: 1px solid #e7ebef; vertical-align: top; }
+    th { background: #eef1f5; font-size: 13px; }
+    tr:last-child td { border-bottom: 0; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Codex runtime hooks enabled</h1>
+    <p class="meta">Generated 2026-06-04T04:33:32.334Z for task <code>codex-runtime-hooks</code>.</p>
+
+    <section class="grid">
+      <div class="card"><div class="label">Runtime surface</div><div class="value pass">PASS</div></div>
+      <div class="card"><div class="label">Hook integrity</div><div class="value pass">PASS</div></div>
+      <div class="card"><div class="label">Skill contracts</div><div class="value pass">PASS</div></div>
+      <div class="card"><div class="label">Kiro primary</div><div class="value">Preserved</div></div>
+    </section>
+
+    <h2>What changed</h2>
+    <ul>
+      <li><code>.harness/config.json</code> now includes <code>codex</code> in <code>agentRuntime.targets</code>.</li>
+      <li><code>agentRuntime.codex.hooks</code>, <code>skills</code>, and <code>agents</code> are enabled.</li>
+      <li><code>.codex/hooks.json</code> registers all nine Codex lifecycle hooks with <code>AHK_RUNTIME=codex</code>.</li>
+      <li><code>.agents/skills</code> contains the 33-skill Codex surface, including <code>inspect-module</code>.</li>
+      <li><code>.codex/agents</code> contains Codex TOML reviewer/advisor agents.</li>
+    </ul>
+
+    <h2>Verification</h2>
+    <table>
+      <thead><tr><th>Gate</th><th>Command</th><th>Status</th></tr></thead>
+      <tbody>
+        <tr><td>Codex runtime surface</td><td><code>node .harness/scripts/check-runtime-surface.mjs --runtime=codex --json</code></td><td class="pass">pass</td></tr>
+        <tr><td>Hook integrity</td><td><code>node .harness/scripts/check-hook-integrity.mjs --json</code></td><td class="pass">pass</td></tr>
+        <tr><td>Skill contracts</td><td><code>node .harness/scripts/check-skill-contracts.mjs</code></td><td class="pass">pass</td></tr>
+        <tr><td>Permissions drift</td><td><code>node .harness/scripts/check-permissions-drift.mjs</code></td><td class="pass">pass</td></tr>
+        <tr><td>Structural</td><td><code>npm run --silent harness:check</code></td><td class="pass">pass</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Known residual</h2>
+    <p>Strict readiness may still report the pre-existing <code>cloud-media-mirroring</code> task-contract gate <code>security</code> as unsupported. That contract is separate from this Codex hook surface change.</p>
+  </main>
+</body>
+</html>

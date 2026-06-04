@@ -30,7 +30,8 @@
   ],
   "agentRuntime": {
     "targets": [
-      "kiro"
+      "kiro",
+      "codex"
     ],
     "primary": "kiro",
     "claude": {
@@ -41,9 +42,9 @@
     },
     "codex": {
       "instructionFile": "AGENTS.md",
-      "hooks": false,
-      "skills": false,
-      "agents": false
+      "hooks": true,
+      "skills": true,
+      "agents": true
     },
     "kiro": {
       "instructionFile": ".kiro/steering/harness.md",

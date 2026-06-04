@@ -1,0 +1,20 @@
+{
+  "name": "hook-integrity",
+  "command": "node .harness/scripts/check-hook-integrity.mjs --json",
+  "status": "pass",
+  "summary": "Codex hooks are enabled and register all nine expected Codex lifecycle events with AHK_RUNTIME=codex; Kiro hooks remain enabled.",
+  "exitCode": 0,
+  "cwd": ".",
+  "startedAt": "2026-06-04T04:32:46.479Z",
+  "finishedAt": "2026-06-04T04:32:46.780Z",
+  "gitHead": "53e98d85b78455b6235a92c4f12958206d6af99e",
+  "workingTreeHash": "sha256:7235c934680f95d3dfc3d0e5bb754d82e344b44c4f1bfb648e11849a563f02ed",
+  "stdoutHash": "sha256:30848819b9e3d20589e8899302034c7efbc84577322b6c013d596d903b696677",
+  "stderrHash": "sha256:e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "stdoutPath": ".harness/evidence/codex-runtime-hooks/checks/hook-integrity-20260604043246/stdout.txt",
+  "stderrPath": ".harness/evidence/codex-runtime-hooks/checks/hook-integrity-20260604043246/stderr.txt",
+  "artifactPaths": [
+    ".harness/evidence/codex-runtime-hooks/checks/hook-integrity-20260604043246/stdout.txt",
+    ".harness/evidence/codex-runtime-hooks/checks/hook-integrity-20260604043246/stderr.txt"
+  ]
+}

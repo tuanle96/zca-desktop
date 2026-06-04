@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "harness-improvement-loop",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.harnessloop-sample",
+  "featureId": "feat.harnessloop-sample",
+  "diffSummary": "Propose and validate a harness improvement against readiness gates",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/harness-readiness.mjs --strict",
+      "summary": "Readiness passes after the improvement"
+    },
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/check-hook-integrity.mjs",
+      "summary": "Hook integrity remains intact"
+    }
+  ]
+}

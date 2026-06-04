@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "feature-intake",
+  "name": "feature-intake",
+  "version": "1.0.0",
+  "description": "Use this skill whenever the user asks to \"add a feature\", \"implement X\", \"build Y\", or before invoking /add-feature. Classifies the request into tiny/normal/high-risk based on estimated complexity and blast radius, then routes to the appropriate workflow — straight to code (tiny), story packet (normal), or ADR + story packet + mandatory review (high-risk). Prevents \"wrong direction\" sessions by forcing a pause before implementation. Pattern from harness-experimental and OpenAI's \"implementation prompts do not go straight to code\" discipline.",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Write",
+      "Edit",
+      "Bash(node .kiro/skills/feature-intake/scripts/classify.mjs*)"
+    ],
+    "deny": []
+  }
+}

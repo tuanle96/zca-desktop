@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "refactor-feature",
+  "name": "refactor-feature",
+  "version": "1.0.0",
+  "description": "Use this skill when restructuring a feature in .harness/feature_list.json — splitting steps, merging steps, renaming, or marking a previously-failing step done. The side-car diffs .harness/feature_list.json#steps before/after and rejects the edit when a step.done transition is not accompanied by a test reference. Forces \"no done without proof\".",
+  "capabilities": [
+    "generation",
+    "workflow"
+  ],
+  "permissions": {
+    "allow": [
+      "Read",
+      "Edit",
+      "Bash(git diff*)",
+      "Bash(node .kiro/skills/refactor-feature/scripts/feature-diff.mjs*)"
+    ],
+    "deny": []
+  }
+}

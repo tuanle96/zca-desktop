@@ -1,0 +1,21 @@
+{
+  "schemaVersion": 1,
+  "skill": "orchestrate",
+  "case": "good",
+  "status": "pass",
+  "taskId": "task.orchestrate-sample",
+  "featureId": "feat.orchestrate-sample",
+  "diffSummary": "Route a multi-step task across skills with explicit handoffs",
+  "checks": [
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/check-orchestration-contracts.mjs --strict",
+      "summary": "Orchestration contract validates"
+    },
+    {
+      "status": "pass",
+      "command": "node .harness/scripts/harness-readiness.mjs --list",
+      "summary": "Routed steps map to real gates"
+    }
+  ]
+}

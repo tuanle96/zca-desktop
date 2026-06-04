@@ -1,0 +1,2 @@
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.false-done","case":"bad-false-done","event":"skill_invoked","taskId":"task.inspect-sample"}
+{"schemaVersion":1,"skill":"inspect-app","traceId":"inspect-app.false-done","case":"bad-false-done","event":"done_claimed_without_evidence","failureClass":"false-done","expectedBlock":"inspect-app reported a complete architecture map but never read the domain layers"}
