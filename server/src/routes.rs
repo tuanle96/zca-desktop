@@ -51,6 +51,19 @@ impl AppState {
     }
 }
 
+type OptionalCiphertext = (Option<Vec<u8>>, Option<Vec<u8>>);
+
+struct OutgoingFileMessage<'a> {
+    user_id: Uuid,
+    account_id: Uuid,
+    account: &'a AccountView,
+    thread_id: &'a str,
+    kind: &'a str,
+    msg_id: &'a str,
+    body: &'a str,
+    file: &'a RichFile,
+}
+
 pub fn app(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/health", get(health))
@@ -76,6 +89,7 @@ pub fn app(state: Arc<AppState>) -> Router {
             "/api/v1/accounts/:account_id/send/reaction",
             post(send_reaction),
         )
+        .route("/api/v1/accounts/:account_id/send/file", post(send_file))
         .route("/api/v1/conversations", get(list_conversations))
         .route(
             "/api/v1/conversations/:conversation_id/messages",
@@ -495,6 +509,96 @@ async fn send_reaction(
     Ok(Json(serde_json::json!({ "sent": true })))
 }
 
+async fn send_file(
+    State(state): State<Arc<AppState>>,
+    Auth(auth): Auth,
+    Path(account_id): Path<Uuid>,
+    Json(req): Json<SendFileRequest>,
+) -> AppResult<Json<SendFileResponse>> {
+    if req.thread_id.trim().is_empty() {
+        return Err(AppError::BadRequest("thread_id is required".to_string()));
+    }
+    let kind = validate_thread_kind(req.thread_kind.as_deref())?;
+    let account = state.db.account_status(auth.user_id, account_id).await?;
+    let secret = state.db.file_secret(auth.user_id, req.file_id).await?;
+    if secret.account_id != Some(account_id) {
+        return Err(AppError::NotFound);
+    }
+
+    let filename = secret
+        .filename
+        .as_deref()
+        .filter(|name| !name.trim().is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("attachment-{}", req.file_id));
+    let plaintext = decrypt_file_blob(&state, auth.user_id, &secret).await?;
+    if plaintext.len() as i64 != secret.size_bytes
+        || sha256_hex(&plaintext) != secret.content_sha256
+    {
+        return Err(AppError::BadRequest(
+            "stored file blob does not match metadata".to_string(),
+        ));
+    }
+
+    let mut sent = state
+        .sessions
+        .send_file(
+            account_id,
+            &req.thread_id,
+            &filename,
+            secret.mime.as_deref(),
+            plaintext,
+            kind,
+        )
+        .await?;
+    sent.file.id = Some(req.file_id.to_string());
+    sent.file.filename = sent.file.filename.or_else(|| Some(filename.clone()));
+    sent.file.mime = sent.file.mime.or_else(|| secret.mime.clone());
+    if sent.file.size_bytes <= 0 {
+        sent.file.size_bytes = secret.size_bytes;
+    }
+
+    let msg_id = sent
+        .msg_id
+        .as_deref()
+        .filter(|id| !id.trim().is_empty())
+        .map(str::to_string)
+        .unwrap_or_else(|| format!("cloud-file-{}", req.file_id));
+    persist_outgoing_file_message(
+        &state,
+        OutgoingFileMessage {
+            user_id: auth.user_id,
+            account_id,
+            account: &account,
+            thread_id: &req.thread_id,
+            kind,
+            msg_id: &msg_id,
+            body: &filename,
+            file: &sent.file,
+        },
+    )
+    .await?;
+    let _ = state.events.send(RealtimeEvent {
+        user_id: auth.user_id,
+        data: serde_json::json!({
+            "type": "message",
+            "event": "file",
+            "accountId": account_id,
+            "threadId": req.thread_id,
+            "msgId": msg_id,
+            "outgoing": true
+        })
+        .to_string(),
+    });
+
+    Ok(Json(SendFileResponse {
+        queued: false,
+        msg_id: Some(msg_id),
+        reason: None,
+        file: sent.file,
+    }))
+}
+
 fn validate_thread_kind(kind: Option<&str>) -> AppResult<&'static str> {
     match kind.unwrap_or("user") {
         "user" => Ok("user"),
@@ -725,7 +829,21 @@ async fn download_file_blob(
     Path(file_id): Path<Uuid>,
 ) -> AppResult<impl IntoResponse> {
     let secret = state.db.file_secret(auth.user_id, file_id).await?;
-    let user_secrets = state.db.user_secrets(auth.user_id).await?;
+    let plaintext = decrypt_file_blob(&state, auth.user_id, &secret).await?;
+    let mut headers = HeaderMap::new();
+    headers.insert(
+        header::CONTENT_TYPE,
+        HeaderValue::from_static("application/octet-stream"),
+    );
+    Ok((StatusCode::OK, headers, plaintext))
+}
+
+async fn decrypt_file_blob(
+    state: &AppState,
+    user_id: Uuid,
+    secret: &crate::db::FileSecret,
+) -> AppResult<Vec<u8>> {
+    let user_secrets = state.db.user_secrets(user_id).await?;
     let data_key = crypto::unwrap_data_key_for_server(
         &state.config.master_key_seed,
         &user_secrets.server_key_nonce,
@@ -738,7 +856,7 @@ async fn download_file_blob(
         .map_err(|_| AppError::Crypto)?;
     let object = state
         .objects
-        .get(&object_store::path::Path::from(secret.object_key))
+        .get(&object_store::path::Path::from(secret.object_key.clone()))
         .await
         .map_err(|_| AppError::NotFound)?
         .bytes()
@@ -748,13 +866,77 @@ async fn download_file_blob(
         return Err(AppError::Crypto);
     }
     let (nonce, ciphertext) = object.split_at(12);
-    let plaintext = crypto::open(&file_key, nonce, ciphertext)?;
-    let mut headers = HeaderMap::new();
-    headers.insert(
-        header::CONTENT_TYPE,
-        HeaderValue::from_static("application/octet-stream"),
-    );
-    Ok((StatusCode::OK, headers, plaintext))
+    crypto::open(&file_key, nonce, ciphertext)
+}
+
+async fn data_key_for_user(state: &AppState, user_id: Uuid) -> AppResult<[u8; 32]> {
+    let user_secrets = state.db.user_secrets(user_id).await?;
+    crypto::unwrap_data_key_for_server(
+        &state.config.master_key_seed,
+        &user_secrets.server_key_nonce,
+        &user_secrets.server_wrapped_data_key,
+    )
+}
+
+fn encrypt_optional(
+    data_key: &[u8; 32],
+    plaintext: Option<&[u8]>,
+) -> AppResult<OptionalCiphertext> {
+    let Some(plaintext) = plaintext else {
+        return Ok((None, None));
+    };
+    let (nonce, ciphertext) = crypto::seal(data_key, plaintext)?;
+    Ok((Some(nonce), Some(ciphertext)))
+}
+
+async fn persist_outgoing_file_message(
+    state: &AppState,
+    message: OutgoingFileMessage<'_>,
+) -> AppResult<()> {
+    let data_key = data_key_for_user(state, message.user_id).await?;
+    let (body_nonce, enc_body) = encrypt_optional(&data_key, Some(message.body.as_bytes()))?;
+    let rich = MessageRichPayload {
+        file: Some(message.file.clone()),
+        ..MessageRichPayload::default()
+    };
+    let rich_json = serde_json::to_vec(&rich).map_err(|_| AppError::Crypto)?;
+    let (rich_nonce, enc_rich) = encrypt_optional(&data_key, Some(&rich_json))?;
+    let metadata = state
+        .sessions
+        .thread_metadata(message.account_id, message.thread_id, message.kind)
+        .await
+        .unwrap_or_default();
+    let conversation_id = state
+        .db
+        .upsert_conversation(
+            message.user_id,
+            message.account_id,
+            message.thread_id,
+            message.kind,
+            metadata.title.as_deref(),
+            metadata.avatar.as_deref(),
+        )
+        .await?;
+    state
+        .db
+        .insert_message_ciphertext(
+            message.user_id,
+            message.account_id,
+            conversation_id,
+            message.msg_id,
+            Some(&message.account.zalo_account_id),
+            message.account.display_name.as_deref(),
+            message.account.avatar.as_deref(),
+            enc_body.as_deref(),
+            body_nonce.as_deref(),
+            enc_rich.as_deref(),
+            rich_nonce.as_deref(),
+            true,
+            "file",
+            None,
+        )
+        .await?;
+    Ok(())
 }
 
 fn object_body_len(plaintext_len: usize) -> usize {

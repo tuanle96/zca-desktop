@@ -213,6 +213,31 @@ impl HostedSessionManager {
             .map_err(|e| AppError::BadRequest(format!("hosted sticker send failed: {e}")))
     }
 
+    pub async fn send_file(
+        &self,
+        account_id: Uuid,
+        thread_id: &str,
+        filename: &str,
+        mime: Option<&str>,
+        bytes: Vec<u8>,
+        kind: &str,
+    ) -> AppResult<crate::zalo_host::HostedAttachmentSend> {
+        let api = {
+            let sessions = self.sessions.lock().await;
+            sessions
+                .get(&account_id)
+                .map(|s| s.api.clone())
+                .ok_or(AppError::NotFound)?
+        };
+        let wait = self.reserve_send(account_id).await;
+        if !wait.is_zero() {
+            tokio::time::sleep(wait).await;
+        }
+        crate::zalo_host::send_file(&api, thread_id, filename, mime, bytes, kind)
+            .await
+            .map_err(|e| AppError::BadRequest(format!("hosted file send failed: {e}")))
+    }
+
     pub async fn send_reaction(
         &self,
         account_id: Uuid,

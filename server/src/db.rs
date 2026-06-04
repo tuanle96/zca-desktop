@@ -39,7 +39,10 @@ pub struct AccountCredential {
 pub struct FileSecret {
     pub id: Uuid,
     pub user_id: Uuid,
+    pub account_id: Option<Uuid>,
     pub object_key: String,
+    pub filename: Option<String>,
+    pub mime: Option<String>,
     pub size_bytes: i64,
     pub content_sha256: String,
     pub enc_file_key: Vec<u8>,
@@ -770,8 +773,9 @@ impl Db {
 
     pub async fn file_secret(&self, user_id: Uuid, file_id: Uuid) -> AppResult<FileSecret> {
         let row = sqlx::query(
-            "SELECT id, user_id, object_key, size_bytes, content_sha256, enc_file_key, file_key_nonce
-             FROM files WHERE user_id = $1 AND id = $2",
+            "SELECT id, user_id, account_id, object_key, filename, mime, size_bytes,
+                    content_sha256, enc_file_key, file_key_nonce
+               FROM files WHERE user_id = $1 AND id = $2",
         )
         .bind(user_id)
         .bind(file_id)
@@ -781,7 +785,10 @@ impl Db {
         Ok(FileSecret {
             id: row.get("id"),
             user_id: row.get("user_id"),
+            account_id: row.get("account_id"),
             object_key: row.get("object_key"),
+            filename: row.get("filename"),
+            mime: row.get("mime"),
             size_bytes: row.get("size_bytes"),
             content_sha256: row.get("content_sha256"),
             enc_file_key: row.get("enc_file_key"),

@@ -98,6 +98,15 @@ pub struct CloudSendReactionPayload {
     pub thread_kind: Option<String>,
 }
 
+#[derive(Debug, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct CloudSendFilePayload {
+    pub thread_id: String,
+    pub file_id: String,
+    #[serde(default)]
+    pub thread_kind: Option<String>,
+}
+
 fn endpoint(base_url: &str, path: &str) -> Result<String, String> {
     let base = base_url.trim().trim_end_matches('/');
     if !(base.starts_with("http://") || base.starts_with("https://")) {
@@ -532,6 +541,28 @@ pub async fn cloud_send_reaction(
     let url = endpoint(
         &base_url,
         &format!("/api/v1/accounts/{account_id}/send/reaction"),
+    )?;
+    let token = resolve_device_token(&base_url, &device_token)?;
+    let res = reqwest::Client::new()
+        .post(url)
+        .bearer_auth(token)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|e| format!("cloud request failed: {e}"))?;
+    parse_response(res).await
+}
+
+#[tauri::command]
+pub async fn cloud_send_file(
+    base_url: String,
+    device_token: String,
+    account_id: String,
+    payload: CloudSendFilePayload,
+) -> Result<serde_json::Value, String> {
+    let url = endpoint(
+        &base_url,
+        &format!("/api/v1/accounts/{account_id}/send/file"),
     )?;
     let token = resolve_device_token(&base_url, &device_token)?;
     let res = reqwest::Client::new()

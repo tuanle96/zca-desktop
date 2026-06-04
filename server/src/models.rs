@@ -150,6 +150,24 @@ pub struct SendReactionRequest {
 
 #[derive(Debug, Deserialize)]
 #[serde(rename_all = "camelCase")]
+pub struct SendFileRequest {
+    pub thread_id: String,
+    pub file_id: Uuid,
+    #[serde(default)]
+    pub thread_kind: Option<String>,
+}
+
+#[derive(Debug, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SendFileResponse {
+    pub queued: bool,
+    pub msg_id: Option<String>,
+    pub reason: Option<String>,
+    pub file: RichFile,
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct ResolvePhoneRequest {
     pub phone: String,
 }

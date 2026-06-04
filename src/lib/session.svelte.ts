@@ -16,6 +16,7 @@ import {
     initCloudFile,
     loadCloudDeviceSession,
     sendCloudReaction,
+    sendCloudFile,
     sendCloudSticker,
     sendCloudText,
     startCloudRealtime,
@@ -885,20 +886,32 @@ class SessionStore {
                 mime: file.type || "application/octet-stream",
                 sizeBytes: file.size,
                 contentSha256,
-            });
-            await uploadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, meta.id, [...bytes]);
-            this.appendToActive(
-                {
-                    id: `file-${meta.id}`,
-                    threadId,
-                    body: file.name || "Tệp đính kèm",
-                    sticker: null,
-                    file: {
-                        id: meta.id,
-                        filename: meta.filename,
-                        mime: meta.mime,
-                        sizeBytes: meta.sizeBytes,
-                    },
+              });
+              await uploadCloudFileBlob(this.cloudBaseUrl!, this.cloudDeviceToken!, meta.id, [...bytes]);
+              const sent = await sendCloudFile(
+                  this.cloudBaseUrl!,
+                  this.cloudDeviceToken!,
+                  this.profile!.accountId,
+                  threadId,
+                  meta.id,
+                  convo.kind,
+              );
+              const sentFile = (sent.file ?? {}) as Record<string, unknown>;
+              this.appendToActive(
+                  {
+                      id: String(sent.msgId ?? `file-${meta.id}`),
+                      threadId,
+                      body: file.name || "Tệp đính kèm",
+                      sticker: null,
+                      file: {
+                          id: String(sentFile.id ?? meta.id),
+                          filename: (sentFile.filename as string | null | undefined) ?? meta.filename,
+                          mime: (sentFile.mime as string | null | undefined) ?? meta.mime,
+                          sizeBytes: Number(sentFile.sizeBytes ?? meta.sizeBytes),
+                          sourceUrl: (sentFile.href as string | null | undefined) ?? null,
+                          thumb: (sentFile.thumb as string | null | undefined) ?? null,
+                          mediaKind: (sentFile.mediaKind as string | null | undefined) ?? "file",
+                      },
                     quote: null,
                     link: null,
                     reactionIcon: null,
