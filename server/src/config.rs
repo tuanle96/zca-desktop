@@ -18,6 +18,7 @@ pub struct Config {
     pub s3_access_key_id: Option<String>,
     pub s3_secret_access_key: Option<String>,
     pub s3_allow_http: bool,
+    pub media_mirror_max_bytes: usize,
     pub master_key_seed: String,
 }
 
@@ -66,6 +67,11 @@ impl Config {
         let s3_allow_http = std::env::var("ZCA_CLOUD_S3_ALLOW_HTTP")
             .map(|v| matches!(v.as_str(), "1" | "true" | "yes"))
             .unwrap_or(false);
+        let media_mirror_max_bytes = std::env::var("ZCA_CLOUD_MEDIA_MIRROR_MAX_BYTES")
+            .ok()
+            .and_then(|v| v.parse::<usize>().ok())
+            .filter(|v| *v > 0)
+            .unwrap_or(25 * 1024 * 1024);
         let master_key_seed = std::env::var("ZCA_CLOUD_MASTER_KEY")
             .unwrap_or_else(|_| "dev-only-zca-cloud-master-key-change-me".to_string());
         Self {
@@ -84,6 +90,7 @@ impl Config {
             s3_access_key_id,
             s3_secret_access_key,
             s3_allow_http,
+            media_mirror_max_bytes,
             master_key_seed,
         }
     }

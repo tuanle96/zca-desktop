@@ -182,6 +182,7 @@ mod tests {
             s3_access_key_id: None,
             s3_secret_access_key: None,
             s3_allow_http: false,
+            media_mirror_max_bytes: 25 * 1024 * 1024,
             master_key_seed: "test-master-key".to_string(),
         }
     }

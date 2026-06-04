@@ -338,6 +338,7 @@ async fn start_account_qr(
             auth.user_id,
             state.db.clone(),
             state.config.clone(),
+            state.objects.clone(),
             state.events.clone(),
         )
         .await;
