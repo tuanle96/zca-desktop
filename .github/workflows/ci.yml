@@ -38,7 +38,9 @@ jobs:
         with:
           components: clippy
       - uses: Swatinem/rust-cache@v2
-      # Pure, native-lib-free crates (no Tauri/webkit needed in CI).
+      # zca-keychain's Linux backend (keyring `sync-secret-service`) links libdbus.
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libdbus-1-dev pkg-config
+      # Shared crates — no Tauri/webkit needed in CI.
       - run: cargo clippy -p zca-cloud-client -p zca-keychain --all-targets -- -D warnings
       - run: cargo test -p zca-cloud-client -p zca-keychain
       # Regenerate the TS wire contract and fail if it drifted from what's committed.
