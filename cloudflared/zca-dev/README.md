@@ -51,3 +51,22 @@ cloudflared tunnel --config cloudflared/zca-dev/config.local.yml ingress validat
 curl -fsS  https://zca.tuanle.dev/health
 curl -fsSI https://mail-zca.tuanle.dev/
 ```
+
+## This deployment (verified live)
+
+- Tunnel **`zca-dev`** = `98071e8c-71ab-4b27-a247-c3c517cd3cc5`, creds at
+  `~/.cloudflared/98071e8c-….json`. `ZCA_TUNNEL_UUID=98071e8c-71ab-4b27-a247-c3c517cd3cc5`.
+- Confirmed 200: `zca.tuanle.dev`→server, `mail-zca.tuanle.dev`→MailHog,
+  `minio-zca.tuanle.dev`→MinIO.
+
+### Gotcha — `route dns` hijack
+`~/.cloudflared/config.yml` defaults `tunnel:` to another tunnel (`mbp-ssh`), so a
+bare `cloudflared tunnel route dns zca-dev <host>` routes to the WRONG tunnel (and
+`-f` won't repoint a record already on one of your tunnels). Bypass the default
+config and target by UUID:
+
+```bash
+cloudflared --config /dev/null tunnel route dns --overwrite-dns \
+  98071e8c-71ab-4b27-a247-c3c517cd3cc5 zca.tuanle.dev
+```
+

@@ -4,8 +4,8 @@
 #   cloudflared tunnel --config cloudflared/zca-dev/config.local.yml run zca-dev
 #
 # Replace <TUNNEL_UUID> with the UUID printed by `cloudflared tunnel create zca-dev`.
-tunnel: zca-dev
-credentials-file: /Users/tuan/.cloudflared/<TUNNEL_UUID>.json
+tunnel: 98071e8c-71ab-4b27-a247-c3c517cd3cc5
+credentials-file: /Users/tuan/.cloudflared/98071e8c-71ab-4b27-a247-c3c517cd3cc5.json
 
 ingress:
   - hostname: zca.tuanle.dev
