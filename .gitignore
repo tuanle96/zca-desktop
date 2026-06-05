@@ -1,7 +1,8 @@
 # Rust / Tauri
 /target
-/src-tauri/target
-/server/target
+/apps/desktop/src-tauri/target
+/apps/server/target
+/crates/zca-types/target
 **/*.rs.bk
 
 # Node / frontend
@@ -10,7 +11,7 @@ dist
 dist-ssr
 .vite
 .svelte-kit
-/build
+/apps/desktop/build
 
 # Zalo credential exports — NEVER commit (cookies are bearer tokens)
 *.cred.json

@@ -1,0 +1,30 @@
+<svg width="1060" height="220" viewBox="0 0 1060 220" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Zalo Desktop logo">
+  <defs>
+    <linearGradient id="wtile" x1="40" y1="30" x2="220" y2="210" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#29A9FF"/>
+      <stop offset="0.55" stop-color="#0A5BFF"/>
+      <stop offset="1" stop-color="#0040C8"/>
+    </linearGradient>
+    <linearGradient id="wz" x1="96" y1="86" x2="168" y2="134" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A78FF"/>
+      <stop offset="1" stop-color="#0047CC"/>
+    </linearGradient>
+  </defs>
+
+  <!-- icon, scaled to 180px tile in a 220 box -->
+  <g transform="translate(20,20) scale(0.3515625)">
+    <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#wtile)"/>
+    <rect x="236" y="92" width="176" height="132" rx="42" fill="#FFFFFF" fill-opacity="0.28"/>
+    <path d="M150 330 L118 396 L214 332 Z" fill="#FFFFFF"/>
+    <rect x="96" y="128" width="288" height="210" rx="56" fill="#FFFFFF"/>
+    <path d="M168 186 H320 L168 288 H320" stroke="url(#wz)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <circle cx="372" cy="318" r="40" fill="#FFFFFF"/>
+    <circle cx="372" cy="318" r="28" fill="#19D6BE"/>
+  </g>
+
+  <!-- wordmark: 'Zalo' bold brand-blue, 'Desktop' lighter -->
+  <text x="232" y="128" font-family="'Bricolage Grotesque Variable','Bricolage Grotesque',Inter,system-ui,sans-serif" font-size="124" font-weight="800" letter-spacing="-3">
+    <tspan fill="#0A5BFF">Zalo</tspan><tspan fill="#7A8699" font-weight="600"> Desktop</tspan>
+  </text>
+  <text x="236" y="180" font-family="Inter,system-ui,sans-serif" font-size="26" font-weight="500" letter-spacing="6" fill="#9AA5B5">MULTI-ACCOUNT ZALO CLIENT</text>
+</svg>

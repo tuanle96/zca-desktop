@@ -1,0 +1,35 @@
+[workspace]
+# CLIENTS workspace: the desktop core (src-tauri) and — later — the mobile core
+# plus the shared crates/ live here behind ONE lockfile + target dir.
+#
+# The cloud server is deliberately a SEPARATE workspace (server/Cargo.toml). It
+# links the `sqlite3` native lib via sqlx-sqlite (pulled transitively by sqlx),
+# which collides with the desktop's rusqlite (also links `sqlite3`) under Cargo's
+# one-package-per-`links` rule — and there is no libsqlite3-sys version both
+# accept (rusqlite 0.37 wants ^0.35, sqlx-sqlite wants an older range). Clients and
+# server therefore share pure path-crates (no native libs) instead of one graph.
+#
+# resolver = "2" is required for a virtual workspace to get edition-2021 feature
+# resolution (keeps build-dep / host features out of the normal dep graph — matters
+# for tauri-build).
+members = ["apps/desktop/src-tauri", "crates/*", "apps/mobile/src-tauri"]
+# zca-types is EXCLUDED from the clients workspace: it has an optional `sqlx`
+# dependency (for the server's FromRow) and Cargo.lock resolves optional deps too,
+# so sqlx-sqlite's libsqlite3-sys would collide with the desktop's rusqlite here
+# even with the feature off. It builds standalone (codegen) and as a path-dep of
+# the server (which enables `sqlx`); clients never depend on it (they consume the
+# generated TS at packages/types/src/generated/contract.ts).
+exclude = ["crates/zca-types"]
+resolver = "2"
+
+[workspace.dependencies]
+# zca-rust: unofficial Zalo API client (rustls TLS — no native bindings). Git
+# dependency per state.json decision d2; pinned to a rev for reproducible builds.
+# Pinned to fix/login-qr-userinfo-optional (c95c88b): (1) trailing QR userinfo
+# probe best-effort (missing `info` can't fail a successful login); (2) enforces
+# qr_timeout so an unscanned QR expires; (3) check_session follows the full
+# redirect chain so chat.zalo.me cookies (zpw_sek) are set before login —
+# fixes `missing zpw_enk` after a QR scan. Re-pin to main once merged.
+# NOTE: the server (separate workspace) pins the SAME rev — keep both in sync until
+# the pin is centralized in a shared crate (Phase 4).
+zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "c95c88b3ad6ac161dfcaa87003171c50a0425faa" }

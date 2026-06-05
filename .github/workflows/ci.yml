@@ -20,7 +20,30 @@ jobs:
       - uses: oven-sh/setup-bun@v2
       - run: bun install --frozen-lockfile
       - run: bun run check
+        working-directory: apps/desktop
       - run: bun run build
+        working-directory: apps/desktop
+      - run: bun run check
+        working-directory: apps/mobile
+      - run: bun run build
+        working-directory: apps/mobile
+
+  shared-crates:
+    name: shared crates (clippy + test + contract codegen)
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
+      - uses: Swatinem/rust-cache@v2
+      # Pure, native-lib-free crates (no Tauri/webkit needed in CI).
+      - run: cargo clippy -p zca-cloud-client -p zca-keychain --all-targets -- -D warnings
+      - run: cargo test -p zca-cloud-client -p zca-keychain
+      # Regenerate the TS wire contract and fail if it drifted from what's committed.
+      - run: cargo test --manifest-path crates/zca-types/Cargo.toml --features ts
+      - run: git diff --exit-code -- packages/types/src/generated
 
   server:
     name: cloud server (clippy + test)
@@ -33,6 +56,6 @@ jobs:
           components: clippy
       - uses: Swatinem/rust-cache@v2
         with:
-          workspaces: server
-      - run: cargo clippy --manifest-path server/Cargo.toml --all-targets -- -D warnings
-      - run: cargo test --manifest-path server/Cargo.toml
+          workspaces: apps/server
+      - run: cargo clippy --manifest-path apps/server/Cargo.toml --all-targets -- -D warnings
+      - run: cargo test --manifest-path apps/server/Cargo.toml

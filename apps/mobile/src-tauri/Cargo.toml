@@ -1,0 +1,30 @@
+[package]
+name = "zca-mobile"
+version = "0.1.0"
+description = "Zalo mobile client (Tauri Mobile) — thin cloud client. Personal, noncommercial use only."
+authors = ["Lê Anh Tuấn (tuanle96)"]
+edition = "2021"
+license = "PolyForm-Noncommercial-1.0.0"
+publish = false
+
+[lib]
+# Mobile targets build the app as a shared/static lib linked by the platform
+# harness; `rlib` keeps `cargo build`/test usable on the host.
+name = "zca_mobile_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+# Deep linking for the magic-link flow (zca:// + iOS universal / Android app links).
+tauri-plugin-deep-link = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+futures-util = "0.3"
+# Shared, Tauri-agnostic pieces — the whole point of the monorepo: the mobile
+# core is a thin wrapper over these (no rusqlite, no zca-rust → small build,
+# no on-device Zalo session, lower store-policy risk).
+zca-cloud-client = { path = "../../../crates/zca-cloud-client" }
+zca-keychain = { path = "../../../crates/zca-keychain" }

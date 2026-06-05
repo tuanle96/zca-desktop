@@ -1,0 +1,13 @@
+[package]
+name = "zca-cloud-client"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "PolyForm-Noncommercial-1.0.0"
+description = "Tauri-agnostic HTTP/SSE client to the zca cloud server (rustls TLS, no native bindings). The single Rust home for the /api/v1 contract — shared by the desktop core (command/cloud.rs) and the mobile core."
+
+[dependencies]
+reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls", "stream"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"

@@ -1,0 +1,18 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="zca-desktop monochrome mark">
+  <!-- Single-color silhouette: use currentColor. Good for tray icons (template), favicons, print. -->
+  <g fill="currentColor">
+    <!-- second account bubble (peeking) -->
+    <rect x="236" y="92" width="176" height="132" rx="42" fill-opacity="0.35"/>
+    <!-- primary bubble + tail -->
+    <path d="M150 330 L118 396 L214 332 Z"/>
+    <rect x="96" y="128" width="288" height="210" rx="56"/>
+    <!-- presence badge ring -->
+    <circle cx="372" cy="318" r="40"/>
+  </g>
+  <!-- knockouts (background color) -->
+  <g fill="#FFFFFF">
+    <circle cx="372" cy="318" r="26"/>
+  </g>
+  <!-- Z monogram knocked out of the bubble -->
+  <path d="M168 186 H320 L168 288 H320" stroke="#FFFFFF" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+</svg>

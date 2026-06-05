@@ -1,0 +1,73 @@
+[package]
+name = "zca-desktop"
+version = "0.1.0"
+description = "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust). Personal, noncommercial use only."
+authors = ["Lê Anh Tuấn (tuanle96) <justin.le.1105@gmail.com>"]
+edition = "2021"
+license = "PolyForm-Noncommercial-1.0.0"
+repository = "https://github.com/tuanle96/zca-desktop"
+homepage = "https://github.com/tuanle96/zca-desktop"
+publish = false
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+# The `_lib` suffix may seem redundant but it is necessary
+# to make the lib name unique and wouldn't conflict with the bin name.
+# This seems to be only an issue on Windows, see https://github.com/rust-lang/cargo/issues/8519
+name = "zca_desktop_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+# Deep linking (ADR-0009): registers the `zca://` custom scheme so magic-link
+# emails open the app and auto-verify. Pure Rust, no extra native bindings.
+tauri-plugin-deep-link = "2"
+# Native OS notifications (ADR-0010): surfaces incoming Zalo messages as desktop
+# notifications when the window is unfocused. Uses the platform notification
+# center (macOS UNUserNotificationCenter / Windows / Linux) via Tauri's
+# first-party plugin — no extra native bindings beyond what Tauri already links.
+tauri-plugin-notification = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+# zca-rust pin lives once in the root [workspace.dependencies] (see the repo-root
+# Cargo.toml for the rev rationale) so the desktop core and cloud server can
+# never drift apart.
+zca-rust = { workspace = true }
+# Shared, Tauri-agnostic HTTP/SSE client to the cloud server (the /api/v1 contract
+# lives here, shared with the mobile core). The desktop's cloud commands are thin
+# wrappers over it; the device token stays in this crate's keychain code, never in
+# the client crate.
+zca-cloud-client = { path = "../../../crates/zca-cloud-client" }
+tokio = { version = "1", features = ["rt-multi-thread", "macros", "sync", "time"] }
+# Structured logging + rolling file capture (config layer). Pure Rust, no native
+# bindings (no ADR needed). `tracing` is already in the tree via zca-rust.
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-appender = "0.2"
+# reqwest: only used in the zalo layer to read cookies back out of the QR-login
+# cookie jar (reqwest::cookie::{Jar, CookieStore}) when assembling Credentials.
+# Pinned to the same version + rustls TLS that zca-rust already resolves, so no
+# new native binding and no new ADR (ADR-0004).
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "json", "rustls-tls", "stream"] }
+futures-util = "0.3"
+# Local persistence (store layer, ADR-0005). rusqlite `bundled` compiles a
+# pinned SQLite in-tree (no system lib). keyring holds the single master key in
+# the OS keychain; aes-gcm encrypts the credential blob at rest (pure Rust).
+rusqlite = { version = "0.37", features = ["bundled"] }
+aes-gcm = "0.10"
+rand = "0.8"
+thiserror = "2"
+
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["sync-secret-service"] }

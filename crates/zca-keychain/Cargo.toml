@@ -1,0 +1,25 @@
+[package]
+name = "zca-keychain"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "PolyForm-Noncommercial-1.0.0"
+description = "Thin OS-keychain wrapper (store/load/delete a secret string). Shared by the desktop and mobile cores so bearer tokens stay in the OS keychain and never cross into the webview."
+
+[dependencies]
+thiserror = "2"
+
+# keyring backs macOS/iOS (Security framework), Windows (WinCred) and Linux
+# (Secret Service). Android has no keyring backend yet — see the cfg(android)
+# stub in lib.rs (a real impl should bridge to Android Keystore).
+[target.'cfg(target_os = "macos")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "ios")'.dependencies]
+keyring = { version = "3", features = ["apple-native"] }
+
+[target.'cfg(target_os = "windows")'.dependencies]
+keyring = { version = "3", features = ["windows-native"] }
+
+[target.'cfg(target_os = "linux")'.dependencies]
+keyring = { version = "3", features = ["sync-secret-service"] }

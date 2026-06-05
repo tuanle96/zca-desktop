@@ -1,0 +1,50 @@
+[workspace]
+# Standalone workspace — separate from the clients (root) workspace ON PURPOSE.
+# The server links the `sqlite3` native lib via sqlx-sqlite (pulled transitively by
+# sqlx), while the desktop links `sqlite3` via rusqlite. Cargo forbids two packages
+# linking the same native lib in one graph, and no libsqlite3-sys version satisfies
+# both, so clients and server can't share a workspace. They share pure path-crates
+# (no native libs) instead. Keep the zca-rust rev in sync with the root Cargo.toml
+# until it's centralized in a shared crate (Phase 4).
+
+[workspace.dependencies]
+zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "c95c88b3ad6ac161dfcaa87003171c50a0425faa" }
+
+[package]
+name = "zca-cloud-server"
+version = "0.1.0"
+edition = "2021"
+publish = false
+license = "PolyForm-Noncommercial-1.0.0"
+
+[dependencies]
+aes-gcm = "0.10"
+argon2 = "0.5"
+axum = { version = "0.7", features = ["macros"] }
+base64 = "0.22"
+chrono = { version = "0.4", features = ["serde"] }
+hkdf = "0.12"
+lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls-tls", "hostname"] }
+object_store = { version = "0.11", features = ["aws"] }
+rand = "0.8"
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "rustls-tls"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+sqlx = { version = "0.8", default-features = false, features = ["runtime-tokio-rustls", "postgres", "uuid", "chrono", "json", "migrate", "macros", "derive"] }
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal", "sync", "time", "net"] }
+tokio-stream = { version = "0.1", features = ["sync"] }
+tower-http = { version = "0.6", features = ["cors", "trace"] }
+tower_governor = "0.4"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+urlencoding = "2"
+uuid = { version = "1", features = ["v4", "serde"] }
+zca-rust = { workspace = true }
+# Shared wire-contract DTOs (single source of truth, also generates the TS
+# bindings). The `sqlx` feature turns on `FromRow` so these map Postgres rows.
+zca-types = { path = "../../crates/zca-types", features = ["sqlx"] }
+
+[dev-dependencies]
+serde_json = "1"

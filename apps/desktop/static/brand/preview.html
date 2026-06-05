@@ -1,0 +1,242 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zalo Desktop — logo proposal</title>
+  <style>
+    :root {
+      --blue: #0A5BFF;
+      --ink: #0d1117;
+      --muted: #7A8699;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: Inter, -apple-system, system-ui, sans-serif;
+      color: #1a2230;
+      background: #f4f6fa;
+    }
+
+    header {
+      padding: 40px 32px 24px;
+    }
+
+    h1 {
+      margin: 0 0 6px;
+      font-size: 26px;
+      letter-spacing: -.5px;
+    }
+
+    .sub {
+      color: var(--muted);
+      font-size: 14px;
+    }
+
+    .wrap {
+      max-width: 1080px;
+      margin: 0 auto;
+      padding: 0 24px 80px;
+    }
+
+    .row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      margin-top: 24px;
+    }
+
+    .panel {
+      border-radius: 18px;
+      padding: 34px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 260px;
+    }
+
+    .light {
+      background: #ffffff;
+      border: 1px solid #e6eaf0;
+    }
+
+    .dark {
+      background: #141821;
+    }
+
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      color: var(--muted);
+      margin: 30px 0 6px;
+      font-weight: 600;
+    }
+
+    .sizes {
+      display: flex;
+      align-items: flex-end;
+      gap: 28px;
+      flex-wrap: wrap;
+      background: #fff;
+      border: 1px solid #e6eaf0;
+      border-radius: 18px;
+      padding: 30px 34px;
+    }
+
+    .sizes .item {
+      text-align: center;
+    }
+
+    .sizes img {
+      display: block;
+      image-rendering: auto;
+    }
+
+    .sizes span {
+      font-size: 11px;
+      color: var(--muted);
+      display: block;
+      margin-top: 8px;
+    }
+
+    .dock {
+      background: linear-gradient(180deg, #2a2f3a, #1b1f27);
+      border-radius: 18px;
+      padding: 26px 34px;
+      display: flex;
+      gap: 30px;
+      align-items: center;
+    }
+
+    .dockcell {
+      text-align: center;
+      color: #cbd3df;
+      font-size: 11px;
+    }
+
+    .swatches {
+      display: flex;
+      gap: 14px;
+      flex-wrap: wrap;
+      margin-top: 10px;
+    }
+
+    .sw {
+      border-radius: 12px;
+      overflow: hidden;
+      border: 1px solid #e6eaf0;
+      width: 120px;
+    }
+
+    .sw .chip {
+      height: 64px;
+    }
+
+    .sw .meta {
+      padding: 8px 10px;
+      font-size: 11px;
+    }
+
+    .sw .meta b {
+      display: block;
+    }
+
+    .sw .meta code {
+      color: var(--muted);
+    }
+
+    .note {
+      background: #fff;
+      border: 1px solid #e6eaf0;
+      border-radius: 18px;
+      padding: 22px 26px;
+      margin-top: 24px;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+
+    .note b {
+      color: var(--blue);
+    }
+  </style>
+</head>
+
+<body>
+  <header>
+    <div class="wrap" style="padding-bottom:0">
+      <h1>Zalo Desktop — logo proposal</h1>
+      <div class="sub">A chat-bubble + <b>Z</b> monogram. Second bubble = multi-account · teal dot = realtime presence.
+        Built on the app's Zalo-blue theme.</div>
+    </div>
+  </header>
+
+  <div class="wrap">
+
+    <div class="label">App icon — on light &amp; dark</div>
+    <div class="row">
+      <div class="panel light"><img src="logo-icon.svg" width="180" height="180" alt=""></div>
+      <div class="panel dark"><img src="logo-icon.svg" width="180" height="180" alt=""></div>
+    </div>
+
+    <div class="label">Wordmark lockup</div>
+    <div class="row">
+      <div class="panel light"><img src="logo-wordmark.svg" width="430" alt=""></div>
+      <div class="panel dark"><img src="logo-wordmark.svg" width="430" alt=""></div>
+    </div>
+
+    <div class="label">Monochrome (tray / favicon / print)</div>
+    <div class="row">
+      <div class="panel light" style="color:#0A5BFF"><img src="logo-mono.svg" width="150" height="150" alt=""></div>
+      <div class="panel dark" style="color:#ffffff"><img src="logo-mono.svg" width="150" height="150" alt=""></div>
+    </div>
+
+    <div class="label">Renders at real icon sizes</div>
+    <div class="sizes">
+      <div class="item"><img src="logo-icon.svg" width="128" height="128" alt=""><span>128px</span></div>
+      <div class="item"><img src="logo-icon.svg" width="64" height="64" alt=""><span>64px</span></div>
+      <div class="item"><img src="logo-icon.svg" width="48" height="48" alt=""><span>48px</span></div>
+      <div class="item"><img src="logo-icon.svg" width="32" height="32" alt=""><span>32px</span></div>
+      <div class="item"><img src="logo-icon.svg" width="16" height="16" alt=""><span>16px (favicon)</span></div>
+    </div>
+
+    <div class="label">Palette</div>
+    <div class="swatches">
+      <div class="sw">
+        <div class="chip" style="background:#29A9FF"></div>
+        <div class="meta"><b>Sky</b><code>#29A9FF</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#0A5BFF"></div>
+        <div class="meta"><b>Zalo blue</b><code>#0A5BFF</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#0040C8"></div>
+        <div class="meta"><b>Deep</b><code>#0040C8</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#19D6BE"></div>
+        <div class="meta"><b>Presence</b><code>#19D6BE</code></div>
+      </div>
+      <div class="sw">
+        <div class="chip" style="background:#141821"></div>
+        <div class="meta"><b>Ink</b><code>#141821</code></div>
+      </div>
+    </div>
+
+    <div class="note">
+      The mark reads as a <b>messaging app</b> first (rounded speech bubble with tail), carries the
+      <b>zca / Zalo</b> identity through the lightning-style <b>Z</b>, hints at <b>multi-account</b> with the
+      bubble stacked behind, and the teal dot signals the <b>realtime listener / online presence</b>.
+      Geometry is tuned to stay legible down to 16px. Source files live in <code>static/brand/</code>.
+    </div>
+
+  </div>
+</body>
+
+</html>

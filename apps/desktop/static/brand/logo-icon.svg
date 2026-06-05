@@ -1,0 +1,35 @@
+<svg width="512" height="512" viewBox="0 0 512 512" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="zca-desktop app icon">
+  <defs>
+    <linearGradient id="tile" x1="0" y1="0" x2="512" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#29A9FF"/>
+      <stop offset="0.55" stop-color="#0A5BFF"/>
+      <stop offset="1" stop-color="#0040C8"/>
+    </linearGradient>
+    <linearGradient id="zmark" x1="168" y1="186" x2="320" y2="288" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0A78FF"/>
+      <stop offset="1" stop-color="#0047CC"/>
+    </linearGradient>
+    <linearGradient id="gloss" x1="256" y1="0" x2="256" y2="512" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#FFFFFF" stop-opacity="0.16"/>
+      <stop offset="0.5" stop-color="#FFFFFF" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+
+  <!-- app tile -->
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#tile)"/>
+  <rect x="0" y="0" width="512" height="512" rx="112" fill="url(#gloss)"/>
+
+  <!-- second account bubble (peeking behind) -->
+  <rect x="236" y="92" width="176" height="132" rx="42" fill="#FFFFFF" fill-opacity="0.28"/>
+
+  <!-- primary chat bubble + tail -->
+  <path d="M150 330 L118 396 L214 332 Z" fill="#FFFFFF"/>
+  <rect x="96" y="128" width="288" height="210" rx="56" fill="#FFFFFF"/>
+
+  <!-- Z monogram -->
+  <path d="M168 186 H320 L168 288 H320" stroke="url(#zmark)" stroke-width="44" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+
+  <!-- realtime / online presence badge -->
+  <circle cx="372" cy="318" r="40" fill="#FFFFFF"/>
+  <circle cx="372" cy="318" r="28" fill="#19D6BE"/>
+</svg>

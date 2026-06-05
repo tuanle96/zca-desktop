@@ -1,0 +1,21 @@
+{
+  "name": "@zca/core-client",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Shared cloud client: thin invoke() wrappers over the Tauri core's cloud_* commands (HTTP/SSE to the cloud server). No secrets cross this layer — the device token stays in the Rust core's keychain. Wire types come from @zca/types (the generated single-source contract). Reused by the desktop and mobile frontends.",
+  "license": "PolyForm-Noncommercial-1.0.0",
+  "types": "./src/index.ts",
+  "svelte": "./src/index.ts",
+  "exports": {
+    ".": {
+      "types": "./src/index.ts",
+      "svelte": "./src/index.ts",
+      "default": "./src/index.ts"
+    }
+  },
+  "dependencies": {
+    "@tauri-apps/api": "^2",
+    "@zca/types": "workspace:*"
+  }
+}

@@ -1,0 +1,24 @@
+[package]
+name = "zca-types"
+version = "0.0.0"
+edition = "2021"
+publish = false
+license = "PolyForm-Noncommercial-1.0.0"
+description = "Single Rust source of truth for the cloud WIRE contract. The server depends on it with the `sqlx` feature (FromRow); `cargo test -p zca-types --features ts` regenerates the matching TypeScript at packages/types/src/generated/contract.ts. This is what removes the models.rs ↔ command/cloud.rs ↔ TS triplication."
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["serde"] }
+# ts-rs only when generating bindings (the `ts` feature) — keeps it out of the
+# server and client builds.
+ts-rs = { version = "10", optional = true, features = ["chrono-impl", "uuid-impl"] }
+# sqlx::FromRow only when the server enables the `sqlx` feature — keeps sqlx (and
+# its sqlx-sqlite, which links the sqlite3 native lib) OUT of the clients
+# workspace, where it would collide with the desktop's rusqlite.
+sqlx = { version = "0.8", optional = true, default-features = false, features = ["postgres", "macros", "derive", "uuid", "chrono"] }
+
+[features]
+ts = ["dep:ts-rs"]
+sqlx = ["dep:sqlx"]
