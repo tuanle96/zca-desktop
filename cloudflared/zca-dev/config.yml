@@ -1,0 +1,17 @@
+# Cloudflare named-tunnel config for the zca DEV stack, run INSIDE Docker by the
+# `cloudflared-zca` service in apps/server/docker-compose.dev.yml (profile: tunnel).
+# Routes target compose service names on the internal network + their INTERNAL ports.
+#
+# `tunnel:` may be the tunnel name or its UUID; the credentials JSON (mounted to the
+# path below) carries the actual tunnel identity. See ./README.md for one-time setup.
+tunnel: zca-dev
+credentials-file: /etc/cloudflared/credentials.json
+
+ingress:
+  - hostname: zca.tuanle.dev
+    service: http://server:37880
+  - hostname: mail-zca.tuanle.dev
+    service: http://mailhog:8025
+  - hostname: minio-zca.tuanle.dev
+    service: http://minio:9000
+  - service: http_status:404

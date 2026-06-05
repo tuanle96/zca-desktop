@@ -61,7 +61,9 @@ services:
     environment:
       DATABASE_URL: postgres://zca:zca@postgres:5432/zca_cloud
       ZCA_CLOUD_BIND: 0.0.0.0:37880
-      ZCA_CLOUD_PUBLIC_BASE_URL: http://127.0.0.1:37880
+      # Override to the tunnel domain when exposing publicly, e.g.
+      # ZCA_CLOUD_PUBLIC_BASE_URL=https://zca.tuanle.dev (so magic-link URLs are public).
+      ZCA_CLOUD_PUBLIC_BASE_URL: ${ZCA_CLOUD_PUBLIC_BASE_URL:-http://127.0.0.1:37880}
       # Login codes are delivered via MailHog (see below) — read them at the
       # MailHog web UI on http://127.0.0.1:37885. ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS
       # (return the code in the API response) is intentionally NOT set: the server
@@ -94,6 +96,22 @@ services:
     ports:
       - "37880:37880"
     restart: always
+
+  # Cloudflare tunnel — exposes the dev stack at *.tuanle.dev. Opt-in via the
+  # `tunnel` profile; see ../../cloudflared/zca-dev/README.md for one-time setup.
+  #   ZCA_TUNNEL_UUID=<uuid> docker compose -f apps/server/docker-compose.dev.yml \
+  #     --profile tunnel up -d cloudflared-zca
+  cloudflared-zca:
+    image: cloudflare/cloudflared:2026.3.0
+    command: tunnel --config /etc/cloudflared/config.yml run zca-dev
+    profiles: [tunnel]
+    depends_on:
+      server:
+        condition: service_started
+    volumes:
+      - ../../cloudflared/zca-dev/config.yml:/etc/cloudflared/config.yml:ro
+      - ${HOME}/.cloudflared/${ZCA_TUNNEL_UUID:-missing-tunnel-uuid}.json:/etc/cloudflared/credentials.json:ro
+    restart: unless-stopped
 
 volumes:
   server-target:

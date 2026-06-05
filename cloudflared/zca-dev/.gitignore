@@ -1,0 +1,3 @@
+# Never commit tunnel credentials / certs (they belong in $HOME/.cloudflared).
+*.json
+*.pem
