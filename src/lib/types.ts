@@ -177,34 +177,4 @@ export type Conversation = {
     avatar: string | null;
 };
 
-// Persisted history reloaded from the active session source.
-export type StoredThread = {
-    accountId: string;
-    threadId: string;
-    kind: ThreadKind;
-    title: string | null;
-    avatar: string | null;
-    lastAt: number | null;
-    unread: number;
-};
-
-export type StoredMessage = {
-    accountId: string;
-    threadId: string;
-    msgId: string;
-    fromId: string | null;
-    fromName: string | null;
-    body: string | null;
-    sticker: Sticker | null;
-    quote: QuoteRef | null;
-    link: LinkPreview | null;
-    reactionIcon: string | null;
-    deleted: boolean;
-    outgoing: boolean;
-    ts: number | null;
-};
-
-export type History = {
-    threads: StoredThread[];
-    messages: StoredMessage[];
-};
+// (Legacy local-history types removed — the cloud backend is the history source.)

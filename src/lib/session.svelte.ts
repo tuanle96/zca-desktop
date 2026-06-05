@@ -31,21 +31,15 @@ import type {
     Conversation,
     CredentialSummary,
     Group,
-    History,
-    IncomingMessage,
     LinkPreview,
-    QrLoginEvent,
     QrPhase,
     QuoteInput,
     QuoteRef,
     ReactionEvent,
     ReactionIcon,
     Sticker,
-    UndoEvent,
 } from "./types";
 
-const MESSAGE_EVENT = "zalo://message";
-const QR_EVENT = "zalo://qr";
 const DEFAULT_CLOUD_BASE_URL = "http://127.0.0.1:37880";
 export const CLOUD_BASE_URL_STORAGE_KEY = "zca.cloud.baseUrl";
 export const CLOUD_DEVICE_LINKED_STORAGE_KEY = "zca.cloud.deviceLinked";
@@ -238,8 +232,6 @@ class SessionStore {
     /** True while a QR flow for an ADDITIONAL account is in progress (overlay). */
     qrAdding = $state(false);
 
-    private unlisten: UnlistenFn | null = null;
-    private unlistenQr: UnlistenFn | null = null;
     private unlistenCloud: UnlistenFn | null = null;
     private qrTimer: ReturnType<typeof setInterval> | null = null;
     private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
@@ -279,18 +271,13 @@ class SessionStore {
         }
     }
 
-    async checkSession() {
-        this.sessionSummary = null;
-    }
-
-    async loginAndListen() {
-        this.error = "Cloud-only mode: đăng nhập bằng magic link và hosted QR.";
-    }
-
-      /** On app start, do not touch the OS keychain before user intent is clear. */
+      /** On app start, silently restore a previously linked cloud device (if any). */
       async restore(): Promise<boolean> {
-          this.restoring = false;
-          return false;
+          try {
+              return await this.restoreCloudDevice();
+          } finally {
+              this.restoring = false;
+          }
       }
 
       async restoreCloudDevice(baseUrl?: string): Promise<boolean> {
@@ -347,16 +334,6 @@ class SessionStore {
         this.qrAdding = false;
         this.qrPhase = "idle";
         this.stopQrCountdown();
-    }
-
-    /**
-     * Run the interactive QR login flow. Login gate for the first account, or
-     * the "add account" overlay for subsequent ones. On success the account is
-     * added to the rail and becomes active.
-     */
-    async startQrLogin() {
-        this.qrError = "Cloud-only mode: use hosted cloud QR.";
-        this.qrPhase = "error";
     }
 
     // --- account management -------------------------------------------------
@@ -487,67 +464,6 @@ class SessionStore {
         );
     }
 
-    private bumpAccountUnread(accountId: string) {
-        this.accounts = this.accounts.map((a) =>
-            a.accountId === accountId ? { ...a, unread: a.unread + 1 } : a,
-        );
-    }
-
-    /** Load directories + history for `accountId` (defaults to active). */
-    private warmUp(accountId?: string) {
-        const id = accountId ?? this.activeAccountId;
-        if (!id) return;
-        this.hydrateCloudHistory(id);
-    }
-
-    // --- QR event plumbing --------------------------------------------------
-
-    private async ensureQrListener() {
-        if (this.unlistenQr) return;
-        this.unlistenQr = await listen<QrLoginEvent>(QR_EVENT, (event) => {
-            this.applyQrEvent(event.payload);
-        });
-    }
-
-    private applyQrEvent(event: QrLoginEvent) {
-        switch (event.stage) {
-            case "generated":
-                this.qrImage = event.image;
-                this.qrScannedName = null;
-                this.qrScannedAvatar = null;
-                this.qrPhase = "waiting-scan";
-                this.startQrCountdown(event.expiresInSecs);
-                break;
-            case "scanned":
-                this.qrScannedName = event.displayName;
-                this.qrScannedAvatar = event.avatar || null;
-                this.qrPhase = "scanned";
-                this.stopQrCountdown();
-                break;
-            case "declined":
-                this.qrPhase = "declined";
-                this.stopQrCountdown();
-                break;
-            case "expired":
-                this.qrPhase = "expired";
-                this.stopQrCountdown();
-                break;
-            case "success":
-                this.qrPhase = "success";
-                this.stopQrCountdown();
-                break;
-        }
-    }
-
-    private startQrCountdown(seconds: number) {
-        this.stopQrCountdown();
-        this.qrSecondsLeft = Math.max(0, Math.floor(seconds));
-        this.qrTimer = setInterval(() => {
-            this.qrSecondsLeft = Math.max(0, this.qrSecondsLeft - 1);
-            if (this.qrSecondsLeft === 0) this.stopQrCountdown();
-        }, 1000);
-    }
-
     private stopQrCountdown() {
         if (this.qrTimer) {
             clearInterval(this.qrTimer);
@@ -556,32 +472,6 @@ class SessionStore {
     }
 
     // --- directories (operate on a specific account bucket) -----------------
-
-    async loadContacts(accountId?: string) {
-        const id = accountId ?? this.activeAccountId;
-        if (!id) return;
-        this.withBucket(id, (b) => {
-            b.contacts = [];
-            b.contactsLoaded = true;
-        });
-        if (id === this.activeAccountId) {
-            this.contacts = [];
-            this.contactsLoaded = true;
-        }
-    }
-
-    async loadGroups(accountId?: string) {
-        const id = accountId ?? this.activeAccountId;
-        if (!id) return;
-        this.withBucket(id, (b) => {
-            b.groups = [];
-            b.groupsLoaded = true;
-        });
-        if (id === this.activeAccountId) {
-            this.groups = [];
-            this.groupsLoaded = true;
-        }
-    }
 
     private groupForIn(b: AccountData, threadId: string): Group | undefined {
         return b.groups.find((g) => g.groupId === threadId);
@@ -595,16 +485,6 @@ class SessionStore {
     private avatarForIn(b: AccountData, threadId: string, kind: "user" | "group"): string | null {
         if (kind === "group") return this.groupForIn(b, threadId)?.avatar ?? null;
         return b.contacts.find((c) => c.userId === threadId)?.avatar ?? null;
-    }
-
-    private refreshConversationIdentities() {
-        const b = this.activeBucket();
-        if (!b) return;
-        this.conversations = this.conversations.map((c) => ({
-            ...c,
-            title: this.titleForIn(b, c.threadId, c.kind, c.title),
-            avatar: this.avatarForIn(b, c.threadId, c.kind) ?? c.avatar,
-        }));
     }
 
     /** Hydrate conversations + per-thread messages for an account. */
@@ -758,6 +638,10 @@ class SessionStore {
         return ok;
     }
 
+    // NOTE: the sticker *catalog* (search / recent / categories) is not yet wired to
+    // the cloud backend, so the picker currently shows no packs to choose from.
+    // Sending a sticker (sendSticker → cloud) does work. These return [] until a
+    // catalog endpoint exists.
     /** Search stickers for the picker (reuses the active account's session). */
     async searchStickers(keyword: string, limit = 40): Promise<Sticker[]> {
         void keyword;
@@ -959,19 +843,8 @@ class SessionStore {
     }
 
     dispose() {
-        this.unlisten?.();
-        this.unlisten = null;
-        this.unlistenQr?.();
-        this.unlistenQr = null;
         this.stopCloudRealtime();
         this.stopQrCountdown();
-    }
-
-    private async ensureListener() {
-        if (this.unlisten) return;
-        this.unlisten = await listen<IncomingMessage>(MESSAGE_EVENT, (event) => {
-            this.ingest(event.payload);
-        });
     }
 
     private async ensureCloudRealtime() {
@@ -1089,77 +962,6 @@ class SessionStore {
         return this.activeAccountId ? this.buckets.get(this.activeAccountId) : undefined;
     }
 
-    private withBucket(accountId: string, fn: (b: AccountData) => void) {
-        const b = this.buckets.get(accountId);
-        if (b) fn(b);
-    }
-
-    /** Route an incoming message to its account bucket. If it's the active
-     * account, also update the reactive view; otherwise bump its rail badge. */
-    private ingest(msg: IncomingMessage) {
-        const b = this.buckets.get(msg.accountId);
-        if (!b) return; // event for an account we don't track
-        const name = msg.fromName ?? msg.fromId;
-        const title = this.titleForIn(b, msg.threadId, msg.threadKind, name);
-        const isActive = msg.accountId === this.activeAccountId;
-        const bumpUnread = !msg.isSelf && !(isActive && msg.threadId === this.activeThreadId);
-
-        // Non-secret routing diagnostic: which account a message was routed to,
-        // and whether that is the active view or a background bucket. account +
-        // thread ids only, never message content. This is the observable signal
-        // that an event for account B does NOT enter account A's active view.
-        log.info(
-            `route: msg account=${msg.accountId} thread=${msg.threadId} -> ${isActive ? "active-view" : "background-bucket"} (active=${this.activeAccountId ?? "none"})`,
-        );
-
-        if (msg.reaction) {
-            this.applyReactionToBucket(b, msg.reaction);
-            if (isActive) {
-                this.threads = b.threads;
-                this.conversations = b.conversations;
-            }
-            return;
-        }
-
-        if (msg.undo) {
-            this.applyUndoToBucket(b, msg.undo);
-            if (isActive) {
-                this.threads = b.threads;
-                this.conversations = b.conversations;
-            }
-            return;
-        }
-
-        this.appendToBucket(
-            b,
-            {
-                id: msg.msgId,
-                threadId: msg.threadId,
-                body: msg.sticker ? "" : (msg.text ?? "[non-text message]"),
-                sticker: msg.sticker,
-                file: null,
-                quote: msg.quote,
-                link: msg.link,
-                reactionIcon: null,
-                deleted: false,
-                outgoing: msg.isSelf,
-                authorName: name,
-                authorAvatar: msg.isSelf ? b.profile.avatar : this.avatarForIn(b, msg.threadId, msg.threadKind),
-                at: Date.now(),
-            },
-            messageSnippet(msg.text, msg.sticker, msg.link),
-            { kind: msg.threadKind, title, bumpUnread },
-        );
-
-        if (isActive) {
-            // Mirror into the reactive view.
-            this.threads = b.threads;
-            this.conversations = b.conversations;
-        } else if (bumpUnread) {
-            this.bumpAccountUnread(msg.accountId);
-        }
-    }
-
     private applyReactionToBucket(b: AccountData, reaction: ReactionEvent) {
         const list = b.threads[reaction.threadId];
         if (!list) return;
@@ -1175,33 +977,6 @@ class SessionStore {
         if (!changed) return;
         b.conversations = b.conversations.map((c) =>
             c.threadId === reaction.threadId ? { ...c } : c,
-        );
-    }
-
-    private applyUndoToBucket(b: AccountData, undo: UndoEvent) {
-        const list = b.threads[undo.threadId];
-        if (!list) return;
-        let changed = false;
-        const recalled = "Tin nhắn đã được thu hồi";
-        const next = list.map((m) => {
-            if (m.id !== undo.msgId) return m;
-            changed = true;
-            return {
-                ...m,
-                body: recalled,
-                sticker: null,
-                link: null,
-                deleted: true,
-            };
-        });
-        if (!changed) return;
-        b.threads = { ...b.threads, [undo.threadId]: next };
-
-        const last = next[next.length - 1];
-        b.conversations = b.conversations.map((c) =>
-            c.threadId === undo.threadId && last?.id === undo.msgId
-                ? { ...c, lastSnippet: recalled }
-                : c,
         );
     }
 
