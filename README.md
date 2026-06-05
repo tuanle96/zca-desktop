@@ -3,6 +3,8 @@
 Cross-platform **Zalo desktop client** built with **Tauri v2 + Rust**, powered by the
 [`zca-rust`](https://github.com/tuanle96/zca-rust) unofficial Zalo API client.
 
+![zca-desktop desktop app screenshot](docs/readme-assets/zca-desktop-demo.png)
+
 - **Multi-account**: several accounts logged in at the same time, each with its own realtime listener.
 - **Multi-device**: coexists with the user's other Zalo devices (phone/web) without forcing a logout.
 
