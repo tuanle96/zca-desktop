@@ -3,7 +3,7 @@ use std::sync::Arc;
 
 use axum::body::Bytes;
 use axum::extract::{Path, Query, State};
-use axum::http::{header, HeaderMap, HeaderValue, StatusCode};
+use axum::http::{header, HeaderMap, HeaderValue, Method, StatusCode};
 use axum::response::sse::{Event, Sse};
 use axum::response::IntoResponse;
 use axum::routing::{delete, get, post};
@@ -14,6 +14,9 @@ use sha2::{Digest, Sha256};
 use tokio::sync::broadcast;
 use tokio_stream::wrappers::BroadcastStream;
 use tokio_stream::StreamExt;
+use tower_governor::governor::GovernorConfigBuilder;
+use tower_governor::key_extractor::SmartIpKeyExtractor;
+use tower_governor::GovernorLayer;
 use tower_http::cors::CorsLayer;
 use tower_http::trace::TraceLayer;
 use uuid::Uuid;
@@ -65,10 +68,10 @@ struct OutgoingFileMessage<'a> {
 }
 
 pub fn app(state: Arc<AppState>) -> Router {
+    let cors = build_cors_layer(&state.config.allowed_origins);
     Router::new()
         .route("/health", get(health))
-        .route("/api/v1/auth/magic-link/request", post(request_magic_link))
-        .route("/api/v1/auth/magic-link/verify", post(verify_magic_link))
+        .merge(auth_router())
         .route("/api/v1/devices", get(list_devices).post(register_device))
         .route("/api/v1/devices/:device_id", delete(revoke_device))
         .route("/api/v1/accounts", get(list_accounts))
@@ -102,9 +105,56 @@ pub fn app(state: Arc<AppState>) -> Router {
             get(download_file_blob).post(upload_file_blob),
         )
         .route("/api/v1/realtime", get(realtime))
-        .layer(CorsLayer::permissive())
+        .layer(cors)
         .layer(TraceLayer::new_for_http())
         .with_state(state)
+}
+
+/// Build the CORS policy from the configured allow-list.
+///
+/// The desktop client reaches this API from a native HTTP client, which is not
+/// subject to CORS, so by default (no `ZCA_CLOUD_ALLOWED_ORIGINS` configured) we
+/// emit no permissive CORS headers and cross-origin browser requests are blocked —
+/// the safe default for a sensitive API. Set `ZCA_CLOUD_ALLOWED_ORIGINS` to a
+/// comma-separated list to explicitly allow specific browser origins.
+fn build_cors_layer(allowed_origins: &[String]) -> CorsLayer {
+    let layer = CorsLayer::new()
+        .allow_methods([Method::GET, Method::POST, Method::DELETE])
+        .allow_headers([header::AUTHORIZATION, header::CONTENT_TYPE]);
+    if allowed_origins.is_empty() {
+        return layer;
+    }
+    let origins: Vec<HeaderValue> = allowed_origins
+        .iter()
+        .filter_map(|origin| origin.parse::<HeaderValue>().ok())
+        .collect();
+    layer.allow_origin(origins)
+}
+
+/// Auth endpoints behind a per-IP rate limiter (brute-force / abuse / DoS guard).
+/// Magic-link *request* is also DB-rate-limited per email; this additionally bounds
+/// verification attempts and protects the unauthenticated endpoints from floods.
+fn auth_router() -> Router<Arc<AppState>> {
+    let config = Arc::new(
+        GovernorConfigBuilder::default()
+            .per_second(2)
+            .burst_size(10)
+            .key_extractor(SmartIpKeyExtractor)
+            .finish()
+            .expect("valid governor configuration"),
+    );
+    // Periodically evict stale per-IP buckets so the limiter's memory stays bounded.
+    let limiter = config.limiter().clone();
+    tokio::spawn(async move {
+        loop {
+            tokio::time::sleep(std::time::Duration::from_secs(60)).await;
+            limiter.retain_recent();
+        }
+    });
+    Router::new()
+        .route("/api/v1/auth/magic-link/request", post(request_magic_link))
+        .route("/api/v1/auth/magic-link/verify", post(verify_magic_link))
+        .layer(GovernorLayer { config })
 }
 
 async fn health() -> Json<HealthResponse> {
@@ -181,7 +231,12 @@ async fn verify_magic_link(
     let email = normalize_email(&req.email)?;
     let device_name = validate_device_name(&req.device_name)?;
     let token_hash = crypto::token_hash(&req.token);
-    if !state.db.magic_link_is_valid(&email, &token_hash).await? {
+    // Atomically claim the magic link up front: a token is valid for exactly one
+    // verification attempt. Claiming it here (rather than after the recovery-key
+    // checks below) prevents a still-valid link from being replayed to brute-force
+    // the recovery key on the existing-user path. `consume_magic_link` performs an
+    // atomic conditional UPDATE, so concurrent verifies can't both succeed.
+    if let Err(err) = state.db.consume_magic_link(&email, &token_hash).await {
         let _ = state
             .db
             .insert_audit_event(
@@ -194,7 +249,7 @@ async fn verify_magic_link(
                 }),
             )
             .await;
-        return Err(AppError::Unauthorized);
+        return Err(err);
     }
 
     let recovery_key = format!("zca-recovery-{}", crypto::random_token(32));
@@ -244,7 +299,6 @@ async fn verify_magic_link(
             return Err(AppError::Forbidden);
         }
     }
-    state.db.consume_magic_link(&email, &token_hash).await?;
     let device_token = crypto::random_token(32);
     let device_id = state
         .db
@@ -838,7 +892,10 @@ async fn upload_file_blob(
             object_body.into(),
         )
         .await
-        .map_err(|e| AppError::BadRequest(format!("object upload failed: {e}")))?;
+        .map_err(|e| {
+            tracing::error!(error = %e, "object upload failed");
+            AppError::ServiceUnavailable("object storage unavailable".to_string())
+        })?;
     Ok(Json(
         serde_json::json!({ "uploaded": true, "ciphertextBytes": object_body_len(body.len()) }),
     ))
@@ -882,7 +939,10 @@ async fn decrypt_file_blob(
         .map_err(|_| AppError::NotFound)?
         .bytes()
         .await
-        .map_err(|e| AppError::BadRequest(format!("object download failed: {e}")))?;
+        .map_err(|e| {
+            tracing::error!(error = %e, "object download failed");
+            AppError::ServiceUnavailable("object storage unavailable".to_string())
+        })?;
     if object.len() < 12 {
         return Err(AppError::Crypto);
     }

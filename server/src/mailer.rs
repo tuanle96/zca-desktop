@@ -1,6 +1,8 @@
+use lettre::message::header::ContentType;
+use lettre::transport::smtp::authentication::Credentials;
+use lettre::transport::smtp::client::{Tls, TlsParameters};
+use lettre::{AsyncSmtpTransport, AsyncTransport, Message, Tokio1Executor};
 use serde::Serialize;
-use tokio::io::{AsyncReadExt, AsyncWriteExt};
-use tokio::net::TcpStream;
 
 use crate::{AppError, AppResult, Config};
 
@@ -57,105 +59,75 @@ fn magic_link_url(config: &Config, email: &str, token: &str) -> String {
     )
 }
 
+/// Deliver the login link over SMTP using a TLS-capable client (lettre).
+///
+/// When `ZCA_CLOUD_SMTP_TLS` is enabled (the default) the connection uses STARTTLS
+/// (or implicit TLS on port 465) and, when credentials are configured, SMTP AUTH —
+/// so the sign-in token is not exposed in cleartext on the wire. Set the TLS flag
+/// to `0` only for a trusted plaintext relay on localhost (e.g. MailHog in dev).
 async fn deliver_magic_link_smtp(
     config: &Config,
     smtp_addr: &str,
     email: &str,
     magic_link: &str,
 ) -> AppResult<()> {
-    let from = extract_email_address(&config.magic_link_from).unwrap_or("no-reply@zca.local");
-    let subject = "Your ZCA Cloud sign-in link";
+    let (host, port) = parse_smtp_addr(smtp_addr)?;
+
+    let from = config
+        .magic_link_from
+        .parse()
+        .map_err(|_| AppError::ServiceUnavailable("invalid magic-link from address".to_string()))?;
+    let to = email
+        .parse()
+        .map_err(|_| AppError::BadRequest("a valid email is required".to_string()))?;
     let body = format!(
-        "From: {}\r\nTo: {email}\r\nSubject: {subject}\r\nContent-Type: text/plain; charset=utf-8\r\n\r\nOpen this link to sign in:\r\n\r\n{magic_link}\r\n\r\nThis link expires in {} seconds.\r\n",
-        config.magic_link_from,
+        "Open this link to sign in:\r\n\r\n{magic_link}\r\n\r\nThis link expires in {} seconds.\r\n",
         config.magic_link_ttl.as_secs()
     );
+    let message = Message::builder()
+        .from(from)
+        .to(to)
+        .subject("Your ZCA Cloud sign-in link")
+        .header(ContentType::TEXT_PLAIN)
+        .body(body)
+        .map_err(|_| AppError::ServiceUnavailable("failed to build sign-in email".to_string()))?;
 
-    let mut stream = TcpStream::connect(smtp_addr)
+    let mut builder = AsyncSmtpTransport::<Tokio1Executor>::builder_dangerous(&host).port(port);
+    if config.magic_link_smtp_tls {
+        let tls_params = TlsParameters::new(host.clone())
+            .map_err(|_| AppError::ServiceUnavailable("smtp tls setup failed".to_string()))?;
+        let tls = if port == 465 {
+            Tls::Wrapper(tls_params)
+        } else {
+            Tls::Required(tls_params)
+        };
+        builder = builder.tls(tls);
+    }
+    if let (Some(user), Some(pass)) = (
+        config.magic_link_smtp_username.as_deref(),
+        config.magic_link_smtp_password.as_deref(),
+    ) {
+        builder = builder.credentials(Credentials::new(user.to_string(), pass.to_string()));
+    }
+
+    builder
+        .build()
+        .send(message)
         .await
         .map_err(|_| AppError::ServiceUnavailable("smtp delivery failed".to_string()))?;
-    read_smtp_response(&mut stream).await?;
-    smtp_cmd(&mut stream, "EHLO zca-cloud.local\r\n").await?;
-    smtp_cmd(&mut stream, &format!("MAIL FROM:<{from}>\r\n")).await?;
-    smtp_cmd(&mut stream, &format!("RCPT TO:<{email}>\r\n")).await?;
-    smtp_cmd(&mut stream, "DATA\r\n").await?;
-    stream
-        .write_all(format!("{}\r\n.\r\n", dot_stuff(&body)).as_bytes())
-        .await
-        .map_err(|_| AppError::ServiceUnavailable("smtp delivery failed".to_string()))?;
-    expect_smtp_ok(&read_smtp_response(&mut stream).await?)?;
-    smtp_cmd(&mut stream, "QUIT\r\n").await?;
     Ok(())
 }
 
-async fn smtp_cmd(stream: &mut TcpStream, command: &str) -> AppResult<()> {
-    stream
-        .write_all(command.as_bytes())
-        .await
-        .map_err(|_| AppError::ServiceUnavailable("smtp delivery failed".to_string()))?;
-    expect_smtp_ok(&read_smtp_response(stream).await?)
-}
-
-async fn read_smtp_response(stream: &mut TcpStream) -> AppResult<String> {
-    loop {
-        let line = read_smtp_line(stream).await?;
-        let more = line.as_bytes().get(3) == Some(&b'-');
-        if !more {
-            return Ok(line);
+fn parse_smtp_addr(addr: &str) -> AppResult<(String, u16)> {
+    match addr.rsplit_once(':') {
+        Some((host, port)) => {
+            let port = port
+                .parse::<u16>()
+                .map_err(|_| AppError::ServiceUnavailable("invalid smtp port".to_string()))?;
+            Ok((host.to_string(), port))
         }
+        None => Ok((addr.to_string(), 587)),
     }
-}
-
-async fn read_smtp_line(stream: &mut TcpStream) -> AppResult<String> {
-    let mut buf = Vec::new();
-    loop {
-        let mut byte = [0u8; 1];
-        let n = stream
-            .read(&mut byte)
-            .await
-            .map_err(|_| AppError::ServiceUnavailable("smtp delivery failed".to_string()))?;
-        if n == 0 {
-            return Err(AppError::ServiceUnavailable(
-                "smtp delivery failed".to_string(),
-            ));
-        }
-        buf.push(byte[0]);
-        if buf.ends_with(b"\r\n") {
-            return String::from_utf8(buf)
-                .map_err(|_| AppError::ServiceUnavailable("smtp delivery failed".to_string()));
-        }
-    }
-}
-
-fn expect_smtp_ok(line: &str) -> AppResult<()> {
-    match line.as_bytes().first() {
-        Some(b'2') | Some(b'3') => Ok(()),
-        _ => Err(AppError::ServiceUnavailable(
-            "smtp delivery failed".to_string(),
-        )),
-    }
-}
-
-fn extract_email_address(value: &str) -> Option<&str> {
-    let trimmed = value.trim();
-    if let Some(start) = trimmed.find('<') {
-        let end = trimmed[start + 1..].find('>')?;
-        return Some(&trimmed[start + 1..start + 1 + end]);
-    }
-    (!trimmed.is_empty()).then_some(trimmed)
-}
-
-fn dot_stuff(body: &str) -> String {
-    body.lines()
-        .map(|line| {
-            if line.starts_with('.') {
-                format!(".{line}")
-            } else {
-                line.to_string()
-            }
-        })
-        .collect::<Vec<_>>()
-        .join("\r\n")
 }
 
 #[cfg(test)]
@@ -174,6 +146,9 @@ mod tests {
             magic_link_webhook_url: None,
             magic_link_smtp_addr: None,
             magic_link_from: "ZCA Cloud <no-reply@zca.local>".to_string(),
+            magic_link_smtp_username: None,
+            magic_link_smtp_password: None,
+            magic_link_smtp_tls: true,
             magic_link_ttl: Duration::from_secs(600),
             magic_link_rate_limit: 5,
             magic_link_rate_window: Duration::from_secs(900),
@@ -184,6 +159,7 @@ mod tests {
             s3_allow_http: false,
             media_mirror_max_bytes: 25 * 1024 * 1024,
             master_key_seed: "test-master-key".to_string(),
+            allowed_origins: Vec::new(),
         }
     }
 
@@ -204,14 +180,15 @@ mod tests {
     }
 
     #[test]
-    fn extracts_mailbox_from_display_from() {
+    fn parses_smtp_addr() {
         assert_eq!(
-            extract_email_address("ZCA Cloud <no-reply@zca.local>"),
-            Some("no-reply@zca.local")
+            parse_smtp_addr("smtp.example.com:587").unwrap(),
+            ("smtp.example.com".to_string(), 587)
         );
         assert_eq!(
-            extract_email_address("plain@zca.local"),
-            Some("plain@zca.local")
+            parse_smtp_addr("mailhog").unwrap(),
+            ("mailhog".to_string(), 587)
         );
+        assert!(parse_smtp_addr("host:notaport").is_err());
     }
 }

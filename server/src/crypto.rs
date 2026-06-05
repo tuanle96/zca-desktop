@@ -4,6 +4,7 @@ use argon2::password_hash::{PasswordHash, PasswordHasher, PasswordVerifier, Salt
 use argon2::Argon2;
 use base64::engine::general_purpose::URL_SAFE_NO_PAD;
 use base64::Engine;
+use hkdf::Hkdf;
 use rand::RngCore;
 use sha2::{Digest, Sha256};
 
@@ -30,14 +31,28 @@ pub fn generate_data_key() -> [u8; KEY_LEN] {
     key
 }
 
+/// Fixed application salt for HKDF key derivation. Combined with a distinct `info`
+/// string per purpose, this provides domain separation and a real KDF instead of a
+/// bare unsalted hash.
+///
+/// BREAKING: changing this salt, the `info` strings, or this scheme makes every
+/// existing wrapped data key — and therefore all stored ciphertext — unreadable.
+const HKDF_SALT: &[u8] = b"zca-cloud-hkdf-salt-v1";
+
+fn derive_key_hkdf(ikm: &[u8], info: &[u8]) -> [u8; KEY_LEN] {
+    let hk = Hkdf::<Sha256>::new(Some(HKDF_SALT), ikm);
+    let mut okm = [0u8; KEY_LEN];
+    hk.expand(info, &mut okm)
+        .expect("KEY_LEN is a valid HKDF-SHA256 output length");
+    okm
+}
+
 pub fn derive_recovery_key(recovery_key: &str) -> [u8; KEY_LEN] {
-    let digest = Sha256::digest(recovery_key.as_bytes());
-    digest.into()
+    derive_key_hkdf(recovery_key.as_bytes(), b"zca-cloud:recovery-key-wrap:v1")
 }
 
 pub fn derive_server_key(master_key_seed: &str) -> [u8; KEY_LEN] {
-    let digest = Sha256::digest(master_key_seed.as_bytes());
-    digest.into()
+    derive_key_hkdf(master_key_seed.as_bytes(), b"zca-cloud:server-key-wrap:v1")
 }
 
 pub fn hash_recovery_key(recovery_key: &str) -> AppResult<String> {

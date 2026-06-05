@@ -40,10 +40,18 @@ services:
       # ── Production hardening ────────────────────────────────────────────────
       # Never echo login codes back in API responses outside dev.
       ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS: "0"
+      # Browser CORS allow-list (comma-separated). Unset by default: the desktop
+      # client uses a native HTTP client (not subject to CORS). Only set for a
+      # cross-origin browser app, e.g. "https://app.example.com".
+      ZCA_CLOUD_ALLOWED_ORIGINS: ${ZCA_CLOUD_ALLOWED_ORIGINS:-}
 
       # ── Email delivery of login codes (recommended) ─────────────────────────
       # Without SMTP (or a webhook) users cannot receive their login code.
       ZCA_CLOUD_SMTP_ADDR: ${ZCA_CLOUD_SMTP_ADDR:-}
+      ZCA_CLOUD_SMTP_USERNAME: ${ZCA_CLOUD_SMTP_USERNAME:-}
+      ZCA_CLOUD_SMTP_PASSWORD: ${ZCA_CLOUD_SMTP_PASSWORD:-}
+      # STARTTLS/SMTPS + AUTH by default; set to 0 only for a trusted localhost relay.
+      ZCA_CLOUD_SMTP_TLS: ${ZCA_CLOUD_SMTP_TLS:-1}
       ZCA_CLOUD_MAGIC_LINK_FROM: ${ZCA_CLOUD_MAGIC_LINK_FROM:-ZCA Cloud <no-reply@zca.local>}
       ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL: ${ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL:-}
 

@@ -10,6 +10,9 @@ pub struct Config {
     pub magic_link_webhook_url: Option<String>,
     pub magic_link_smtp_addr: Option<String>,
     pub magic_link_from: String,
+    pub magic_link_smtp_username: Option<String>,
+    pub magic_link_smtp_password: Option<String>,
+    pub magic_link_smtp_tls: bool,
     pub magic_link_ttl: Duration,
     pub magic_link_rate_limit: i64,
     pub magic_link_rate_window: Duration,
@@ -20,10 +23,14 @@ pub struct Config {
     pub s3_allow_http: bool,
     pub media_mirror_max_bytes: usize,
     pub master_key_seed: String,
+    pub allowed_origins: Vec<String>,
 }
 
+/// The built-in placeholder that must never be accepted as a real master key.
+const INSECURE_MASTER_KEY_PLACEHOLDER: &str = "dev-only-zca-cloud-master-key-change-me";
+
 impl Config {
-    pub fn from_env() -> Self {
+    pub fn from_env() -> Result<Self, String> {
         let bind_addr = std::env::var("ZCA_CLOUD_BIND")
             .ok()
             .and_then(|v| v.parse().ok())
@@ -44,6 +51,17 @@ impl Config {
             .filter(|v| !v.trim().is_empty());
         let magic_link_from = std::env::var("ZCA_CLOUD_MAGIC_LINK_FROM")
             .unwrap_or_else(|_| "ZCA Cloud <no-reply@zca.local>".to_string());
+        let magic_link_smtp_username = std::env::var("ZCA_CLOUD_SMTP_USERNAME")
+            .ok()
+            .filter(|v| !v.trim().is_empty());
+        let magic_link_smtp_password = std::env::var("ZCA_CLOUD_SMTP_PASSWORD")
+            .ok()
+            .filter(|v| !v.is_empty());
+        // TLS on by default; set ZCA_CLOUD_SMTP_TLS=0 only for a trusted plaintext
+        // relay on localhost (e.g. MailHog in dev).
+        let magic_link_smtp_tls = std::env::var("ZCA_CLOUD_SMTP_TLS")
+            .map(|v| matches!(v.as_str(), "1" | "true" | "yes"))
+            .unwrap_or(true);
         let magic_link_ttl = std::env::var("ZCA_CLOUD_MAGIC_LINK_TTL_SECS")
             .ok()
             .and_then(|v| v.parse::<u64>().ok())
@@ -72,9 +90,57 @@ impl Config {
             .and_then(|v| v.parse::<usize>().ok())
             .filter(|v| *v > 0)
             .unwrap_or(25 * 1024 * 1024);
+
+        // Security-critical: this seed wraps every user's data key, which in turn
+        // encrypts stored Zalo sessions, messages, and files. It must be provided
+        // explicitly — there is deliberately NO fallback, so a misconfigured deployment
+        // fails closed instead of silently encrypting everything under a public default.
         let master_key_seed = std::env::var("ZCA_CLOUD_MASTER_KEY")
-            .unwrap_or_else(|_| "dev-only-zca-cloud-master-key-change-me".to_string());
-        Self {
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty())
+            .ok_or_else(|| {
+                "ZCA_CLOUD_MASTER_KEY is required: set a strong, unique secret \
+                 (e.g. `openssl rand -base64 48`)"
+                    .to_string()
+            })?;
+        if master_key_seed == INSECURE_MASTER_KEY_PLACEHOLDER {
+            return Err("ZCA_CLOUD_MASTER_KEY is set to the built-in insecure placeholder; \
+                 generate a real secret (e.g. `openssl rand -base64 48`)"
+                .to_string());
+        }
+        if master_key_seed.len() < 32 {
+            return Err(
+                "ZCA_CLOUD_MASTER_KEY must be at least 32 characters of high-entropy secret"
+                    .to_string(),
+            );
+        }
+
+        // Optional explicit browser CORS allow-list (comma-separated origins). The
+        // desktop client talks to this API from a native HTTP client (not subject to
+        // CORS), so when this is unset we emit no permissive CORS headers — see
+        // routes::build_cors_layer.
+        let allowed_origins = std::env::var("ZCA_CLOUD_ALLOWED_ORIGINS")
+            .ok()
+            .map(|v| {
+                v.split(',')
+                    .map(|s| s.trim().to_string())
+                    .filter(|s| !s.is_empty())
+                    .collect::<Vec<_>>()
+            })
+            .unwrap_or_default();
+
+        // Refuse to expose the dev-only "return the magic token in the API response"
+        // behaviour on a non-loopback bind — that flag fully bypasses email-based auth.
+        if dev_return_magic_tokens && !bind_addr.ip().is_loopback() {
+            return Err(
+                "ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS must not be enabled on a non-loopback bind \
+                 (it returns sign-in tokens in API responses and bypasses auth)"
+                    .to_string(),
+            );
+        }
+
+        Ok(Self {
             bind_addr,
             database_url,
             public_base_url,
@@ -82,6 +148,9 @@ impl Config {
             magic_link_webhook_url,
             magic_link_smtp_addr,
             magic_link_from,
+            magic_link_smtp_username,
+            magic_link_smtp_password,
+            magic_link_smtp_tls,
             magic_link_ttl,
             magic_link_rate_limit,
             magic_link_rate_window,
@@ -92,6 +161,7 @@ impl Config {
             s3_allow_http,
             media_mirror_max_bytes,
             master_key_seed,
-        }
+            allowed_origins,
+        })
     }
 }

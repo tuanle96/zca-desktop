@@ -9,7 +9,7 @@ async fn main() -> anyhow_free::Result<()> {
         .json()
         .init();
 
-    let config = Config::from_env();
+    let config = Config::from_env()?;
     let db = Db::connect(&config.database_url).await?;
     if std::env::var("ZCA_CLOUD_MIGRATE_DOWN_ONLY")
         .map(|v| matches!(v.as_str(), "1" | "true" | "yes"))
@@ -42,7 +42,11 @@ async fn main() -> anyhow_free::Result<()> {
     let router = app(Arc::new(state));
     let listener = tokio::net::TcpListener::bind(config.bind_addr).await?;
     tracing::info!(addr = %config.bind_addr, "zca cloud server listening");
-    axum::serve(listener, router.into_make_service()).await?;
+    axum::serve(
+        listener,
+        router.into_make_service_with_connect_info::<std::net::SocketAddr>(),
+    )
+    .await?;
     Ok(())
 }
 

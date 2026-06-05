@@ -34,19 +34,41 @@ struct ErrorBody {
 
 impl IntoResponse for AppError {
     fn into_response(self) -> Response {
-        let (status, code) = match self {
-            AppError::BadRequest(_) => (StatusCode::BAD_REQUEST, "bad_request"),
-            AppError::Unauthorized => (StatusCode::UNAUTHORIZED, "unauthorized"),
-            AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden"),
-            AppError::NotFound => (StatusCode::NOT_FOUND, "not_found"),
-            AppError::ServiceUnavailable(_) => {
-                (StatusCode::SERVICE_UNAVAILABLE, "service_unavailable")
+        // Internal failures (database, crypto) must never leak their detail to the
+        // client: the underlying error can disclose SQL fragments, column/constraint
+        // names, or storage topology. Log the detail server-side and return a generic
+        // message. Client-actionable variants keep their developer-authored message.
+        let (status, code, message) = match &self {
+            AppError::BadRequest(msg) => (StatusCode::BAD_REQUEST, "bad_request", msg.clone()),
+            AppError::Unauthorized => (
+                StatusCode::UNAUTHORIZED,
+                "unauthorized",
+                "unauthorized".to_string(),
+            ),
+            AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden", "forbidden".to_string()),
+            AppError::NotFound => (StatusCode::NOT_FOUND, "not_found", "not found".to_string()),
+            AppError::ServiceUnavailable(msg) => (
+                StatusCode::SERVICE_UNAVAILABLE,
+                "service_unavailable",
+                msg.clone(),
+            ),
+            AppError::RateLimited(msg) => {
+                (StatusCode::TOO_MANY_REQUESTS, "rate_limited", msg.clone())
             }
-            AppError::RateLimited(_) => (StatusCode::TOO_MANY_REQUESTS, "rate_limited"),
-            AppError::Crypto => (StatusCode::INTERNAL_SERVER_ERROR, "crypto_error"),
-            AppError::Db(_) => (StatusCode::INTERNAL_SERVER_ERROR, "database_error"),
+            AppError::Crypto => (
+                StatusCode::INTERNAL_SERVER_ERROR,
+                "crypto_error",
+                "internal server error".to_string(),
+            ),
+            AppError::Db(err) => {
+                tracing::error!(error = %err, "database error");
+                (
+                    StatusCode::INTERNAL_SERVER_ERROR,
+                    "database_error",
+                    "internal server error".to_string(),
+                )
+            }
         };
-        let message = self.to_string();
         (
             status,
             Json(ErrorBody {

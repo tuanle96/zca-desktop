@@ -32,6 +32,15 @@ impl FromRequestParts<Arc<AppState>> for Auth {
 
 pub fn normalize_email(email: &str) -> AppResult<String> {
     let email = email.trim().to_lowercase();
+    // Reject control characters (CR, LF, NUL, ...) before the address is ever
+    // interpolated into SMTP commands / mail headers. This closes the
+    // email-header / SMTP-injection vector in the mailer (an embedded "\r\n"
+    // would otherwise let a caller inject extra recipients or forged headers).
+    if email.bytes().any(|b| b < 0x20 || b == 0x7f) {
+        return Err(AppError::BadRequest(
+            "a valid email is required".to_string(),
+        ));
+    }
     if !email.contains('@') || email.len() > 320 {
         return Err(AppError::BadRequest(
             "a valid email is required".to_string(),
@@ -59,5 +68,12 @@ mod tests {
             "user@example.com"
         );
         assert!(normalize_email("not-email").is_err());
+    }
+
+    #[test]
+    fn rejects_header_injection() {
+        assert!(normalize_email("a@b.com\r\nRCPT TO:<victim@x>").is_err());
+        assert!(normalize_email("a@b.com\nBcc: evil@example.com").is_err());
+        assert!(normalize_email("a@b.com\u{0000}").is_err());
     }
 }

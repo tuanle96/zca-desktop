@@ -65,7 +65,9 @@ services:
       # For a real deploy build the `runtime` target and set these to production values.
       ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS: "1"
       ZCA_CLOUD_SMTP_ADDR: mailhog:1025
-      ZCA_CLOUD_MASTER_KEY: dev-only-zca-cloud-master-key-change-me
+      # MailHog speaks plaintext SMTP — disable TLS for the dev relay only.
+      ZCA_CLOUD_SMTP_TLS: "0"
+      ZCA_CLOUD_MASTER_KEY: dev-insecure-local-only-change-before-any-real-deploy
       ZCA_CLOUD_OBJECT_STORE: s3
       ZCA_CLOUD_S3_ENDPOINT: http://minio:9000
       ZCA_CLOUD_S3_ALLOW_HTTP: "1"

@@ -786,9 +786,14 @@ async fn mirror_rich_file(ctx: &MediaMirrorContext<'_>, file: &mut RichFile) -> 
 }
 
 async fn fetch_remote_media(url: &reqwest::Url, max_bytes: usize) -> AppResult<Vec<u8>> {
+    // SSRF guard: resolve the target host and reject private / loopback / link-local /
+    // CGNAT ranges so an attacker-supplied media URL can't make the server reach
+    // internal services (cloud metadata, localhost, intranet). Redirects are disabled
+    // so a public URL can't bounce to an internal one.
+    ensure_public_host(url).await?;
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(20))
-        .redirect(reqwest::redirect::Policy::limited(3))
+        .redirect(reqwest::redirect::Policy::none())
         .build()
         .map_err(|e| AppError::BadRequest(format!("media fetch client failed: {e}")))?;
     let response = client
@@ -825,6 +830,58 @@ async fn fetch_remote_media(url: &reqwest::Url, max_bytes: usize) -> AppResult<V
 fn mirrorable_media_url(href: &str) -> Option<reqwest::Url> {
     let url = reqwest::Url::parse(href).ok()?;
     matches!(url.scheme(), "http" | "https").then_some(url)
+}
+
+/// Reject media URLs whose host resolves to a non-public IP range (SSRF guard).
+/// This is a best-effort mitigation: it resolves the host and blocks private ranges
+/// before the request, and redirects are disabled by the caller.
+async fn ensure_public_host(url: &reqwest::Url) -> AppResult<()> {
+    let host = url
+        .host_str()
+        .ok_or_else(|| AppError::BadRequest("media url has no host".to_string()))?;
+    let port = url.port_or_known_default().unwrap_or(443);
+    let addrs: Vec<std::net::IpAddr> = match host.parse::<std::net::IpAddr>() {
+        Ok(ip) => vec![ip],
+        Err(_) => tokio::net::lookup_host((host, port))
+            .await
+            .map_err(|_| AppError::BadRequest("media host resolution failed".to_string()))?
+            .map(|sa| sa.ip())
+            .collect(),
+    };
+    if addrs.is_empty() {
+        return Err(AppError::BadRequest("media host did not resolve".to_string()));
+    }
+    if addrs.iter().any(is_blocked_ip) {
+        return Err(AppError::BadRequest("media host is not allowed".to_string()));
+    }
+    Ok(())
+}
+
+/// True for IPs that must never be reachable via a user-supplied media URL.
+fn is_blocked_ip(ip: &std::net::IpAddr) -> bool {
+    match ip {
+        std::net::IpAddr::V4(v4) => {
+            v4.is_private()
+                || v4.is_loopback()
+                || v4.is_link_local()
+                || v4.is_broadcast()
+                || v4.is_documentation()
+                || v4.is_unspecified()
+                || v4.octets()[0] == 0
+                // 100.64.0.0/10 (CGNAT)
+                || (v4.octets()[0] == 100 && (64..=127).contains(&v4.octets()[1]))
+        }
+        std::net::IpAddr::V6(v6) => {
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || (v6.segments()[0] & 0xfe00) == 0xfc00 // fc00::/7 unique-local
+                || (v6.segments()[0] & 0xffc0) == 0xfe80 // fe80::/10 link-local
+                || v6
+                    .to_ipv4_mapped()
+                    .map(|v4| is_blocked_ip(&std::net::IpAddr::V4(v4)))
+                    .unwrap_or(false)
+        }
+    }
 }
 
 fn encrypted_object_body(file_key: &[u8; 32], bytes: &[u8]) -> AppResult<Vec<u8>> {
