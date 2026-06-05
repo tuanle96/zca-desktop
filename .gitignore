@@ -27,10 +27,16 @@ cookies.json
 /logs/
 *.log
 
-# Harness local runtime state
-.harness/state/harness.db
-.harness/state/harness.db-*
+# Internal agent / dev tooling — not part of the published project
+/.harness/
+/.agents/
+/.kiro/
+/.codex/
+/.code-review-graph/
 .agent-worktrees/
+
+# One-time OSS-prep helper (not for publishing)
+/oss-prepare-public.sh
 
 # OS / editor
 .DS_Store

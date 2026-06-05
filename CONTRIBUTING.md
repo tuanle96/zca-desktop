@@ -68,14 +68,11 @@ types → config → store → zalo → session → command
 ```
 
 A module may only depend on layers earlier in that list. The SvelteKit frontend
-is the `ui` layer and talks to `command/` via Tauri `invoke`/`listen`. See
-[ADR-0003](./.harness/docs/adr/0003-rust-core-layering.md) and
-[`.harness/docs/architecture.md`](./.harness/docs/architecture.md) for the
-rationale.
+is the `ui` layer and talks to `command/` via Tauri `invoke`/`listen`.
 
-- **Do not** add or rename a layer without an Architecture Decision Record
-  (`.harness/docs/adr/`).
-- **Do not** add dependencies with native bindings without an ADR.
+- **Do not** add or rename a layer without a clear architectural reason explained
+  in your PR.
+- **Do not** add dependencies with native bindings without discussion.
 
 This repository is developed with the
 [agent-harness-kit](https://github.com/tuanle96/agent-harness-kit) workflow. You

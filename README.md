@@ -13,23 +13,40 @@ Cross-platform **Zalo desktop client** built with **Tauri v2 + Rust**, powered b
 
 ## Stack
 - **Core**: Rust (Tauri v2) — hosts a `SessionManager` of `zca-rust` `API` + `Listener` sessions.
-- **UI**: webview frontend, talks to core via Tauri commands + events.
-- **Auth**: credentials imported from the ZaloDataExtractor browser export (`imei` + `cookie` + `userAgent`), stored in the OS keychain.
+- **UI**: SvelteKit / Svelte 5 webview frontend, talks to the core via Tauri commands + events.
+- **Cloud backend** (`server/`): Rust (axum + sqlx) host for email magic-link sign-in, server-hosted Zalo accounts, and an encrypted message/media store. The current login flow expects a reachable backend — see [`server/README.md`](./server/README.md).
+- **Auth**: link this device to a cloud account via an email magic-link, then add Zalo accounts by QR. Session secrets are encrypted at rest — in the OS keychain on the desktop core, and under per-user keys on the server.
 
-## Dev control center: agent-harness-kit
-This repo uses [`agent-harness-kit`](https://github.com/tuanle96/agent-harness-kit) (Kiro runtime, Rust adapter) as the
-model + harness control center.
-- Roadmap / backlog: `.harness/feature_list.json`
-- Phases, scope, risks, decisions: `.harness/project/state.json`
-- Model routing: `.harness/config.json#models` (Opus=implementation, Sonnet=review, Haiku=explore)
-- Pick the next unit of work with the `/add-feature` skill.
+## Quick start
+Prerequisites: [Rust](https://rustup.rs), [bun](https://bun.sh), and the
+[Tauri v2 system dependencies](https://v2.tauri.app/start/prerequisites/) for your OS.
+
+```bash
+# 1. Install frontend deps
+bun install
+
+# 2. Start the cloud backend (Postgres + MinIO + MailHog + the server at :37880)
+docker compose -f server/docker-compose.dev.yml up -d --build
+
+# 3. Run the desktop app (Vite + the Tauri shell)
+bun run tauri dev
+```
+
+The current sign-in flow needs the backend from step 2. See
+[`server/README.md`](./server/README.md) to run or deploy it standalone.
+
+## Development
+See [CONTRIBUTING.md](./CONTRIBUTING.md) for the layer architecture, commands, and PR
+checklist. The project is developed with the
+[`agent-harness-kit`](https://github.com/tuanle96/agent-harness-kit) workflow, but you
+do **not** need it to build or contribute a normal fix.
 
 ## Status
-MVP vertical slice is implemented and harness-tracked: QR login, multi-account
-session management, keychain credential storage, SQLite history restore,
-contacts/groups, settings, text/sticker/reaction/quote/link/undo messaging.
-Remaining planned work is attachment upload/rendering, deeper device-coexistence
-validation, optional sync relay research, and signed app packaging.
+Early but functional: email magic-link sign-in via the cloud backend, multi-account
+session management, QR account linking, encrypted credential/media storage, SQLite
+history restore, contacts/groups, settings, and text/sticker/reaction/quote/link/undo
+messaging. Planned work includes richer attachment rendering, deeper
+device-coexistence validation, and signed app packaging.
 
 ## Contributing
 Contributions are welcome. Please read [CONTRIBUTING.md](./CONTRIBUTING.md) first.
