@@ -1,0 +1,28 @@
+name: eval-nightly
+
+on:
+  schedule:
+    - cron: "0 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  eval-nightly:
+    name: nightly harness evals
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Run local harness eval checks when present
+        run: |
+          if [ ! -d .harness ]; then
+            echo "No committed .harness directory; skipping local-only harness evals."
+            exit 0
+          fi
+          node .harness/scripts/check-eval-tasks.mjs
+          node .harness/scripts/check-trace-corpus.mjs

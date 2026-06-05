@@ -23,6 +23,26 @@ magic-link auth, server-hosted accounts, and an encrypted sync/media store.
 - **Verify before done.** Run the relevant build/test/lint gates; don't claim a change works without checking it.
 - **Posture.** Unofficial Zalo API, personal use only — avoid spam-like or bulk automation (ban risk for users).
 
+## Codex Agent Notes
+- This file is the Codex runtime boundary for repository work. Codex-facing instructions live here; local harness implementation files live under `.harness/`, `.agents/`, and `.codex/`.
+- Do not assume Claude-only runtime behavior; Codex must use the same task contracts, evidence bundles, review gates, and readiness checks as every other agent runtime.
+- Use the feature list in `.harness/feature_list.json` to understand planned/completed work before changing feature scope.
+- For non-trivial changes, bind work to a task contract in `.harness/task-contracts/`. A task contract identifies allowed files/layers, risk, acceptance checks, and required reviewers.
+- Evidence bundles live in `.harness/evidence/`; the evidence bundle docs are `.harness/docs/evidence-bundle.md` and the evidence bundle schema is `.harness/schemas/evidence-bundle.schema.json`.
+- Review decisions live in `.harness/reviews/<taskId>/`; the review decision schema is `.harness/schemas/review-decision.schema.json`.
+- Passing review decisions must bind to the task with `taskId`, bind to the feature with `featureId`, and list `checkedFiles` for review coverage.
+
+## Mandatory Advisor Protocol
+- Security-touching, public API, cross-layer, high-risk, or claim-done work requires the advisor protocol unless the active task contract explicitly says otherwise.
+- The advisor decision artifact is `.harness/reviews/<taskId>/advisor-decision.json`; it must use reviewer `advisor`, include `taskId`, `featureId`, `checkedFiles`, and record a pass decision before claiming done.
+- Do not weaken hooks, bypass review, or mark work complete when required advisor/readiness artifacts are missing.
+
+## Readiness Gates
+- Run `npm run harness:check` for the structural harness gate.
+- Run `npm run harness:doctor` when validating Codex runtime surfaces.
+- Run `npm run harness:readiness` before declaring repo-level readiness.
+- Code/test green is not the same as harness green; report both when they differ.
+
 ## Pointers
 - Cloud backend (run · deploy · env vars) → [`server/README.md`](./server/README.md)
 - Contributing, CLA, PR checklist → [`CONTRIBUTING.md`](./CONTRIBUTING.md)

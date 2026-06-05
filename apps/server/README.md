@@ -14,9 +14,11 @@ docker compose -f docker-compose.dev.yml logs -f server   # watch rebuilds
 docker compose -f docker-compose.dev.yml down
 ```
 
-Edit any `.rs` under `src/` → `cargo-watch` rebuilds and restarts in a few seconds. In dev the
-login code is returned directly in the API (`ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS=1`); outgoing mail
-lands in MailHog at <http://localhost:37885>.
+Edit any `.rs` under `src/` -> `cargo-watch` rebuilds and restarts in a few seconds.
+The compose dev stack sends login codes to MailHog at <http://localhost:37885>.
+The direct API token return flag (`ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS=1`) is only
+for trusted loopback-native debugging and is intentionally not enabled in the
+compose service.
 
 > Prefer running native? `docker compose -f docker-compose.dev.yml up -d postgres minio mailhog create-bucket`, then `cargo run` with the matching env.
 

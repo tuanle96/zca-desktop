@@ -24,6 +24,9 @@ cookies.json
 .env.*
 !.env.*.example
 
+# Local Cloudflare tunnel configs/credentials
+/cloudflared/zca-dev/config.local.yml
+
 # Local debug logs + raw API captures (may contain redacted/raw payloads)
 /logs/
 *.log

@@ -12,12 +12,14 @@ leak, or mishandle these credentials — are taken seriously.
 **Please do not report security vulnerabilities through public GitHub issues,
 discussions, or pull requests.**
 
-Instead, report privately using one of:
+Instead, report privately using:
 
 - GitHub's [private vulnerability reporting](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability)
-  ("Report a vulnerability" under the repository's **Security** tab), **or**
-- Email the maintainer: **justin.le.1105@gmail.com** (use a subject line starting
-  with `[zca-desktop security]`).
+  ("Report a vulnerability" under the repository's **Security** tab).
+
+If GitHub private vulnerability reporting is unavailable, contact the maintainer
+through the public GitHub profile linked from the repository owner account. Do
+not paste credentials, cookies, or message content into public channels.
 
 Please include:
 

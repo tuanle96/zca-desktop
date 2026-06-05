@@ -2,7 +2,7 @@
 name = "zca-desktop"
 version = "0.1.0"
 description = "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust). Personal, noncommercial use only."
-authors = ["Lê Anh Tuấn (tuanle96) <justin.le.1105@gmail.com>"]
+authors = ["Lê Anh Tuấn (tuanle96)"]
 edition = "2021"
 license = "PolyForm-Noncommercial-1.0.0"
 repository = "https://github.com/tuanle96/zca-desktop"

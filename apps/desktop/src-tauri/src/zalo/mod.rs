@@ -831,7 +831,7 @@ pub async fn list_groups(api: &API) -> ZaloResult<Vec<Group>> {
             }
         })
         .collect();
-    groups.sort_by(|a, b| a.name.to_lowercase().cmp(&b.name.to_lowercase()));
+    groups.sort_by_key(|group| group.name.to_lowercase());
     Ok(groups)
 }
 
@@ -1201,11 +1201,10 @@ mod tests {
         );
         let own_id = api.get_own_id().to_string();
 
-        // Resolve the test recipient by phone (Lê Anh Tuấn, authorized by the
-        // project owner). self_listen means our own outbound message comes back
-        // as a real inbound websocket event we can match on.
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        // Resolve the operator-provided test recipient by phone. self_listen
+        // means our own outbound message comes back as a real inbound websocket
+        // event we can match on.
+        let recipient_phone = live_test_phone();
         let thread_id = find_user_uid(&api, &recipient_phone)
             .await
             .expect("could not resolve test recipient by phone");
@@ -1256,7 +1255,7 @@ mod tests {
     }
 
     /// Live send-text smoke. Ignored by default. Logs in and sends ONE real text
-    /// message to the authorized recipient (Lê Anh Tuấn, resolved by phone),
+    /// message to the operator-provided test recipient (resolved by phone),
     /// asserting a non-empty message id comes back. Run explicitly:
     ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_text_live --nocapture
     #[tokio::test]
@@ -1274,8 +1273,7 @@ mod tests {
 
         let api = login(credentials).await.expect("live login failed");
 
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let recipient_phone = live_test_phone();
         let thread_id = find_user_uid(&api, &recipient_phone)
             .await
             .expect("could not resolve recipient by phone");
@@ -1296,8 +1294,8 @@ mod tests {
     }
 
     /// Live send-sticker smoke. Ignored by default. Logs in, searches for a
-    /// sticker, and sends ONE real sticker to the authorized recipient (Lê Anh
-    /// Tuấn, resolved by phone), asserting search returns results and Zalo
+    /// sticker, and sends ONE real sticker to the operator-provided test
+    /// recipient (resolved by phone), asserting search returns results and Zalo
     /// returns a non-empty message id. Run explicitly:
     ///   cargo test --manifest-path src-tauri/Cargo.toml -- --ignored send_sticker_live --nocapture
     #[tokio::test]
@@ -1324,8 +1322,7 @@ mod tests {
         );
         let picked = &stickers[0];
 
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let recipient_phone = live_test_phone();
         let thread_id = find_user_uid(&api, &recipient_phone)
             .await
             .expect("could not resolve recipient by phone");
@@ -1390,8 +1387,7 @@ mod tests {
 
         let api = login(credentials).await.expect("live login failed");
 
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let recipient_phone = live_test_phone();
         let thread_id = find_user_uid(&api, &recipient_phone)
             .await
             .expect("could not resolve recipient by phone");
@@ -1420,5 +1416,10 @@ mod tests {
         .await
         .expect("send_reaction failed");
         println!("reaction_live OK: reacted Heart to msg_id={}", msg_id);
+    }
+
+    fn live_test_phone() -> String {
+        std::env::var("ZALO_TEST_PHONE")
+            .expect("set ZALO_TEST_PHONE to an authorized test recipient phone number")
     }
 }

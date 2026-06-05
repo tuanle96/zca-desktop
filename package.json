@@ -4,6 +4,11 @@
   "private": true,
   "description": "zca monorepo — desktop & mobile Zalo clients, cloud server, and shared packages. Personal, noncommercial use only.",
   "type": "module",
+  "scripts": {
+    "harness:check": "node .harness/scripts/harness-check.mjs",
+    "harness:doctor": "npx --yes agent-harness-kit@0.20.0 doctor --runtime codex",
+    "harness:readiness": "node .harness/scripts/harness-readiness.mjs --json --fail-on=fail --review-promotion=fail"
+  },
   "author": "Lê Anh Tuấn (tuanle96)",
   "license": "PolyForm-Noncommercial-1.0.0",
   "repository": {

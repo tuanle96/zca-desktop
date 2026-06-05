@@ -502,11 +502,11 @@ mod tests {
         // Let both sockets complete their cipher handshake.
         tokio::time::sleep(StdDuration::from_secs(3)).await;
 
-        // Resolve the authorized recipient by phone for each account (sending to
-        // own uid returns code 114). self_listen surfaces each account's own
-        // outbound message as a real inbound event tagged with that account.
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        // Resolve the operator-provided test recipient by phone for each account
+        // (sending to own uid returns code 114). self_listen surfaces each
+        // account's own outbound message as a real inbound event tagged with
+        // that account.
+        let recipient_phone = live_test_phone();
         let recipient_a = api_a
             .find_user(&recipient_phone, zca_rust::models::AvatarSize::Small)
             .await
@@ -621,11 +621,10 @@ mod tests {
 
         tokio::time::sleep(StdDuration::from_secs(3)).await;
 
-        // Resolve the authorized test recipient by phone (sending to own uid
+        // Resolve the operator-provided test recipient by phone (sending to own uid
         // returns code 114). self_listen surfaces our own outbound message as a
         // real inbound event we can match on.
-        let recipient_phone =
-            std::env::var("ZALO_TEST_PHONE").unwrap_or_else(|_| "0359969964".to_string());
+        let recipient_phone = live_test_phone();
         let recipient = api
             .find_user(&recipient_phone, zca_rust::models::AvatarSize::Small)
             .await
@@ -671,5 +670,10 @@ mod tests {
             id.len(),
             msg_id.len()
         );
+    }
+
+    fn live_test_phone() -> String {
+        std::env::var("ZALO_TEST_PHONE")
+            .expect("set ZALO_TEST_PHONE to an authorized test recipient phone number")
     }
 }

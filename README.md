@@ -43,6 +43,13 @@ checklist. The project is developed with the
 [`agent-harness-kit`](https://github.com/tuanle96/agent-harness-kit) workflow, but you
 do **not** need it to build or contribute a normal fix.
 
+## Operational docs
+- [Architecture](./docs/ARCHITECTURE.md)
+- [Credential handling](./docs/CREDENTIALS.md)
+- [Privacy and data handling](./docs/PRIVACY.md)
+- [Deployment checklist](./docs/DEPLOYMENT.md)
+- [Threat model](./docs/THREAT_MODEL.md)
+
 ## Status
 Early but functional: email magic-link sign-in via the cloud backend, multi-account
 session management, QR account linking, encrypted credential/media storage, SQLite
