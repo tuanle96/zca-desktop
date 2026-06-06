@@ -8,10 +8,6 @@ tunnel: zca-dev
 credentials-file: /etc/cloudflared/credentials.json
 
 ingress:
-  - hostname: zca.example.com
+  - hostname: zca.tuanle.dev
     service: http://server:37880
-  - hostname: mail-zca.example.com
-    service: http://mailhog:8025
-  - hostname: minio-zca.example.com
-    service: http://minio:9000
   - service: http_status:404

@@ -7,6 +7,9 @@ use serde::Serialize;
 
 use crate::{AppError, AppResult, Config};
 
+const RESEND_EMAILS_ENDPOINT: &str = "https://api.resend.com/emails";
+const MAGIC_LINK_SUBJECT: &str = "Your ZCA Cloud sign-in link";
+
 #[derive(Debug, Serialize)]
 #[serde(rename_all = "camelCase")]
 struct MagicLinkWebhookPayload<'a> {
@@ -15,8 +18,26 @@ struct MagicLinkWebhookPayload<'a> {
     expires_in_secs: u64,
 }
 
+#[derive(Debug, Serialize)]
+struct ResendEmailPayload<'a> {
+    from: &'a str,
+    to: &'a str,
+    subject: &'a str,
+    html: String,
+    text: String,
+}
+
+struct MagicLinkEmail {
+    html: String,
+    text: String,
+}
+
 pub async fn deliver_magic_link(config: &Config, email: &str, token: &str) -> AppResult<()> {
     let magic_link = magic_link_url(config, email, token);
+
+    if let Some(api_key) = config.magic_link_resend_api_key.as_deref() {
+        return deliver_magic_link_resend(config, api_key, email, &magic_link, token).await;
+    }
 
     if let Some(smtp_addr) = config.magic_link_smtp_addr.as_deref() {
         return deliver_magic_link_smtp(config, smtp_addr, email, &magic_link, token).await;
@@ -48,6 +69,71 @@ pub async fn deliver_magic_link(config: &Config, email: &str, token: &str) -> Ap
             "magic-link delivery failed".to_string(),
         ));
     }
+    Ok(())
+}
+
+fn build_magic_link_email(config: &Config, magic_link: &str, token: &str) -> MagicLinkEmail {
+    let ttl_secs = config.magic_link_ttl.as_secs();
+    let text = format!(
+        "Open this link to sign in:\r\n\r\n{magic_link}\r\n\r\n\
+         If the link doesn't open the app (e.g. during development), paste this \
+         code into the app's sign-in field:\r\n\r\n{token}\r\n\r\n\
+         This link expires in {ttl_secs} seconds.\r\n",
+    );
+
+    let link_attr = html_escape(magic_link);
+    let link_text = html_escape(magic_link);
+    let code_text = html_escape(token);
+    let html = format!(
+        "<p>Click to sign in to ZCA Cloud:</p>\
+         <p><a href=\"{link_attr}\">{link_text}</a></p>\
+         <p>If the link doesn't open the app (e.g. during development), paste this \
+         code into the app's sign-in field:</p>\
+         <p><code>{code_text}</code></p>\
+         <p>This link expires in {ttl_secs} seconds.</p>",
+    );
+
+    MagicLinkEmail { html, text }
+}
+
+fn build_resend_payload<'a>(
+    config: &'a Config,
+    email: &'a str,
+    magic_link: &str,
+    token: &str,
+) -> ResendEmailPayload<'a> {
+    let body = build_magic_link_email(config, magic_link, token);
+    ResendEmailPayload {
+        from: &config.magic_link_from,
+        to: email,
+        subject: MAGIC_LINK_SUBJECT,
+        html: body.html,
+        text: body.text,
+    }
+}
+
+async fn deliver_magic_link_resend(
+    config: &Config,
+    api_key: &str,
+    email: &str,
+    magic_link: &str,
+    token: &str,
+) -> AppResult<()> {
+    let payload = build_resend_payload(config, email, magic_link, token);
+    let res = reqwest::Client::new()
+        .post(RESEND_EMAILS_ENDPOINT)
+        .bearer_auth(api_key)
+        .json(&payload)
+        .send()
+        .await
+        .map_err(|_| AppError::ServiceUnavailable("resend delivery failed".to_string()))?;
+
+    if !res.status().is_success() {
+        return Err(AppError::ServiceUnavailable(
+            "resend delivery failed".to_string(),
+        ));
+    }
+
     Ok(())
 }
 
@@ -104,42 +190,25 @@ async fn deliver_magic_link_smtp(
     let to = email
         .parse()
         .map_err(|_| AppError::BadRequest("a valid email is required".to_string()))?;
-    let ttl_secs = config.magic_link_ttl.as_secs();
-    let text_body = format!(
-        "Open this link to sign in:\r\n\r\n{magic_link}\r\n\r\n\
-         If the link doesn't open the app (e.g. during development), paste this \
-         code into the app's sign-in field:\r\n\r\n{token}\r\n\r\n\
-         This link expires in {ttl_secs} seconds.\r\n",
-    );
     // HTML alternative: the clickable link lives in an <a href>, so even if the
     // raw URL is long it cannot be truncated by quoted-printable line wrapping
     // (which silently cut the token off the plain-text link). See ADR-0009.
-    let link_attr = html_escape(magic_link);
-    let link_text = html_escape(magic_link);
-    let code_text = html_escape(token);
-    let html_body = format!(
-        "<p>Click to sign in to ZCA Cloud:</p>\
-         <p><a href=\"{link_attr}\">{link_text}</a></p>\
-         <p>If the link doesn't open the app (e.g. during development), paste this \
-         code into the app's sign-in field:</p>\
-         <p><code>{code_text}</code></p>\
-         <p>This link expires in {ttl_secs} seconds.</p>",
-    );
+    let body = build_magic_link_email(config, magic_link, token);
     let message = Message::builder()
         .from(from)
         .to(to)
-        .subject("Your ZCA Cloud sign-in link")
+        .subject(MAGIC_LINK_SUBJECT)
         .multipart(
             MultiPart::alternative()
                 .singlepart(
                     SinglePart::builder()
                         .header(ContentType::TEXT_PLAIN)
-                        .body(text_body),
+                        .body(body.text),
                 )
                 .singlepart(
                     SinglePart::builder()
                         .header(ContentType::TEXT_HTML)
-                        .body(html_body),
+                        .body(body.html),
                 ),
         )
         .map_err(|_| AppError::ServiceUnavailable("failed to build sign-in email".to_string()))?;
@@ -195,6 +264,7 @@ mod tests {
             database_url: "postgres://postgres:postgres@localhost:5432/zca_cloud".to_string(),
             public_base_url: "http://localhost:37880".to_string(),
             dev_return_magic_tokens: false,
+            magic_link_resend_api_key: None,
             magic_link_webhook_url: None,
             magic_link_smtp_addr: None,
             magic_link_from: "ZCA Cloud <no-reply@zca.local>".to_string(),
@@ -255,5 +325,26 @@ mod tests {
             ("mailhog".to_string(), 587)
         );
         assert!(parse_smtp_addr("host:notaport").is_err());
+    }
+
+    #[test]
+    fn resend_payload_uses_configured_sender_and_preserves_magic_link() {
+        let config = config_without_delivery();
+        let payload = build_resend_payload(
+            &config,
+            "user@example.com",
+            "zca://magic-link?email=user%40example.com&token=a%20token",
+            "a token",
+        );
+        let json = serde_json::to_value(&payload).unwrap();
+
+        assert_eq!(json["from"], "ZCA Cloud <no-reply@zca.local>");
+        assert_eq!(json["to"], "user@example.com");
+        assert_eq!(json["subject"], MAGIC_LINK_SUBJECT);
+        assert!(json["text"]
+            .as_str()
+            .unwrap()
+            .contains("zca://magic-link?email=user%40example.com&token=a%20token"));
+        assert!(json["html"].as_str().unwrap().contains("a%20token"));
     }
 }

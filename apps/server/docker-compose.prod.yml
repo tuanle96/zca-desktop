@@ -46,7 +46,8 @@ services:
       ZCA_CLOUD_ALLOWED_ORIGINS: ${ZCA_CLOUD_ALLOWED_ORIGINS:-}
 
       # ── Email delivery of login codes (recommended) ─────────────────────────
-      # Without SMTP (or a webhook) users cannot receive their login code.
+      # Without Resend, SMTP, or a webhook users cannot receive their login code.
+      ZCA_CLOUD_RESEND_API_KEY: ${ZCA_CLOUD_RESEND_API_KEY:-}
       ZCA_CLOUD_SMTP_ADDR: ${ZCA_CLOUD_SMTP_ADDR:-}
       ZCA_CLOUD_SMTP_USERNAME: ${ZCA_CLOUD_SMTP_USERNAME:-}
       ZCA_CLOUD_SMTP_PASSWORD: ${ZCA_CLOUD_SMTP_PASSWORD:-}

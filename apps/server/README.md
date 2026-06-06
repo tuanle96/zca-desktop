@@ -52,7 +52,8 @@ at your registry and `docker compose -f docker-compose.prod.yml push`.
 
 | Variable | Default | Description |
 |---|---|---|
-| `ZCA_CLOUD_SMTP_ADDR` | — | SMTP `host:port` for sending login codes (without it, users can't receive codes) |
+| `ZCA_CLOUD_RESEND_API_KEY` | — | Resend API key for production login-code email delivery; preferred over SMTP/webhook when set |
+| `ZCA_CLOUD_SMTP_ADDR` | — | SMTP fallback `host:port` for sending login codes |
 | `ZCA_CLOUD_MAGIC_LINK_FROM` | `ZCA Cloud <no-reply@zca.local>` | From address for login-code emails |
 
 **Optional**
@@ -64,7 +65,7 @@ at your registry and `docker compose -f docker-compose.prod.yml push`.
 | `ZCA_CLOUD_OBJECT_STORE` | — | Set to `s3` to use S3 (compose does this; otherwise in-memory) |
 | `ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS` | `0` | Return login codes in API responses — **dev only** |
 | `ZCA_CLOUD_S3_ALLOW_HTTP` | `0` | Allow plain-HTTP S3 (internal MinIO only) |
-| `ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL` | — | Webhook delivery as an alternative to SMTP |
+| `ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL` | — | Webhook delivery fallback as an alternative to Resend/SMTP |
 | `ZCA_CLOUD_MAGIC_LINK_TTL_SECS` | `600` | Login-code lifetime |
 | `ZCA_CLOUD_MAGIC_LINK_RATE_LIMIT` | `5` | Max code requests per rate window |
 | `ZCA_CLOUD_MAGIC_LINK_RATE_WINDOW_SECS` | `900` | Rate-limit window |

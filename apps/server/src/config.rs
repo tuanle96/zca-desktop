@@ -7,6 +7,7 @@ pub struct Config {
     pub database_url: String,
     pub public_base_url: String,
     pub dev_return_magic_tokens: bool,
+    pub magic_link_resend_api_key: Option<String>,
     pub magic_link_webhook_url: Option<String>,
     pub magic_link_smtp_addr: Option<String>,
     pub magic_link_from: String,
@@ -34,6 +35,12 @@ pub struct Config {
 const INSECURE_MASTER_KEY_PLACEHOLDER: &str = "dev-only-zca-cloud-master-key-change-me";
 
 impl Config {
+    pub fn magic_link_delivery_configured(&self) -> bool {
+        self.magic_link_resend_api_key.is_some()
+            || self.magic_link_smtp_addr.is_some()
+            || self.magic_link_webhook_url.is_some()
+    }
+
     pub fn from_env() -> Result<Self, String> {
         let bind_addr = std::env::var("ZCA_CLOUD_BIND")
             .ok()
@@ -47,6 +54,10 @@ impl Config {
         let dev_return_magic_tokens = std::env::var("ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS")
             .map(|v| matches!(v.as_str(), "1" | "true" | "yes"))
             .unwrap_or(false);
+        let magic_link_resend_api_key = std::env::var("ZCA_CLOUD_RESEND_API_KEY")
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty());
         let magic_link_webhook_url = std::env::var("ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL")
             .ok()
             .filter(|v| !v.trim().is_empty());
@@ -114,9 +125,11 @@ impl Config {
                     .to_string()
             })?;
         if master_key_seed == INSECURE_MASTER_KEY_PLACEHOLDER {
-            return Err("ZCA_CLOUD_MASTER_KEY is set to the built-in insecure placeholder; \
+            return Err(
+                "ZCA_CLOUD_MASTER_KEY is set to the built-in insecure placeholder; \
                  generate a real secret (e.g. `openssl rand -base64 48`)"
-                .to_string());
+                    .to_string(),
+            );
         }
         if master_key_seed.len() < 32 {
             return Err(
@@ -154,6 +167,7 @@ impl Config {
             database_url,
             public_base_url,
             dev_return_magic_tokens,
+            magic_link_resend_api_key,
             magic_link_webhook_url,
             magic_link_smtp_addr,
             magic_link_from,

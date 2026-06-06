@@ -8,7 +8,7 @@ magic-link auth, server-hosted accounts, and an encrypted sync/media store.
 
 ## Stack & layout
 - **Rust core** — `src-tauri/src/`, layered `types → config → store → zalo → session → command` (forward-only: a module may only depend on layers earlier in that list).
-- **Cloud backend** — `server/`: axum + sqlx (Postgres + S3). The app talks to it over HTTP (default `http://127.0.0.1:37880`). Run native (`cargo run`) or via Docker — see [`server/README.md`](./server/README.md).
+- **Cloud backend** — `server/`: axum + sqlx (Postgres + S3). Production clients default to `https://zca.tuanle.dev`; local dev can override the cloud base URL to `http://127.0.0.1:37880`. Run native (`cargo run`) or via Docker — see [`server/README.md`](./server/README.md).
 - **Frontend** — `src/` (SvelteKit SPA, `ssr=false`) calls the core via Tauri `invoke`/`listen`. shadcn-svelte components live in `src/lib/components/ui/`; `cn` in `src/lib/utils.ts`; theme in `src/app.css`.
 
 ## Commands

@@ -26,6 +26,7 @@ import {
     verifyCloudMagicLink,
     type CloudAccount,
 } from "./cloud";
+import { DEFAULT_CLOUD_BASE_URL } from "./cloudConfig";
 import { log } from "./log";
 import { notifications } from "./notifications.svelte";
 import type {
@@ -44,7 +45,6 @@ import type {
     Sticker,
 } from "./types";
 
-const DEFAULT_CLOUD_BASE_URL = "http://127.0.0.1:37880";
 export const CLOUD_BASE_URL_STORAGE_KEY = "zca.cloud.baseUrl";
 export const CLOUD_DEVICE_LINKED_STORAGE_KEY = "zca.cloud.deviceLinked";
 

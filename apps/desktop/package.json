@@ -1,6 +1,6 @@
 {
   "name": "zca-desktop",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust + SvelteKit). Personal, noncommercial use only.",
   "type": "module",
   "author": "Lê Anh Tuấn (tuanle96)",

@@ -13,8 +13,9 @@
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
   } from "@zca/core-client";
   import type { CloudAccount } from "@zca/core-client";
+  import { DEFAULT_CLOUD_BASE_URL } from "$lib/cloudConfig";
 
-  let baseUrl = $state("http://localhost:37880");
+  let baseUrl = $state(DEFAULT_CLOUD_BASE_URL);
   let email = $state("");
   let code = $state("");
   let status = $state("");
@@ -83,7 +84,7 @@
     <section>
       <label>
         Máy chủ
-        <input bind:value={baseUrl} placeholder="http://localhost:37880" />
+        <input bind:value={baseUrl} placeholder={DEFAULT_CLOUD_BASE_URL} />
       </label>
       <label>
         Email

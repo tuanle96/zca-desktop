@@ -83,10 +83,7 @@ pub fn app(state: Arc<AppState>) -> Router {
             "/api/v1/accounts/:account_id/resolve/phone",
             post(resolve_phone),
         )
-        .route(
-            "/api/v1/accounts/:account_id/contacts",
-            get(list_contacts),
-        )
+        .route("/api/v1/accounts/:account_id/contacts", get(list_contacts))
         .route("/api/v1/accounts/:account_id/send/text", post(send_text))
         .route(
             "/api/v1/accounts/:account_id/send/sticker",
@@ -213,7 +210,7 @@ async fn request_magic_link(
             None,
             serde_json::json!({
                 "emailDomain": email.split('@').nth(1).unwrap_or("unknown"),
-                "deliveryConfigured": state.config.magic_link_webhook_url.is_some()
+                "deliveryConfigured": state.config.magic_link_delivery_configured()
             }),
         )
         .await;

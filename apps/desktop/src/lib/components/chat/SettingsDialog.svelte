@@ -31,6 +31,7 @@
     type CloudAccount,
     type CloudDevice,
   } from "$lib/cloud";
+  import { DEFAULT_CLOUD_BASE_URL } from "$lib/cloudConfig";
   import { session } from "$lib/session.svelte";
   import { theme, type ThemeMode } from "$lib/theme.svelte";
   import { notifications } from "$lib/notifications.svelte";
@@ -40,7 +41,7 @@
   let tab = $state<Tab>("account");
   let confirmingLogout = $state(false);
 
-  let cloudBaseUrl = $state("http://127.0.0.1:37880");
+  let cloudBaseUrl = $state(DEFAULT_CLOUD_BASE_URL);
   let cloudDeviceLinked = $state(false);
   let cloudAccounts = $state<CloudAccount[]>([]);
   let cloudDevices = $state<CloudDevice[]>([]);
@@ -48,7 +49,7 @@
   let revokingDeviceId = $state<string | null>(null);
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
-  const appVersion = "0.1.0";
+  const appVersion = "0.1.1";
   const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
   const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
   const realtimeDotClass = $derived(

@@ -9,10 +9,6 @@ tunnel: <TUNNEL_UUID_OR_NAME>
 credentials-file: /Users/<you>/.cloudflared/<TUNNEL_UUID>.json
 
 ingress:
-  - hostname: zca.example.com
+  - hostname: zca.tuanle.dev
     service: http://127.0.0.1:37880
-  - hostname: mail-zca.example.com
-    service: http://127.0.0.1:37885
-  - hostname: minio-zca.example.com
-    service: http://127.0.0.1:37882
   - service: http_status:404

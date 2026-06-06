@@ -28,6 +28,7 @@
     verifyCloudMagicLink,
     type CloudAccount,
   } from "$lib/cloud";
+  import { DEFAULT_CLOUD_BASE_URL } from "$lib/cloudConfig";
   import { CLOUD_BASE_URL_STORAGE_KEY, CLOUD_DEVICE_LINKED_STORAGE_KEY, session } from "$lib/session.svelte";
 
   // `adding` = shown as an overlay to add another account (cancellable);
@@ -41,7 +42,7 @@
     }
   });
 
-  let cloudBaseUrl = $state("http://127.0.0.1:37880");
+  let cloudBaseUrl = $state(DEFAULT_CLOUD_BASE_URL);
   let cloudEmail = $state("");
   let cloudToken = $state("");
   let cloudDeviceName = $state("Máy của tôi");

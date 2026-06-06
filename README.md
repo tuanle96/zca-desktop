@@ -137,7 +137,7 @@ Prerequisites:
 # 1. Install workspace dependencies
 bun install
 
-# 2. Optional but recommended: start the local cloud backend
+# 2. Optional: start the local cloud backend for development
 #    Postgres + MinIO + MailHog + zca cloud server at http://127.0.0.1:37880
 docker compose -f apps/server/docker-compose.dev.yml up -d --build
 
@@ -145,9 +145,11 @@ docker compose -f apps/server/docker-compose.dev.yml up -d --build
 bun --cwd apps/desktop run tauri dev
 ```
 
-The current default sign-in path uses the local backend from step 2 for
-magic-link/device auth. See [apps/server/README.md](./apps/server/README.md) for
-backend-specific setup, environment variables, and deployment notes.
+The production default sign-in endpoint is `https://zca.tuanle.dev`. Override
+`PUBLIC_ZCA_CLOUD_BASE_URL=http://127.0.0.1:37880` when you want the app to use
+the local backend from step 2 for magic-link/device auth. See
+[apps/server/README.md](./apps/server/README.md) for backend-specific setup,
+environment variables, and deployment notes.
 
 ## Development commands
 

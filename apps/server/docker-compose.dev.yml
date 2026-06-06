@@ -61,9 +61,9 @@ services:
     environment:
       DATABASE_URL: postgres://zca:zca@postgres:5432/zca_cloud
       ZCA_CLOUD_BIND: 0.0.0.0:37880
-      # Override to your tunnel domain when exposing publicly, e.g.
-      # ZCA_CLOUD_PUBLIC_BASE_URL=https://zca.example.com (so magic-link URLs are public).
-      ZCA_CLOUD_PUBLIC_BASE_URL: ${ZCA_CLOUD_PUBLIC_BASE_URL:-http://127.0.0.1:37880}
+      # Public API URL used in magic-link URLs. Override to a local URL only for
+      # loopback-only debugging.
+      ZCA_CLOUD_PUBLIC_BASE_URL: ${ZCA_CLOUD_PUBLIC_BASE_URL:-https://zca.tuanle.dev}
       # Login codes are delivered via MailHog (see below) — read them at the
       # MailHog web UI on http://127.0.0.1:37885. ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS
       # (return the code in the API response) is intentionally NOT set: the server

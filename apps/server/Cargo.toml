@@ -12,7 +12,7 @@ zca-rust = { git = "https://github.com/tuanle96/zca-rust", rev = "c95c88b3ad6ac1
 
 [package]
 name = "zca-cloud-server"
-version = "0.1.0"
+version = "0.1.1"
 edition = "2021"
 publish = false
 license = "PolyForm-Noncommercial-1.0.0"
@@ -27,7 +27,7 @@ hkdf = "0.12"
 lettre = { version = "0.11", default-features = false, features = ["builder", "smtp-transport", "tokio1", "tokio1-rustls-tls", "hostname"] }
 object_store = { version = "0.11", features = ["aws"] }
 rand = "0.8"
-reqwest = { version = "0.12", default-features = false, features = ["cookies", "rustls-tls"] }
+reqwest = { version = "0.12", default-features = false, features = ["cookies", "json", "rustls-tls"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 sha2 = "0.10"
