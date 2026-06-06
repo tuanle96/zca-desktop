@@ -58,20 +58,18 @@ services:
         condition: service_healthy
       create-bucket:
         condition: service_completed_successfully
+    env_file:
+      - .env
     environment:
       DATABASE_URL: postgres://zca:zca@postgres:5432/zca_cloud
       ZCA_CLOUD_BIND: 0.0.0.0:37880
       # Public API URL used in magic-link URLs. Override to a local URL only for
       # loopback-only debugging.
       ZCA_CLOUD_PUBLIC_BASE_URL: ${ZCA_CLOUD_PUBLIC_BASE_URL:-https://zca.tuanle.dev}
-      # Login codes are delivered via MailHog (see below) — read them at the
-      # MailHog web UI on http://127.0.0.1:37885. ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS
-      # (return the code in the API response) is intentionally NOT set: the server
+      # Login codes are delivered through Resend from apps/server/.env.
+      # ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS is intentionally NOT set: the server
       # refuses that flag on a non-loopback bind, and this container must bind
       # 0.0.0.0 for Docker port mapping.
-      ZCA_CLOUD_SMTP_ADDR: mailhog:1025
-      # MailHog speaks plaintext SMTP — disable TLS for the dev relay only.
-      ZCA_CLOUD_SMTP_TLS: "0"
       # Magic-link emails open the desktop app via the zca:// deep link (ADR-0009).
       # NOTE: on macOS, custom-scheme deep links only fire for the INSTALLED .app,
       # not under `tauri dev` — use the code printed in the email during dev.

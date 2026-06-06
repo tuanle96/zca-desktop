@@ -6,7 +6,14 @@ Default port **37880**; database migrations run automatically on boot.
 
 ## Dev (hot-reload)
 
-Brings up the infra (Postgres + MinIO + MailHog) and the server, rebuilding on every change:
+Brings up the infra (Postgres + MinIO) and the server, rebuilding on every change.
+Login-code emails are sent with Resend from `apps/server/.env`:
+
+```bash
+ZCA_CLOUD_RESEND_API_KEY=re_...
+ZCA_CLOUD_MAGIC_LINK_FROM="ZCA Cloud <no-reply@zca.tuanle.dev>"
+ZCA_CLOUD_PUBLIC_BASE_URL=https://zca.tuanle.dev
+```
 
 ```bash
 docker compose -f docker-compose.dev.yml up -d --build
@@ -15,12 +22,11 @@ docker compose -f docker-compose.dev.yml down
 ```
 
 Edit any `.rs` under `src/` -> `cargo-watch` rebuilds and restarts in a few seconds.
-The compose dev stack sends login codes to MailHog at <http://localhost:37885>.
 The direct API token return flag (`ZCA_CLOUD_DEV_RETURN_MAGIC_TOKENS=1`) is only
 for trusted loopback-native debugging and is intentionally not enabled in the
 compose service.
 
-> Prefer running native? `docker compose -f docker-compose.dev.yml up -d postgres minio mailhog create-bucket`, then `cargo run` with the matching env.
+> Prefer running native? `docker compose -f docker-compose.dev.yml up -d postgres minio create-bucket`, then `cargo run` with the matching env.
 
 ## Deploy (prod)
 
