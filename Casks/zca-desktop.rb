@@ -1,6 +1,6 @@
 cask "zca-desktop" do
-  version "0.1.5"
-  sha256 "dbb2403f4573e970c6c81360c27cec8e14a4a749c7664be07e7cef9efefa0508"
+  version "0.1.6"
+  sha256 "9ecc20284ad2494cdd43460b2d7ee47c8907fd7b7d25263aa7f3552df6d2d679"
 
   url "https://github.com/tuanle96/zca-desktop/releases/download/v#{version}/Zalo.Desktop_#{version}_universal.dmg"
   name "Zalo Desktop"

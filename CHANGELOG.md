@@ -8,6 +8,16 @@ All notable zca-desktop release changes are documented here.
 
 - No pending schema compatibility changes.
 
+## v0.1.6 - 2026-06-06
+
+Magic-link duplicate callback hotfix.
+
+### Fixed
+
+- Prevented the browser magic-link landing page from delivering the same token more than once while opening the app.
+- Ignored duplicate already-verified magic-link callbacks in the desktop session state.
+- Moved the login gate to the "add Zalo account" step as soon as the cloud device token is valid, even before a Zalo account exists.
+
 ## v0.1.5 - 2026-06-06
 
 Cloud endpoint hotfix.

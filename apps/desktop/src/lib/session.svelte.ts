@@ -243,6 +243,8 @@ class SessionStore {
     cloudLinking = $state(false);
     private cloudBaseUrl: string | null = null;
     private cloudDeviceToken: string | null = null;
+    private inFlightMagicLink: string | null = null;
+    private lastVerifiedMagicLink: string | null = null;
 
     /** which middle/main pane is shown: chats or contacts */
     view = $state<"chats" | "contacts">("chats");
@@ -388,15 +390,28 @@ class SessionStore {
      * Mirrors the manual verify path in QrLoginScreen but runs unattended.
      */
     async linkViaMagicToken(email: string, token: string, baseUrl?: string): Promise<boolean> {
-        if (this.cloudLinking) return false;
-        this.cloudLinking = true;
-        this.error = "";
         const targetBaseUrl = normalizeCloudBaseUrl(
             baseUrl || (typeof localStorage !== "undefined" ? cloudBaseUrlFromStorage(localStorage) : DEFAULT_CLOUD_BASE_URL),
         );
+        const magicLinkKey = `${targetBaseUrl}\n${email.trim().toLowerCase()}\n${token}`;
+        if (this.lastVerifiedMagicLink === magicLinkKey) {
+            log.info("deep-link: duplicate verified magic-link ignored");
+            return true;
+        }
+        if (this.cloudLinking) {
+            if (this.inFlightMagicLink === magicLinkKey) {
+                log.info("deep-link: duplicate in-flight magic-link ignored");
+                return true;
+            }
+            return false;
+        }
+        this.cloudLinking = true;
+        this.inFlightMagicLink = magicLinkKey;
+        this.error = "";
         const deviceName = defaultDeviceName();
         try {
             const res = await verifyCloudMagicLink(targetBaseUrl, email, token, deviceName);
+            this.lastVerifiedMagicLink = magicLinkKey;
             if (typeof localStorage !== "undefined") {
                 localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
                 localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
@@ -414,6 +429,7 @@ class SessionStore {
             log.error(`deep-link: magic-link verify failed: ${String(e)}`);
             return false;
         } finally {
+            if (this.inFlightMagicLink === magicLinkKey) this.inFlightMagicLink = null;
             this.cloudLinking = false;
         }
     }

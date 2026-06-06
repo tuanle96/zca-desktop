@@ -63,9 +63,18 @@
 
   const cloudConnected = $derived(session.cloudMode && session.realtimeState === "live");
   // Step 1 = link this device; step 2 = add a Zalo account (device already linked).
-  const step = $derived(adding || cloudConnected ? 2 : 1);
+  const step = $derived(adding || session.cloudMode ? 2 : 1);
   const cloudShowRetry = $derived(["expired", "declined", "error"].includes(cloudQrPhase));
   const cloudDimQr = $derived(cloudQrPhase === "scanned" || cloudShowRetry);
+
+  $effect(() => {
+    if (session.cloudMode && !cloudDeviceLinked) {
+      cloudDeviceLinked = true;
+      cloudToken = "";
+      cloudError = "";
+      cloudStatus = "Thiết bị cloud đã liên kết. Thêm tài khoản Zalo để bắt đầu.";
+    }
+  });
 
   const cloudErrorText = $derived.by(() => {
     switch (cloudQrPhase) {

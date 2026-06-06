@@ -240,26 +240,33 @@ fn build_magic_link_landing_html(config: &crate::Config, email: &str, token: &st
          <script>\
          const callbackUrl = {callback_json};\
          const openAppUrl = {open_app_json};\
-         const statusEl = document.getElementById('status');\
-         const openButton = document.getElementById('openApp');\
-         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\
-         async function deliver() {{\
-           for (let attempt = 0; attempt < 18; attempt += 1) {{\
-             try {{\
-               const res = await fetch(callbackUrl, {{ method: 'GET', mode: 'cors' }});\
-               if (res.ok) {{\
-                 statusEl.textContent = 'Token delivered. You can return to ZCA Desktop.';\
-                 return;\
-               }}\
-             }} catch (_) {{}}\
+           const statusEl = document.getElementById('status');\
+           const openButton = document.getElementById('openApp');\
+           const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\
+           let delivered = false;\
+           let delivering = false;\
+           async function deliver() {{\
+             if (delivered || delivering) return;\
+             delivering = true;\
+             for (let attempt = 0; attempt < 18; attempt += 1) {{\
+               try {{\
+                 const res = await fetch(callbackUrl, {{ method: 'GET', mode: 'cors' }});\
+                 if (res.ok) {{\
+                   delivered = true;\
+                   statusEl.textContent = 'Token delivered. You can return to ZCA Desktop.';\
+                   delivering = false;\
+                   return;\
+                 }}\
+               }} catch (_) {{}}\
              if (attempt === 0 && openAppUrl) window.location.href = openAppUrl;\
              statusEl.textContent = attempt < 2 ? 'Opening ZCA Desktop...' : 'Waiting for ZCA Desktop to start...';\
              await sleep(1200);\
+             }}\
+             statusEl.textContent = 'Could not reach ZCA Desktop. Open the app and paste the code below.';\
+             delivering = false;\
            }}\
-           statusEl.textContent = 'Could not reach ZCA Desktop. Open the app and paste the code below.';\
-         }}\
-         openButton.addEventListener('click', () => {{ if (openAppUrl) window.location.href = openAppUrl; void deliver(); }});\
-         void deliver();\
+           openButton.addEventListener('click', () => {{ if (openAppUrl) window.location.href = openAppUrl; void deliver(); }});\
+           void deliver();\
          </script>\
          </body>\
          </html>"
