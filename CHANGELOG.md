@@ -23,6 +23,7 @@ Production cloud endpoint and email delivery release.
 - Resend-backed magic-link email delivery for the cloud server via `ZCA_CLOUD_RESEND_API_KEY`.
 - Production environment docs for the Resend sender `ZCA Cloud <no-reply@zca.tuanle.dev>`.
 - Release note artifact for the notarized macOS universal DMG.
+- Homebrew Cask definition for installing the notarized macOS DMG with `brew install --cask zca-desktop`.
 
 ### Verified
 

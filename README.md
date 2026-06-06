@@ -21,6 +21,18 @@ management, QR login, encrypted credential storage, SQLite history restore, and
 the self-hosted cloud backend are implemented and tested. Some media delivery
 and packaging work is still in progress; see [Roadmap](#roadmap).
 
+## Install
+
+### Homebrew Cask
+
+```bash
+brew tap tuanle96/tap
+brew install --cask zca-desktop
+```
+
+The published macOS DMG is universal `x86_64 arm64`, Developer ID signed,
+notarized by Apple, and stapled for Gatekeeper.
+
 ## Implemented
 
 ### Desktop local mode
