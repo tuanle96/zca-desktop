@@ -33,6 +33,11 @@ brew install --cask zca-desktop
 The published macOS DMG is universal `x86_64 arm64`, Developer ID signed,
 notarized by Apple, and stapled for Gatekeeper.
 
+The app also supports in-app updates from the Settings -> Giới thiệu panel. The
+updater checks the latest GitHub Release `latest.json`, verifies the Tauri
+updater signature, downloads the signed updater payload, installs it, and
+relaunches the app.
+
 ## Implemented
 
 ### Desktop local mode
@@ -108,7 +113,8 @@ notarized by Apple, and stapled for Gatekeeper.
 ### Mid term
 
 - Package signed desktop builds for Windows and Linux using Tauri bundling.
-- Add optional updater plumbing after signed builds are reliable.
+- Expand release automation for publishing the updater `latest.json` asset on
+  every signed macOS release.
 - Expand multi-device coexistence testing across phone, web, and desktop Zalo
   sessions.
 - Improve cloud deployment templates for production-grade Postgres, object

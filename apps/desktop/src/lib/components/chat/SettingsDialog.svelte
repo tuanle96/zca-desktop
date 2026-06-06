@@ -19,6 +19,8 @@
     Trash2,
     Bell,
     BellOff,
+    RefreshCw,
+    Download,
   } from "@lucide/svelte";
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
@@ -35,8 +37,15 @@
   import { session } from "$lib/session.svelte";
   import { theme, type ThemeMode } from "$lib/theme.svelte";
   import { notifications } from "$lib/notifications.svelte";
+  import {
+    checkForAppUpdate,
+    downloadInstallAndRelaunch,
+    updateNotes,
+    type AppUpdate,
+  } from "$lib/updater";
 
   type Tab = "account" | "appearance" | "data" | "about";
+  type UpdateState = "idle" | "checking" | "none" | "available" | "installing" | "error";
 
   let tab = $state<Tab>("account");
   let confirmingLogout = $state(false);
@@ -47,9 +56,15 @@
   let cloudDevices = $state<CloudDevice[]>([]);
   let cloudDataError = $state("");
   let revokingDeviceId = $state<string | null>(null);
+  let updateState = $state<UpdateState>("idle");
+  let updateError = $state("");
+  let availableUpdate = $state<AppUpdate | null>(null);
+  let updateDownloadedBytes = $state(0);
+  let updateContentLength = $state<number | undefined>(undefined);
+  let updateAutoChecked = $state(false);
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
-  const appVersion = "0.1.1";
+  const appVersion = "0.1.2";
   const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
   const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
   const realtimeDotClass = $derived(
@@ -58,6 +73,13 @@
       : session.realtimeState === "connecting" || session.realtimeState === "reconnecting"
         ? "bg-amber-500"
         : "bg-muted-foreground/40",
+  );
+  const updateProgressLabel = $derived(
+    updateState !== "installing"
+      ? ""
+      : !updateContentLength
+        ? "Đang tải bản cập nhật..."
+        : `Đang tải ${Math.min(100, Math.round((updateDownloadedBytes / updateContentLength) * 100))}%`,
   );
 
   const navItems: { id: Tab; icon: typeof User; label: string }[] = [
@@ -156,6 +178,43 @@
   async function toggleNotifications() {
     await notifications.setEnabled(!notifications.enabled);
   }
+
+  async function checkForUpdates() {
+    updateState = "checking";
+    updateError = "";
+    updateDownloadedBytes = 0;
+    updateContentLength = undefined;
+    try {
+      const update = await checkForAppUpdate();
+      availableUpdate = update;
+      updateState = update ? "available" : "none";
+    } catch (e) {
+      updateError = String(e);
+      updateState = "error";
+    }
+  }
+
+  async function installUpdate() {
+    if (!availableUpdate) return;
+    updateState = "installing";
+    updateError = "";
+    try {
+      await downloadInstallAndRelaunch(availableUpdate, (progress) => {
+        updateDownloadedBytes = progress.downloadedBytes;
+        updateContentLength = progress.contentLength;
+      });
+    } catch (e) {
+      updateError = String(e);
+      updateState = "error";
+    }
+  }
+
+  $effect(() => {
+    if (tab === "about" && !updateAutoChecked) {
+      updateAutoChecked = true;
+      void checkForUpdates();
+    }
+  });
 
   onMount(() => {
     loadCloudOverview();
@@ -481,6 +540,48 @@
               </dd>
             </div>
           </dl>
+          <div class="mt-5 rounded-xl border p-4">
+            <div class="flex items-start justify-between gap-3">
+              <div class="min-w-0">
+                <p class="text-sm font-medium">Cập nhật</p>
+                {#if updateState === "checking"}
+                  <p class="text-muted-foreground mt-1 text-xs">Đang kiểm tra phiên bản mới...</p>
+                {:else if updateState === "none"}
+                  <p class="text-muted-foreground mt-1 text-xs">Bạn đang dùng bản mới nhất.</p>
+                {:else if updateState === "available" && availableUpdate}
+                  <p class="mt-1 text-sm font-medium tabular-nums">Có bản {availableUpdate.version}</p>
+                  <p class="text-muted-foreground mt-1 line-clamp-3 text-xs">{updateNotes(availableUpdate)}</p>
+                {:else if updateState === "installing"}
+                  <p class="text-muted-foreground mt-1 text-xs">{updateProgressLabel}</p>
+                {:else if updateState === "error"}
+                  <p class="text-destructive mt-1 text-xs" role="alert">{updateError}</p>
+                {:else}
+                  <p class="text-muted-foreground mt-1 text-xs">Kiểm tra GitHub release mới và cài trực tiếp trong app.</p>
+                {/if}
+              </div>
+              <div class="flex shrink-0 gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  disabled={updateState === "checking" || updateState === "installing"}
+                  onclick={checkForUpdates}
+                >
+                  {#if updateState === "checking"}
+                    <Loader2 class="animate-spin" />
+                  {:else}
+                    <RefreshCw />
+                  {/if}
+                  Kiểm tra
+                </Button>
+                {#if updateState === "available" && availableUpdate}
+                  <Button size="sm" onclick={installUpdate}>
+                    <Download />
+                    Cài đặt
+                  </Button>
+                {/if}
+              </div>
+            </div>
+          </div>
         {/if}
       </div>
     </section>

@@ -26,11 +26,13 @@ pub fn run() {
     // the app still runs (QR login works), persistence/restore just no-op.
     let store_state = command::StoreState(open_store());
 
-    tauri::Builder::default()
-        .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_deep_link::init())
-        .plugin(tauri_plugin_notification::init())
-        .manage(command::SessionState::default())
+      tauri::Builder::default()
+          .plugin(tauri_plugin_opener::init())
+          .plugin(tauri_plugin_deep_link::init())
+          .plugin(tauri_plugin_notification::init())
+          .plugin(tauri_plugin_updater::Builder::new().build())
+          .plugin(tauri_plugin_process::init())
+          .manage(command::SessionState::default())
         .manage(store_state)
         .setup(move |_app| {
             // Keep the file-logging guard alive for the whole app lifetime.

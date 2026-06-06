@@ -8,6 +8,19 @@ All notable zca-desktop release changes are documented here.
 
 - No pending schema compatibility changes.
 
+## v0.1.2 - 2026-06-06
+
+In-app updater release.
+
+### Added
+
+- Tauri updater plugin wiring for in-app update checks, download/install, and relaunch from the Settings About tab.
+- Static GitHub Release updater manifest at `latest.json` for signed macOS updater artifacts.
+
+### Changed
+
+- Version bumped to `0.1.2` so users can move from the first Homebrew Cask release into an updater-enabled app.
+
 ## v0.1.1 - 2026-06-06
 
 Production cloud endpoint and email delivery release.
