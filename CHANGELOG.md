@@ -8,6 +8,15 @@ All notable zca-desktop release changes are documented here.
 
 - No pending schema compatibility changes.
 
+## v0.1.5 - 2026-06-06
+
+Cloud endpoint hotfix.
+
+### Fixed
+
+- Fixed production builds falling back to `http://127.0.0.1:37880` when `PUBLIC_ZCA_CLOUD_BASE_URL` was present during build/runtime.
+- Migrated stale `zca.cloud.baseUrl` values in browser storage from loopback hosts back to `https://zca.tuanle.dev`.
+
 ## v0.1.4 - 2026-06-06
 
 Startup crash hotfix.

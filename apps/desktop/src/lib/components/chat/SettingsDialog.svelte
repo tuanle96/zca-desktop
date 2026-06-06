@@ -64,7 +64,7 @@
   let updateAutoChecked = $state(false);
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
-  const appVersion = "0.1.4";
+  const appVersion = "0.1.5";
   const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
   const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
   const realtimeDotClass = $derived(

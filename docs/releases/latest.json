@@ -1,15 +1,15 @@
 {
-  "version": "0.1.4",
-  "notes": "Fixes the macOS startup crash by starting the magic-link callback listener on Tauri's async runtime.",
-  "pub_date": "2026-06-06T08:41:46Z",
+  "version": "0.1.5",
+  "notes": "Fixes production cloud login falling back to localhost by rejecting loopback cloud defaults and migrating stale stored endpoints.",
+  "pub_date": "2026-06-06T09:18:01Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN21CNzMyYjZaUUtUbitQM0piOGhMSHZnNllPSWZlbFdoVmdKZlFXcHVRdDVzZGxZNjFKTjRnQ09ISzlNUG9qUHYxUUIrSi9CWk5DZzMvUzNXVEp0R2dvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzM1MjExCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKdVVNSHVrRzUzNnZQMmxEWngxeEtpbTZVdWlidW8zalBsSldaMjl0SGx6ajlVYlVzSGZxdUpTanhnOEpmZTVsZ2Zxc0UxdFpmRmJVVVR1UmFZb21XQ1E9PQo=",
-      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.4/Zalo.Desktop.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN21CaXN6Y2gwNzE0SFhHOGJwbGlCZ1Z0OEdRNE1kUzhYMnhZYUVCR0dncUNoV2RqVk9pdjVrdUc4SzZ4ZFovMHBuOUdyL3RkVTcydytMU3pJKzBXSlE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzM3MjIzCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKVHZ1ZTl6V3RHSU03dE52VGVTeWZKcFFBUWtjVllBS2xnVFJsakpjNmpqVStiQTFqUVhFSXgvTWVpNnFPNGJyci9LaTB6WmI0MjZsd05nRS9ERkE5RHc9PQo=",
+      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.5/Zalo.Desktop.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN21CNzMyYjZaUUtUbitQM0piOGhMSHZnNllPSWZlbFdoVmdKZlFXcHVRdDVzZGxZNjFKTjRnQ09ISzlNUG9qUHYxUUIrSi9CWk5DZzMvUzNXVEp0R2dvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzM1MjExCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKdVVNSHVrRzUzNnZQMmxEWngxeEtpbTZVdWlidW8zalBsSldaMjl0SGx6ajlVYlVzSGZxdUpTanhnOEpmZTVsZ2Zxc0UxdFpmRmJVVVR1UmFZb21XQ1E9PQo=",
-      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.4/Zalo.Desktop.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN21CaXN6Y2gwNzE0SFhHOGJwbGlCZ1Z0OEdRNE1kUzhYMnhZYUVCR0dncUNoV2RqVk9pdjVrdUc4SzZ4ZFovMHBuOUdyL3RkVTcydytMU3pJKzBXSlE4PQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzM3MjIzCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKVHZ1ZTl6V3RHSU03dE52VGVTeWZKcFFBUWtjVllBS2xnVFJsakpjNmpqVStiQTFqUVhFSXgvTWVpNnFPNGJyci9LaTB6WmI0MjZsd05nRS9ERkE5RHc9PQo=",
+      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.5/Zalo.Desktop.app.tar.gz"
     }
   }
 }
