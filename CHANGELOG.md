@@ -8,6 +8,21 @@ All notable zca-desktop release changes are documented here.
 
 - No pending schema compatibility changes.
 
+## v0.1.3 - 2026-06-06
+
+Cloud magic-link callback and production endpoint hardening release.
+
+### Added
+
+- Browser-first magic-link landing flow that opens the desktop app through a local callback listener, with `zca://open` used only to wake the app.
+- Local callback validation for cloud magic links, including loopback listener handling and origin checks against the configured cloud API.
+
+### Changed
+
+- Desktop cloud defaults and persisted cloud server settings now normalize to `https://zca.tuanle.dev` instead of reusing localhost values.
+- Advanced cloud server settings reject loopback hosts such as `localhost` and `127.0.0.1`, falling back to the production cloud endpoint.
+- Version bumped to `0.1.3` for the next GitHub/Homebrew/updater release.
+
 ## v0.1.2 - 2026-06-06
 
 In-app updater release.

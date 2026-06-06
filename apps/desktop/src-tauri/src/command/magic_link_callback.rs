@@ -194,7 +194,7 @@ fn normalize_base_url(input: &str) -> Option<String> {
 
 fn origin_allowed(origin: Option<&str>, base_url: &str) -> bool {
     let Some(origin) = origin.map(str::trim).filter(|v| !v.is_empty()) else {
-        return true;
+        return false;
     };
     origin.trim_end_matches('/') == origin_from_base_url(base_url).as_deref().unwrap_or("")
 }
@@ -259,6 +259,12 @@ mod tests {
             Some("https://evil.example"),
             "https://zca.tuanle.dev"
         ));
+    }
+
+    #[test]
+    fn rejects_missing_origin() {
+        assert!(!origin_allowed(None, "https://zca.tuanle.dev"));
+        assert!(!origin_allowed(Some(""), "https://zca.tuanle.dev"));
     }
 
     #[test]

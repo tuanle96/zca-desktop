@@ -28,7 +28,7 @@
     verifyCloudMagicLink,
     type CloudAccount,
   } from "$lib/cloud";
-  import { DEFAULT_CLOUD_BASE_URL } from "$lib/cloudConfig";
+  import { DEFAULT_CLOUD_BASE_URL, cloudBaseUrlFromStorage, normalizeCloudBaseUrl } from "$lib/cloudConfig";
   import { CLOUD_BASE_URL_STORAGE_KEY, CLOUD_DEVICE_LINKED_STORAGE_KEY, session } from "$lib/session.svelte";
 
   // `adding` = shown as an overlay to add another account (cancellable);
@@ -86,7 +86,7 @@
 
   async function loadCloudSettings() {
     if (typeof localStorage === "undefined") return;
-    cloudBaseUrl = localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || cloudBaseUrl;
+    cloudBaseUrl = cloudBaseUrlFromStorage(localStorage);
     cloudDeviceLinked = localStorage.getItem(CLOUD_DEVICE_LINKED_STORAGE_KEY) === "1";
     if (cloudDeviceLinked) cloudStatus = "Thiết bị này đã từng liên kết cloud.";
   }
@@ -95,6 +95,7 @@
     cloudBusy = true;
     cloudError = "";
     try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
       localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
       const connected = await session.restoreCloudDevice(cloudBaseUrl);
       if (!connected) {
@@ -117,6 +118,7 @@
     cloudBusy = true;
     cloudError = "";
     try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
       const res = await requestCloudMagicLink(cloudBaseUrl, cloudEmail);
       cloudStatus = res.devMagicToken
         ? "Đã nhận mã đăng nhập (chế độ dev)."
@@ -134,6 +136,7 @@
     cloudBusy = true;
     cloudError = "";
     try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
       const res = await verifyCloudMagicLink(
         cloudBaseUrl,
         cloudEmail,
@@ -141,6 +144,7 @@
         cloudDeviceName,
         cloudRecoveryKey || undefined,
       );
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
       localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
       localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
       cloudDeviceLinked = true;
@@ -190,6 +194,7 @@
     cloudQrScannedName = null;
     cloudQrPhase = "starting";
     try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
       localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
       const res = await startCloudAccountQr(cloudBaseUrl, token);
       cloudQrFlowId = String(res.flowId ?? "");

@@ -1,15 +1,15 @@
 {
-  "version": "0.1.2",
-  "notes": "Adds in-app update checks, signed updater payload delivery, and relaunch support from Settings -> Giới thiệu.",
-  "pub_date": "2026-06-06T04:23:40Z",
+  "version": "0.1.3",
+  "notes": "Routes magic links through the browser callback flow and normalizes cloud server settings to https://zca.tuanle.dev.",
+  "pub_date": "2026-06-06T07:30:34Z",
   "platforms": {
     "darwin-aarch64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN2tHcGFmdmVoaENJWEdCa0t2VjhtT3h6aE5uNEFhMitURjFCUFhLeCtlQVlWUlM2MGhyNlBLcE93eXZLbWlDV2E4UXI0YWJpT1lhYlhhYVZLQjMzTVFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzE5NzAyCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKN3dZWXR1N2FXclRIcDh4QllGczRGazdsQVB5RURjMCttUHRFcVV3eFpmSjhQU1RDTjVHTWQvalRvd3pCMWRzdG5ULy8wZzI5eElhSXVmOTkybjFYQ2c9PQo=",
-      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.2/Zalo.Desktop.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN2pVdXlZRmVLdEFWNzU3MVo3M2NldDcwcXdJZjRTdUl6RnJWTGNIR1hyemxaV2s1blZkbCtka1BES3hNOVAzYmMrNVZ4WERTdlNsaTYvZ3lyTVA3MmdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzMwOTU1CWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKOENDVU5qb0VQa0xpNFRFLzYzbmhjeUhYTjJLRFJEVUVBelEwbjVKMEQrVElHYXZodEVuV1JqT1I2NWtQcXd4Q0VqdFNjak9mc0tPQmZVckp3NjdpQ2c9PQo=",
+      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.3/Zalo.Desktop.app.tar.gz"
     },
     "darwin-x86_64": {
-      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN2tHcGFmdmVoaENJWEdCa0t2VjhtT3h6aE5uNEFhMitURjFCUFhLeCtlQVlWUlM2MGhyNlBLcE93eXZLbWlDV2E4UXI0YWJpT1lhYlhhYVZLQjMzTVFNPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzE5NzAyCWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKN3dZWXR1N2FXclRIcDh4QllGczRGazdsQVB5RURjMCttUHRFcVV3eFpmSjhQU1RDTjVHTWQvalRvd3pCMWRzdG5ULy8wZzI5eElhSXVmOTkybjFYQ2c9PQo=",
-      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.2/Zalo.Desktop.app.tar.gz"
+      "signature": "dW50cnVzdGVkIGNvbW1lbnQ6IHNpZ25hdHVyZSBmcm9tIHRhdXJpIHNlY3JldCBrZXkKUlVUVDYvTnk1a0RMN2pVdXlZRmVLdEFWNzU3MVo3M2NldDcwcXdJZjRTdUl6RnJWTGNIR1hyemxaV2s1blZkbCtka1BES3hNOVAzYmMrNVZ4WERTdlNsaTYvZ3lyTVA3MmdvPQp0cnVzdGVkIGNvbW1lbnQ6IHRpbWVzdGFtcDoxNzgwNzMwOTU1CWZpbGU6WmFsbyBEZXNrdG9wLmFwcC50YXIuZ3oKOENDVU5qb0VQa0xpNFRFLzYzbmhjeUhYTjJLRFJEVUVBelEwbjVKMEQrVElHYXZodEVuV1JqT1I2NWtQcXd4Q0VqdFNjak9mc0tPQmZVckp3NjdpQ2c9PQo=",
+      "url": "https://github.com/tuanle96/zca-desktop/releases/download/v0.1.3/Zalo.Desktop.app.tar.gz"
     }
   }
 }

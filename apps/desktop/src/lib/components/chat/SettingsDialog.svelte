@@ -33,7 +33,7 @@
     type CloudAccount,
     type CloudDevice,
   } from "$lib/cloud";
-  import { DEFAULT_CLOUD_BASE_URL } from "$lib/cloudConfig";
+  import { DEFAULT_CLOUD_BASE_URL, cloudBaseUrlFromStorage } from "$lib/cloudConfig";
   import { session } from "$lib/session.svelte";
   import { theme, type ThemeMode } from "$lib/theme.svelte";
   import { notifications } from "$lib/notifications.svelte";
@@ -64,7 +64,7 @@
   let updateAutoChecked = $state(false);
 
   const repoUrl = "https://github.com/tuanle96/zca-desktop";
-  const appVersion = "0.1.2";
+  const appVersion = "0.1.3";
   const activeCloudAccounts = $derived(cloudAccounts.filter((account) => account.state === "active").length);
   const activeCloudDevices = $derived(cloudDevices.filter((device) => !device.revokedAt).length);
   const realtimeDotClass = $derived(
@@ -108,10 +108,10 @@
     confirmingLogout = false;
   }
 
-  async function loadCloudOverview() {
-    if (typeof localStorage !== "undefined") {
-      cloudBaseUrl = localStorage.getItem("zca.cloud.baseUrl") || cloudBaseUrl;
-    }
+    async function loadCloudOverview() {
+      if (typeof localStorage !== "undefined") {
+        cloudBaseUrl = cloudBaseUrlFromStorage(localStorage);
+      }
     try {
       const saved = await loadCloudDeviceSession(cloudBaseUrl);
       cloudDeviceLinked = Boolean(saved?.hasDeviceToken);

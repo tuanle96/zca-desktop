@@ -26,7 +26,7 @@ import {
     verifyCloudMagicLink,
     type CloudAccount,
 } from "./cloud";
-import { DEFAULT_CLOUD_BASE_URL } from "./cloudConfig";
+import { DEFAULT_CLOUD_BASE_URL, cloudBaseUrlFromStorage, normalizeCloudBaseUrl } from "./cloudConfig";
 import { log } from "./log";
 import { notifications } from "./notifications.svelte";
 import type {
@@ -312,7 +312,7 @@ class SessionStore {
 
     async restoreCloudDevice(baseUrl?: string): Promise<boolean> {
         if (typeof localStorage === "undefined") return false;
-        const targetBaseUrl = baseUrl || localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY) || DEFAULT_CLOUD_BASE_URL;
+        const targetBaseUrl = normalizeCloudBaseUrl(baseUrl || cloudBaseUrlFromStorage(localStorage));
         const saved = await loadCloudDeviceSession(targetBaseUrl).catch((e) => {
             log.error(`cloud-restore: device session lookup failed: ${String(e)}`);
             return null;
@@ -391,10 +391,9 @@ class SessionStore {
         if (this.cloudLinking) return false;
         this.cloudLinking = true;
         this.error = "";
-        const targetBaseUrl =
-            baseUrl ||
-            (typeof localStorage !== "undefined" && localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY)) ||
-            DEFAULT_CLOUD_BASE_URL;
+        const targetBaseUrl = normalizeCloudBaseUrl(
+            baseUrl || (typeof localStorage !== "undefined" ? cloudBaseUrlFromStorage(localStorage) : DEFAULT_CLOUD_BASE_URL),
+        );
         const deviceName = defaultDeviceName();
         try {
             const res = await verifyCloudMagicLink(targetBaseUrl, email, token, deviceName);
