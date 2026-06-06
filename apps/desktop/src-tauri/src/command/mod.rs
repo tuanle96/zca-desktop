@@ -16,7 +16,9 @@ use crate::types::{
 use crate::zalo::{self, API};
 
 mod cloud;
+mod magic_link_callback;
 pub use cloud::*;
+pub use magic_link_callback::*;
 
 /// Tauri event name the frontend subscribes to for incoming chat messages.
 pub const MESSAGE_EVENT: &str = "zalo://message";

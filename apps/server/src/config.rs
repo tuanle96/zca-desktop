@@ -14,9 +14,9 @@ pub struct Config {
     pub magic_link_smtp_username: Option<String>,
     pub magic_link_smtp_password: Option<String>,
     pub magic_link_smtp_tls: bool,
-    /// Custom URL scheme for the desktop deep link in magic-link emails (ADR-0009).
-    /// When non-empty the email links `<scheme>://magic-link?email=&token=`, which
-    /// opens the app directly. Set empty to fall back to the HTTPS form.
+    /// Custom URL scheme for opening the desktop app from the HTTPS magic-link
+    /// landing page. Email clients receive HTTPS links because many of them block
+    /// custom schemes in message CTAs.
     pub app_link_scheme: String,
     pub magic_link_ttl: Duration,
     pub magic_link_rate_limit: i64,

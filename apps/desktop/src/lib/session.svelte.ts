@@ -387,24 +387,25 @@ class SessionStore {
      * emailed token, persist the device token to the keychain, then connect.
      * Mirrors the manual verify path in QrLoginScreen but runs unattended.
      */
-    async linkViaMagicToken(email: string, token: string): Promise<boolean> {
+    async linkViaMagicToken(email: string, token: string, baseUrl?: string): Promise<boolean> {
         if (this.cloudLinking) return false;
         this.cloudLinking = true;
         this.error = "";
-        const baseUrl =
+        const targetBaseUrl =
+            baseUrl ||
             (typeof localStorage !== "undefined" && localStorage.getItem(CLOUD_BASE_URL_STORAGE_KEY)) ||
             DEFAULT_CLOUD_BASE_URL;
         const deviceName = defaultDeviceName();
         try {
-            const res = await verifyCloudMagicLink(baseUrl, email, token, deviceName);
+            const res = await verifyCloudMagicLink(targetBaseUrl, email, token, deviceName);
             if (typeof localStorage !== "undefined") {
-                localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, baseUrl);
+                localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
                 localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
             }
             // Connect with the freshly issued (keychain-stored) device token.
             // "failed" here just means no Zalo account linked yet — the user
             // continues to the QR step — so we treat anything non-throwing as ok.
-            await this.connectCloud(baseUrl, res.deviceToken);
+            await this.connectCloud(targetBaseUrl, res.deviceToken);
             log.info("deep-link: device linked via magic token");
             return true;
         } catch (e) {

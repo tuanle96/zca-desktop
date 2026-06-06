@@ -1,16 +1,21 @@
-// Deep-link handling for the `zca://` custom scheme (ADR-0009). Magic-link
-// emails contain `zca://magic-link?email=&token=`; clicking opens the app and
-// this module funnels the token into the existing cloud verify flow.
+// Magic-link handling (ADR-0009). Modern emails open an HTTPS browser landing
+// page first; that page delivers the token to the running app through a local
+// loopback callback. The old `zca://magic-link?email=&token=` form remains
+// accepted for compatibility.
 //
 // macOS caveat: custom-scheme deep links only fire for the INSTALLED .app
 // bundle, not under `tauri dev`. The copy-paste token field remains the dev
 // path.
 
 import { getCurrent, onOpenUrl } from "@tauri-apps/plugin-deep-link";
+import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import { log } from "./log";
 import { session } from "./session.svelte";
 
 export type MagicLinkParams = { email: string; token: string };
+type LocalMagicLinkPayload = MagicLinkParams & { baseUrl?: string };
+
+const MAGIC_LINK_CALLBACK_EVENT = "zca-cloud://magic-link-callback";
 
 /** Parse a `zca://magic-link?email=&token=` URL. Returns null if it isn't one. */
 export function parseMagicLink(url: string): MagicLinkParams | null {
@@ -47,6 +52,8 @@ async function handleUrls(urls: string[]): Promise<void> {
  * with, then listens for links delivered while running. Returns an unlisten fn.
  */
 export async function initDeepLinks(): Promise<() => void> {
+    let unlistenLocal: UnlistenFn | null = null;
+    let unlistenDeepLink: (() => void) | null = null;
     try {
         const startUrls = await getCurrent();
         if (startUrls?.length) await handleUrls(startUrls);
@@ -54,9 +61,22 @@ export async function initDeepLinks(): Promise<() => void> {
         log.error(`deep-link: getCurrent failed: ${String(e)}`);
     }
     try {
-        return await onOpenUrl((urls) => void handleUrls(urls));
+        unlistenLocal = await listen<LocalMagicLinkPayload>(MAGIC_LINK_CALLBACK_EVENT, (event) => {
+            const { email, token, baseUrl } = event.payload;
+            if (!email || !token) return;
+            log.info("local-callback: magic-link received, verifying");
+            void session.linkViaMagicToken(email, token, baseUrl);
+        });
+    } catch (e) {
+        log.error(`local-callback: subscribe failed: ${String(e)}`);
+    }
+    try {
+        unlistenDeepLink = await onOpenUrl((urls) => void handleUrls(urls));
     } catch (e) {
         log.error(`deep-link: onOpenUrl subscribe failed: ${String(e)}`);
-        return () => { };
     }
+    return () => {
+        unlistenLocal?.();
+        unlistenDeepLink?.();
+    };
 }

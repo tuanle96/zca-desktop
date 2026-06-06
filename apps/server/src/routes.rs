@@ -5,7 +5,7 @@ use axum::body::Bytes;
 use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, HeaderValue, Method, StatusCode};
 use axum::response::sse::{Event, Sse};
-use axum::response::IntoResponse;
+use axum::response::{Html, IntoResponse};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 use chrono::{Duration as ChronoDuration, Utc};
@@ -71,6 +71,7 @@ pub fn app(state: Arc<AppState>) -> Router {
     let cors = build_cors_layer(&state.config.allowed_origins);
     Router::new()
         .route("/health", get(health))
+        .route("/auth/magic-link", get(magic_link_landing))
         .merge(auth_router())
         .route("/api/v1/devices", get(list_devices).post(register_device))
         .route("/api/v1/devices/:device_id", delete(revoke_device))
@@ -163,6 +164,115 @@ async fn health() -> Json<HealthResponse> {
         ok: true,
         service: "zca-cloud-server",
     })
+}
+
+#[derive(Debug, Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct MagicLinkLandingQuery {
+    email: String,
+    token: String,
+}
+
+async fn magic_link_landing(
+    State(state): State<Arc<AppState>>,
+    Query(query): Query<MagicLinkLandingQuery>,
+) -> AppResult<Html<String>> {
+    let email = normalize_email(&query.email)?;
+    let token = query.token.trim();
+    if token.is_empty() {
+        return Err(AppError::BadRequest("token is required".to_string()));
+    }
+    Ok(Html(build_magic_link_landing_html(
+        &state.config,
+        &email,
+        token,
+    )))
+}
+
+fn build_magic_link_landing_html(config: &crate::Config, email: &str, token: &str) -> String {
+    const LOCAL_CALLBACK_PORT: u16 = 37886;
+    let base_url = config.public_base_url.trim_end_matches('/');
+    let callback_url = format!(
+        "http://127.0.0.1:{LOCAL_CALLBACK_PORT}/auth/magic-link/callback?email={}&token={}&baseUrl={}",
+        urlencoding::encode(email),
+        urlencoding::encode(token),
+        urlencoding::encode(base_url),
+    );
+    let open_app_url = if config.app_link_scheme.trim().is_empty() {
+        String::new()
+    } else {
+        format!("{}://open", config.app_link_scheme.trim())
+    };
+    let callback_json = serde_json::to_string(&callback_url).unwrap_or_else(|_| "\"\"".to_string());
+    let open_app_json = serde_json::to_string(&open_app_url).unwrap_or_else(|_| "\"\"".to_string());
+    let code_text = html_escape(token);
+
+    format!(
+        "<!doctype html>\
+         <html lang=\"en\">\
+         <head>\
+         <meta charset=\"utf-8\">\
+         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
+         <title>ZCA Cloud sign-in</title>\
+         <style>\
+         body{{margin:0;background:#f6f7f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}}\
+         main{{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box;}}\
+         section{{width:100%;max-width:520px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;box-sizing:border-box;}}\
+         h1{{margin:24px 0 10px;font-size:28px;line-height:36px;letter-spacing:0;}}\
+         p{{margin:0;color:#4b5563;font-size:15px;line-height:24px;}}\
+         button,a.button{{display:inline-block;margin-top:24px;background:#111827;color:#fff;border:0;border-radius:8px;padding:13px 18px;font-size:15px;font-weight:700;text-decoration:none;cursor:pointer;}}\
+         code{{display:block;margin-top:18px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;color:#111827;font-size:15px;line-height:24px;word-break:break-all;}}\
+         .brand{{font-size:13px;font-weight:700;}}\
+         .muted{{margin-top:18px;color:#9ca3af;font-size:12px;line-height:20px;}}\
+         </style>\
+         </head>\
+         <body>\
+         <main>\
+         <section>\
+         <div class=\"brand\">ZCA Cloud</div>\
+         <h1>Opening your app</h1>\
+         <p id=\"status\">Keep this page open while ZCA Desktop receives your sign-in token.</p>\
+         <button id=\"openApp\" type=\"button\">Open ZCA Desktop</button>\
+         <p class=\"muted\">If the app does not open, copy this code into the sign-in field:</p>\
+         <code>{code_text}</code>\
+         </section>\
+         </main>\
+         <script>\
+         const callbackUrl = {callback_json};\
+         const openAppUrl = {open_app_json};\
+         const statusEl = document.getElementById('status');\
+         const openButton = document.getElementById('openApp');\
+         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\
+         async function deliver() {{\
+           for (let attempt = 0; attempt < 18; attempt += 1) {{\
+             try {{\
+               const res = await fetch(callbackUrl, {{ method: 'GET', mode: 'cors' }});\
+               if (res.ok) {{\
+                 statusEl.textContent = 'Token delivered. You can return to ZCA Desktop.';\
+                 return;\
+               }}\
+             }} catch (_) {{}}\
+             if (attempt === 0 && openAppUrl) window.location.href = openAppUrl;\
+             statusEl.textContent = attempt < 2 ? 'Opening ZCA Desktop...' : 'Waiting for ZCA Desktop to start...';\
+             await sleep(1200);\
+           }}\
+           statusEl.textContent = 'Could not reach ZCA Desktop. Open the app and paste the code below.';\
+         }}\
+         openButton.addEventListener('click', () => {{ if (openAppUrl) window.location.href = openAppUrl; void deliver(); }});\
+         void deliver();\
+         </script>\
+         </body>\
+         </html>"
+    )
+}
+
+fn html_escape(input: &str) -> String {
+    input
+        .replace('&', "&amp;")
+        .replace('<', "&lt;")
+        .replace('>', "&gt;")
+        .replace('"', "&quot;")
+        .replace('\'', "&#39;")
 }
 
 async fn request_magic_link(
@@ -1073,7 +1183,49 @@ fn realtime_payload_for_user(user_id: Uuid, event: RealtimeEvent) -> Option<Stri
 
 #[cfg(test)]
 mod tests {
+    use std::net::{IpAddr, Ipv4Addr, SocketAddr};
+    use std::time::Duration;
+
     use super::*;
+
+    fn test_config() -> crate::Config {
+        crate::Config {
+            bind_addr: SocketAddr::new(IpAddr::V4(Ipv4Addr::LOCALHOST), 37880),
+            database_url: "postgres://postgres:postgres@localhost:5432/zca_cloud".to_string(),
+            public_base_url: "https://zca.tuanle.dev".to_string(),
+            dev_return_magic_tokens: false,
+            magic_link_resend_api_key: None,
+            magic_link_webhook_url: None,
+            magic_link_smtp_addr: None,
+            magic_link_from: "ZCA Cloud <no-reply@zca.local>".to_string(),
+            magic_link_smtp_username: None,
+            magic_link_smtp_password: None,
+            magic_link_smtp_tls: true,
+            app_link_scheme: "zca".to_string(),
+            magic_link_ttl: Duration::from_secs(600),
+            magic_link_rate_limit: 5,
+            magic_link_rate_window: Duration::from_secs(900),
+            s3_bucket: "test".to_string(),
+            s3_endpoint: None,
+            s3_access_key_id: None,
+            s3_secret_access_key: None,
+            s3_allow_http: false,
+            media_mirror_max_bytes: 25 * 1024 * 1024,
+            master_key_seed: "test-master-key".to_string(),
+            allowed_origins: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn magic_link_landing_uses_local_callback_and_safe_open_link() {
+        let html = build_magic_link_landing_html(&test_config(), "user@example.com", "a <token>");
+        assert!(html.contains("127.0.0.1:37886/auth/magic-link/callback"));
+        assert!(html.contains("zca://open"));
+        assert!(!html.contains("zca://magic-link"));
+        assert!(html.contains("a &lt;token&gt;"));
+        assert!(!html.contains("a <token>"));
+        assert!(html.contains("baseUrl=https%3A%2F%2Fzca.tuanle.dev"));
+    }
 
     #[test]
     fn realtime_payload_is_user_scoped() {

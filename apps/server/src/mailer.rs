@@ -180,17 +180,9 @@ fn html_escape(input: &str) -> String {
 }
 
 fn magic_link_url(config: &Config, email: &str, token: &str) -> String {
-    // ADR-0009: prefer the desktop deep-link scheme so clicking the email opens
-    // the app and auto-verifies. Fall back to the HTTPS form when the scheme is
-    // explicitly disabled (empty).
-    if !config.app_link_scheme.is_empty() {
-        return format!(
-            "{}://magic-link?email={}&token={}",
-            config.app_link_scheme,
-            urlencoding::encode(email),
-            urlencoding::encode(token)
-        );
-    }
+    // ADR-0009: email clients receive HTTPS links. The browser landing page then
+    // delivers the token to the running app through the loopback callback and can
+    // use the custom scheme only to wake the app.
     format!(
         "{}/auth/magic-link?email={}&token={}",
         config.public_base_url.trim_end_matches('/'),
@@ -327,18 +319,17 @@ mod tests {
 
     #[test]
     fn magic_link_url_encodes_email_and_token() {
-        // Default config uses the zca:// deep-link scheme (ADR-0009).
         let config = config_without_delivery();
         let link = magic_link_url(&config, "user+test@example.com", "a token");
-        assert!(link.starts_with("zca://magic-link?"));
+        assert!(link.starts_with("http://localhost:37880/auth/magic-link?"));
         assert!(link.contains("email=user%2Btest%40example.com"));
         assert!(link.contains("token=a%20token"));
     }
 
     #[test]
-    fn magic_link_url_falls_back_to_https_when_scheme_disabled() {
+    fn magic_link_url_uses_https_even_when_scheme_enabled() {
         let mut config = config_without_delivery();
-        config.app_link_scheme = String::new();
+        config.app_link_scheme = "zca".to_string();
         let link = magic_link_url(&config, "user+test@example.com", "a token");
         assert!(link.starts_with("http://localhost:37880/auth/magic-link?"));
         assert!(link.contains("email=user%2Btest%40example.com"));
@@ -363,7 +354,7 @@ mod tests {
         let config = config_without_delivery();
         let email = build_magic_link_email(
             &config,
-            "zca://magic-link?email=user%40example.com&token=a%20token",
+            "https://zca.tuanle.dev/auth/magic-link?email=user%40example.com&token=a%20token",
             "a <token>",
         );
 
@@ -384,7 +375,7 @@ mod tests {
         let payload = build_resend_payload(
             &config,
             "user@example.com",
-            "zca://magic-link?email=user%40example.com&token=a%20token",
+            "https://zca.tuanle.dev/auth/magic-link?email=user%40example.com&token=a%20token",
             "a token",
         );
         let json = serde_json::to_value(&payload).unwrap();
@@ -392,10 +383,9 @@ mod tests {
         assert_eq!(json["from"], "ZCA Cloud <no-reply@zca.local>");
         assert_eq!(json["to"], "user@example.com");
         assert_eq!(json["subject"], MAGIC_LINK_SUBJECT);
-        assert!(json["text"]
-            .as_str()
-            .unwrap()
-            .contains("zca://magic-link?email=user%40example.com&token=a%20token"));
+        assert!(json["text"].as_str().unwrap().contains(
+            "https://zca.tuanle.dev/auth/magic-link?email=user%40example.com&token=a%20token"
+        ));
         assert!(json["html"].as_str().unwrap().contains("a%20token"));
     }
 }
