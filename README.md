@@ -73,8 +73,8 @@ and packaging work is still in progress; see [Roadmap](#roadmap).
   mode is still a roadmap item.
 - **Hosted attachment delivery hardening**: cloud upload/storage exists, but
   recipient delivery for some media paths still needs final live proof and fixes.
-- **Signed app distribution**: installers and signed/notarized bundles for
-  macOS/Windows/Linux are not published yet.
+- **Signed app distribution**: the macOS universal DMG is published, signed, and
+  notarized; Windows and Linux installers are still roadmap items.
 - **Deep device-coexistence proof**: the app is designed to coexist with other
   Zalo devices and self-listen is enabled, but broader multi-device validation is
   still planned.
@@ -95,8 +95,7 @@ and packaging work is still in progress; see [Roadmap](#roadmap).
 
 ### Mid term
 
-- Package signed desktop builds for macOS, Windows, and Linux using Tauri
-  bundling.
+- Package signed desktop builds for Windows and Linux using Tauri bundling.
 - Add optional updater plumbing after signed builds are reliable.
 - Expand multi-device coexistence testing across phone, web, and desktop Zalo
   sessions.

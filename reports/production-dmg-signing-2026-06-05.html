@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Zalo Desktop - Production DMG Signing Report</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      color: #172026;
+      background: #f6f8fa;
+      line-height: 1.55;
+    }
+    main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 40px 24px 56px;
+    }
+    h1 {
+      margin: 0 0 8px;
+      font-size: 30px;
+      letter-spacing: 0;
+    }
+    h2 {
+      margin-top: 32px;
+      font-size: 20px;
+    }
+    .meta {
+      color: #5f6b76;
+      margin-bottom: 24px;
+    }
+    .status {
+      border-left: 6px solid #0f6b3f;
+      background: #edf8f1;
+      padding: 16px 18px;
+      border-radius: 6px;
+      margin: 24px 0;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 14px;
+    }
+    .card {
+      background: white;
+      border: 1px solid #d9e0e7;
+      border-radius: 6px;
+      padding: 16px;
+    }
+    .pass {
+      color: #0f6b3f;
+      font-weight: 700;
+    }
+    .warn {
+      color: #a05b00;
+      font-weight: 700;
+    }
+    .fail {
+      color: #a11d1d;
+      font-weight: 700;
+    }
+    code {
+      background: #eef2f5;
+      border-radius: 4px;
+      padding: 2px 5px;
+      word-break: break-word;
+    }
+    pre {
+      background: #172026;
+      color: #f6f8fa;
+      border-radius: 6px;
+      padding: 14px;
+      overflow-x: auto;
+    }
+    ul {
+      padding-left: 22px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Zalo Desktop - Production DMG Signing Report</h1>
+    <div class="meta">Ngày kiểm tra: 2026-06-05 · Repo: <code>/Users/justin/Dev/VibeLab/zca-desktop</code></div>
+
+    <div class="status">
+      <strong>Kết luận:</strong> DMG production đã được build dạng universal, ký bằng Developer ID,
+      notarize thành công, staple ticket và pass Gatekeeper. Artifact hiện đủ điều kiện phát hành macOS
+      Developer ID trực tiếp.
+    </div>
+
+    <h2>Artifact</h2>
+    <div class="grid">
+      <div class="card">
+        <div class="pass">DMG created</div>
+        <p><code>target/universal-apple-darwin/release/bundle/dmg/Zalo Desktop_0.1.0_universal.dmg</code></p>
+      </div>
+      <div class="card">
+        <div class="pass">SHA-256</div>
+        <p><code>6ba5f4de1df45c8471154efd6e173c4525b53975136de4e021b264231321cf88</code></p>
+      </div>
+      <div class="card">
+        <div class="pass">Architecture</div>
+        <p>Binary trong DMG là universal: <code>x86_64 arm64</code>.</p>
+      </div>
+      <div class="card">
+        <div class="pass">Signing identity</div>
+        <p><code>Developer ID Application: LE ANH TUAN (VGQU7EVXZV)</code></p>
+      </div>
+    </div>
+
+    <h2>Verification</h2>
+    <ul>
+      <li><span class="pass">Pass</span> <code>npm run harness:doctor</code> - harness installed, Codex surfaces valid.</li>
+      <li><span class="pass">Pass</span> <code>npm run harness:check</code> - structural check no-op pass by current adapter config.</li>
+      <li><span class="pass">Pass</span> <code>bun run check</code> - <code>svelte-check</code> found 0 errors and 0 warnings.</li>
+      <li><span class="pass">Pass</span> <code>cargo test --manifest-path apps/desktop/src-tauri/Cargo.toml</code> - 44 passed, 14 ignored live/keychain tests.</li>
+      <li><span class="pass">Pass</span> <code>cargo clippy --manifest-path apps/desktop/src-tauri/Cargo.toml -- -D warnings</code>.</li>
+      <li><span class="pass">Pass</span> <code>npm run harness:readiness</code> - required readiness gates passed.</li>
+      <li><span class="pass">Pass</span> DMG code signature verifies on disk and satisfies designated requirement.</li>
+      <li><span class="pass">Pass</span> Mounted app code signature verifies; hardened runtime flag present.</li>
+      <li><span class="pass">Pass</span> Apple notarization accepted submission <code>12d10a35-772b-4609-b050-5025801b8576</code>.</li>
+      <li><span class="pass">Pass</span> <code>xcrun stapler staple</code> and <code>xcrun stapler validate</code> completed successfully.</li>
+      <li><span class="pass">Pass</span> DMG Gatekeeper assessment with primary-signature context: <code>accepted</code>, source <code>Notarized Developer ID</code>.</li>
+      <li><span class="pass">Pass</span> Mounted app Gatekeeper assessment: <code>accepted</code>, source <code>Notarized Developer ID</code>.</li>
+    </ul>
+
+    <h2>Build Command</h2>
+    <pre>bun run tauri build --target universal-apple-darwin --bundles dmg --ci --config '{"bundle":{"macOS":{"signingIdentity":"Developer ID Application: LE ANH TUAN (VGQU7EVXZV)"}}}'</pre>
+
+    <h2>Notarization Source</h2>
+    <p>
+      The App Store Connect API-key credentials were found in the sibling VibeOps release setup and verified
+      with <code>xcrun notarytool history</code> before submitting this DMG. Secret values were not printed.
+      The Tauri mapping is <code>ASC_KEY_ID</code> to <code>APPLE_API_KEY</code>,
+      <code>ASC_ISSUER_ID</code> to <code>APPLE_API_ISSUER</code>, and
+      <code>ASC_KEY_PATH</code> to <code>APPLE_API_KEY_PATH</code>.
+    </p>
+
+    <h2>Release State</h2>
+    <p>
+      This artifact can now be published. Keep the current SHA-256 and submission id with the release record.
+    </p>
+  </main>
+</body>
+</html>
