@@ -74,23 +74,54 @@ pub async fn deliver_magic_link(config: &Config, email: &str, token: &str) -> Ap
 
 fn build_magic_link_email(config: &Config, magic_link: &str, token: &str) -> MagicLinkEmail {
     let ttl_secs = config.magic_link_ttl.as_secs();
+    let ttl_label = if ttl_secs.is_multiple_of(60) {
+        format!("{} minutes", ttl_secs / 60)
+    } else {
+        format!("{ttl_secs} seconds")
+    };
     let text = format!(
-        "Open this link to sign in:\r\n\r\n{magic_link}\r\n\r\n\
-         If the link doesn't open the app (e.g. during development), paste this \
-         code into the app's sign-in field:\r\n\r\n{token}\r\n\r\n\
-         This link expires in {ttl_secs} seconds.\r\n",
+        "Sign in to ZCA Cloud\r\n\r\n\
+         Open this secure sign-in link:\r\n{magic_link}\r\n\r\n\
+         If the link does not open the app, paste this code into the sign-in field:\r\n\
+         {token}\r\n\r\n\
+         This link expires in {ttl_label}. If you did not request it, you can ignore this email.\r\n",
     );
 
     let link_attr = html_escape(magic_link);
-    let link_text = html_escape(magic_link);
     let code_text = html_escape(token);
+    let ttl_text = html_escape(&ttl_label);
     let html = format!(
-        "<p>Click to sign in to ZCA Cloud:</p>\
-         <p><a href=\"{link_attr}\">{link_text}</a></p>\
-         <p>If the link doesn't open the app (e.g. during development), paste this \
-         code into the app's sign-in field:</p>\
-         <p><code>{code_text}</code></p>\
-         <p>This link expires in {ttl_secs} seconds.</p>",
+        "<!doctype html>\
+         <html>\
+         <body style=\"margin:0;padding:0;background:#f6f7f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;\">\
+         <div style=\"display:none;max-height:0;overflow:hidden;color:transparent;opacity:0;\">Your secure ZCA Cloud sign-in link expires in {ttl_text}.</div>\
+         <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"background:#f6f7f9;padding:32px 16px;\">\
+         <tr><td align=\"center\">\
+         <table role=\"presentation\" width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"width:100%;max-width:560px;background:#ffffff;border:1px solid #e5e7eb;border-radius:12px;overflow:hidden;\">\
+         <tr><td style=\"padding:28px 32px 0 32px;\">\
+         <div style=\"font-size:13px;font-weight:700;letter-spacing:0;color:#111827;\">ZCA Cloud</div>\
+         <h1 style=\"margin:28px 0 10px 0;font-size:24px;line-height:32px;font-weight:700;color:#111827;\">Sign in to your account</h1>\
+         <p style=\"margin:0;color:#4b5563;font-size:15px;line-height:24px;\">Use the secure link below to continue. This link is valid for {ttl_text}.</p>\
+         </td></tr>\
+         <tr><td style=\"padding:28px 32px 8px 32px;\">\
+         <a href=\"{link_attr}\" style=\"display:inline-block;background:#111827;color:#ffffff;text-decoration:none;font-size:15px;line-height:20px;font-weight:700;padding:13px 18px;border-radius:8px;\">Sign in to ZCA Cloud</a>\
+         </td></tr>\
+         <tr><td style=\"padding:18px 32px 0 32px;\">\
+         <p style=\"margin:0 0 10px 0;color:#6b7280;font-size:13px;line-height:20px;\">If the button does not open the app, paste this code into the sign-in field:</p>\
+         <div style=\"font-family:'SFMono-Regular',Consolas,'Liberation Mono',Menlo,monospace;font-size:16px;line-height:24px;font-weight:700;color:#111827;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;word-break:break-all;\">{code_text}</div>\
+         </td></tr>\
+         <tr><td style=\"padding:18px 32px 0 32px;\">\
+         <p style=\"margin:0;color:#6b7280;font-size:12px;line-height:20px;word-break:break-all;\">Fallback link: <a href=\"{link_attr}\" style=\"color:#374151;text-decoration:underline;\">{link_attr}</a></p>\
+         </td></tr>\
+         <tr><td style=\"padding:28px 32px 32px 32px;\">\
+         <p style=\"margin:0;color:#9ca3af;font-size:12px;line-height:20px;\">If you did not request this email, no action is needed. The link will expire automatically.</p>\
+         </td></tr>\
+         </table>\
+         <p style=\"margin:16px 0 0 0;color:#9ca3af;font-size:12px;line-height:18px;\">ZCA Cloud authentication</p>\
+         </td></tr>\
+         </table>\
+         </body>\
+         </html>",
     );
 
     MagicLinkEmail { html, text }
@@ -325,6 +356,26 @@ mod tests {
             ("mailhog".to_string(), 587)
         );
         assert!(parse_smtp_addr("host:notaport").is_err());
+    }
+
+    #[test]
+    fn magic_link_email_renders_minimal_html_template() {
+        let config = config_without_delivery();
+        let email = build_magic_link_email(
+            &config,
+            "zca://magic-link?email=user%40example.com&token=a%20token",
+            "a <token>",
+        );
+
+        assert!(email.html.contains("<!doctype html>"));
+        assert!(email.html.contains("Sign in to your account"));
+        assert!(email.html.contains("Sign in to ZCA Cloud"));
+        assert!(email.html.contains("valid for 10 minutes"));
+        assert!(email.html.contains("a &lt;token&gt;"));
+        assert!(!email.html.contains("a <token>"));
+        assert!(email.text.contains("Sign in to ZCA Cloud"));
+        assert!(email.text.contains("This link expires in 10 minutes."));
+        assert!(email.text.contains("a <token>"));
     }
 
     #[test]
