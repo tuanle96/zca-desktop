@@ -6304,7 +6304,7 @@ dependencies = [
 
 [[package]]
 name = "zca-desktop"
-version = "0.1.3"
+version = "0.1.4"
 dependencies = [
  "aes-gcm",
  "futures-util",

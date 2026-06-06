@@ -1,6 +1,6 @@
 [package]
 name = "zca-desktop"
-version = "0.1.3"
+version = "0.1.4"
 description = "Cross-platform unofficial Zalo desktop client (Tauri v2 + Rust). Personal, noncommercial use only."
 authors = ["Lê Anh Tuấn (tuanle96)"]
 edition = "2021"

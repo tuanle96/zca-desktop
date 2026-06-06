@@ -8,6 +8,14 @@ All notable zca-desktop release changes are documented here.
 
 - No pending schema compatibility changes.
 
+## v0.1.4 - 2026-06-06
+
+Startup crash hotfix.
+
+### Fixed
+
+- Fixed an immediate macOS startup panic caused by starting the magic-link callback listener with `tokio::spawn` before a Tokio reactor exists in Tauri setup.
+
 ## v0.1.3 - 2026-06-06
 
 Cloud magic-link callback and production endpoint hardening release.

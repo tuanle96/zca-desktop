@@ -25,7 +25,7 @@ pub struct MagicLinkCallbackPayload {
 }
 
 pub fn start_magic_link_callback_server(app: AppHandle) {
-    tokio::spawn(async move {
+    tauri::async_runtime::spawn(async move {
         let addr = format!("127.0.0.1:{MAGIC_LINK_CALLBACK_PORT}");
         let listener = match TcpListener::bind(&addr).await {
             Ok(listener) => listener,
@@ -45,7 +45,7 @@ pub fn start_magic_link_callback_server(app: AppHandle) {
                 }
             };
             let app = app.clone();
-            tokio::spawn(async move {
+            tauri::async_runtime::spawn(async move {
                 if let Err(error) = handle_connection(stream, app).await {
                     tracing::debug!(%error, "magic-link callback request failed");
                 }
