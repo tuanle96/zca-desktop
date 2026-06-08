@@ -14,8 +14,10 @@ import { session } from "./session.svelte";
 
 export type MagicLinkParams = { email: string; token: string };
 type LocalMagicLinkPayload = MagicLinkParams & { baseUrl?: string };
+type LocalOAuthPayload = { code: string; baseUrl?: string };
 
 const MAGIC_LINK_CALLBACK_EVENT = "zca-cloud://magic-link-callback";
+const OAUTH_CALLBACK_EVENT = "zca-cloud://oauth-callback";
 
 /** Parse a `zca://magic-link?email=&token=` URL. Returns null if it isn't one. */
 export function parseMagicLink(url: string): MagicLinkParams | null {
@@ -37,8 +39,30 @@ export function parseMagicLink(url: string): MagicLinkParams | null {
     return { email, token };
 }
 
+function parseOAuthLink(url: string): LocalOAuthPayload | null {
+    let parsed: URL;
+    try {
+        parsed = new URL(url);
+    } catch {
+        return null;
+    }
+    const isCustom = parsed.protocol === "zca:" && parsed.hostname === "oauth";
+    const isHttp = parsed.pathname.replace(/\/+$/, "").endsWith("/auth/oauth/callback");
+    if (!isCustom && !isHttp) return null;
+    const code = parsed.searchParams.get("code")?.trim();
+    const baseUrl = parsed.searchParams.get("baseUrl")?.trim();
+    if (!code) return null;
+    return { code, baseUrl: baseUrl || undefined };
+}
+
 async function handleUrls(urls: string[]): Promise<void> {
     for (const url of urls) {
+        const oauth = parseOAuthLink(url);
+        if (oauth) {
+            log.info("deep-link: oauth code received, verifying");
+            await session.linkViaOAuthCode(oauth.code, oauth.baseUrl);
+            return;
+        }
         const params = parseMagicLink(url);
         if (!params) continue;
         log.info("deep-link: magic-link received, verifying");
@@ -67,6 +91,17 @@ export async function initDeepLinks(): Promise<() => void> {
             log.info("local-callback: magic-link received, verifying");
             void session.linkViaMagicToken(email, token, baseUrl);
         });
+        const unlistenMagic = unlistenLocal;
+        const unlistenOAuth = await listen<LocalOAuthPayload>(OAUTH_CALLBACK_EVENT, (event) => {
+            const { code, baseUrl } = event.payload;
+            if (!code) return;
+            log.info("local-callback: oauth code received, verifying");
+            void session.linkViaOAuthCode(code, baseUrl);
+        });
+        unlistenLocal = () => {
+            unlistenMagic();
+            unlistenOAuth();
+        };
     } catch (e) {
         log.error(`local-callback: subscribe failed: ${String(e)}`);
     }

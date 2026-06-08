@@ -13,6 +13,10 @@ pub enum AppError {
     Unauthorized,
     #[error("forbidden")]
     Forbidden,
+    #[error("recovery key required")]
+    RecoveryKeyRequired,
+    #[error("invalid recovery key")]
+    RecoveryKeyInvalid,
     #[error("not found")]
     NotFound,
     #[error("service unavailable: {0}")]
@@ -46,6 +50,16 @@ impl IntoResponse for AppError {
                 "unauthorized".to_string(),
             ),
             AppError::Forbidden => (StatusCode::FORBIDDEN, "forbidden", "forbidden".to_string()),
+            AppError::RecoveryKeyRequired => (
+                StatusCode::FORBIDDEN,
+                "recovery_key_required",
+                "recovery_key_required".to_string(),
+            ),
+            AppError::RecoveryKeyInvalid => (
+                StatusCode::FORBIDDEN,
+                "recovery_key_invalid",
+                "recovery_key_invalid".to_string(),
+            ),
             AppError::NotFound => (StatusCode::NOT_FOUND, "not_found", "not found".to_string()),
             AppError::ServiceUnavailable(msg) => (
                 StatusCode::SERVICE_UNAVAILABLE,

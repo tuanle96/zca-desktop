@@ -4,6 +4,7 @@
 // data bucket; the UI shows the active account and a rail of all accounts.
 // No mock data — everything here reflects real IPC.
 
+import { invoke } from "@tauri-apps/api/core";
 import { listen, type UnlistenFn } from "@tauri-apps/api/event";
 import {
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
@@ -24,6 +25,7 @@ import {
     startCloudRealtime,
     uploadCloudFileBlob,
     verifyCloudMagicLink,
+    verifyCloudOAuthCode,
     type CloudAccount,
 } from "./cloud";
 import { DEFAULT_CLOUD_BASE_URL, cloudBaseUrlFromStorage, normalizeCloudBaseUrl } from "./cloudConfig";
@@ -93,6 +95,22 @@ function reactionEmoji(icon: ReactionIcon): string {
         punch: "👊",
     };
     return map[icon];
+}
+
+async function sendLocalReaction(
+    accountId: string,
+    message: ChatMessage,
+    icon: ReactionIcon,
+    kind: Conversation["kind"],
+): Promise<void> {
+    await invoke("send_reaction", {
+        accountId,
+        threadId: message.threadId,
+        msgId: message.id,
+        cliMsgId: `${message.id}_cli`,
+        kind,
+        icon,
+    });
 }
 
 /** All per-account data. The active account's slice is mirrored into the
@@ -182,6 +200,14 @@ function isCloudAuthError(value: unknown): boolean {
     return /status=?\s*40[13]\b/.test(text) || /\bunauthorized\b/i.test(text) || /\bforbidden\b/i.test(text);
 }
 
+function isCloudRecoveryKeyRequiredError(value: unknown): boolean {
+    return /\brecovery_key_required\b/i.test(typeof value === "string" ? value : String(value));
+}
+
+function isCloudRecoveryKeyInvalidError(value: unknown): boolean {
+    return /\brecovery_key_invalid\b/i.test(typeof value === "string" ? value : String(value));
+}
+
 /** Best-effort human-friendly device name for unattended (deep-link) linking. */
 function defaultDeviceName(): string {
     if (typeof navigator !== "undefined") {
@@ -240,8 +266,9 @@ class SessionStore {
     cloudMode = $state(false);
     /** True while a magic-link deep link is being verified (ADR-0009), so the
      * login gate can show progress instead of looking frozen. */
-    cloudLinking = $state(false);
-    private cloudBaseUrl: string | null = null;
+      cloudLinking = $state(false);
+      cloudIssuedRecoveryKey = $state("");
+      private cloudBaseUrl: string | null = null;
     private cloudDeviceToken: string | null = null;
     private inFlightMagicLink: string | null = null;
     private lastVerifiedMagicLink: string | null = null;
@@ -412,6 +439,7 @@ class SessionStore {
         try {
             const res = await verifyCloudMagicLink(targetBaseUrl, email, token, deviceName);
             this.lastVerifiedMagicLink = magicLinkKey;
+            this.cloudIssuedRecoveryKey = res.recoveryKey ?? "";
             if (typeof localStorage !== "undefined") {
                 localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
                 localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
@@ -423,13 +451,59 @@ class SessionStore {
             log.info("deep-link: device linked via magic token");
             return true;
         } catch (e) {
-            this.error = isCloudAuthError(e)
-                ? "Mã đăng nhập đã hết hạn hoặc không hợp lệ. Hãy gửi lại mã."
-                : String(e);
+            this.error = isCloudRecoveryKeyRequiredError(e)
+                ? "Tài khoản cloud này đã tồn tại. Dán mã từ email vào ô mã xác thực, nhập recovery key, rồi bấm Kết nối thiết bị."
+                : isCloudRecoveryKeyInvalidError(e)
+                  ? "Recovery key không đúng. Hãy kiểm tra lại recovery key hoặc gửi mã đăng nhập mới."
+                  : isCloudAuthError(e)
+                    ? "Mã đăng nhập đã hết hạn hoặc không hợp lệ. Hãy gửi lại mã."
+                    : String(e);
             log.error(`deep-link: magic-link verify failed: ${String(e)}`);
             return false;
         } finally {
             if (this.inFlightMagicLink === magicLinkKey) this.inFlightMagicLink = null;
+            this.cloudLinking = false;
+        }
+    }
+
+    async linkViaOAuthCode(code: string, baseUrl?: string): Promise<boolean> {
+        const targetBaseUrl = normalizeCloudBaseUrl(
+            baseUrl || (typeof localStorage !== "undefined" ? cloudBaseUrlFromStorage(localStorage) : DEFAULT_CLOUD_BASE_URL),
+        );
+        const oauthKey = `${targetBaseUrl}\n${code}`;
+        if (this.lastVerifiedMagicLink === oauthKey) {
+            log.info("oauth-callback: duplicate verified code ignored");
+            return true;
+        }
+        if (this.cloudLinking) {
+            if (this.inFlightMagicLink === oauthKey) {
+                log.info("oauth-callback: duplicate in-flight code ignored");
+                return true;
+            }
+            return false;
+        }
+        this.cloudLinking = true;
+        this.inFlightMagicLink = oauthKey;
+        this.error = "";
+        try {
+            const res = await verifyCloudOAuthCode(targetBaseUrl, code);
+            this.lastVerifiedMagicLink = oauthKey;
+            this.cloudIssuedRecoveryKey = res.recoveryKey ?? "";
+            if (typeof localStorage !== "undefined") {
+                localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, targetBaseUrl);
+                localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+            }
+            await this.connectCloud(targetBaseUrl, res.deviceToken);
+            log.info("oauth-callback: device linked via oauth code");
+            return true;
+        } catch (e) {
+            this.error = isCloudAuthError(e)
+                ? "Phiên đăng nhập OAuth đã hết hạn hoặc không hợp lệ. Hãy đăng nhập lại."
+                : String(e);
+            log.error(`oauth-callback: code verify failed: ${String(e)}`);
+            return false;
+        } finally {
+            if (this.inFlightMagicLink === oauthKey) this.inFlightMagicLink = null;
             this.cloudLinking = false;
         }
     }
@@ -893,21 +967,23 @@ class SessionStore {
         if (!this.profile) return false;
         const convo = this.conversations.find((c) => c.threadId === message.threadId);
         const kind = convo?.kind ?? "user";
+        const cliMsgId = `${message.id}_cli`;
         let ok = false;
         await this.run(async () => {
-            if (!this.cloudBaseUrl || !this.cloudDeviceToken) {
-                throw new Error("cloud device session not connected");
+            if (this.cloudBaseUrl && this.cloudDeviceToken) {
+                await sendCloudReaction(
+                    this.cloudBaseUrl,
+                    this.cloudDeviceToken,
+                    this.profile!.accountId,
+                    message.threadId,
+                    message.id,
+                    cliMsgId,
+                    icon,
+                    kind,
+                );
+            } else {
+                await sendLocalReaction(this.profile!.accountId, message, icon, kind);
             }
-            await sendCloudReaction(
-                this.cloudBaseUrl,
-                this.cloudDeviceToken,
-                this.profile!.accountId,
-                message.threadId,
-                message.id,
-                `${message.id}_cli`,
-                icon,
-                kind,
-            );
             const b = this.activeBucket();
             if (b) {
                 this.applyReactionToBucket(b, {

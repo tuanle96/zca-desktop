@@ -4,6 +4,7 @@
 //! dependency. Higher layers (`zalo`, `command`) map these DTOs as needed.
 
 pub mod account;
+pub mod cloud_callback;
 pub mod contact;
 pub mod credentials;
 pub mod events;
@@ -16,6 +17,7 @@ pub mod stored;
 pub mod undo;
 
 pub use account::{AccountId, AccountProfile, CredentialSummary};
+pub use cloud_callback::{MagicLinkCallbackPayload, OAuthCallbackPayload};
 pub use contact::{Contact, Group};
 pub use credentials::{Cookie, CredentialError, Credentials};
 pub use events::{IncomingMessage, ThreadKind};

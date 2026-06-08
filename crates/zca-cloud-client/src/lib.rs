@@ -145,6 +145,10 @@ impl CloudClient {
         .await
     }
 
+    pub async fn oauth_providers(&self) -> Result<Value> {
+        self.get("/api/v1/auth/oauth/providers").await
+    }
+
     pub async fn verify_magic_link(
         &self,
         email: &str,
@@ -160,6 +164,14 @@ impl CloudClient {
                 "deviceName": device_name,
                 "recoveryKey": recovery_key,
             }),
+        )
+        .await
+    }
+
+    pub async fn verify_oauth_desktop_code(&self, code: &str) -> Result<Value> {
+        self.post(
+            "/api/v1/auth/oauth/device/verify",
+            &serde_json::json!({ "code": code }),
         )
         .await
     }

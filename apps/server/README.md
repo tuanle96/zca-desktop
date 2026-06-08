@@ -59,6 +59,8 @@ at your registry and `docker compose -f docker-compose.prod.yml push`.
 | Variable | Default | Description |
 |---|---|---|
 | `ZCA_CLOUD_RESEND_API_KEY` | — | Resend API key for production login-code email delivery; preferred over SMTP/webhook when set |
+| `ZCA_CLOUD_GOOGLE_CLIENT_ID` / `ZCA_CLOUD_GOOGLE_CLIENT_SECRET` | — | Google OAuth web app credentials; callback URL: `<ZCA_CLOUD_PUBLIC_BASE_URL>/auth/oauth/google/callback` |
+| `ZCA_CLOUD_GITHUB_CLIENT_ID` / `ZCA_CLOUD_GITHUB_CLIENT_SECRET` | — | GitHub OAuth app credentials; callback URL: `<ZCA_CLOUD_PUBLIC_BASE_URL>/auth/oauth/github/callback` |
 | `ZCA_CLOUD_SMTP_ADDR` | — | SMTP fallback `host:port` for sending login codes |
 | `ZCA_CLOUD_MAGIC_LINK_FROM` | `ZCA Cloud <no-reply@zca.local>` | From address for login-code emails |
 

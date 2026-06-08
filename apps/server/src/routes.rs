@@ -1,11 +1,12 @@
 use std::convert::Infallible;
 use std::sync::Arc;
+use std::time::Duration;
 
 use axum::body::Bytes;
 use axum::extract::{Path, Query, State};
 use axum::http::{header, HeaderMap, HeaderValue, Method, StatusCode};
-use axum::response::sse::{Event, Sse};
-use axum::response::{Html, IntoResponse};
+use axum::response::sse::{Event, KeepAlive, Sse};
+use axum::response::{Html, IntoResponse, Redirect};
 use axum::routing::{delete, get, post};
 use axum::{Json, Router};
 use chrono::{Duration as ChronoDuration, Utc};
@@ -26,6 +27,10 @@ use crate::crypto;
 use crate::error::{AppError, AppResult};
 use crate::models::*;
 use crate::sessions::HostedSessionManager;
+
+#[path = "oauth.rs"]
+mod oauth;
+use oauth::{fetch_oauth_profile, oauth_redirect_uri, OAuthProfile, OAuthProvider};
 
 pub struct AppState {
     pub config: crate::Config,
@@ -72,6 +77,8 @@ pub fn app(state: Arc<AppState>) -> Router {
     Router::new()
         .route("/health", get(health))
         .route("/auth/magic-link", get(magic_link_landing))
+        .route("/auth/oauth/:provider/start", get(oauth_start))
+        .route("/auth/oauth/:provider/callback", get(oauth_callback))
         .merge(auth_router())
         .route("/api/v1/devices", get(list_devices).post(register_device))
         .route("/api/v1/devices/:device_id", delete(revoke_device))
@@ -154,8 +161,13 @@ fn auth_router() -> Router<Arc<AppState>> {
         }
     });
     Router::new()
+        .route("/api/v1/auth/oauth/providers", get(oauth_providers))
         .route("/api/v1/auth/magic-link/request", post(request_magic_link))
         .route("/api/v1/auth/magic-link/verify", post(verify_magic_link))
+        .route(
+            "/api/v1/auth/oauth/device/verify",
+            post(verify_oauth_desktop_code),
+        )
         .layer(GovernorLayer { config })
 }
 
@@ -282,6 +294,310 @@ fn html_escape(input: &str) -> String {
         .replace('\'', "&#39;")
 }
 
+#[derive(Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct OAuthStartQuery {
+    #[serde(default)]
+    device_name: Option<String>,
+}
+
+#[derive(Deserialize)]
+struct OAuthCallbackQuery {
+    code: String,
+    state: String,
+}
+
+async fn oauth_providers(State(state): State<Arc<AppState>>) -> Json<OAuthProvidersResponse> {
+    Json(OAuthProvidersResponse {
+        google: OAuthProviderStatus {
+            configured: OAuthProvider::Google.configured(&state.config),
+        },
+        github: OAuthProviderStatus {
+            configured: OAuthProvider::Github.configured(&state.config),
+        },
+    })
+}
+
+async fn oauth_start(
+    State(state): State<Arc<AppState>>,
+    Path(provider): Path<String>,
+    Query(query): Query<OAuthStartQuery>,
+) -> AppResult<Redirect> {
+    let provider = OAuthProvider::parse(&provider)?;
+    let (client_id, _) = provider.client(&state.config)?;
+    let device_name = validate_device_name(query.device_name.as_deref().unwrap_or("Máy của tôi"))?;
+    let oauth_state = crypto::random_token(32);
+    let expires_at = Utc::now() + ChronoDuration::minutes(10);
+    state
+        .db
+        .insert_oauth_login_state(
+            &crypto::token_hash(&oauth_state),
+            provider.slug(),
+            device_name,
+            expires_at,
+        )
+        .await?;
+    let url = build_oauth_authorize_url(&state.config, provider, client_id, &oauth_state);
+    Ok(Redirect::temporary(&url))
+}
+
+async fn oauth_callback(
+    State(state): State<Arc<AppState>>,
+    Path(provider): Path<String>,
+    Query(query): Query<OAuthCallbackQuery>,
+) -> AppResult<Html<String>> {
+    let provider = OAuthProvider::parse(&provider)?;
+    let device_name = state
+        .db
+        .consume_oauth_login_state(&crypto::token_hash(&query.state), provider.slug())
+        .await?;
+    let profile = fetch_oauth_profile(&state.config, provider, &query.code).await?;
+    let email = normalize_email(&profile.email)?;
+    if !profile.email_verified {
+        return Err(AppError::Forbidden);
+    }
+    let user_id = oauth_existing_user_id(&state, provider, &profile, &email).await?;
+    let desktop_code = crypto::random_token(32);
+    let desktop_code_hash = crypto::token_hash(&desktop_code);
+    state
+        .db
+        .insert_oauth_desktop_code(crate::db::NewOAuthDesktopCode {
+            code_hash: &desktop_code_hash,
+            user_id,
+            provider: provider.slug(),
+            provider_subject: &profile.subject,
+            email: &email,
+            email_verified: profile.email_verified,
+            device_name: &device_name,
+            expires_at: Utc::now() + ChronoDuration::minutes(5),
+        })
+        .await?;
+    let _ = state
+        .db
+        .insert_audit_event(
+            user_id,
+            None,
+            "oauth_login_completed",
+            None,
+            serde_json::json!({ "provider": provider.slug(), "emailDomain": email.split('@').nth(1).unwrap_or("unknown") }),
+        )
+        .await;
+    Ok(Html(build_oauth_landing_html(
+        &state.config,
+        provider,
+        &desktop_code,
+    )))
+}
+
+async fn verify_oauth_desktop_code(
+    State(state): State<Arc<AppState>>,
+    Json(req): Json<OAuthDesktopVerifyRequest>,
+) -> AppResult<Json<MagicLinkVerifyResponse>> {
+    let code = req.code.trim();
+    if code.is_empty() {
+        return Err(AppError::BadRequest("code is required".to_string()));
+    }
+    let claimed = state
+        .db
+        .consume_oauth_desktop_code(&crypto::token_hash(code))
+        .await?;
+    if !claimed.email_verified {
+        return Err(AppError::Forbidden);
+    }
+    let email = normalize_email(&claimed.email)?;
+    let (user_id, recovery_key) = oauth_device_user_id(&state, &claimed, &email).await?;
+    state
+        .db
+        .upsert_oauth_identity(
+            &claimed.provider,
+            &claimed.provider_subject,
+            user_id,
+            &email,
+            claimed.email_verified,
+        )
+        .await?;
+    let device_name = validate_device_name(&claimed.device_name)?;
+    let device_token = crypto::random_token(32);
+    let device_id = state
+        .db
+        .insert_device(user_id, device_name, &crypto::token_hash(&device_token))
+        .await?;
+    let _ = state
+        .db
+        .insert_audit_event(
+            Some(user_id),
+            Some(device_id),
+            "oauth_device_registered",
+            Some(&device_id.to_string()),
+            serde_json::json!({ "provider": claimed.provider, "deviceName": device_name }),
+        )
+        .await;
+    Ok(Json(MagicLinkVerifyResponse {
+        user_id,
+        device_id,
+        device_token,
+        recovery_key,
+    }))
+}
+
+async fn oauth_existing_user_id(
+    state: &Arc<AppState>,
+    provider: OAuthProvider,
+    profile: &OAuthProfile,
+    email: &str,
+) -> AppResult<Option<Uuid>> {
+    if let Some(user_id) = state
+        .db
+        .user_id_by_oauth_identity(provider.slug(), &profile.subject)
+        .await?
+    {
+        return Ok(Some(user_id));
+    }
+    state.db.user_id_by_email(email).await
+}
+
+async fn oauth_device_user_id(
+    state: &Arc<AppState>,
+    claimed: &crate::db::OAuthDesktopCode,
+    email: &str,
+) -> AppResult<(Uuid, Option<String>)> {
+    if let Some(user_id) = claimed.user_id {
+        return Ok((user_id, None));
+    }
+    if let Some(user_id) = state
+        .db
+        .user_id_by_oauth_identity(&claimed.provider, &claimed.provider_subject)
+        .await?
+    {
+        return Ok((user_id, None));
+    }
+    if let Some(user_id) = state.db.user_id_by_email(email).await? {
+        return Ok((user_id, None));
+    }
+    let recovery_key = format!("zca-recovery-{}", crypto::random_token(32));
+    let data_key = crypto::generate_data_key();
+    let (wrap_nonce, wrapped) = crypto::wrap_data_key(&recovery_key, &data_key)?;
+    let (server_key_nonce, server_wrapped_data_key) =
+        crypto::wrap_data_key_for_server(&state.config.master_key_seed, &data_key)?;
+    let mut wrapped_data_key = wrap_nonce;
+    wrapped_data_key.extend_from_slice(&wrapped);
+    let (user_id, created) = state
+        .db
+        .get_or_create_user(
+            email,
+            &recovery_key,
+            &wrapped_data_key,
+            &server_key_nonce,
+            &server_wrapped_data_key,
+        )
+        .await?;
+    Ok((user_id, created.then_some(recovery_key)))
+}
+
+fn build_oauth_authorize_url(
+    config: &crate::Config,
+    provider: OAuthProvider,
+    client_id: &str,
+    state: &str,
+) -> String {
+    let redirect_uri = oauth_redirect_uri(config, provider);
+    format!(
+        "{}?client_id={}&redirect_uri={}&response_type=code&scope={}&state={}",
+        provider.authorize_url(),
+        urlencoding::encode(client_id),
+        urlencoding::encode(&redirect_uri),
+        urlencoding::encode(provider.scope()),
+        urlencoding::encode(state),
+    )
+}
+
+fn build_oauth_landing_html(
+    config: &crate::Config,
+    provider: OAuthProvider,
+    desktop_code: &str,
+) -> String {
+    const LOCAL_CALLBACK_PORT: u16 = 37886;
+    let base_url = config.public_base_url.trim_end_matches('/');
+    let callback_url = format!(
+        "http://127.0.0.1:{LOCAL_CALLBACK_PORT}/auth/oauth/callback?code={}&baseUrl={}",
+        urlencoding::encode(desktop_code),
+        urlencoding::encode(base_url),
+    );
+    let open_app_url = if config.app_link_scheme.trim().is_empty() {
+        String::new()
+    } else {
+        format!("{}://open", config.app_link_scheme.trim())
+    };
+    let callback_json = serde_json::to_string(&callback_url).unwrap_or_else(|_| "\"\"".to_string());
+    let open_app_json = serde_json::to_string(&open_app_url).unwrap_or_else(|_| "\"\"".to_string());
+    let provider_label = html_escape(provider.label());
+    let code_text = html_escape(desktop_code);
+    format!(
+        "<!doctype html>\
+         <html lang=\"en\">\
+         <head>\
+         <meta charset=\"utf-8\">\
+         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
+         <title>ZCA Cloud OAuth</title>\
+         <style>\
+         body{{margin:0;background:#f6f7f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}}\
+         main{{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box;}}\
+         section{{width:100%;max-width:520px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;box-sizing:border-box;}}\
+         h1{{margin:24px 0 10px;font-size:28px;line-height:36px;letter-spacing:0;}}\
+         p{{margin:0;color:#4b5563;font-size:15px;line-height:24px;}}\
+         button{{display:inline-block;margin-top:24px;background:#111827;color:#fff;border:0;border-radius:8px;padding:13px 18px;font-size:15px;font-weight:700;cursor:pointer;}}\
+         code{{display:block;margin-top:18px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;color:#111827;font-size:15px;line-height:24px;word-break:break-all;}}\
+         .brand{{font-size:13px;font-weight:700;}}\
+         .muted{{margin-top:18px;color:#9ca3af;font-size:12px;line-height:20px;}}\
+         </style>\
+         </head>\
+         <body>\
+         <main>\
+         <section>\
+         <div class=\"brand\">ZCA Cloud</div>\
+         <h1>Opening your app</h1>\
+         <p id=\"status\">{provider_label} sign-in succeeded. Keep this page open while ZCA Desktop receives your device session.</p>\
+         <button id=\"openApp\" type=\"button\">Open ZCA Desktop</button>\
+         <p class=\"muted\">If the app does not open, copy this code into the sign-in field:</p>\
+         <code>{code_text}</code>\
+         </section>\
+         </main>\
+         <script>\
+         const callbackUrl = {callback_json};\
+         const openAppUrl = {open_app_json};\
+         const statusEl = document.getElementById('status');\
+         const openButton = document.getElementById('openApp');\
+         const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));\
+         let delivered = false;\
+         let delivering = false;\
+         async function deliver() {{\
+           if (delivered || delivering) return;\
+           delivering = true;\
+           for (let attempt = 0; attempt < 18; attempt += 1) {{\
+             try {{\
+               const res = await fetch(callbackUrl, {{ method: 'GET', mode: 'cors' }});\
+               if (res.ok) {{\
+                 delivered = true;\
+                 statusEl.textContent = 'Device session delivered. You can return to ZCA Desktop.';\
+                 delivering = false;\
+                 return;\
+               }}\
+             }} catch (_) {{}}\
+             if (attempt === 0 && openAppUrl) window.location.href = openAppUrl;\
+             statusEl.textContent = attempt < 2 ? 'Opening ZCA Desktop...' : 'Waiting for ZCA Desktop to start...';\
+             await sleep(1200);\
+           }}\
+           statusEl.textContent = 'Could not reach ZCA Desktop. Open the app and paste the code below.';\
+           delivering = false;\
+         }}\
+         openButton.addEventListener('click', () => {{ if (openAppUrl) window.location.href = openAppUrl; void deliver(); }});\
+         void deliver();\
+         </script>\
+         </body>\
+         </html>"
+    )
+}
+
 async fn request_magic_link(
     State(state): State<Arc<AppState>>,
     Json(req): Json<MagicLinkRequest>,
@@ -349,12 +665,7 @@ async fn verify_magic_link(
     let email = normalize_email(&req.email)?;
     let device_name = validate_device_name(&req.device_name)?;
     let token_hash = crypto::token_hash(&req.token);
-    // Atomically claim the magic link up front: a token is valid for exactly one
-    // verification attempt. Claiming it here (rather than after the recovery-key
-    // checks below) prevents a still-valid link from being replayed to brute-force
-    // the recovery key on the existing-user path. `consume_magic_link` performs an
-    // atomic conditional UPDATE, so concurrent verifies can't both succeed.
-    if let Err(err) = state.db.consume_magic_link(&email, &token_hash).await {
+    if !state.db.magic_link_is_valid(&email, &token_hash).await? {
         let _ = state
             .db
             .insert_audit_event(
@@ -367,55 +678,63 @@ async fn verify_magic_link(
                 }),
             )
             .await;
-        return Err(err);
+        return Err(AppError::Unauthorized);
     }
 
-    let recovery_key = format!("zca-recovery-{}", crypto::random_token(32));
-    let data_key = crypto::generate_data_key();
-    let (wrap_nonce, wrapped) = crypto::wrap_data_key(&recovery_key, &data_key)?;
-    let (server_key_nonce, server_wrapped_data_key) =
-        crypto::wrap_data_key_for_server(&state.config.master_key_seed, &data_key)?;
-    let mut wrapped_data_key = wrap_nonce;
-    wrapped_data_key.extend_from_slice(&wrapped);
-
-    let (user_id, created) = state
-        .db
-        .get_or_create_user(
-            &email,
-            &recovery_key,
-            &wrapped_data_key,
-            &server_key_nonce,
-            &server_wrapped_data_key,
-        )
-        .await?;
-    if !created {
-        let Some(provided_recovery_key) = req.recovery_key.as_deref() else {
-            let _ = state
+    let (user_id, created, recovery_key, consumed) =
+        if let Some(user_id) = state.db.user_id_by_email(&email).await? {
+            let Some(provided_recovery_key) = req.recovery_key.as_deref() else {
+                let _ = state
+                    .db
+                    .insert_audit_event(
+                        Some(user_id),
+                        None,
+                        "device_recovery_key_required",
+                        None,
+                        serde_json::json!({ "deviceName": device_name }),
+                    )
+                    .await;
+                return Err(AppError::RecoveryKeyRequired);
+            };
+            let secrets = state.db.user_secrets(user_id).await?;
+            if !crypto::verify_recovery_key(&secrets.recovery_key_hash, provided_recovery_key) {
+                let _ = state.db.consume_magic_link(&email, &token_hash).await;
+                let _ = state
+                    .db
+                    .insert_audit_event(
+                        Some(user_id),
+                        None,
+                        "device_recovery_key_failed",
+                        None,
+                        serde_json::json!({ "deviceName": device_name }),
+                    )
+                    .await;
+                return Err(AppError::RecoveryKeyInvalid);
+            }
+            (user_id, false, String::new(), false)
+        } else {
+            let recovery_key = format!("zca-recovery-{}", crypto::random_token(32));
+            let data_key = crypto::generate_data_key();
+            let (wrap_nonce, wrapped) = crypto::wrap_data_key(&recovery_key, &data_key)?;
+            let (server_key_nonce, server_wrapped_data_key) =
+                crypto::wrap_data_key_for_server(&state.config.master_key_seed, &data_key)?;
+            let mut wrapped_data_key = wrap_nonce;
+            wrapped_data_key.extend_from_slice(&wrapped);
+            state.db.consume_magic_link(&email, &token_hash).await?;
+            let (user_id, created) = state
                 .db
-                .insert_audit_event(
-                    Some(user_id),
-                    None,
-                    "device_recovery_key_required",
-                    None,
-                    serde_json::json!({ "deviceName": device_name }),
+                .get_or_create_user(
+                    &email,
+                    &recovery_key,
+                    &wrapped_data_key,
+                    &server_key_nonce,
+                    &server_wrapped_data_key,
                 )
-                .await;
-            return Err(AppError::Forbidden);
+                .await?;
+            (user_id, created, recovery_key, true)
         };
-        let secrets = state.db.user_secrets(user_id).await?;
-        if !crypto::verify_recovery_key(&secrets.recovery_key_hash, provided_recovery_key) {
-            let _ = state
-                .db
-                .insert_audit_event(
-                    Some(user_id),
-                    None,
-                    "device_recovery_key_failed",
-                    None,
-                    serde_json::json!({ "deviceName": device_name }),
-                )
-                .await;
-            return Err(AppError::Forbidden);
-        }
+    if !created && !consumed {
+        state.db.consume_magic_link(&email, &token_hash).await?;
     }
     let device_token = crypto::random_token(32);
     let device_id = state
@@ -1174,14 +1493,23 @@ async fn realtime(
     Auth(auth): Auth,
 ) -> Sse<impl tokio_stream::Stream<Item = Result<Event, Infallible>>> {
     let rx = state.events.subscribe();
-    let stream = BroadcastStream::new(rx).filter_map(move |item| match item {
-        Ok(event) => realtime_payload_for_user(auth.user_id, event)
-            .map(|data| Ok(Event::default().event("message").data(data))),
-        Err(tokio_stream::wrappers::errors::BroadcastStreamRecvError::Lagged(_)) => {
-            Some(Ok(Event::default().event("lagged").data("{}")))
+    let ready = tokio_stream::once(Ok(Event::default()
+        .event("connected")
+        .data(r#"{"type":"connected"}"#)));
+    let stream = ready.chain(BroadcastStream::new(rx).filter_map(move |item| {
+        match item {
+            Ok(event) => realtime_payload_for_user(auth.user_id, event)
+                .map(|data| Ok(Event::default().event("message").data(data))),
+            Err(tokio_stream::wrappers::errors::BroadcastStreamRecvError::Lagged(_)) => {
+                Some(Ok(Event::default().event("lagged").data("{}")))
+            }
         }
-    });
-    Sse::new(stream)
+    }));
+    Sse::new(stream).keep_alive(
+        KeepAlive::new()
+            .interval(Duration::from_secs(5))
+            .text("keepalive"),
+    )
 }
 
 fn realtime_payload_for_user(user_id: Uuid, event: RealtimeEvent) -> Option<String> {
@@ -1209,6 +1537,10 @@ mod tests {
             magic_link_smtp_password: None,
             magic_link_smtp_tls: true,
             app_link_scheme: "zca".to_string(),
+            oauth_google_client_id: Some("google-client".to_string()),
+            oauth_google_client_secret: Some("google-secret".to_string()),
+            oauth_github_client_id: Some("github-client".to_string()),
+            oauth_github_client_secret: Some("github-secret".to_string()),
             magic_link_ttl: Duration::from_secs(600),
             magic_link_rate_limit: 5,
             magic_link_rate_window: Duration::from_secs(900),
@@ -1232,6 +1564,52 @@ mod tests {
         assert!(html.contains("a &lt;token&gt;"));
         assert!(!html.contains("a <token>"));
         assert!(html.contains("baseUrl=https%3A%2F%2Fzca.tuanle.dev"));
+    }
+
+    #[test]
+    fn oauth_authorize_url_uses_provider_callback_and_scope() {
+        let config = test_config();
+        let google = build_oauth_authorize_url(
+            &config,
+            OAuthProvider::Google,
+            "google-client",
+            "state value",
+        );
+        assert!(google.starts_with("https://accounts.google.com/o/oauth2/v2/auth?"));
+        assert!(google.contains("client_id=google-client"));
+        assert!(google.contains(
+            "redirect_uri=https%3A%2F%2Fzca.tuanle.dev%2Fauth%2Foauth%2Fgoogle%2Fcallback"
+        ));
+        assert!(google.contains("scope=openid%20email%20profile"));
+        assert!(google.contains("state=state%20value"));
+
+        let github =
+            build_oauth_authorize_url(&config, OAuthProvider::Github, "github-client", "state");
+        assert!(github.starts_with("https://github.com/login/oauth/authorize?"));
+        assert!(github.contains("scope=user%3Aemail"));
+    }
+
+    #[test]
+    fn oauth_landing_uses_local_callback_and_escapes_code() {
+        let html = build_oauth_landing_html(&test_config(), OAuthProvider::Google, "code <x>");
+        assert!(html.contains("127.0.0.1:37886/auth/oauth/callback"));
+        assert!(html.contains("zca://open"));
+        assert!(html.contains("code &lt;x&gt;"));
+        assert!(!html.contains("code <x>"));
+        assert!(html.contains("baseUrl=https%3A%2F%2Fzca.tuanle.dev"));
+    }
+
+    #[test]
+    fn oauth_provider_configured_requires_client_id_and_secret() {
+        let mut config = test_config();
+        assert!(OAuthProvider::Google.configured(&config));
+        assert!(OAuthProvider::Github.configured(&config));
+
+        config.oauth_google_client_secret = None;
+        assert!(!OAuthProvider::Google.configured(&config));
+
+        config.oauth_github_client_id = Some(" ".to_string());
+        assert!(!OAuthProvider::Github.configured(&config));
     }
 
     #[test]

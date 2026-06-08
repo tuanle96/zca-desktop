@@ -15,6 +15,8 @@ import type {
     DeviceView,
     AccountView,
     ContactView,
+    OAuthProviderStatus,
+    OAuthProvidersResponse,
 } from "@zca/types";
 
 export const CLOUD_EVENT = "zca-cloud://event";
@@ -25,6 +27,8 @@ export type CloudVerifyResponse = MagicLinkVerifyResponse;
 export type CloudDevice = DeviceView;
 export type CloudAccount = AccountView;
 export type CloudContact = ContactView;
+export type CloudOAuthProviderStatus = OAuthProviderStatus;
+export type CloudOAuthProviders = OAuthProvidersResponse;
 
 /// Desktop/mobile-only view of the locally-stored device session (not a wire type).
 export type CloudDeviceSession = {
@@ -44,6 +48,10 @@ export function requestCloudMagicLink(baseUrl: string, email: string) {
     return invoke<CloudMagicLinkResponse>("cloud_request_magic_link", { baseUrl, email });
 }
 
+export function getCloudOAuthProviders(baseUrl: string) {
+    return invoke<CloudOAuthProviders>("cloud_oauth_providers", { baseUrl });
+}
+
 export function verifyCloudMagicLink(
     baseUrl: string,
     email: string,
@@ -57,6 +65,13 @@ export function verifyCloudMagicLink(
         token,
         deviceName,
         recoveryKey,
+    });
+}
+
+export function verifyCloudOAuthCode(baseUrl: string, code: string) {
+    return invoke<CloudVerifyResponse>("cloud_verify_oauth_code", {
+        baseUrl,
+        code,
     });
 }
 

@@ -6,7 +6,32 @@ All notable zca-desktop release changes are documented here.
 
 ### Schema Compatibility
 
-- No pending schema compatibility changes.
+- Adds OAuth login state, OAuth identity, and one-time OAuth desktop-code tables through `202606060001_oauth_device_login`.
+
+### Overview
+
+- Browser OAuth cloud login and production readiness work.
+
+### Added
+
+- Added backend-owned Google/GitHub OAuth device login for cloud sessions.
+- Added a browser-to-desktop OAuth handoff that exchanges a one-time code into a ZCA device token.
+- Added a public OAuth provider-status preflight endpoint so the desktop can detect whether Google/GitHub OAuth is configured before opening the browser.
+- Added desktop Google/GitHub cloud sign-in controls with manual OAuth code fallback.
+
+### Changed
+
+- Moved email magic-link sign-in into a fallback section while keeping existing recovery-key behavior.
+- Updated deployment docs with OAuth callback URLs, provider env vars, and production smoke commands.
+- Added an initial SSE `connected` event and keepalive heartbeat for cloud realtime so Cloudflare does not 524 idle streams before the first message.
+
+### Verified
+
+- Interactive desktop browser-login roundtrip passed for both Google and GitHub on 2026-06-08 against `https://zca.tuanle.dev` (device linked, one-time code consumed, device token issued, realtime connected), confirmed across the desktop log, server audit events, and database state.
+
+### Known Gaps
+
+- Harness advisor source review passes, but readiness remains blocked by the current Codex runtime not writing the required SubagentStop runtime proof.
 
 ## v0.1.6 - 2026-06-06
 

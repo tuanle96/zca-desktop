@@ -4,24 +4,34 @@
 //! token to this loopback listener, so Gmail only has to render a normal HTTPS
 //! CTA while the installed app still receives the token without copy/paste.
 
-use serde::Serialize;
 use tauri::{AppHandle, Emitter};
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::{TcpListener, TcpStream};
 use tokio::time::{timeout, Duration};
 
+use crate::types::{MagicLinkCallbackPayload, OAuthCallbackPayload};
+
 pub const MAGIC_LINK_CALLBACK_EVENT: &str = "zca-cloud://magic-link-callback";
+pub const OAUTH_CALLBACK_EVENT: &str = "zca-cloud://oauth-callback";
 pub const MAGIC_LINK_CALLBACK_PORT: u16 = 37886;
 
-const CALLBACK_PATH: &str = "/auth/magic-link/callback";
+const MAGIC_LINK_CALLBACK_PATH: &str = "/auth/magic-link/callback";
+const OAUTH_CALLBACK_PATH: &str = "/auth/oauth/callback";
 const MAX_REQUEST_BYTES: usize = 8192;
 
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
-#[serde(rename_all = "camelCase")]
-pub struct MagicLinkCallbackPayload {
-    pub email: String,
-    pub token: String,
-    pub base_url: String,
+#[derive(Debug, Clone, PartialEq, Eq)]
+enum CallbackPayload {
+    MagicLink(MagicLinkCallbackPayload),
+    OAuth(OAuthCallbackPayload),
+}
+
+impl CallbackPayload {
+    fn base_url(&self) -> &str {
+        match self {
+            Self::MagicLink(payload) => &payload.base_url,
+            Self::OAuth(payload) => &payload.base_url,
+        }
+    }
 }
 
 pub fn start_magic_link_callback_server(app: AppHandle) {
@@ -67,7 +77,7 @@ async fn handle_connection(mut stream: TcpStream, app: AppHandle) -> Result<(), 
         let allowed = request
             .payload
             .as_ref()
-            .map(|payload| origin_allowed(request.origin.as_deref(), &payload.base_url))
+            .map(|payload| origin_allowed(request.origin.as_deref(), payload.base_url()))
             .unwrap_or(false);
         let response = if allowed {
             http_response(204, "application/json", "", request.origin.as_deref())
@@ -99,7 +109,7 @@ async fn handle_connection(mut stream: TcpStream, app: AppHandle) -> Result<(), 
         return Ok(());
     };
 
-    if !origin_allowed(request.origin.as_deref(), &payload.base_url) {
+    if !origin_allowed(request.origin.as_deref(), payload.base_url()) {
         let response = http_response(403, "application/json", "{\"ok\":false}", None);
         stream
             .write_all(response.as_bytes())
@@ -108,10 +118,19 @@ async fn handle_connection(mut stream: TcpStream, app: AppHandle) -> Result<(), 
         return Ok(());
     }
 
-    let email_domain = payload.email.split('@').nth(1).unwrap_or("unknown");
-    app.emit(MAGIC_LINK_CALLBACK_EVENT, &payload)
-        .map_err(|e| e.to_string())?;
-    tracing::info!(email_domain, "magic-link callback delivered to app");
+    match payload {
+        CallbackPayload::MagicLink(payload) => {
+            let email_domain = payload.email.split('@').nth(1).unwrap_or("unknown");
+            app.emit(MAGIC_LINK_CALLBACK_EVENT, &payload)
+                .map_err(|e| e.to_string())?;
+            tracing::info!(email_domain, "magic-link callback delivered to app");
+        }
+        CallbackPayload::OAuth(payload) => {
+            app.emit(OAUTH_CALLBACK_EVENT, &payload)
+                .map_err(|e| e.to_string())?;
+            tracing::info!("oauth callback delivered to app");
+        }
+    }
 
     let response = http_response(
         200,
@@ -130,7 +149,7 @@ async fn handle_connection(mut stream: TcpStream, app: AppHandle) -> Result<(), 
 struct ParsedRequest {
     method: String,
     origin: Option<String>,
-    payload: Option<MagicLinkCallbackPayload>,
+    payload: Option<CallbackPayload>,
 }
 
 fn parse_request(raw: &str) -> Option<ParsedRequest> {
@@ -155,22 +174,33 @@ fn parse_request(raw: &str) -> Option<ParsedRequest> {
     })
 }
 
-fn parse_callback_path(path: &str) -> Option<MagicLinkCallbackPayload> {
+fn parse_callback_path(path: &str) -> Option<CallbackPayload> {
     let (route, query) = path.split_once('?')?;
-    if route != CALLBACK_PATH {
-        return None;
+    if route == MAGIC_LINK_CALLBACK_PATH {
+        let email = query_param(query, "email")?.trim().to_string();
+        let token = query_param(query, "token")?.trim().to_string();
+        let base_url = normalize_base_url(&query_param(query, "baseUrl")?)?;
+        if email.is_empty() || token.is_empty() {
+            return None;
+        }
+        return Some(CallbackPayload::MagicLink(MagicLinkCallbackPayload {
+            email,
+            token,
+            base_url,
+        }));
     }
-    let email = query_param(query, "email")?.trim().to_string();
-    let token = query_param(query, "token")?.trim().to_string();
-    let base_url = normalize_base_url(&query_param(query, "baseUrl")?)?;
-    if email.is_empty() || token.is_empty() {
-        return None;
+    if route == OAUTH_CALLBACK_PATH {
+        let code = query_param(query, "code")?.trim().to_string();
+        let base_url = normalize_base_url(&query_param(query, "baseUrl")?)?;
+        if code.is_empty() {
+            return None;
+        }
+        return Some(CallbackPayload::OAuth(OAuthCallbackPayload {
+            code,
+            base_url,
+        }));
     }
-    Some(MagicLinkCallbackPayload {
-        email,
-        token,
-        base_url,
-    })
+    None
 }
 
 fn query_param(query: &str, name: &str) -> Option<String> {
@@ -246,9 +276,27 @@ mod tests {
 
         assert_eq!(request.method, "GET");
         assert_eq!(request.origin.as_deref(), Some("https://zca.tuanle.dev"));
-        let payload = request.payload.expect("payload parses");
+        let CallbackPayload::MagicLink(payload) = request.payload.expect("payload parses") else {
+            panic!("expected magic-link payload");
+        };
         assert_eq!(payload.email, "user@example.com");
         assert_eq!(payload.token, "a token");
+        assert_eq!(payload.base_url, "https://zca.tuanle.dev");
+        assert!(origin_allowed(request.origin.as_deref(), &payload.base_url));
+    }
+
+    #[test]
+    fn parses_valid_oauth_callback_request() {
+        let request = parse_request(
+            "GET /auth/oauth/callback?code=desktop%20code&baseUrl=https%3A%2F%2Fzca.tuanle.dev HTTP/1.1\r\n\
+             Origin: https://zca.tuanle.dev\r\n\r\n",
+        )
+        .expect("request parses");
+
+        let CallbackPayload::OAuth(payload) = request.payload.expect("payload parses") else {
+            panic!("expected oauth payload");
+        };
+        assert_eq!(payload.code, "desktop code");
         assert_eq!(payload.base_url, "https://zca.tuanle.dev");
         assert!(origin_allowed(request.origin.as_deref(), &payload.base_url));
     }
@@ -273,5 +321,9 @@ mod tests {
             "/auth/magic-link/callback?email=user%40example.com&token=t&baseUrl=file%3A%2F%2Ftmp%2Fx"
         )
         .is_none());
+        assert!(
+            parse_callback_path("/auth/oauth/callback?code=t&baseUrl=file%3A%2F%2Ftmp%2Fx")
+                .is_none()
+        );
     }
 }

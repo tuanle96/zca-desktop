@@ -74,6 +74,10 @@ services:
       # NOTE: on macOS, custom-scheme deep links only fire for the INSTALLED .app,
       # not under `tauri dev` — use the code printed in the email during dev.
       ZCA_CLOUD_APP_LINK_SCHEME: zca
+      ZCA_CLOUD_GOOGLE_CLIENT_ID: ${ZCA_CLOUD_GOOGLE_CLIENT_ID:-}
+      ZCA_CLOUD_GOOGLE_CLIENT_SECRET: ${ZCA_CLOUD_GOOGLE_CLIENT_SECRET:-}
+      ZCA_CLOUD_GITHUB_CLIENT_ID: ${ZCA_CLOUD_GITHUB_CLIENT_ID:-}
+      ZCA_CLOUD_GITHUB_CLIENT_SECRET: ${ZCA_CLOUD_GITHUB_CLIENT_SECRET:-}
       ZCA_CLOUD_MASTER_KEY: dev-insecure-local-only-change-before-any-real-deploy
       ZCA_CLOUD_OBJECT_STORE: s3
       ZCA_CLOUD_S3_ENDPOINT: http://minio:9000

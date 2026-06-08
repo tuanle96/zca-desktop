@@ -18,6 +18,10 @@ pub struct Config {
     /// landing page. Email clients receive HTTPS links because many of them block
     /// custom schemes in message CTAs.
     pub app_link_scheme: String,
+    pub oauth_google_client_id: Option<String>,
+    pub oauth_google_client_secret: Option<String>,
+    pub oauth_github_client_id: Option<String>,
+    pub oauth_github_client_secret: Option<String>,
     pub magic_link_ttl: Duration,
     pub magic_link_rate_limit: i64,
     pub magic_link_rate_window: Duration,
@@ -82,6 +86,22 @@ impl Config {
         let app_link_scheme = std::env::var("ZCA_CLOUD_APP_LINK_SCHEME")
             .map(|v| v.trim().trim_end_matches("://").to_string())
             .unwrap_or_else(|_| "zca".to_string());
+        let oauth_google_client_id = std::env::var("ZCA_CLOUD_GOOGLE_CLIENT_ID")
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty());
+        let oauth_google_client_secret = std::env::var("ZCA_CLOUD_GOOGLE_CLIENT_SECRET")
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty());
+        let oauth_github_client_id = std::env::var("ZCA_CLOUD_GITHUB_CLIENT_ID")
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty());
+        let oauth_github_client_secret = std::env::var("ZCA_CLOUD_GITHUB_CLIENT_SECRET")
+            .ok()
+            .map(|v| v.trim().to_string())
+            .filter(|v| !v.is_empty());
         let magic_link_ttl = std::env::var("ZCA_CLOUD_MAGIC_LINK_TTL_SECS")
             .ok()
             .and_then(|v| v.parse::<u64>().ok())
@@ -175,6 +195,10 @@ impl Config {
             magic_link_smtp_password,
             magic_link_smtp_tls,
             app_link_scheme,
+            oauth_google_client_id,
+            oauth_google_client_secret,
+            oauth_github_client_id,
+            oauth_github_client_secret,
             magic_link_ttl,
             magic_link_rate_limit,
             magic_link_rate_window,

@@ -21,12 +21,15 @@
   import { Input } from "$lib/components/ui/input/index.js";
   import {
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
+    getCloudOAuthProviders,
     listCloudAccounts,
     requestCloudMagicLink,
     startCloudAccountQr,
     getCloudQrStatus,
     verifyCloudMagicLink,
+    verifyCloudOAuthCode,
     type CloudAccount,
+    type CloudOAuthProviders,
   } from "$lib/cloud";
   import { DEFAULT_CLOUD_BASE_URL, cloudBaseUrlFromStorage, normalizeCloudBaseUrl } from "$lib/cloudConfig";
   import { CLOUD_BASE_URL_STORAGE_KEY, CLOUD_DEVICE_LINKED_STORAGE_KEY, session } from "$lib/session.svelte";
@@ -45,10 +48,13 @@
   let cloudBaseUrl = $state(DEFAULT_CLOUD_BASE_URL);
   let cloudEmail = $state("");
   let cloudToken = $state("");
+  let cloudOAuthCode = $state("");
   let cloudDeviceName = $state("Máy của tôi");
   let cloudRecoveryKey = $state("");
   let cloudIssuedRecoveryKey = $state("");
   let cloudBusy = $state(false);
+  let oauthBusyProvider = $state<"google" | "github" | "">("");
+  let oauthProviders = $state<CloudOAuthProviders | null>(null);
   let cloudStatus = $state("");
   let cloudError = $state("");
   let cloudAccounts = $state<CloudAccount[]>([]);
@@ -72,6 +78,9 @@
       cloudDeviceLinked = true;
       cloudToken = "";
       cloudError = "";
+      if (session.cloudIssuedRecoveryKey) {
+        cloudIssuedRecoveryKey = session.cloudIssuedRecoveryKey;
+      }
       cloudStatus = "Thiết bị cloud đã liên kết. Thêm tài khoản Zalo để bắt đầu.";
     }
   });
@@ -93,11 +102,45 @@
     stopCloudQrPoll();
   });
 
+  function formatCloudVerifyError(value: unknown): string {
+    const text = typeof value === "string" ? value : String(value);
+    if (/\brecovery_key_required\b/i.test(text)) {
+      return "Tài khoản cloud này đã tồn tại. Nhập recovery key trong Tùy chọn nâng cao rồi bấm Kết nối thiết bị.";
+    }
+    if (/\brecovery_key_invalid\b/i.test(text)) {
+      return "Recovery key không đúng. Hãy kiểm tra lại recovery key hoặc gửi mã đăng nhập mới.";
+    }
+    if (/status=?\s*401\b/.test(text) || /\bunauthorized\b/i.test(text)) {
+      return "Mã đăng nhập đã hết hạn hoặc không hợp lệ. Hãy gửi lại mã.";
+    }
+    return text;
+  }
+
   async function loadCloudSettings() {
     if (typeof localStorage === "undefined") return;
     cloudBaseUrl = cloudBaseUrlFromStorage(localStorage);
     cloudDeviceLinked = localStorage.getItem(CLOUD_DEVICE_LINKED_STORAGE_KEY) === "1";
     if (cloudDeviceLinked) cloudStatus = "Thiết bị này đã từng liên kết cloud.";
+    try {
+      await refreshOAuthProviders();
+    } catch {
+      oauthProviders = null;
+    }
+  }
+
+  async function refreshOAuthProviders() {
+    cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
+    const providers = await getCloudOAuthProviders(cloudBaseUrl);
+    oauthProviders = providers;
+    return providers;
+  }
+
+  function oauthProviderLabel(provider: "google" | "github") {
+    return provider === "google" ? "Google" : "GitHub";
+  }
+
+  function oauthProviderAvailable(provider: "google" | "github") {
+    return oauthProviders?.[provider]?.configured !== false;
   }
 
   async function continueLinkedCloudDevice() {
@@ -135,7 +178,7 @@
       if (res.devMagicToken) cloudToken = res.devMagicToken;
       localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
     } catch (e) {
-      cloudError = String(e);
+      cloudError = formatCloudVerifyError(e);
     } finally {
       cloudBusy = false;
     }
@@ -165,6 +208,54 @@
       await session.connectCloud(cloudBaseUrl, res.deviceToken);
     } catch (e) {
       cloudError = String(e);
+    } finally {
+      cloudBusy = false;
+    }
+  }
+
+  async function startOAuthLogin(provider: "google" | "github") {
+    oauthBusyProvider = provider;
+    cloudError = "";
+    cloudStatus = "";
+    try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
+      const providers = await refreshOAuthProviders();
+      if (!providers[provider].configured) {
+        cloudError = `${oauthProviderLabel(provider)} OAuth chưa được cấu hình trên máy chủ cloud.`;
+        return;
+      }
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+      const params = new URLSearchParams({
+        deviceName: cloudDeviceName || "Máy của tôi",
+      });
+      const { openUrl } = await import("@tauri-apps/plugin-opener");
+      await openUrl(`${cloudBaseUrl}/auth/oauth/${provider}/start?${params.toString()}`);
+      cloudStatus = "Đã mở trình duyệt để đăng nhập cloud.";
+    } catch (e) {
+      cloudError = String(e);
+    } finally {
+      oauthBusyProvider = "";
+    }
+  }
+
+  async function verifyOAuthCode() {
+    cloudBusy = true;
+    cloudError = "";
+    try {
+      cloudBaseUrl = normalizeCloudBaseUrl(cloudBaseUrl);
+      const res = await verifyCloudOAuthCode(cloudBaseUrl, cloudOAuthCode);
+      localStorage.setItem(CLOUD_BASE_URL_STORAGE_KEY, cloudBaseUrl);
+      localStorage.setItem(CLOUD_DEVICE_LINKED_STORAGE_KEY, "1");
+      cloudDeviceLinked = true;
+      cloudIssuedRecoveryKey = res.recoveryKey ?? "";
+      cloudStatus = res.recoveryKey
+        ? "Cloud đã liên kết. Lưu recovery key ở nơi an toàn."
+        : "Cloud đã liên kết thiết bị này.";
+      cloudOAuthCode = "";
+      await refreshCloudAccounts(res.deviceToken);
+      await session.connectCloud(cloudBaseUrl, res.deviceToken);
+    } catch (e) {
+      cloudError = formatCloudVerifyError(e);
     } finally {
       cloudBusy = false;
     }
@@ -470,10 +561,10 @@
       {/if}
 
       {#if step === 1}
-        <!-- Step 1: link this device via magic link -->
+        <!-- Step 1: link this device via browser OAuth, with magic-link fallback -->
         <div>
           <h2 class="font-display text-xl font-semibold tracking-tight">Kết nối thiết bị</h2>
-          <p class="text-muted-foreground mt-1 text-sm">Nhận mã đăng nhập qua email để liên kết máy này với cloud.</p>
+          <p class="text-muted-foreground mt-1 text-sm">Đăng nhập bằng trình duyệt để liên kết máy này với cloud.</p>
         </div>
 
         {#if cloudDeviceLinked && !cloudConnected}
@@ -489,34 +580,66 @@
         {/if}
 
         <div class="grid gap-1.5">
-          <label for="cloud-email" class="text-xs font-medium">Email</label>
-          <div class="grid grid-cols-[1fr_auto] gap-2">
-            <Input id="cloud-email" type="email" bind:value={cloudEmail} placeholder="ban@example.com" />
-            <Button variant="secondary" disabled={cloudBusy || !cloudEmail} onclick={requestCloudLink}>
-              {#if cloudBusy}<Loader2 class="animate-spin" />{/if}
-              Gửi mã
-            </Button>
-          </div>
-        </div>
-
-        <div class="grid gap-1.5">
-          <label for="cloud-token" class="text-xs font-medium">Mã xác thực</label>
-          <Input id="cloud-token" bind:value={cloudToken} placeholder="Dán mã từ email" />
-        </div>
-
-        <div class="grid gap-1.5">
           <label for="cloud-device" class="text-xs font-medium">Tên thiết bị</label>
           <Input id="cloud-device" bind:value={cloudDeviceName} placeholder="Máy của tôi" />
         </div>
 
-        <Button
-          class="bg-brand text-brand-foreground hover:bg-brand/90"
-          disabled={cloudBusy || !cloudToken || !cloudEmail}
-          onclick={verifyCloudLink}
-        >
-          {#if cloudBusy}<Loader2 class="animate-spin" />{:else}<ShieldCheck class="size-4" />{/if}
-          Kết nối thiết bị
-        </Button>
+        <div class="grid gap-2">
+          <Button
+            class="bg-foreground text-background hover:bg-foreground/90"
+            disabled={!!oauthBusyProvider || !oauthProviderAvailable("google")}
+            onclick={() => startOAuthLogin("google")}
+          >
+            {#if oauthBusyProvider === "google"}<Loader2 class="animate-spin" />{:else}<span class="text-base font-bold">G</span>{/if}
+            Tiếp tục với Google
+          </Button>
+          <Button
+            variant="outline"
+            disabled={!!oauthBusyProvider || !oauthProviderAvailable("github")}
+            onclick={() => startOAuthLogin("github")}
+          >
+            {#if oauthBusyProvider === "github"}<Loader2 class="animate-spin" />{:else}<span class="text-xs font-bold">GH</span>{/if}
+            Tiếp tục với GitHub
+          </Button>
+          {#if oauthProviders && !oauthProviders.google.configured && !oauthProviders.github.configured}
+            <p class="text-muted-foreground text-xs">Máy chủ cloud chưa bật Google/GitHub OAuth.</p>
+          {/if}
+        </div>
+
+        <details class="group border-border/70 bg-background/40 rounded-lg border px-3 py-2 text-sm">
+          <summary
+            class="text-muted-foreground flex cursor-pointer list-none items-center justify-between font-medium [&::-webkit-details-marker]:hidden"
+          >
+            Đăng nhập bằng email
+            <ChevronDown class="size-4 transition-transform group-open:rotate-180" />
+          </summary>
+          <div class="mt-3 grid gap-3">
+            <div class="grid gap-1.5">
+              <label for="cloud-email" class="text-xs font-medium">Email</label>
+              <div class="grid grid-cols-[1fr_auto] gap-2">
+                <Input id="cloud-email" type="email" bind:value={cloudEmail} placeholder="ban@example.com" />
+                <Button variant="secondary" disabled={cloudBusy || !cloudEmail} onclick={requestCloudLink}>
+                  {#if cloudBusy}<Loader2 class="animate-spin" />{/if}
+                  Gửi mã
+                </Button>
+              </div>
+            </div>
+
+            <div class="grid gap-1.5">
+              <label for="cloud-token" class="text-xs font-medium">Mã xác thực</label>
+              <Input id="cloud-token" bind:value={cloudToken} placeholder="Dán mã từ email" />
+            </div>
+
+            <Button
+              class="bg-brand text-brand-foreground hover:bg-brand/90"
+              disabled={cloudBusy || !cloudToken || !cloudEmail}
+              onclick={verifyCloudLink}
+            >
+              {#if cloudBusy}<Loader2 class="animate-spin" />{:else}<ShieldCheck class="size-4" />{/if}
+              Kết nối bằng email
+            </Button>
+          </div>
+        </details>
 
         <details class="group border-border/70 bg-background/40 rounded-lg border px-3 py-2 text-sm">
           <summary
@@ -528,14 +651,29 @@
           <div class="mt-3 grid gap-3">
             <div class="grid gap-1.5">
               <label for="cloud-url" class="text-xs font-medium">Địa chỉ máy chủ cloud</label>
-              <Input id="cloud-url" bind:value={cloudBaseUrl} placeholder="https://cloud.example.com" />
+              <Input
+                id="cloud-url"
+                bind:value={cloudBaseUrl}
+                oninput={() => (oauthProviders = null)}
+                placeholder="https://cloud.example.com"
+              />
             </div>
             <div class="grid gap-1.5">
               <label for="cloud-recovery" class="text-xs font-medium">Recovery key</label>
               <Input id="cloud-recovery" bind:value={cloudRecoveryKey} placeholder="Dán khi chuyển sang thiết bị mới" />
             </div>
+            <div class="grid gap-1.5">
+              <label for="cloud-oauth-code" class="text-xs font-medium">Mã OAuth dự phòng</label>
+              <div class="grid grid-cols-[1fr_auto] gap-2">
+                <Input id="cloud-oauth-code" bind:value={cloudOAuthCode} placeholder="Dán mã từ trình duyệt" />
+                <Button variant="secondary" disabled={cloudBusy || !cloudOAuthCode} onclick={verifyOAuthCode}>
+                  {#if cloudBusy}<Loader2 class="animate-spin" />{/if}
+                  Nhận
+                </Button>
+              </div>
+            </div>
             <p class="text-muted-foreground text-xs">
-              Mã xác thực được gửi tới email của bạn.
+              OAuth sẽ mở trình duyệt tại máy chủ cloud này. Nếu trình duyệt không tự trả về app, dán mã OAuth dự phòng ở đây.
             </p>
           </div>
         </details>

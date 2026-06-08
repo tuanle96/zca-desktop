@@ -537,7 +537,8 @@ async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
         &user_secrets.server_key_nonce,
         &user_secrets.server_wrapped_data_key,
     ));
-    let credentials_json = persist_step!(serde_json::to_vec(&credentials).map_err(|_| AppError::Crypto));
+    let credentials_json =
+        persist_step!(serde_json::to_vec(&credentials).map_err(|_| AppError::Crypto));
     let (nonce, ciphertext) = persist_step!(crypto::seal(&data_key, &credentials_json));
     let account = persist_step!(
         db.upsert_account_credentials(
@@ -554,11 +555,12 @@ async fn run_qr_flow(ctx: QrFlowContext) -> AppResult<()> {
 
     let (message_tx, mut message_rx) = tokio::sync::mpsc::channel::<HostedRealtimeEvent>(256);
     let listener_api = Arc::new(api);
-    let listener = persist_step!(
-        crate::zalo_host::start_message_listener(listener_api.clone(), message_tx)
-            .await
-            .map_err(|e| AppError::BadRequest(format!("listener failed: {e}")))
-    );
+    let listener = persist_step!(crate::zalo_host::start_message_listener(
+        listener_api.clone(),
+        message_tx
+    )
+    .await
+    .map_err(|e| AppError::BadRequest(format!("listener failed: {e}"))));
 
     sessions.sessions.lock().await.insert(
         account.id,
@@ -892,10 +894,14 @@ async fn ensure_public_host(url: &reqwest::Url) -> AppResult<()> {
             .collect(),
     };
     if addrs.is_empty() {
-        return Err(AppError::BadRequest("media host did not resolve".to_string()));
+        return Err(AppError::BadRequest(
+            "media host did not resolve".to_string(),
+        ));
     }
     if addrs.iter().any(is_blocked_ip) {
-        return Err(AppError::BadRequest("media host is not allowed".to_string()));
+        return Err(AppError::BadRequest(
+            "media host is not allowed".to_string(),
+        ));
     }
     Ok(())
 }

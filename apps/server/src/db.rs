@@ -26,6 +26,26 @@ pub struct UserSecrets {
     pub server_wrapped_data_key: Vec<u8>,
 }
 
+pub struct OAuthDesktopCode {
+    pub user_id: Option<Uuid>,
+    pub provider: String,
+    pub provider_subject: String,
+    pub email: String,
+    pub email_verified: bool,
+    pub device_name: String,
+}
+
+pub struct NewOAuthDesktopCode<'a> {
+    pub code_hash: &'a str,
+    pub user_id: Option<Uuid>,
+    pub provider: &'a str,
+    pub provider_subject: &'a str,
+    pub email: &'a str,
+    pub email_verified: bool,
+    pub device_name: &'a str,
+    pub expires_at: DateTime<Utc>,
+}
+
 #[derive(Debug, Clone)]
 pub struct AccountCredential {
     pub id: Uuid,
@@ -141,6 +161,137 @@ impl Db {
         .fetch_one(&self.pool)
         .await?;
         Ok(exists)
+    }
+
+    pub async fn user_id_by_email(&self, email: &str) -> AppResult<Option<Uuid>> {
+        let user_id = sqlx::query_scalar("SELECT id FROM users WHERE email = $1")
+            .bind(email)
+            .fetch_optional(&self.pool)
+            .await?;
+        Ok(user_id)
+    }
+
+    pub async fn insert_oauth_login_state(
+        &self,
+        state_hash: &str,
+        provider: &str,
+        device_name: &str,
+        expires_at: DateTime<Utc>,
+    ) -> AppResult<()> {
+        sqlx::query(
+            "INSERT INTO oauth_login_states (state_hash, provider, device_name, expires_at)
+             VALUES ($1, $2, $3, $4)",
+        )
+        .bind(state_hash)
+        .bind(provider)
+        .bind(device_name)
+        .bind(expires_at)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn consume_oauth_login_state(
+        &self,
+        state_hash: &str,
+        provider: &str,
+    ) -> AppResult<String> {
+        let row = sqlx::query(
+            "UPDATE oauth_login_states
+             SET used_at = now()
+             WHERE state_hash = $1 AND provider = $2 AND used_at IS NULL AND expires_at > now()
+             RETURNING device_name",
+        )
+        .bind(state_hash)
+        .bind(provider)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(AppError::Unauthorized)?;
+        Ok(row.get("device_name"))
+    }
+
+    pub async fn user_id_by_oauth_identity(
+        &self,
+        provider: &str,
+        provider_subject: &str,
+    ) -> AppResult<Option<Uuid>> {
+        sqlx::query_scalar(
+            "SELECT user_id FROM oauth_user_identities
+             WHERE provider = $1 AND provider_subject = $2",
+        )
+        .bind(provider)
+        .bind(provider_subject)
+        .fetch_optional(&self.pool)
+        .await
+        .map_err(AppError::from)
+    }
+
+    pub async fn upsert_oauth_identity(
+        &self,
+        provider: &str,
+        provider_subject: &str,
+        user_id: Uuid,
+        email: &str,
+        email_verified: bool,
+    ) -> AppResult<()> {
+        sqlx::query(
+            "INSERT INTO oauth_user_identities
+                (provider, provider_subject, user_id, email, email_verified)
+             VALUES ($1, $2, $3, $4, $5)
+             ON CONFLICT(provider, provider_subject) DO UPDATE SET
+                user_id = excluded.user_id,
+                email = excluded.email,
+                email_verified = excluded.email_verified,
+                updated_at = now()",
+        )
+        .bind(provider)
+        .bind(provider_subject)
+        .bind(user_id)
+        .bind(email)
+        .bind(email_verified)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn insert_oauth_desktop_code(&self, code: NewOAuthDesktopCode<'_>) -> AppResult<()> {
+        sqlx::query(
+            "INSERT INTO oauth_desktop_codes
+                (code_hash, user_id, provider, provider_subject, email, email_verified, device_name, expires_at)
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)",
+        )
+        .bind(code.code_hash)
+        .bind(code.user_id)
+        .bind(code.provider)
+        .bind(code.provider_subject)
+        .bind(code.email)
+        .bind(code.email_verified)
+        .bind(code.device_name)
+        .bind(code.expires_at)
+        .execute(&self.pool)
+        .await?;
+        Ok(())
+    }
+
+    pub async fn consume_oauth_desktop_code(&self, code_hash: &str) -> AppResult<OAuthDesktopCode> {
+        let row = sqlx::query(
+            "UPDATE oauth_desktop_codes
+             SET used_at = now()
+             WHERE code_hash = $1 AND used_at IS NULL AND expires_at > now()
+             RETURNING user_id, provider, provider_subject, email, email_verified, device_name",
+        )
+        .bind(code_hash)
+        .fetch_optional(&self.pool)
+        .await?
+        .ok_or(AppError::Unauthorized)?;
+        Ok(OAuthDesktopCode {
+            user_id: row.get("user_id"),
+            provider: row.get("provider"),
+            provider_subject: row.get("provider_subject"),
+            email: row.get("email"),
+            email_verified: row.get("email_verified"),
+            device_name: row.get("device_name"),
+        })
     }
 
     pub async fn count_magic_links_since(

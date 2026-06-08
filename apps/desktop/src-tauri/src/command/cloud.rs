@@ -110,9 +110,8 @@ fn stash_token_and_redact(base_url: &str, mut resp: Value) -> Result<Value, Stri
 #[tauri::command]
 pub async fn cloud_load_device_session(base_url: String) -> Result<Option<Value>, String> {
     let base = normalized_base_url(&base_url)?;
-    Ok(load_cloud_device_token(&base)?.map(|_| {
-        serde_json::json!({ "baseUrl": base, "hasDeviceToken": true })
-    }))
+    Ok(load_cloud_device_token(&base)?
+        .map(|_| serde_json::json!({ "baseUrl": base, "hasDeviceToken": true })))
 }
 
 #[tauri::command]
@@ -198,6 +197,15 @@ pub async fn cloud_request_magic_link(base_url: String, email: String) -> Result
 }
 
 #[tauri::command]
+pub async fn cloud_oauth_providers(base_url: String) -> Result<Value, String> {
+    CloudClient::new(&base_url)
+        .map_err(|e| e.to_string())?
+        .oauth_providers()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
 pub async fn cloud_verify_magic_link(
     base_url: String,
     email: String,
@@ -208,6 +216,16 @@ pub async fn cloud_verify_magic_link(
     let resp = CloudClient::new(&base_url)
         .map_err(|e| e.to_string())?
         .verify_magic_link(&email, &token, &device_name, recovery_key.as_deref())
+        .await
+        .map_err(|e| e.to_string())?;
+    stash_token_and_redact(&base_url, resp)
+}
+
+#[tauri::command]
+pub async fn cloud_verify_oauth_code(base_url: String, code: String) -> Result<Value, String> {
+    let resp = CloudClient::new(&base_url)
+        .map_err(|e| e.to_string())?
+        .verify_oauth_desktop_code(&code)
         .await
         .map_err(|e| e.to_string())?;
     stash_token_and_redact(&base_url, resp)
@@ -363,7 +381,10 @@ pub async fn cloud_send_sticker(
     payload: Value,
 ) -> Result<Value, String> {
     authed_client(&base_url, &device_token)?
-        .post(&format!("/api/v1/accounts/{account_id}/send/sticker"), &payload)
+        .post(
+            &format!("/api/v1/accounts/{account_id}/send/sticker"),
+            &payload,
+        )
         .await
         .map_err(|e| e.to_string())
 }
@@ -376,7 +397,10 @@ pub async fn cloud_send_reaction(
     payload: Value,
 ) -> Result<Value, String> {
     authed_client(&base_url, &device_token)?
-        .post(&format!("/api/v1/accounts/{account_id}/send/reaction"), &payload)
+        .post(
+            &format!("/api/v1/accounts/{account_id}/send/reaction"),
+            &payload,
+        )
         .await
         .map_err(|e| e.to_string())
 }
@@ -389,7 +413,10 @@ pub async fn cloud_send_file(
     payload: Value,
 ) -> Result<Value, String> {
     authed_client(&base_url, &device_token)?
-        .post(&format!("/api/v1/accounts/{account_id}/send/file"), &payload)
+        .post(
+            &format!("/api/v1/accounts/{account_id}/send/file"),
+            &payload,
+        )
         .await
         .map_err(|e| e.to_string())
 }

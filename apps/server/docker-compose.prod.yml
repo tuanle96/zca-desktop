@@ -56,6 +56,15 @@ services:
       ZCA_CLOUD_MAGIC_LINK_FROM: ${ZCA_CLOUD_MAGIC_LINK_FROM:-ZCA Cloud <no-reply@zca.local>}
       ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL: ${ZCA_CLOUD_MAGIC_LINK_WEBHOOK_URL:-}
 
+      # ── Browser OAuth device login ──────────────────────────────────────────
+      # Configure OAuth app callback URLs at:
+      #   ${ZCA_CLOUD_PUBLIC_BASE_URL}/auth/oauth/google/callback
+      #   ${ZCA_CLOUD_PUBLIC_BASE_URL}/auth/oauth/github/callback
+      ZCA_CLOUD_GOOGLE_CLIENT_ID: ${ZCA_CLOUD_GOOGLE_CLIENT_ID:-}
+      ZCA_CLOUD_GOOGLE_CLIENT_SECRET: ${ZCA_CLOUD_GOOGLE_CLIENT_SECRET:-}
+      ZCA_CLOUD_GITHUB_CLIENT_ID: ${ZCA_CLOUD_GITHUB_CLIENT_ID:-}
+      ZCA_CLOUD_GITHUB_CLIENT_SECRET: ${ZCA_CLOUD_GITHUB_CLIENT_SECRET:-}
+
       # ── Optional tunables (defaults shown) ──────────────────────────────────
       ZCA_CLOUD_MAGIC_LINK_TTL_SECS: ${ZCA_CLOUD_MAGIC_LINK_TTL_SECS:-600}
       ZCA_CLOUD_MAGIC_LINK_RATE_LIMIT: ${ZCA_CLOUD_MAGIC_LINK_RATE_LIMIT:-5}
