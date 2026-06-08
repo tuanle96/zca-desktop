@@ -20,6 +20,8 @@ tauri-build = { version = "2", features = [] }
 tauri = { version = "2", features = [] }
 # Deep linking for the magic-link flow (zca:// + iOS universal / Android app links).
 tauri-plugin-deep-link = "2"
+# Opens the system browser for cloud OAuth (Google/GitHub) sign-in.
+tauri-plugin-opener = "2"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 futures-util = "0.3"

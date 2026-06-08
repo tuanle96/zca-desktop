@@ -98,6 +98,25 @@ async fn cloud_verify_magic_link(
 }
 
 #[tauri::command]
+async fn cloud_oauth_providers(base_url: String) -> Result<Value, String> {
+    CloudClient::new(&base_url)
+        .map_err(|e| e.to_string())?
+        .oauth_providers()
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+async fn cloud_verify_oauth_code(base_url: String, code: String) -> Result<Value, String> {
+    let resp = CloudClient::new(&base_url)
+        .map_err(|e| e.to_string())?
+        .verify_oauth_desktop_code(&code)
+        .await
+        .map_err(|e| e.to_string())?;
+    stash_token_and_redact(&base_url, resp)
+}
+
+#[tauri::command]
 async fn cloud_register_device(
     base_url: String,
     device_token: String,
@@ -373,6 +392,7 @@ pub fn run() {
         // Deep linking carries the magic-link verify code into the app:
         // desktop/Linux/Windows register the `zca://` scheme; iOS uses Universal
         // Links and Android uses App Links (configured in tauri.conf.json).
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_deep_link::init())
         .setup(|_app| {
             // On Android, `keyring` has no backend; `zca-keychain` falls back to a
@@ -392,6 +412,8 @@ pub fn run() {
             cloud_clear_device_session,
             cloud_request_magic_link,
             cloud_verify_magic_link,
+            cloud_oauth_providers,
+            cloud_verify_oauth_code,
             cloud_register_device,
             cloud_list_devices,
             cloud_revoke_device,

@@ -6349,6 +6349,7 @@ dependencies = [
  "tauri",
  "tauri-build",
  "tauri-plugin-deep-link",
+ "tauri-plugin-opener",
  "zca-cloud-client",
  "zca-keychain",
 ]
