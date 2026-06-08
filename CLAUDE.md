@@ -40,6 +40,12 @@ bun install                            # at the repo root: links the bun workspa
 # iOS/Android need local SDKs (Xcode / Android Studio):
 #   cd apps/mobile && bun run tauri ios init    # then: bun run tauri ios build
 #   cd apps/mobile && bun run tauri android init # then: bun run tauri android build
+# Native iOS bits live in apps/mobile/src-tauri/gen/apple (GITIGNORED): the zca:// URL scheme
+# (project.yml CFBundleURLTypes, for OAuth auto-return) and glass-tabbar.mm (native iOS 26
+# Liquid Glass UITabBar — CSS can't do real Liquid Glass in WKWebView). `tauri ios dev` does
+# NOT run xcodegen, so after editing project.yml / adding a .mm:
+#   (cd apps/mobile/src-tauri/gen/apple && xcodegen generate)  # then restart `tauri ios dev`
+# Re-add both after `tauri ios init`. See the `tauri-ios-native-glass` skill for the technique.
 
 # Cloud server (dev: Postgres + MinIO + MailHog + server at :37880, hot-reload)
 docker compose -f apps/server/docker-compose.dev.yml up -d --build

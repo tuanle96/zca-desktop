@@ -47,3 +47,4 @@ magic-link auth, server-hosted accounts, and an encrypted sync/media store.
 - Cloud backend (run · deploy · env vars) → [`server/README.md`](./server/README.md)
 - Contributing, CLA, PR checklist → [`CONTRIBUTING.md`](./CONTRIBUTING.md)
 - Security policy → [`SECURITY.md`](./SECURITY.md)  ·  Usage caveats / ban risk → [`DISCLAIMER.md`](./DISCLAIMER.md)
+- Mobile app (Tauri iOS, desktop-parity build) → plan in `plans/20260608-mobile-app-parity/`; iOS dev gotchas + native Liquid Glass note in [`CLAUDE.md`](./CLAUDE.md) "Commands". Native iOS bits (the `zca://` URL scheme for OAuth auto-return; `glass-tabbar.mm`, a native iOS 26 Liquid Glass `UITabBar` — CSS can't fake Liquid Glass in WKWebView) live in **gitignored** `apps/mobile/src-tauri/gen/apple`; after editing `project.yml` / adding a `.mm`, run `xcodegen generate` then restart `tauri ios dev`. Reusable technique → the `tauri-ios-native-glass` skill.
