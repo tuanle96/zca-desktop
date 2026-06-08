@@ -12,6 +12,11 @@
     X,
     Heart,
     FileDown,
+    Image as ImageIcon,
+    FileText,
+    Download,
+    ExternalLink,
+    CheckCircle2,
     Cloud,
     Wifi,
     WifiOff,
@@ -20,7 +25,7 @@
   import { Button } from "$lib/components/ui/button/index.js";
   import { session } from "$lib/session.svelte";
   import StickerPicker from "./StickerPicker.svelte";
-  import type { ChatMessage, QuoteInput, Sticker } from "$lib/types";
+  import type { ChatMessage, QuoteInput, ReactionIcon, Sticker } from "$lib/types";
 
   let draft = $state("");
   let scroller = $state<HTMLElement | null>(null);
@@ -55,6 +60,14 @@
   const fileButtonTitle = $derived(
     session.canUseCloudFiles ? "Đính kèm tệp cloud" : "Đính kèm bật sau khi cloud kết nối",
   );
+  const reactionOptions: { icon: ReactionIcon; emoji: string; label: string }[] = [
+    { icon: "like", emoji: "👍", label: "Thích" },
+    { icon: "heart", emoji: "❤️", label: "Yêu thích" },
+    { icon: "haha", emoji: "😆", label: "Haha" },
+    { icon: "wow", emoji: "😮", label: "Wow" },
+    { icon: "cry", emoji: "😢", label: "Buồn" },
+    { icon: "angry", emoji: "😠", label: "Giận" },
+  ];
 
   // Autoscroll to the newest message when the active thread's list grows.
   $effect(() => {
@@ -108,6 +121,10 @@
   async function pickSticker(sticker: Sticker) {
     showStickers = false;
     await session.sendSticker(sticker);
+  }
+
+  async function react(m: ChatMessage, icon: ReactionIcon) {
+    await session.sendReaction(m, icon);
   }
 
   async function uploadFiles(files: File[]) {
@@ -174,8 +191,70 @@
     return Boolean(m.file?.id);
   }
 
+  async function openFile(m: ChatMessage) {
+    if (canDownloadCloudFile(m)) {
+      await session.downloadCloudFile(m);
+      return;
+    }
+    openRemoteFile(m);
+  }
+
   function openRemoteFile(m: ChatMessage) {
     if (m.file?.sourceUrl) window.open(m.file.sourceUrl, "_blank", "noopener,noreferrer");
+  }
+
+  function fileKindLabel(m: ChatMessage): string {
+    const kind = m.file?.mediaKind;
+    if (kind === "image") return "Ảnh";
+    if (kind === "video") return "Video";
+    if (kind === "audio") return "Âm thanh";
+    return "Tệp";
+  }
+
+  function fileExtension(filename: string | null | undefined): string {
+    const ext = filename?.split(".").pop()?.trim();
+    if (!ext || ext === filename) return "FILE";
+    return ext.slice(0, 4).toUpperCase();
+  }
+
+  function fileMeta(m: ChatMessage): string {
+    const parts = [fileKindLabel(m)];
+    const size = fileSize(m.file?.sizeBytes ?? 0);
+    if (size) parts.push(size);
+    return parts.join(" · ");
+  }
+
+  function fileAvailability(m: ChatMessage): string {
+    if (canDownloadCloudFile(m)) return "Đã lưu trên cloud";
+    if (m.file?.sourceUrl) return "Có thể mở";
+    return "Chưa sẵn sàng";
+  }
+
+  function fileActionLabel(m: ChatMessage): string {
+    if (canDownloadCloudFile(m)) return "Tải xuống";
+    if (m.file?.sourceUrl) return "Mở";
+    return "Không có đường dẫn";
+  }
+
+  function fileCardTone(m: ChatMessage): string {
+    return m.outgoing
+      ? "border-brand/20 bg-brand/10 hover:bg-brand/15"
+      : "border-border bg-background hover:bg-muted/45";
+  }
+
+  function fileIconTone(m: ChatMessage): string {
+    const kind = m.file?.mediaKind;
+    if (kind === "image") return "bg-sky-500 text-white";
+    if (kind === "video") return "bg-violet-500 text-white";
+    if (kind === "audio") return "bg-emerald-500 text-white";
+    return "bg-slate-700 text-white";
+  }
+
+  function bubbleClass(m: ChatMessage): string {
+    if (m.file) return "max-w-[72%] text-sm text-foreground sm:max-w-sm";
+    return m.outgoing
+      ? "max-w-[68%] rounded-2xl rounded-br-md bg-brand px-3.5 py-2 text-sm text-brand-foreground shadow-sm"
+      : "max-w-[68%] rounded-2xl rounded-bl-md bg-background px-3.5 py-2 text-sm shadow-sm";
   }
 
   function bubbleAvatar(m: ChatMessage): string | null {
@@ -320,14 +399,31 @@
                     >
                       <Quote class="size-3.5" />
                     </button>
-                    <button
-                      onclick={() => session.sendReaction(m, "heart")}
-                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
-                      title="Thả tim"
-                      aria-label="Thả tim"
-                    >
-                      <Heart class="size-3.5" />
-                    </button>
+                    <div class="group/reaction relative flex">
+                      <button
+                        onclick={() => react(m, "heart")}
+                        class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                        title="Thả tim"
+                        aria-label="Thả tim"
+                        disabled={session.busy}
+                      >
+                        <Heart class="size-3.5" />
+                      </button>
+                      <div class="pointer-events-none absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border bg-background/95 px-2 py-1.5 opacity-0 shadow-lg transition duration-150 group-hover/reaction:pointer-events-auto group-hover/reaction:opacity-100 group-focus-within/reaction:pointer-events-auto group-focus-within/reaction:opacity-100">
+                        {#each reactionOptions as option}
+                          <button
+                            type="button"
+                            onclick={() => react(m, option.icon)}
+                            class="hover:bg-muted flex size-7 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-110 disabled:opacity-40"
+                            title={option.label}
+                            aria-label={option.label}
+                            disabled={session.busy}
+                          >
+                            {option.emoji}
+                          </button>
+                        {/each}
+                      </div>
+                    </div>
                   </div>
                 </div>
               {:else}
@@ -339,54 +435,81 @@
                       {/if}
                       <Avatar.Fallback class="bg-brand/10 text-brand text-xs font-medium">
                         {initials(bubbleName(m))}
-                      </Avatar.Fallback>
-                    </Avatar.Root>
-                  {/if}
-                  <div
-                    class="max-w-[68%] rounded-2xl px-3.5 py-2 text-sm shadow-sm {m.outgoing
-                      ? 'bg-brand text-brand-foreground rounded-br-md'
-                      : 'bg-background rounded-bl-md'}"
-                  >
-                    {#if m.quote}
-                      <div class="mb-1 rounded-md border-l-2 border-current/30 bg-black/5 px-2 py-1 text-xs opacity-80">
-                        <div class="font-medium">{m.quote.fromD || "Tin nhắn"}</div>
-                        <div class="line-clamp-2 break-words">{m.quote.msg}</div>
-                      </div>
+                        </Avatar.Fallback>
+                      </Avatar.Root>
                     {/if}
-                    {#if m.file}
-                      <div class="flex max-w-full flex-col gap-2 rounded-md border border-current/15 bg-black/5 p-2 text-left text-xs">
-                        {#if m.file.mediaKind === "image" && filePreviewUrl(m)}
+                    <div class={bubbleClass(m)}>
+                      {#if m.quote}
+                        <div class="mb-1 rounded-md border-l-2 border-current/30 bg-black/5 px-2 py-1 text-xs opacity-80">
+                          <div class="font-medium">{m.quote.fromD || "Tin nhắn"}</div>
+                          <div class="line-clamp-2 break-words">{m.quote.msg}</div>
+                        </div>
+                      {/if}
+                      {#if m.file}
+                        <div class="flex max-w-full flex-col gap-2 text-left text-xs">
+                          {#if m.file.mediaKind === "image" && filePreviewUrl(m)}
+                            <button
+                              type="button"
+                              onclick={() => openFile(m)}
+                              class="group/file relative overflow-hidden rounded-lg border bg-background p-2 text-left shadow-sm ring-1 ring-black/5 transition duration-150 hover:-translate-y-px hover:shadow-md focus-visible:ring-2 focus-visible:ring-brand/40 disabled:pointer-events-none disabled:opacity-70 {m.outgoing ? 'border-brand/20' : 'border-border'}"
+                              title={m.file.filename || "Mở hình ảnh"}
+                              aria-label={m.file.filename || "Mở hình ảnh"}
+                              disabled={!canDownloadCloudFile(m) && !m.file.sourceUrl}
+                            >
+                              <span class="absolute left-3 top-3 z-10 inline-flex items-center gap-1 rounded-md bg-black/65 px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-sm">
+                                <ImageIcon class="size-3" />
+                                Ảnh
+                              </span>
+                              <img
+                                src={filePreviewUrl(m)!}
+                                alt={m.file.filename || "Hình ảnh"}
+                                class="max-h-72 min-h-36 w-full rounded-md bg-white object-contain"
+                                loading="lazy"
+                              />
+                              <span class="absolute bottom-3 right-3 rounded-full bg-black/70 px-2 py-1 text-[10px] font-medium text-white opacity-0 shadow-sm transition-opacity group-hover/file:opacity-100 group-focus-visible/file:opacity-100">
+                                {fileActionLabel(m)}
+                              </span>
+                            </button>
+                          {/if}
                           <button
                             type="button"
-                            onclick={() => canDownloadCloudFile(m) ? session.downloadCloudFile(m) : openRemoteFile(m)}
-                            class="overflow-hidden rounded-md border border-current/10 bg-background/50"
-                            title={m.file.filename || "Mở hình ảnh"}
-                            aria-label={m.file.filename || "Mở hình ảnh"}
+                            onclick={() => openFile(m)}
+                            class="group/file flex max-w-full items-center gap-3 rounded-lg border p-2.5 text-left shadow-sm ring-1 ring-black/5 transition duration-150 hover:-translate-y-px hover:shadow-md disabled:pointer-events-none disabled:opacity-70 {fileCardTone(m)}"
+                            disabled={!canDownloadCloudFile(m) && !m.file.sourceUrl}
                           >
-                            <img src={filePreviewUrl(m)!} alt={m.file.filename || "Hình ảnh"} class="max-h-56 w-full object-cover" loading="lazy" />
-                          </button>
-                        {/if}
-                        <button
-                          type="button"
-                          onclick={() => canDownloadCloudFile(m) ? session.downloadCloudFile(m) : openRemoteFile(m)}
-                          class="hover:bg-background/40 flex max-w-full items-center gap-2 rounded-md p-1 text-left transition-colors"
-                          disabled={!canDownloadCloudFile(m) && !m.file.sourceUrl}
-                        >
-                          <FileDown class="size-4 shrink-0" />
-                          <span class="min-w-0 flex-1">
-                            <span class="block truncate font-medium">{m.file.filename || "Tệp đính kèm"}</span>
-                            <span class="opacity-70">
-                              {#if m.file.mediaKind && m.file.mediaKind !== "file"}{m.file.mediaKind}{/if}
-                              {#if fileSize(m.file.sizeBytes)} {fileSize(m.file.sizeBytes)}{/if}
+                            <span class="flex size-11 shrink-0 items-center justify-center rounded-md {fileIconTone(m)}">
+                              {#if m.file.mediaKind === "image"}
+                                <ImageIcon class="size-5" />
+                              {:else if m.file.mediaKind === "file" || !m.file.mediaKind}
+                                <span class="text-[10px] font-bold leading-none tracking-wide">{fileExtension(m.file.filename)}</span>
+                              {:else}
+                                <FileText class="size-5" />
+                              {/if}
                             </span>
-                          </span>
-                        </button>
-                      </div>
-                    {:else if m.deleted}
-                      <p class="text-muted-foreground italic">{m.body}</p>
-                    {:else}
-                      <p class="whitespace-pre-wrap break-words">{m.body}</p>
-                    {/if}
+                            <span class="min-w-0 flex-1">
+                              <span class="block truncate text-sm font-semibold">{m.file.filename || "Tệp đính kèm"}</span>
+                              <span class="text-muted-foreground mt-0.5 block truncate">{fileMeta(m)}</span>
+                              <span class="mt-1 inline-flex items-center gap-1 text-[10px] font-medium text-emerald-700">
+                                <CheckCircle2 class="size-3" />
+                                {fileAvailability(m)}
+                              </span>
+                            </span>
+                            <span class="ml-auto flex size-8 shrink-0 items-center justify-center rounded-md border border-current/10 bg-background/75 text-muted-foreground transition-colors group-hover/file:text-brand">
+                              {#if canDownloadCloudFile(m)}
+                                <Download class="size-4" />
+                              {:else if m.file.sourceUrl}
+                                <ExternalLink class="size-4" />
+                              {:else}
+                                <FileDown class="size-4" />
+                              {/if}
+                            </span>
+                          </button>
+                        </div>
+                      {:else if m.deleted}
+                        <p class="text-muted-foreground italic">{m.body}</p>
+                      {:else}
+                        <p class="whitespace-pre-wrap break-words">{m.body}</p>
+                      {/if}
                     {#if m.link}
                       <a
                         href={m.link.href}
@@ -416,14 +539,31 @@
                     >
                       <Quote class="size-3.5" />
                     </button>
-                    <button
-                      onclick={() => session.sendReaction(m, "heart")}
-                      class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
-                      title="Thả tim"
-                      aria-label="Thả tim"
-                    >
-                      <Heart class="size-3.5" />
-                    </button>
+                    <div class="group/reaction relative flex">
+                      <button
+                        onclick={() => react(m, "heart")}
+                        class="bg-background text-muted-foreground hover:bg-muted hover:text-brand flex size-7 items-center justify-center rounded-full border shadow-sm transition-colors"
+                        title="Thả tim"
+                        aria-label="Thả tim"
+                        disabled={session.busy}
+                      >
+                        <Heart class="size-3.5" />
+                      </button>
+                      <div class="pointer-events-none absolute bottom-8 left-1/2 z-20 flex -translate-x-1/2 items-center gap-1 rounded-full border bg-background/95 px-2 py-1.5 opacity-0 shadow-lg transition duration-150 group-hover/reaction:pointer-events-auto group-hover/reaction:opacity-100 group-focus-within/reaction:pointer-events-auto group-focus-within/reaction:opacity-100">
+                        {#each reactionOptions as option}
+                          <button
+                            type="button"
+                            onclick={() => react(m, option.icon)}
+                            class="hover:bg-muted flex size-7 items-center justify-center rounded-full text-base leading-none transition-transform hover:scale-110 disabled:opacity-40"
+                            title={option.label}
+                            aria-label={option.label}
+                            disabled={session.busy}
+                          >
+                            {option.emoji}
+                          </button>
+                        {/each}
+                      </div>
+                    </div>
                   </div>
                 </div>
               {/if}
