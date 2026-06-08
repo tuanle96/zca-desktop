@@ -6,7 +6,7 @@
   "type": "module",
   "scripts": {
     "harness:check": "node .harness/scripts/harness-check.mjs",
-    "harness:doctor": "npx --yes agent-harness-kit@0.20.0 doctor --runtime codex",
+    "harness:doctor": "npx --yes agent-harness-kit@0.22.2 doctor --runtime codex",
     "harness:readiness": "node .harness/scripts/harness-readiness.mjs --json --fail-on=fail --review-promotion=fail"
   },
   "author": "Lê Anh Tuấn (tuanle96)",
