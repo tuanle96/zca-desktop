@@ -19,6 +19,7 @@
   import * as Avatar from "$lib/components/ui/avatar/index.js";
   import { Button } from "$lib/components/ui/button/index.js";
   import { Input } from "$lib/components/ui/input/index.js";
+  import BrandMark from "$lib/components/brand-mark.svelte";
   import {
     CLOUD_DEVICE_TOKEN_KEYCHAIN,
     getCloudOAuthProviders,
@@ -590,7 +591,7 @@
             disabled={!!oauthBusyProvider || !oauthProviderAvailable("google")}
             onclick={() => startOAuthLogin("google")}
           >
-            {#if oauthBusyProvider === "google"}<Loader2 class="animate-spin" />{:else}<span class="text-base font-bold">G</span>{/if}
+            {#if oauthBusyProvider === "google"}<Loader2 class="animate-spin" />{:else}<span class="flex size-5 items-center justify-center rounded-full bg-white"><BrandMark provider="google" class="size-4" /></span>{/if}
             Tiếp tục với Google
           </Button>
           <Button
@@ -598,7 +599,7 @@
             disabled={!!oauthBusyProvider || !oauthProviderAvailable("github")}
             onclick={() => startOAuthLogin("github")}
           >
-            {#if oauthBusyProvider === "github"}<Loader2 class="animate-spin" />{:else}<span class="text-xs font-bold">GH</span>{/if}
+            {#if oauthBusyProvider === "github"}<Loader2 class="animate-spin" />{:else}<BrandMark provider="github" class="size-4" />{/if}
             Tiếp tục với GitHub
           </Button>
           {#if oauthProviders && !oauthProviders.google.configured && !oauthProviders.github.configured}
