@@ -176,38 +176,41 @@ impl Db {
         state_hash: &str,
         provider: &str,
         device_name: &str,
+        platform: Option<&str>,
         expires_at: DateTime<Utc>,
     ) -> AppResult<()> {
         sqlx::query(
-            "INSERT INTO oauth_login_states (state_hash, provider, device_name, expires_at)
-             VALUES ($1, $2, $3, $4)",
+            "INSERT INTO oauth_login_states (state_hash, provider, device_name, platform, expires_at)
+             VALUES ($1, $2, $3, $4, $5)",
         )
         .bind(state_hash)
         .bind(provider)
         .bind(device_name)
+        .bind(platform)
         .bind(expires_at)
         .execute(&self.pool)
         .await?;
         Ok(())
     }
 
+    /// Returns the stored (device_name, platform) for the OAuth login state.
     pub async fn consume_oauth_login_state(
         &self,
         state_hash: &str,
         provider: &str,
-    ) -> AppResult<String> {
+    ) -> AppResult<(String, Option<String>)> {
         let row = sqlx::query(
             "UPDATE oauth_login_states
              SET used_at = now()
              WHERE state_hash = $1 AND provider = $2 AND used_at IS NULL AND expires_at > now()
-             RETURNING device_name",
+             RETURNING device_name, platform",
         )
         .bind(state_hash)
         .bind(provider)
         .fetch_optional(&self.pool)
         .await?
         .ok_or(AppError::Unauthorized)?;
-        Ok(row.get("device_name"))
+        Ok((row.get("device_name"), row.get("platform")))
     }
 
     pub async fn user_id_by_oauth_identity(

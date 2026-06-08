@@ -299,6 +299,9 @@ fn html_escape(input: &str) -> String {
 struct OAuthStartQuery {
     #[serde(default)]
     device_name: Option<String>,
+    /// Client kind ("mobile" returns into the app via the zca:// deep link).
+    #[serde(default)]
+    platform: Option<String>,
 }
 
 #[derive(Deserialize)]
@@ -326,6 +329,7 @@ async fn oauth_start(
     let provider = OAuthProvider::parse(&provider)?;
     let (client_id, _) = provider.client(&state.config)?;
     let device_name = validate_device_name(query.device_name.as_deref().unwrap_or("Máy của tôi"))?;
+    let platform = query.platform.as_deref().map(str::trim).filter(|p| !p.is_empty());
     let oauth_state = crypto::random_token(32);
     let expires_at = Utc::now() + ChronoDuration::minutes(10);
     state
@@ -334,6 +338,7 @@ async fn oauth_start(
             &crypto::token_hash(&oauth_state),
             provider.slug(),
             device_name,
+            platform,
             expires_at,
         )
         .await?;
@@ -347,7 +352,7 @@ async fn oauth_callback(
     Query(query): Query<OAuthCallbackQuery>,
 ) -> AppResult<Html<String>> {
     let provider = OAuthProvider::parse(&provider)?;
-    let device_name = state
+    let (device_name, platform) = state
         .db
         .consume_oauth_login_state(&crypto::token_hash(&query.state), provider.slug())
         .await?;
@@ -386,6 +391,7 @@ async fn oauth_callback(
         &state.config,
         provider,
         &desktop_code,
+        platform.as_deref(),
     )))
 }
 
@@ -515,9 +521,13 @@ fn build_oauth_landing_html(
     config: &crate::Config,
     provider: OAuthProvider,
     desktop_code: &str,
+    platform: Option<&str>,
 ) -> String {
-    const LOCAL_CALLBACK_PORT: u16 = 37886;
     let base_url = config.public_base_url.trim_end_matches('/');
+    if platform == Some("mobile") {
+        return build_mobile_oauth_landing_html(config, provider, desktop_code, base_url);
+    }
+    const LOCAL_CALLBACK_PORT: u16 = 37886;
     let callback_url = format!(
         "http://127.0.0.1:{LOCAL_CALLBACK_PORT}/auth/oauth/callback?code={}&baseUrl={}",
         urlencoding::encode(desktop_code),
@@ -592,6 +602,70 @@ fn build_oauth_landing_html(
          }}\
          openButton.addEventListener('click', () => {{ if (openAppUrl) window.location.href = openAppUrl; void deliver(); }});\
          void deliver();\
+         </script>\
+         </body>\
+         </html>"
+    )
+}
+
+/// Mobile OAuth landing: return into the app via the `zca://verify?code=…` deep
+/// link (auto-redirect + button), with the manual code as a paste fallback.
+fn build_mobile_oauth_landing_html(
+    config: &crate::Config,
+    provider: OAuthProvider,
+    code: &str,
+    base_url: &str,
+) -> String {
+    let scheme = {
+        let s = config.app_link_scheme.trim();
+        if s.is_empty() {
+            "zca"
+        } else {
+            s
+        }
+    };
+    let deep_link = format!(
+        "{scheme}://verify?code={}&baseUrl={}",
+        urlencoding::encode(code),
+        urlencoding::encode(base_url),
+    );
+    let deep_link_attr = html_escape(&deep_link);
+    let deep_link_json = serde_json::to_string(&deep_link).unwrap_or_else(|_| "\"\"".to_string());
+    let provider_label = html_escape(provider.label());
+    let code_text = html_escape(code);
+    format!(
+        "<!doctype html>\
+         <html lang=\"vi\">\
+         <head>\
+         <meta charset=\"utf-8\">\
+         <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\">\
+         <title>ZCA Cloud</title>\
+         <style>\
+         body{{margin:0;background:#f6f7f9;color:#111827;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,Helvetica,Arial,sans-serif;}}\
+         main{{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:32px 16px;box-sizing:border-box;}}\
+         section{{width:100%;max-width:520px;background:#fff;border:1px solid #e5e7eb;border-radius:12px;padding:32px;box-sizing:border-box;text-align:center;}}\
+         h1{{margin:20px 0 10px;font-size:26px;line-height:34px;}}\
+         p{{margin:0;color:#4b5563;font-size:15px;line-height:24px;}}\
+         a.btn{{display:inline-block;margin-top:24px;background:#0068ff;color:#fff;border:0;border-radius:10px;padding:14px 22px;font-size:16px;font-weight:700;text-decoration:none;}}\
+         code{{display:block;margin-top:18px;background:#f3f4f6;border:1px solid #e5e7eb;border-radius:8px;padding:14px 16px;color:#111827;font-size:14px;line-height:22px;word-break:break-all;}}\
+         .brand{{font-size:13px;font-weight:700;color:#0068ff;}}\
+         .muted{{margin-top:18px;color:#9ca3af;font-size:12px;line-height:20px;}}\
+         </style>\
+         </head>\
+         <body>\
+         <main>\
+         <section>\
+         <div class=\"brand\">ZCA Cloud</div>\
+         <h1>Đăng nhập thành công</h1>\
+         <p>Đăng nhập {provider_label} thành công. Quay lại ứng dụng Zalo Mobile để hoàn tất.</p>\
+         <a class=\"btn\" href=\"{deep_link_attr}\">Mở Zalo Mobile</a>\
+         <p class=\"muted\">Nếu ứng dụng không tự mở, sao chép mã này và dán vào ô “Mã OAuth dự phòng”:</p>\
+         <code>{code_text}</code>\
+         </section>\
+         </main>\
+         <script>\
+         const link = {deep_link_json};\
+         setTimeout(function(){{ try {{ window.location.href = link; }} catch (e) {{}} }}, 400);\
          </script>\
          </body>\
          </html>"
@@ -1591,12 +1665,21 @@ mod tests {
 
     #[test]
     fn oauth_landing_uses_local_callback_and_escapes_code() {
-        let html = build_oauth_landing_html(&test_config(), OAuthProvider::Google, "code <x>");
+        let html = build_oauth_landing_html(&test_config(), OAuthProvider::Google, "code <x>", None);
         assert!(html.contains("127.0.0.1:37886/auth/oauth/callback"));
         assert!(html.contains("zca://open"));
         assert!(html.contains("code &lt;x&gt;"));
         assert!(!html.contains("code <x>"));
         assert!(html.contains("baseUrl=https%3A%2F%2Fzca.tuanle.dev"));
+    }
+
+    #[test]
+    fn oauth_landing_mobile_uses_deep_link() {
+        let html = build_oauth_landing_html(&test_config(), OAuthProvider::Google, "tok <y>", Some("mobile"));
+        assert!(html.contains("zca://verify?code=tok"));
+        assert!(html.contains("baseUrl=https%3A%2F%2Fzca.tuanle.dev"));
+        assert!(!html.contains("127.0.0.1:37886"));
+        assert!(html.contains("tok &lt;y&gt;"));
     }
 
     #[test]
