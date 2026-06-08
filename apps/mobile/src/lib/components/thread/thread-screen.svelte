@@ -1,11 +1,12 @@
 <script lang="ts">
   // The pushed chat thread: header (back + title + realtime dot), message list,
   // composer. Builds the QuoteInput on reply exactly like the desktop ChatPane.
-  import type { ChatMessage, QuoteInput, ReactionIcon } from "@zca/types";
+  import type { ChatMessage, QuoteInput, ReactionIcon, Sticker } from "@zca/types";
   import AppHeader from "$lib/components/shell/app-header.svelte";
   import MessageList from "./message-list.svelte";
   import Composer from "./composer.svelte";
   import ImageLightbox from "./image-lightbox.svelte";
+  import StickerSheet from "./sticker-sheet.svelte";
   import { session } from "$lib/session-store.svelte";
   import { nav } from "$lib/nav.svelte";
 
@@ -17,6 +18,7 @@
   let draft = $state("");
   let replyTo = $state<ChatMessage | null>(null);
   let lightbox = $state<ChatMessage | null>(null);
+  let stickerOpen = $state(false);
 
   const convo = $derived(session.activeConversation);
   const headerTitle = $derived(convo?.title ?? title ?? "Hội thoại");
@@ -50,6 +52,11 @@
 
   function react(m: ChatMessage, icon: ReactionIcon) {
     void session.sendReaction(m, icon);
+  }
+
+  function pickSticker(s: Sticker) {
+    stickerOpen = false;
+    void session.sendSticker(s);
   }
 
   function openFile(m: ChatMessage) {
@@ -96,10 +103,14 @@
     canAttach={session.canUseCloudFiles}
     onsend={send}
     onattach={() => {}}
-    onsticker={() => {}}
+    onsticker={() => (stickerOpen = true)}
     oncancelreply={() => (replyTo = null)}
   />
 </div>
+
+{#if stickerOpen}
+  <StickerSheet onpick={pickSticker} onclose={() => (stickerOpen = false)} />
+{/if}
 
 {#if lightbox}
   <ImageLightbox message={lightbox} onclose={() => (lightbox = null)} />
