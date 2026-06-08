@@ -2,7 +2,7 @@
 
 All notable zca-desktop release changes are documented here.
 
-## Unreleased
+## v0.1.7 - 2026-06-08
 
 ### Schema Compatibility
 
