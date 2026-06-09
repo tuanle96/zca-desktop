@@ -2,6 +2,16 @@
 
 All notable zca-desktop release changes are documented here.
 
+## v0.1.8 - 2026-06-09
+
+### Overview
+
+- UI-only follow-up to v0.1.7: real Google/GitHub brand icons on the OAuth login screen.
+
+### Changed
+
+- Replaced the generic OAuth provider icons with the real Google and GitHub brand glyphs on the login screen, via a shared brand-mark component.
+
 ## v0.1.7 - 2026-06-08
 
 ### Schema Compatibility

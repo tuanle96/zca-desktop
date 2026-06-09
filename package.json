@@ -1,6 +1,6 @@
 {
   "name": "zca",
-  "version": "0.1.7",
+  "version": "0.1.8",
   "private": true,
   "description": "zca monorepo — desktop & mobile Zalo clients, cloud server, and shared packages. Personal, noncommercial use only.",
   "type": "module",
