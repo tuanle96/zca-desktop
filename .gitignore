@@ -38,6 +38,9 @@ cookies.json
 /.codex/
 /.code-review-graph/
 .agent-worktrees/
+/.claude/
+/plans/
+/reports/
 
 # One-time OSS-prep helper (not for publishing)
 /oss-prepare-public.sh
